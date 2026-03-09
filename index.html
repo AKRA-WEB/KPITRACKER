@@ -189,7 +189,10 @@
 
             <!-- Customer Notes -->
             <div class="bg-white p-4 rounded-xl shadow-sm">
-                <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2"><i class="fa-solid fa-truck-fast text-blue-500 mr-2"></i>รายชื่อลูกค้า / การจัดส่ง</h3>
+                <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2 flex justify-between items-center">
+                    <span><i class="fa-solid fa-truck-fast text-blue-500 mr-2"></i>รายชื่อลูกค้า / การจัดส่ง</span>
+                    <span id="dash-customer-notes-count" class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-bold">0 รายการ</span>
+                </h3>
                 <div id="dash-customer-notes" class="space-y-2 max-h-60 overflow-y-auto">
                     <!-- Javascript generates list here -->
                 </div>
@@ -512,6 +515,7 @@
             let totalVol = 0; let totalErr = 0;
             let empErrCount = { 'หยอง':0, 'เจมส์':0, 'พุช':0, 'บรรเลง':0, 'ใหม่':0 };
             let allCustomerNotesHtml = '';
+            let totalCustomerNotesCount = 0;
             let weeklyTasksMap = {}; // เก็บข้อมูล Task เพื่อดึงอันล่าสุด
             
             let categorizedNotes = {
@@ -528,9 +532,15 @@
                 totalErr += day.errors.length;
                 
                 if (day.customerNotes && day.customerNotes.trim() !== '') {
+                    let notesLines = day.customerNotes.split('\n').filter(line => line.trim() !== '');
+                    totalCustomerNotesCount += notesLines.length;
+
                     allCustomerNotesHtml += `
                         <div class="text-sm bg-blue-50 p-3 rounded-lg border border-blue-100 mb-2">
-                            <span class="text-xs text-blue-600 font-bold block mb-1 border-b border-blue-200 pb-1"><i class="fa-solid fa-calendar-day mr-1"></i> วันที่ ${day.date}</span>
+                            <span class="text-xs text-blue-600 font-bold block mb-1 border-b border-blue-200 pb-1 flex justify-between items-center">
+                                <span><i class="fa-solid fa-calendar-day mr-1"></i> วันที่ ${day.date}</span>
+                                <span class="bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded text-[10px]">${notesLines.length} รายการ</span>
+                            </span>
                             <div class="text-gray-700 whitespace-pre-wrap mt-1 leading-relaxed">${day.customerNotes}</div>
                         </div>
                     `;
@@ -614,6 +624,7 @@
             
             document.getElementById('dash-error-notes').innerHTML = allNotesHtml || '<div class="text-center text-gray-400 text-sm py-4">ไม่มีข้อผิดพลาดในสัปดาห์นี้ 🎉</div>';
             document.getElementById('dash-customer-notes').innerHTML = allCustomerNotesHtml || '<div class="text-center text-gray-400 text-sm py-4">ไม่มีบันทึกข้อมูลลูกค้า/การจัดส่ง</div>';
+            document.getElementById('dash-customer-notes-count').innerText = `${totalCustomerNotesCount} รายการ`;
 
             const lastWeekStart = new Date(startOfCurrentWeek); lastWeekStart.setDate(lastWeekStart.getDate() - 7);
             const lastWeekEnd = new Date(endOfWeek); lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
