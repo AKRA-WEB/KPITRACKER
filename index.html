@@ -3,756 +3,592 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KPI Tracker & Dashboard</title>
-    <!-- Tailwind CSS -->
+    <title>KPI Tracker - Daily Record</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Custom Styles for better mobile experience */
-        body { -webkit-tap-highlight-color: transparent; }
-        .toast-enter { animation: slideIn 0.3s ease-out forwards; }
-        .toast-exit { animation: fadeOut 0.3s ease-in forwards; }
-        @keyframes slideIn {
-            from { transform: translateY(-100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-        /* Hide number input spinners */
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none; margin: 0;
-        }
+        body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        .tab-active { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
+        .tab-inactive { color: #9ca3af; }
+        .toast { transition: opacity 0.3s, transform 0.3s; transform: translateY(100%); opacity: 0; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        /* Hide scrollbar for clean mobile UI */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 50; justify-content: center; align-items: center; flex-direction: column; }
     </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 pb-20 max-w-lg mx-auto shadow-xl relative min-h-screen">
+<body class="text-gray-800 pb-20">
 
     <!-- Header -->
-    <div class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex justify-between items-center rounded-b-xl">
-        <h1 class="text-xl font-bold flex items-center gap-2">
-            <i data-lucide="bar-chart-3"></i> KPI Tracker
-        </h1>
-        <button id="btn-refresh" class="hidden p-2 bg-blue-500 rounded-full hover:bg-blue-400 active:scale-95 transition" onclick="fetchDashboardData()">
-            <i data-lucide="refresh-cw" class="w-5 h-5" id="refresh-icon"></i>
+    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex justify-between items-center">
+        <h1 class="text-xl font-bold"><i class="fa-solid fa-clipboard-check mr-2"></i> KPI Daily Record</h1>
+        <button onclick="syncDataFromSheet()" id="btn-sync" class="text-white bg-blue-700 px-3 py-1 rounded-full text-xs font-semibold shadow active:bg-blue-800 transition-colors">
+            <i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล
         </button>
-    </div>
+    </header>
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed top-16 left-0 right-0 z-50 px-4 pointer-events-none flex flex-col gap-2 max-w-lg mx-auto"></div>
-
-    <div class="p-4">
+    <!-- Main Content Area -->
+    <main id="app-content" class="p-4 max-w-md mx-auto">
         
-        <!-- ================= TAB 1: บันทึกข้อมูล (Form) ================= -->
-        <div id="form-section" class="tab-content space-y-6">
-            <form id="kpi-form" onsubmit="submitForm(event)">
-                
-                <!-- โซนที่ 1: ข้อมูลทั่วไป -->
-                <div class="bg-white p-4 rounded-2xl shadow-sm border-t-4 border-t-blue-500 space-y-4 mb-6">
-                    <h2 class="font-bold text-slate-800 flex items-center gap-2 border-b pb-2">
-                        <i data-lucide="calendar" class="text-blue-500 w-5 h-5"></i> โซนที่ 1: ข้อมูลทั่วไป
-                    </h2>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">วันที่ (พิมพ์เองตามสะดวก)</label>
-                        <input type="text" id="input-date" required placeholder="เช่น 12 มี.ค. 67, หรือ วันจันทร์ที่ 1" class="w-full p-2 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" />
-                    </div>
-                </div>
-
-                <!-- โซนความผิดพลาด (รายบุคคล) -->
-                <div class="bg-red-50 p-4 rounded-2xl shadow-sm border border-red-100 space-y-4 mb-6">
-                    <h2 class="font-semibold text-red-700 flex items-center gap-2 border-b border-red-200 pb-2">
-                        <i data-lucide="alert-octagon" class="w-5 h-5"></i> ความผิดพลาดในการจัดสินค้า (รายบุคคล)
-                    </h2>
-                    
-                    <p class="text-xs text-red-500 font-medium">กดปุ่ม + เพื่อเพิ่มรายชื่อพนักงานและข้อผิดพลาดในแต่ละหมวดหมู่</p>
-
-                    <!-- Category 1 -->
-                    <div class="bg-white p-3 rounded-xl border border-yellow-200">
-                        <h3 class="font-bold text-yellow-800 mb-3 flex justify-between items-center">
-                            <span class="text-sm">1. จัดผิด แต่แก้ทันก่อนส่ง</span>
-                            <button type="button" onclick="addErrorEntry('err1')" class="text-xs bg-yellow-100 px-2 py-1.5 rounded-lg text-yellow-700 hover:bg-yellow-200 flex items-center gap-1 active:scale-95 transition shadow-sm">
-                                <i data-lucide="plus" class="w-3 h-3"></i> เพิ่มคนผิด
-                            </button>
-                        </h3>
-                        <div id="err1-list" class="space-y-3"></div>
-                    </div>
-
-                    <!-- Category 2 -->
-                    <div class="bg-white p-3 rounded-xl border border-orange-200">
-                        <h3 class="font-bold text-orange-800 mb-3 flex justify-between items-center">
-                            <span class="text-sm">2. จัดผิด ไปถึงหน้าร้านแล้ว</span>
-                            <button type="button" onclick="addErrorEntry('err2')" class="text-xs bg-orange-100 px-2 py-1.5 rounded-lg text-orange-700 hover:bg-orange-200 flex items-center gap-1 active:scale-95 transition shadow-sm">
-                                <i data-lucide="plus" class="w-3 h-3"></i> เพิ่มคนผิด
-                            </button>
-                        </h3>
-                        <div id="err2-list" class="space-y-3"></div>
-                    </div>
-
-                    <!-- Category 3 -->
-                    <div class="bg-white p-3 rounded-xl border border-red-200">
-                        <h3 class="font-bold text-red-800 mb-3 flex justify-between items-center">
-                            <span class="text-sm">3. จัดผิด ไปถึงมือลูกค้าแล้ว</span>
-                            <button type="button" onclick="addErrorEntry('err3')" class="text-xs bg-red-100 px-2 py-1.5 rounded-lg text-red-700 hover:bg-red-200 flex items-center gap-1 active:scale-95 transition shadow-sm">
-                                <i data-lucide="plus" class="w-3 h-3"></i> เพิ่มคนผิด
-                            </button>
-                        </h3>
-                        <div id="err3-list" class="space-y-3"></div>
-                    </div>
-                </div>
-
-                <!-- โซนที่ 2: ข้อมูลรวมประจำวัน -->
-                <div class="bg-slate-100 p-4 rounded-2xl shadow-sm border-t-4 border-t-emerald-500 space-y-4 mb-6">
-                    <h2 class="font-bold text-slate-800 flex items-center gap-2 border-b border-slate-200 pb-2">
-                        <i data-lucide="calendar-check" class="text-emerald-600 w-5 h-5"></i> โซนที่ 2: ข้อมูลรวมประจำวัน
-                    </h2>
-                    
-                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">จำนวนบิลเบิกรวม (ของวันนี้)</label>
-                        <input type="number" id="input-bills" inputmode="numeric" placeholder="ระบุจำนวนบิลรวม" class="w-full p-3 border rounded-xl bg-slate-50 text-lg font-medium text-center focus:ring-2 focus:ring-emerald-500 outline-none" />
-                    </div>
-
-                    <div class="space-y-3">
-                        <!-- รับที่ร้าน -->
-                        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                            <div class="flex items-center justify-between mb-2">
-                                <label class="flex items-center gap-1 text-sm font-semibold text-slate-700"><i data-lucide="package" class="w-4 h-4 text-emerald-600"></i> ลูกค้ารับที่ร้าน</label>
-                                <input type="number" id="input-pickup" inputmode="numeric" placeholder="จำนวนบิล" class="w-24 p-1 border rounded bg-slate-50 text-center font-medium outline-none focus:ring-2 focus:ring-emerald-500" />
-                            </div>
-                            <textarea id="input-pickup-names" rows="1" placeholder="ระบุชื่อลูกค้าที่มารับ..." class="w-full p-2 border rounded-lg bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
-                        </div>
-                        
-                        <!-- ส่งต่างจังหวัด -->
-                        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                            <div class="flex items-center justify-between mb-2">
-                                <label class="flex items-center gap-1 text-sm font-semibold text-slate-700"><i data-lucide="truck" class="w-4 h-4 text-emerald-600"></i> ส่งต่างจังหวัด</label>
-                                <input type="number" id="input-delProv" inputmode="numeric" placeholder="จำนวนบิล" class="w-24 p-1 border rounded bg-slate-50 text-center font-medium outline-none focus:ring-2 focus:ring-emerald-500" />
-                            </div>
-                            <textarea id="input-delProv-names" rows="1" placeholder="ระบุชื่อลูกค้าที่ไปส่ง..." class="w-full p-2 border rounded-lg bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
-                        </div>
-
-                        <!-- ส่งในตลาด -->
-                        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                            <div class="flex items-center justify-between mb-2">
-                                <label class="flex items-center gap-1 text-sm font-semibold text-slate-700"><i data-lucide="truck" class="w-4 h-4 text-emerald-600"></i> ส่งในตลาด</label>
-                                <input type="number" id="input-delIn" inputmode="numeric" placeholder="จำนวนบิล" class="w-24 p-1 border rounded bg-slate-50 text-center font-medium outline-none focus:ring-2 focus:ring-emerald-500" />
-                            </div>
-                            <textarea id="input-delIn-names" rows="1" placeholder="ระบุชื่อลูกค้าที่ไปส่ง..." class="w-full p-2 border rounded-lg bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
-                        </div>
-
-                        <!-- ส่งนอกตลาด -->
-                        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                            <div class="flex items-center justify-between mb-2">
-                                <label class="flex items-center gap-1 text-sm font-semibold text-slate-700"><i data-lucide="truck" class="w-4 h-4 text-emerald-600"></i> ส่งนอกตลาด</label>
-                                <input type="number" id="input-delOut" inputmode="numeric" placeholder="จำนวนบิล" class="w-24 p-1 border rounded bg-slate-50 text-center font-medium outline-none focus:ring-2 focus:ring-emerald-500" />
-                            </div>
-                            <textarea id="input-delOut-names" rows="1" placeholder="ระบุชื่อลูกค้าที่ไปส่ง..." class="w-full p-2 border rounded-lg bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit" id="btn-submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition flex justify-center items-center gap-2 text-lg disabled:opacity-70 disabled:active:scale-100">
-                    <i data-lucide="save" class="w-5 h-5"></i> <span id="btn-submit-text">บันทึกข้อมูลประจำวัน</span>
-                </button>
-            </form>
-        </div>
-
-        <!-- ================= TAB 2: Dashboard KPI ================= -->
-        <div id="dashboard-section" class="tab-content hidden space-y-4">
-            <!-- Filter Controls -->
-            <div id="filter-controls" class="flex gap-2 hidden">
-                <select id="filter-week" onchange="renderDashboard()" class="flex-1 p-2 border rounded-xl bg-white text-sm font-medium shadow-sm outline-none"></select>
-                <select id="filter-emp" onchange="renderDashboard()" class="flex-1 p-2 border rounded-xl bg-white text-sm font-medium shadow-sm outline-none"></select>
-            </div>
+        <!-- ================= VIEW: RECORD ================= -->
+        <div id="view-record" class="space-y-6">
             
-            <!-- Dashboard Content Container -->
-            <div id="dashboard-container">
-                <!-- Content will be injected here by JS -->
+            <!-- Date Selection -->
+            <div class="bg-white p-4 rounded-xl shadow-sm">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">วันที่บันทึก</label>
+                <input type="date" id="record-date" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
-        </div>
 
-        <!-- ================= TAB 3: ตั้งค่า ================= -->
-        <div id="settings-section" class="tab-content hidden space-y-4">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-                <h2 class="text-lg font-bold flex items-center gap-2 mb-4"><i data-lucide="settings" class="w-5 h-5"></i> ตั้งค่าระบบ</h2>
-                <div class="bg-blue-50 p-4 rounded-xl text-sm text-blue-800 space-y-2 mb-4">
-                    <p class="font-bold">วิธีเชื่อมต่อ Google Sheet:</p>
-                    <ol class="list-decimal pl-4 space-y-1">
-                        <li>นำโค้ด Apps Script (Code.gs) ไปวางใน Sheet</li>
-                        <li>กด Deploy แบบ "Web App" ให้สิทธิ์ "ทุกคน"</li>
-                        <li>คัดลอก URL ที่ได้มาวางในช่องด้านล่าง</li>
-                    </ol>
+            <!-- ZONE 1: Errors -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500">
+                <h2 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>โซน 1: บันทึกความผิดพลาด (KPI)</h2>
+                
+                <div id="error-entries-container" class="space-y-3">
+                    <!-- Javascript will populate rows here -->
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Web App URL</label>
-                    <textarea id="input-url" rows="4" placeholder="https://script.google.com/macros/s/.../exec"
-                        class="w-full p-3 border rounded-xl bg-slate-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
-                </div>
-                <button onclick="saveSettings()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl shadow-md hover:bg-slate-700 transition active:scale-95">
-                    บันทึกการตั้งค่า
+                
+                <button onclick="addErrorEntryRow()" class="mt-3 w-full bg-red-100 text-red-600 border border-red-200 font-bold py-2 rounded-lg text-sm active:bg-red-200 shadow-sm transition-colors">
+                    <i class="fa-solid fa-plus mr-1"></i> เพิ่มรายการผิดพลาด
                 </button>
             </div>
+
+            <!-- ZONE 2: General Data -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <h2 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-boxes-stacked text-blue-500 mr-2"></i>โซน 2: ข้อมูลงานประจำวัน</h2>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <span class="text-sm font-medium">บิลย้ายคลัง (หน้าร้านเบิก)</span>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="adjVol('vol-transfer', -1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">-</button>
+                            <input type="number" id="vol-transfer" value="0" class="w-12 text-center border rounded p-1 text-sm">
+                            <button onclick="adjVol('vol-transfer', 1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">+</button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <span class="text-sm font-medium">ลูกค้ามารับที่ร้าน</span>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="adjVol('vol-pickup', -1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">-</button>
+                            <input type="number" id="vol-pickup" value="0" class="w-12 text-center border rounded p-1 text-sm">
+                            <button onclick="adjVol('vol-pickup', 1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">+</button>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-2">
+                        <span class="text-sm font-bold text-gray-700 block mb-2">ไปส่งสินค้า</span>
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="bg-gray-50 p-2 rounded border">
+                                <label class="text-xs text-gray-500 block mb-1">ตจว.</label>
+                                <input type="number" id="vol-upcountry" value="0" class="w-full text-center border rounded p-1 text-sm">
+                            </div>
+                            <div class="bg-gray-50 p-2 rounded border">
+                                <label class="text-xs text-gray-500 block mb-1">ในตลาด</label>
+                                <input type="number" id="vol-inmarket" value="0" class="w-full text-center border rounded p-1 text-sm">
+                            </div>
+                            <div class="bg-gray-50 p-2 rounded border">
+                                <label class="text-xs text-gray-500 block mb-1">นอกตลาด</label>
+                                <input type="number" id="vol-outmarket" value="0" class="w-full text-center border rounded p-1 text-sm">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-2 border-t mt-2">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">รายชื่อลูกค้า / หมายเหตุการส่งสินค้า</label>
+                        <p class="text-xs text-gray-500 mb-2">บันทึกชื่อลูกค้าที่มารับเอง หรือสถานที่ส่งสินค้า</p>
+                        <textarea id="vol-customer-notes" rows="3" class="w-full p-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="เช่น:&#10;- รับที่ร้าน: คุณเอ&#10;- ส่งในตลาด: ร้านเจ๊บี&#10;- ส่งตจว: บจก. ซีดี"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="saveDailyRecord()" id="btn-save" class="w-full bg-blue-600 text-white font-bold text-lg py-3 rounded-xl shadow-lg active:bg-blue-700 transition-colors flex justify-center items-center">
+                <i class="fa-solid fa-cloud-arrow-up mr-2"></i> บันทึกข้อมูลเข้า Google Sheet
+            </button>
+
         </div>
 
-    </div>
+        <!-- ================= VIEW: DASHBOARD ================= -->
+        <div id="view-dashboard" class="hidden space-y-4">
+            
+            <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm">
+                <button onclick="changeWeek(-1)" class="p-2 text-blue-600"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="text-center">
+                    <h3 class="font-bold text-gray-800" id="dash-week-label">สัปดาห์นี้</h3>
+                    <p class="text-xs text-gray-500" id="dash-date-range">... - ...</p>
+                </div>
+                <button onclick="changeWeek(1)" class="p-2 text-blue-600" id="btn-next-week" disabled><i class="fa-solid fa-chevron-right text-gray-300"></i></button>
+            </div>
+
+            <!-- Overview Cards -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-red-500">
+                    <p class="text-xs text-gray-500 font-semibold mb-1">ความผิดพลาดรวม</p>
+                    <div class="flex items-end justify-between">
+                        <span class="text-3xl font-bold text-gray-800" id="dash-total-errors">0</span>
+                        <span class="text-xs text-red-500" id="dash-err-trend">ครั้ง</span>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-1" id="dash-err-compare">เทียบกับวีคก่อน: -</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-blue-500">
+                    <p class="text-xs text-gray-500 font-semibold mb-1">ปริมาณงานรวม (บิล+ส่ง)</p>
+                    <div class="flex items-end justify-between">
+                        <span class="text-3xl font-bold text-gray-800" id="dash-total-volume">0</span>
+                    </div>
+                     <p class="text-[10px] text-gray-400 mt-1">อัตราผิดพลาด: <span id="dash-err-percent" class="font-bold text-blue-600">0%</span></p>
+                </div>
+            </div>
+
+            <!-- Employee Breakdown -->
+            <div class="bg-white p-4 rounded-xl shadow-sm">
+                <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2">แยกตามรายบุคคล</h3>
+                <div id="dash-emp-breakdown" class="space-y-3">
+                    <!-- Javascript generates bars here -->
+                </div>
+            </div>
+
+            <!-- Details Note -->
+            <div class="bg-white p-4 rounded-xl shadow-sm">
+                <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2">บันทึกข้อผิดพลาด (หมายเหตุ)</h3>
+                <div id="dash-error-notes" class="space-y-2 max-h-60 overflow-y-auto">
+                    <!-- Javascript generates list here -->
+                </div>
+            </div>
+
+            <!-- Customer Notes -->
+            <div class="bg-white p-4 rounded-xl shadow-sm">
+                <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2"><i class="fa-solid fa-truck-fast text-blue-500 mr-2"></i>รายชื่อลูกค้า / การจัดส่ง</h3>
+                <div id="dash-customer-notes" class="space-y-2 max-h-60 overflow-y-auto">
+                    <!-- Javascript generates list here -->
+                </div>
+            </div>
+
+        </div>
+
+    </main>
 
     <!-- Bottom Navigation -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] max-w-lg mx-auto z-20">
-        <div class="flex justify-around">
-            <button onclick="switchTab('form')" id="nav-form" class="nav-btn flex-1 flex flex-col items-center py-3 text-xs font-medium transition text-blue-600">
-                <i data-lucide="pen-square" class="w-6 h-6 mb-1"></i> บันทึก KPI
-            </button>
-            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn flex-1 flex flex-col items-center py-3 text-xs font-medium transition text-slate-400">
-                <i data-lucide="bar-chart-3" class="w-6 h-6 mb-1"></i> สรุปผล
-            </button>
-            <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn flex-1 flex flex-col items-center py-3 text-xs font-medium transition text-slate-400">
-                <i data-lucide="settings" class="w-6 h-6 mb-1"></i> ตั้งค่า
-            </button>
-        </div>
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around p-2 pb-4 z-20 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        <button onclick="switchTab('record')" id="tab-record" class="flex flex-col items-center p-2 w-1/2 tab-active">
+            <i class="fa-solid fa-pen-to-square text-xl mb-1"></i>
+            <span class="text-xs font-semibold">บันทึกข้อมูล</span>
+        </button>
+        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex flex-col items-center p-2 w-1/2 tab-inactive">
+            <i class="fa-solid fa-chart-pie text-xl mb-1"></i>
+            <span class="text-xs font-semibold">แดชบอร์ด</span>
+        </button>
+    </nav>
+
+    <!-- Loading UI & Toast -->
+    <div id="loading" class="loading-overlay">
+        <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500 mb-3"></i>
+        <p class="text-gray-700 font-semibold" id="loading-text">กำลังโหลดข้อมูล...</p>
     </div>
 
-    <!-- JavaScript Logic -->
+    <div id="toast" class="toast fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center space-x-2 w-max max-w-xs">
+        <i class="fa-solid fa-circle-check text-green-400"></i>
+        <span id="toast-msg" class="text-sm">บันทึกสำเร็จ</span>
+    </div>
+
     <script>
-        // --- State Variables ---
-        let appUrl = '';
-        let sheetData = [];
-        let isLoadingData = false;
-        let isSubmitting = false;
+        // ================= CONFIGURATION =================
+        // วาง URL ของ Google Apps Script (เว็บแอป) ที่นี่
+        const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec"; 
+        
+        // ================= STATE =================
+        let viewOffsetWeek = 0; // 0 = current week, -1 = last week
+        
+        // Set today's date
+        document.getElementById('record-date').valueAsDate = new Date();
 
-        // --- Init ---
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            appUrl = localStorage.getItem('gas_kpi_url') || '';
-            if (appUrl) {
-                document.getElementById('input-url').value = appUrl;
-            } else {
-                showToast('กรุณาตั้งค่า Web App URL ก่อนเริ่มใช้งาน', 'warning');
-                switchTab('settings');
-            }
-        });
-
-        // --- Navigation ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`${tabId}-section`).classList.remove('hidden');
-
-            document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('text-blue-600');
-                el.classList.add('text-slate-400');
-            });
-            document.getElementById(`nav-${tabId}`).classList.remove('text-slate-400');
-            document.getElementById(`nav-${tabId}`).classList.add('text-blue-600');
-
-            const refreshBtn = document.getElementById('btn-refresh');
-            if (tabId === 'dashboard') {
-                refreshBtn.classList.remove('hidden');
-                if (appUrl) fetchDashboardData();
-                else showToast('ยังไม่ได้ตั้งค่า URL', 'error');
-            } else {
-                refreshBtn.classList.add('hidden');
-            }
-        }
-
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
+        // ================= API / SYNC =================
+        async function syncDataFromSheet() {
+            if(!GOOGLE_APP_SCRIPT_URL) return;
             
-            let bgClass = 'bg-slate-800'; let icon = 'info';
-            if (type === 'success') { bgClass = 'bg-emerald-600'; icon = 'check-circle-2'; }
-            if (type === 'error') { bgClass = 'bg-red-600'; icon = 'alert-circle'; }
-            if (type === 'warning') { bgClass = 'bg-orange-500'; icon = 'alert-triangle'; }
-
-            toast.className = `toast-enter ${bgClass} text-white p-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-medium`;
-            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i> ${message}`;
-            
-            container.appendChild(toast);
-            lucide.createIcons({ root: toast });
-
-            setTimeout(() => {
-                toast.classList.replace('toast-enter', 'toast-exit');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        function saveSettings() {
-            const url = document.getElementById('input-url').value.trim();
-            if (url) {
-                appUrl = url;
-                localStorage.setItem('gas_kpi_url', url);
-                showToast('บันทึกการตั้งค่าสำเร็จ');
-                switchTab('form');
-            } else {
-                showToast('กรุณาระบุ URL', 'error');
-            }
-        }
-
-        // --- Dynamic Error Entries Logic ---
-        function addErrorEntry(type) {
-            const container = document.getElementById(`${type}-list`);
-            const id = Date.now() + Math.random().toString(36).substr(2, 5);
-            
-            let borderColor = type === 'err1' ? 'border-yellow-200' : (type === 'err2' ? 'border-orange-200' : 'border-red-200');
-            
-            const div = document.createElement('div');
-            div.className = `p-3 bg-slate-50 rounded-xl border ${borderColor} relative shadow-sm animate-[fadeIn_0.2s_ease-out]`;
-            div.id = `entry-${id}`;
-            div.innerHTML = `
-                <button type="button" onclick="document.getElementById('entry-${id}').remove()" class="absolute top-2 right-2 text-slate-400 hover:text-red-500 p-1 bg-white rounded-full shadow-sm"><i data-lucide="x" class="w-4 h-4"></i></button>
-                <div class="flex gap-2 mb-2 pr-8">
-                    <select class="flex-1 p-2 border rounded-lg bg-white text-sm font-medium outline-none focus:ring-2 focus:ring-red-400 emp-select" required>
-                        <option value="" disabled selected>เลือกพนักงาน</option>
-                        <option value="เจมส์">เจมส์</option>
-                        <option value="พุช">พุช</option>
-                        <option value="บรรเลง">บรรเลง</option>
-                        <option value="หยอง">หยอง</option>
-                        <option value="ใหม่">ใหม่</option>
-                    </select>
-                    <div class="flex items-center gap-1 bg-white border rounded-lg px-1 shadow-sm">
-                        <button type="button" onclick="changeDynamicNumber(this, -1)" class="w-7 h-7 text-slate-500 font-bold active:bg-slate-100 rounded">-</button>
-                        <input type="number" class="w-8 text-center text-sm font-bold err-count outline-none" value="1" min="1">
-                        <button type="button" onclick="changeDynamicNumber(this, 1)" class="w-7 h-7 text-slate-500 font-bold active:bg-slate-100 rounded">+</button>
-                    </div>
-                </div>
-                <textarea class="w-full p-2 border rounded-lg bg-white text-sm outline-none focus:ring-2 focus:ring-red-400 err-remark" rows="2" placeholder="ใส่หมายเหตุ (เช่น - หยิบผิด - หยิบเกิน)"></textarea>
-            `;
-            container.appendChild(div);
-            lucide.createIcons({ root: div });
-        }
-
-        function changeDynamicNumber(btn, amount) {
-            const input = btn.parentElement.querySelector('.err-count');
-            let val = parseInt(input.value) || 1;
-            val = Math.max(1, val + amount);
-            input.value = val;
-        }
-
-        // --- Form Submission Logic ---
-        async function submitForm(e) {
-            e.preventDefault();
-            if (!appUrl) {
-                showToast('กรุณาตั้งค่า Web App URL ก่อน', 'warning');
-                switchTab('settings');
-                return;
-            }
-
-            const date = document.getElementById('input-date').value.trim();
-            if (!date) return showToast('กรุณาระบุวันที่', 'error');
-
-            const btn = document.getElementById('btn-submit');
-            const btnText = document.getElementById('btn-submit-text');
-            
-            // 1. ดึงข้อมูล Daily Totals
-            const bills = parseInt(document.getElementById('input-bills').value) || 0;
-            const pickup = parseInt(document.getElementById('input-pickup').value) || 0;
-            const delIn = parseInt(document.getElementById('input-delIn').value) || 0;
-            const delOut = parseInt(document.getElementById('input-delOut').value) || 0;
-            const delProv = parseInt(document.getElementById('input-delProv').value) || 0;
-            
-            const pickupNames = document.getElementById('input-pickup-names').value.trim();
-            const delInNames = document.getElementById('input-delIn-names').value.trim();
-            const delOutNames = document.getElementById('input-delOut-names').value.trim();
-            const delProvNames = document.getElementById('input-delProv-names').value.trim();
-
-            const rowsToSubmit = [];
-            const hasDailyTotals = (bills > 0 || pickup > 0 || delIn > 0 || delOut > 0 || delProv > 0);
-
-            // ถ้ามียอดรวมประจำวัน ให้บันทึกเป็น 1 แถว โดยใช้ชื่อพนักงานเป็น "-"
-            if (hasDailyTotals) {
-                rowsToSubmit.push({
-                    date, employeeName: "-", bills, err1: 0, err2: 0, err3: 0,
-                    pickup, delIn, delOut, delProv,
-                    remark: "", pickupNames, delInNames, delOutNames, delProvNames
-                });
-            }
-
-            // 2. ดึงข้อมูล Error แบบรายบุคคล
-            const empErrors = {};
-            ['err1', 'err2', 'err3'].forEach(errType => {
-                const list = document.getElementById(`${errType}-list`);
-                Array.from(list.children).forEach(entry => {
-                    const emp = entry.querySelector('.emp-select').value;
-                    const count = parseInt(entry.querySelector('.err-count').value) || 0;
-                    const remark = entry.querySelector('.err-remark').value.trim();
-                    
-                    if (emp && count > 0) {
-                        if (!empErrors[emp]) empErrors[emp] = { err1:0, err2:0, err3:0, remarks: [] };
-                        empErrors[emp][errType] += count;
-                        
-                        let typeLabel = errType === 'err1' ? 'แก้ทัน' : (errType === 'err2' ? 'หน้าร้าน' : 'ถึงลูกค้า');
-                        if (remark) {
-                            empErrors[emp].remarks.push(`[${typeLabel}] ${count} ครั้ง:\n${remark}`);
-                        }
-                    }
-                });
-            });
-
-            // สร้าง Payload ให้พนักงานแต่ละคนที่มี error
-            Object.keys(empErrors).forEach(emp => {
-                const errs = empErrors[emp];
-                rowsToSubmit.push({
-                    date, employeeName: emp, bills: 0, // บิลใส่ 0 เพราะรวมไปแล้วในก้อนแรก
-                    err1: errs.err1, err2: errs.err2, err3: errs.err3,
-                    pickup: 0, delIn: 0, delOut: 0, delProv: 0,
-                    remark: errs.remarks.join('\n\n'), // เอาหมายเหตุมาต่อกัน
-                    pickupNames: "", delInNames: "", delOutNames: "", delProvNames: ""
-                });
-            });
-
-            if (rowsToSubmit.length === 0) {
-                return showToast('กรุณากรอกข้อมูลอย่างน้อย 1 รายการ', 'warning');
-            }
-
-            isSubmitting = true;
-            btn.disabled = true;
+            const btnSync = document.getElementById('btn-sync');
+            btnSync.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1"></i> ซิงค์ข้อมูล...';
+            btnSync.disabled = true;
 
             try {
-                // ทยอยยิงข้อมูลทีละแถว
-                for (let i = 0; i < rowsToSubmit.length; i++) {
-                    btnText.innerText = `กำลังบันทึก ${i+1}/${rowsToSubmit.length}...`;
-                    const response = await fetch(appUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(rowsToSubmit[i])
-                    });
-                    const result = await response.json();
-                    if (result.status !== 'success') throw new Error(result.message);
+                // Fetch Data from Google Sheet
+                const response = await fetch(GOOGLE_APP_SCRIPT_URL);
+                const data = await response.json();
+                
+                if (Array.isArray(data)) {
+                    localStorage.setItem('kpiData', JSON.stringify(data));
+                    
+                    // Update Dashboard if currently viewed
+                    if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
+                        loadDashboardData();
+                    }
+                    showToast("ซิงค์ข้อมูลล่าสุดจาก Sheet เรียบร้อย");
                 }
-                showToast('บันทึกข้อมูลเรียบร้อยแล้ว!', 'success');
-                resetForm();
             } catch (error) {
                 console.error(error);
-                showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
+                showToast("ไม่สามารถดึงข้อมูลจาก Sheet ได้", true);
             } finally {
-                isSubmitting = false;
-                btn.disabled = false;
-                btnText.innerText = 'บันทึกข้อมูลประจำวัน';
+                btnSync.innerHTML = '<i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล';
+                btnSync.disabled = false;
             }
         }
 
-        function resetForm() {
-            // เคลียร์ค่า Date และ Totals
-            document.getElementById('input-date').value = '';
-            document.getElementById('input-bills').value = '';
-            ['pickup', 'delIn', 'delOut', 'delProv'].forEach(id => {
-                document.getElementById(`input-${id}`).value = '';
-                document.getElementById(`input-${id}-names`).value = '';
-            });
-            // เคลียร์โซน Errors
-            ['err1', 'err2', 'err3'].forEach(id => {
-                document.getElementById(`${id}-list`).innerHTML = '';
-            });
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // --- Dashboard & KPI Logic ---
-        function getISOWeekInfo(dateString) {
-            let d = dateString ? new Date(dateString) : new Date();
-            if (isNaN(d.getTime())) d = new Date(); // Fallback
-            d.setHours(0, 0, 0, 0);
-            d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
-            const week1 = new Date(d.getFullYear(), 0, 4);
-            const weekNumber = 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-            return `${d.getFullYear()}-W${weekNumber.toString().padStart(2, '0')}`;
-        }
-
-        async function fetchDashboardData() {
-            const container = document.getElementById('dashboard-container');
-            const icon = document.getElementById('refresh-icon');
-            const filters = document.getElementById('filter-controls');
-            
-            icon.classList.add('animate-spin');
-            filters.classList.add('hidden');
-            container.innerHTML = `
-                <div class="py-20 text-center text-slate-500 flex flex-col items-center">
-                    <i data-lucide="loader-2" class="animate-spin w-8 h-8 text-blue-500 mb-4"></i>
-                    กำลังโหลดข้อมูล...
-                </div>
-            `;
-            lucide.createIcons({ root: container });
-
-            try {
-                const response = await fetch(appUrl);
-                const data = await response.json();
-                sheetData = data;
-                updateFiltersAndRender();
-            } catch (error) {
-                console.error("Fetch Error:", error);
-                showToast('ดึงข้อมูลไม่ได้ แสดงข้อมูลจำลองแทน', 'warning');
-                sheetData = generateMockData();
-                updateFiltersAndRender();
-            } finally {
-                icon.classList.remove('animate-spin');
+        // ================= UI FUNCTIONS =================
+        function switchTab(tab) {
+            if(tab === 'record') {
+                document.getElementById('view-record').classList.remove('hidden');
+                document.getElementById('view-dashboard').classList.add('hidden');
+                document.getElementById('tab-record').classList.replace('tab-inactive', 'tab-active');
+                document.getElementById('tab-dashboard').classList.replace('tab-active', 'tab-inactive');
+            } else {
+                document.getElementById('view-record').classList.add('hidden');
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                document.getElementById('tab-dashboard').classList.replace('tab-inactive', 'tab-active');
+                document.getElementById('tab-record').classList.replace('tab-active', 'tab-inactive');
+                loadDashboardData();
             }
         }
 
-        function generateMockData() {
-            const currentW = getISOWeekInfo();
-            return [
-                {"วันที่": "12 มี.ค.", "สัปดาห์ที่": currentW, "ชื่อพนักงาน": "-", "จำนวนบิลเบิก": 210, "จัดผิด(แก้ทัน)": 0, "จัดผิด(ถึงหน้าร้าน)": 0, "จัดผิด(ถึงลูกค้า)": 0, "รับสินค้าร้าน": 20, "ส่งต่างจังหวัด": 10, "ส่งในตลาด": 50, "ส่งนอกตลาด": 40, "ชื่อลูกค้ารับร้าน": "ร้าน ก.ไก่, ร้าน ข.ไข่", "ชื่อลูกค้าตจว.": "เฮียตง (ชลบุรี), เจ๊หมวย (ระยอง)", "ชื่อลูกค้าในตลาด": "แผงป้าสม, แผงลุงพร", "ชื่อลูกค้านอกตลาด": "หมู่บ้านจัดสรร A, ร้านสะดวกซื้อ B"},
-                {"วันที่": "12 มี.ค.", "สัปดาห์ที่": currentW, "ชื่อพนักงาน": "หยอง", "จำนวนบิลเบิก": 0, "จัดผิด(แก้ทัน)": 4, "จัดผิด(ถึงหน้าร้าน)": 0, "จัดผิด(ถึงลูกค้า)": 0, "หมายเหตุ": "[แก้ทัน] 4 ครั้ง:\n- หยิบผิด\n- หยิบเกิน\n- หยิบตักเป็นแพค"},
-                {"วันที่": "13 มี.ค.", "สัปดาห์ที่": currentW, "ชื่อพนักงาน": "เจมส์", "จำนวนบิลเบิก": 0, "จัดผิด(แก้ทัน)": 1, "จัดผิด(ถึงหน้าร้าน)": 0, "จัดผิด(ถึงลูกค้า)": 0, "หมายเหตุ": "[แก้ทัน] 1 ครั้ง:\n- จัดไม่ครบเพราะดูบิลผิด"},
-                {"วันที่": "14 มี.ค.", "สัปดาห์ที่": currentW, "ชื่อพนักงาน": "บรรเลง", "จำนวนบิลเบิก": 0, "จัดผิด(แก้ทัน)": 0, "จัดผิด(ถึงหน้าร้าน)": 1, "จัดผิด(ถึงลูกค้า)": 0, "หมายเหตุ": "[หน้าร้าน] 1 ครั้ง:\n- จัดเกินไป 1 ลัง"}
-            ];
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = message;
+            toast.querySelector('i').className = isError ? 'fa-solid fa-circle-xmark text-red-400' : 'fa-solid fa-circle-check text-green-400';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        function updateFiltersAndRender() {
-            if (!sheetData || sheetData.length === 0) {
-                document.getElementById('dashboard-container').innerHTML = '<div class="py-10 text-center text-slate-500">ยังไม่มีข้อมูลแสดงผล</div>';
-                return;
-            }
-
-            const weekSelect = document.getElementById('filter-week');
-            const empSelect = document.getElementById('filter-emp');
-            
-            const weeks = [...new Set(sheetData.map(r => r["สัปดาห์ที่"] || getISOWeekInfo(r["วันที่"])))].sort().reverse();
-            const employees = [...new Set(sheetData.map(r => r["ชื่อพนักงาน"]))].filter(emp => emp && emp !== "-").sort();
-
-            if(weekSelect.options.length === 0) {
-                weekSelect.innerHTML = weeks.map(w => `<option value="${w}">สัปดาห์: ${w}</option>`).join('');
-                empSelect.innerHTML = `<option value="ทั้งหมด">พนักงาน: ทั้งหมด</option>` + 
-                                     employees.map(emp => `<option value="${emp}">${emp}</option>`).join('');
-            }
-
-            document.getElementById('filter-controls').classList.remove('hidden');
-            renderDashboard();
+        function adjVol(id, val) {
+            let el = document.getElementById(id);
+            let current = parseInt(el.value) || 0;
+            let newVal = current + val;
+            if(newVal < 0) newVal = 0;
+            el.value = newVal;
         }
 
-        function renderDashboard() {
-            const selectedWeek = document.getElementById('filter-week').value;
-            const selectedEmployee = document.getElementById('filter-emp').value;
-            
-            const [year, weekStr] = selectedWeek.split('-W');
-            let prevWeekNum = parseInt(weekStr) - 1;
-            let prevYear = parseInt(year);
-            if (prevWeekNum <= 0) { prevWeekNum = 52; prevYear -= 1; }
-            const previousWeek = `${prevYear}-W${prevWeekNum.toString().padStart(2, '0')}`;
-
-            // ข้อมูลทั้งหมด
-            let currentWeekDataAll = sheetData.filter(r => (r["สัปดาห์ที่"] || getISOWeekInfo(r["วันที่"])) === selectedWeek);
-            let prevWeekDataAll = sheetData.filter(r => (r["สัปดาห์ที่"] || getISOWeekInfo(r["วันที่"])) === previousWeek);
-
-            let totalCurrentBills = currentWeekDataAll.reduce((sum, r) => sum + (parseInt(r["จำนวนบิลเบิก"]) || 0), 0);
-            let totalPrevBills = prevWeekDataAll.reduce((sum, r) => sum + (parseInt(r["จำนวนบิลเบิก"]) || 0), 0);
-
-            let currentWeekData = currentWeekDataAll;
-            let prevWeekData = prevWeekDataAll;
-
-            // กรองพนักงาน
-            if (selectedEmployee !== 'ทั้งหมด') {
-                currentWeekData = currentWeekDataAll.filter(r => r["ชื่อพนักงาน"] === selectedEmployee);
-                prevWeekData = prevWeekDataAll.filter(r => r["ชื่อพนักงาน"] === selectedEmployee);
-            }
-
-            const calcStats = (dataArray) => {
-                let s = { err1: 0, err2: 0, err3: 0, pickup: 0, delProv: 0, delIn: 0, delOut: 0 };
-                dataArray.forEach(row => {
-                    s.err1 += parseInt(row["จัดผิด(แก้ทัน)"]) || 0;
-                    s.err2 += parseInt(row["จัดผิด(ถึงหน้าร้าน)"]) || 0;
-                    s.err3 += parseInt(row["จัดผิด(ถึงลูกค้า)"]) || 0;
-                    s.pickup += parseInt(row["รับสินค้าร้าน"]) || 0;
-                    s.delProv += parseInt(row["ส่งต่างจังหวัด"]) || 0;
-                    s.delIn += parseInt(row["ส่งในตลาด"]) || 0;
-                    s.delOut += parseInt(row["ส่งนอกตลาด"]) || 0;
-                });
-                s.totalErrors = s.err1 + s.err2 + s.err3;
-                return s;
-            };
-
-            const cur = calcStats(currentWeekData);
-            const prev = calcStats(prevWeekData);
-
-            const curErrorRate = totalCurrentBills > 0 ? (cur.totalErrors / totalCurrentBills) * 100 : 0;
-            const prevErrorRate = totalPrevBills > 0 ? (prev.totalErrors / totalPrevBills) * 100 : 0;
-
-            const getChangeUI = (currentVal, prevVal, isRate = false) => {
-                let diff = 0; let type = 'neutral';
-                if (isRate) {
-                    diff = currentVal - prevVal;
-                    if(diff > 0) type = 'bad'; else if(diff < 0) type = 'good';
-                } else {
-                    if (prevVal === 0 && currentVal === 0) diff = 0;
-                    else if (prevVal === 0) { diff = 100; type = 'bad'; }
-                    else {
-                        diff = ((currentVal - prevVal) / prevVal) * 100;
-                        if(diff > 0) type = 'bad'; else if(diff < 0) type = 'good';
-                    }
-                }
-                const absDiff = Math.abs(diff).toFixed(isRate ? 2 : 1);
-                if (type === 'bad') return `<span class="text-xs font-bold text-red-500 flex items-center bg-red-50 px-1 py-0.5 rounded"><i data-lucide="trending-up" class="w-3 h-3 mr-1"></i> +${absDiff}%</span>`;
-                if (type === 'good') return `<span class="text-xs font-bold text-emerald-500 flex items-center bg-emerald-50 px-1 py-0.5 rounded"><i data-lucide="trending-down" class="w-3 h-3 mr-1"></i> -${absDiff}%</span>`;
-                return `<span class="text-xs font-bold text-slate-400">คงที่</span>`;
-            };
-
-            // ดึงข้อมูลข้อความ หมายเหตุ และ รายชื่อลูกค้า
-            let errorDetails = [];
-            let deliveryDetails = { pickup: [], delProv: [], delIn: [], delOut: [] };
-
-            currentWeekDataAll.forEach(row => {
-                const date = row["วันที่"] || "-";
-                const emp = row["ชื่อพนักงาน"] || "-";
-
-                // กรองหมายเหตุ (แสดงตามพนักงานที่เลือก)
-                if (selectedEmployee === 'ทั้งหมด' || emp === selectedEmployee) {
-                    // ดึงค่าจากคอลัมน์ "หมายเหตุ" อย่างแม่นยำ
-                    if (row["หมายเหตุ"] !== undefined && row["หมายเหตุ"].toString().trim() !== "") {
-                        errorDetails.push({ date, emp, text: row["หมายเหตุ"].toString().trim() });
-                    }
-                }
-
-                // กรองรายชื่อลูกค้า (ผูกกับแถวที่เป็นยอดรวม emp === "-")
-                if (selectedEmployee === 'ทั้งหมด' || emp === selectedEmployee || emp === "-") {
-                    if (row["ชื่อลูกค้ารับร้าน"] !== undefined && row["ชื่อลูกค้ารับร้าน"].toString().trim() !== "") deliveryDetails.pickup.push({date, text: row["ชื่อลูกค้ารับร้าน"]});
-                    if (row["ชื่อลูกค้าตจว."] !== undefined && row["ชื่อลูกค้าตจว."].toString().trim() !== "") deliveryDetails.delProv.push({date, text: row["ชื่อลูกค้าตจว."]});
-                    if (row["ชื่อลูกค้าในตลาด"] !== undefined && row["ชื่อลูกค้าในตลาด"].toString().trim() !== "") deliveryDetails.delIn.push({date, text: row["ชื่อลูกค้าในตลาด"]});
-                    if (row["ชื่อลูกค้านอกตลาด"] !== undefined && row["ชื่อลูกค้านอกตลาด"].toString().trim() !== "") deliveryDetails.delOut.push({date, text: row["ชื่อลูกค้านอกตลาด"]});
-                }
-            });
-
-            const container = document.getElementById('dashboard-container');
-            container.innerHTML = `
-                <!-- ภาพรวม -->
-                <div class="grid grid-cols-2 gap-3 mt-4">
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                        <div class="text-xs text-slate-500">บิลเบิกทั้งหมด (บริษัท)</div>
-                        <div class="text-3xl font-bold text-slate-800 mt-1">${totalCurrentBills.toLocaleString()}</div>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                        <div class="text-xs text-slate-500">${selectedEmployee === 'ทั้งหมด' ? 'อัตราความผิดพลาดรวม' : 'ผลงาน Error ต่อบิลรวม'}</div>
-                        <div class="flex items-baseline gap-1 mt-1">
-                            <span class="text-3xl font-bold text-red-600">${curErrorRate.toFixed(2)}</span>
-                            <span class="text-sm font-medium text-red-600">%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- เปรียบเทียบ -->
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mt-4">
-                    <h3 class="text-sm font-semibold text-slate-700 mb-3 border-b pb-2">เปรียบเทียบกับสัปดาห์ก่อนหน้า</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <div class="text-xs text-slate-500">จำนวนครั้งที่ผิดพลาด</div>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-xl font-bold">${cur.totalErrors} ครั้ง</span>
-                                ${getChangeUI(cur.totalErrors, prev.totalErrors, false)}
-                            </div>
-                        </div>
-                        <div>
-                            <div class="text-xs text-slate-500">% Error เพิ่ม/ลด</div>
-                            <div class="flex items-center gap-2 mt-1">
-                                ${getChangeUI(curErrorRate, prevErrorRate, true)}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- รายละเอียดความผิดพลาด -->
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mt-4">
-                    <h3 class="text-sm font-semibold text-slate-700 mb-3">เจาะลึกความผิดพลาด (${cur.totalErrors} ครั้ง)</h3>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-yellow-700 bg-yellow-50 px-2 py-1 rounded">1. แก้ไขทันก่อนส่ง</span>
-                            <span class="font-bold">${cur.err1}</span>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2">
-                            <div class="bg-yellow-400 h-2 rounded-full" style="width: ${cur.totalErrors ? (cur.err1/cur.totalErrors)*100 : 0}%"></div>
-                        </div>
-
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-orange-700 bg-orange-50 px-2 py-1 rounded">2. หลุดไปถึงหน้าร้าน</span>
-                            <span class="font-bold">${cur.err2}</span>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2">
-                            <div class="bg-orange-500 h-2 rounded-full" style="width: ${cur.totalErrors ? (cur.err2/cur.totalErrors)*100 : 0}%"></div>
-                        </div>
-
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-red-700 bg-red-50 px-2 py-1 rounded">3. หลุดไปถึงลูกค้า</span>
-                            <span class="font-bold">${cur.err3}</span>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2">
-                            <div class="bg-red-500 h-2 rounded-full" style="width: ${cur.totalErrors ? (cur.err3/cur.totalErrors)*100 : 0}%"></div>
-                        </div>
-                    </div>
-
-                    <!-- แสดงหมายเหตุความผิดพลาด -->
-                    <div class="mt-4 pt-4 border-t border-slate-200">
-                        <h4 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1"><i data-lucide="file-text" class="w-4 h-4 text-slate-500"></i> บันทึกหมายเหตุประจำสัปดาห์</h4>
-                        ${errorDetails.length > 0 ? 
-                            `<div class="space-y-3">
-                                ${errorDetails.map(err => `
-                                    <div class="bg-red-50 p-3 rounded-xl border border-red-100 shadow-sm relative">
-                                        <div class="absolute top-0 left-0 w-1 h-full bg-red-400 rounded-l-xl"></div>
-                                        <div class="pl-2">
-                                            <div class="text-xs font-bold text-red-800 mb-1 flex justify-between">
-                                                <span><i data-lucide="calendar" class="w-3 h-3 inline pb-0.5"></i> ${err.date}</span>
-                                                <span><i data-lucide="user" class="w-3 h-3 inline pb-0.5"></i> ${err.emp}</span>
-                                            </div>
-                                            <div class="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">${err.text}</div>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>` 
-                            : `<div class="text-sm text-slate-400 italic text-center py-2 bg-slate-50 rounded-xl">ไม่มีบันทึกหมายเหตุในสัปดาห์นี้</div>`
-                        }
-                    </div>
-                </div>
-
-                ${selectedEmployee === 'ทั้งหมด' ? `
-                <!-- สรุปการจัดส่ง (แสดงเฉพาะเมื่อดูรวมทั้งหมด) -->
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mt-4">
-                    <h3 class="text-sm font-semibold text-slate-700 mb-3 border-b pb-2">สถิติและรายชื่อการจัดส่ง / รับสินค้า</h3>
+        // ================= RECORD LOGIC =================
+        function addErrorEntryRow() {
+            const container = document.getElementById('error-entries-container');
+            const rowId = Date.now() + Math.floor(Math.random() * 1000);
+            const html = `
+                <div class="error-entry bg-red-50 p-3 rounded-lg border border-red-100 relative">
+                    <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-xmark"></i></button>
                     
-                    <div class="space-y-4">
-                        <!-- รับหน้าร้าน -->
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-sm font-bold text-slate-700 flex items-center gap-1"><i data-lucide="package" class="w-4 h-4 text-emerald-600"></i> รับหน้าร้าน (${cur.pickup} บิล)</span>
-                            </div>
-                            ${deliveryDetails.pickup.length > 0 ? 
-                                deliveryDetails.pickup.map(d => `<div class="text-xs text-slate-600 border-t border-slate-200 py-1.5"><span class="font-bold text-emerald-700 mr-1">${d.date}:</span> ${d.text}</div>`).join('')
-                                : `<div class="text-xs text-slate-400 italic">ไม่มีบันทึกรายชื่อ</div>`
-                            }
+                    <div class="mb-2 pr-6">
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">พนักงาน (เลือกได้หลายคน)</label>
+                        <div class="flex flex-wrap gap-1.5">
+                            ${['หยอง', 'เจมส์', 'พุช', 'บรรเลง', 'ใหม่'].map((emp, i) => `
+                                <div>
+                                    <input type="checkbox" id="emp-${rowId}-${i}" value="${emp}" class="hidden peer err-emp-cb">
+                                    <label for="emp-${rowId}-${i}" class="inline-block bg-white border border-gray-300 rounded-full px-2.5 py-1 text-xs cursor-pointer peer-checked:bg-red-500 peer-checked:text-white peer-checked:border-red-500 transition-colors">${emp}</label>
+                                </div>
+                            `).join('')}
                         </div>
-
-                        <!-- ส่งต่างจังหวัด -->
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-sm font-bold text-slate-700 flex items-center gap-1"><i data-lucide="truck" class="w-4 h-4 text-blue-600"></i> ส่งต่างจังหวัด (${cur.delProv} บิล)</span>
-                            </div>
-                            ${deliveryDetails.delProv.length > 0 ? 
-                                deliveryDetails.delProv.map(d => `<div class="text-xs text-slate-600 border-t border-slate-200 py-1.5"><span class="font-bold text-blue-700 mr-1">${d.date}:</span> ${d.text}</div>`).join('')
-                                : `<div class="text-xs text-slate-400 italic">ไม่มีบันทึกรายชื่อ</div>`
-                            }
+                    </div>
+                    <div class="grid grid-cols-1 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">ประเภท</label>
+                            <select class="err-type w-full p-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-red-500">
+                                <option value="แก้ไขได้ก่อนจัดส่ง">1. แก้ไขได้ก่อนจัดส่ง</option>
+                                <option value="ส่งถึงหน้าร้านแล้ว">2. ส่งถึงหน้าร้านแล้ว</option>
+                                <option value="ส่งถึงลูกค้าแล้ว">3. ส่งถึงลูกค้าแล้ว</option>
+                            </select>
                         </div>
-
-                        <!-- ส่งในตลาด -->
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-sm font-bold text-slate-700 flex items-center gap-1"><i data-lucide="map-pin" class="w-4 h-4 text-orange-600"></i> ส่งในตลาด (${cur.delIn} บิล)</span>
-                            </div>
-                            ${deliveryDetails.delIn.length > 0 ? 
-                                deliveryDetails.delIn.map(d => `<div class="text-xs text-slate-600 border-t border-slate-200 py-1.5"><span class="font-bold text-orange-700 mr-1">${d.date}:</span> ${d.text}</div>`).join('')
-                                : `<div class="text-xs text-slate-400 italic">ไม่มีบันทึกรายชื่อ</div>`
-                            }
-                        </div>
-
-                        <!-- ส่งนอกตลาด -->
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-sm font-bold text-slate-700 flex items-center gap-1"><i data-lucide="map" class="w-4 h-4 text-purple-600"></i> ส่งนอกตลาด (${cur.delOut} บิล)</span>
-                            </div>
-                            ${deliveryDetails.delOut.length > 0 ? 
-                                deliveryDetails.delOut.map(d => `<div class="text-xs text-slate-600 border-t border-slate-200 py-1.5"><span class="font-bold text-purple-700 mr-1">${d.date}:</span> ${d.text}</div>`).join('')
-                                : `<div class="text-xs text-slate-400 italic">ไม่มีบันทึกรายชื่อ</div>`
-                            }
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">หมายเหตุ / อาการ</label>
+                            <input type="text" class="err-note w-full p-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-red-500" placeholder="เช่น หยิบสินค้าเกิน, หยิบตักเป็นแพค...">
                         </div>
                     </div>
                 </div>
-                ` : ''}
             `;
-            lucide.createIcons({ root: container });
+            container.insertAdjacentHTML('beforeend', html);
         }
+
+        async function saveDailyRecord() {
+            const btn = document.getElementById('btn-save');
+            const date = document.getElementById('record-date').value;
+            
+            // Gather Errors
+            let currentErrors = [];
+            const entries = document.querySelectorAll('.error-entry');
+            let hasIncompleteError = false;
+
+            entries.forEach(entry => {
+                const checkedCbs = entry.querySelectorAll('.err-emp-cb:checked');
+                const type = entry.querySelector('.err-type').value;
+                const note = entry.querySelector('.err-note').value;
+                
+                if (checkedCbs.length > 0 && note.trim() !== "") {
+                    checkedCbs.forEach(cb => {
+                        currentErrors.push({ id: Date.now() + Math.random(), emp: cb.value, type, note });
+                    });
+                } else if (checkedCbs.length > 0 || note.trim() !== "") {
+                    hasIncompleteError = true;
+                }
+            });
+
+            if (hasIncompleteError) {
+                return showToast("กรุณาเลือกพนักงานและใส่หมายเหตุให้ครบทุกรายการที่กรอกค้างไว้", true);
+            }
+
+            const payload = {
+                date: date,
+                errors: currentErrors,
+                customerNotes: document.getElementById('vol-customer-notes').value,
+                volume: {
+                    transfer: parseInt(document.getElementById('vol-transfer').value) || 0,
+                    pickup: parseInt(document.getElementById('vol-pickup').value) || 0,
+                    upcountry: parseInt(document.getElementById('vol-upcountry').value) || 0,
+                    inmarket: parseInt(document.getElementById('vol-inmarket').value) || 0,
+                    outmarket: parseInt(document.getElementById('vol-outmarket').value) || 0
+                }
+            };
+
+            // === Google Apps Script Integration ===
+            if(GOOGLE_APP_SCRIPT_URL) {
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
+                btn.disabled = true;
+                
+                try {
+                    await fetch(GOOGLE_APP_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors', // POST ไปยัง GAS
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    // จำลองบันทึกลง Local เครื่องตัวเราเองให้ขึ้นแดชบอร์ดทันทีด้วย
+                    let localData = JSON.parse(localStorage.getItem('kpiData') || '[]');
+                    localData = localData.filter(d => d.date !== date);
+                    localData.push(payload);
+                    localStorage.setItem('kpiData', JSON.stringify(localData));
+
+                    // Success Reset
+                    showToast("บันทึกข้อมูลเรียบร้อย!");
+                    
+                    // Reset Zone 1
+                    document.getElementById('error-entries-container').innerHTML = '';
+                    addErrorEntryRow();
+
+                    // Reset Zone 2
+                    ['vol-transfer','vol-pickup','vol-upcountry','vol-inmarket','vol-outmarket'].forEach(id => document.getElementById(id).value = '0');
+                    document.getElementById('vol-customer-notes').value = '';
+                    
+                } catch(error) {
+                    console.error(error);
+                    showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheet", true);
+                } finally {
+                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> บันทึกข้อมูลเข้า Google Sheet';
+                    btn.disabled = false;
+                }
+            } else {
+                showToast("กรุณาใส่ URL ของ Google Apps Script ก่อน", true);
+            }
+        }
+
+        // ================= DASHBOARD LOGIC =================
+        function getStartOfWeek(d) {
+            d = new Date(d);
+            var day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        function changeWeek(offset) {
+            viewOffsetWeek += offset;
+            if(viewOffsetWeek > 0) viewOffsetWeek = 0;
+            
+            const btnNext = document.getElementById('btn-next-week');
+            if(viewOffsetWeek === 0) {
+                btnNext.disabled = true;
+                btnNext.innerHTML = '<i class="fa-solid fa-chevron-right text-gray-300"></i>';
+            } else {
+                btnNext.disabled = false;
+                btnNext.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+            }
+            loadDashboardData();
+        }
+
+        function loadDashboardData() {
+            // ดึงข้อมูลที่ sync มาจาก LocalStorage
+            const rawData = JSON.parse(localStorage.getItem('kpiData') || '[]');
+            
+            const today = new Date();
+            const startOfCurrentWeek = getStartOfWeek(today);
+            startOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + (viewOffsetWeek * 7));
+            const endOfWeek = new Date(startOfCurrentWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+
+            document.getElementById('dash-week-label').innerText = viewOffsetWeek === 0 ? "สัปดาห์นี้" : (viewOffsetWeek === -1 ? "สัปดาห์ที่แล้ว" : "อดีต");
+            document.getElementById('dash-date-range').innerText = `${startOfCurrentWeek.getDate()}/${startOfCurrentWeek.getMonth()+1} - ${endOfWeek.getDate()}/${endOfWeek.getMonth()+1}`;
+
+            // Calculate Metrics for target week
+            let targetWeekData = rawData.filter(d => {
+                const itemDate = new Date(d.date);
+                itemDate.setHours(0,0,0,0);
+                startOfCurrentWeek.setHours(0,0,0,0);
+                endOfWeek.setHours(23,59,59,999);
+                return itemDate >= startOfCurrentWeek && itemDate <= endOfWeek;
+            });
+
+            let totalVol = 0;
+            let totalErr = 0;
+            let empErrCount = { 'หยอง':0, 'เจมส์':0, 'พุช':0, 'บรรเลง':0, 'ใหม่':0 };
+            let allCustomerNotesHtml = '';
+            
+            let categorizedNotes = {
+                'หยอง': { 'แก้ไขได้ก่อนจัดส่ง': [], 'ส่งถึงหน้าร้านแล้ว': [], 'ส่งถึงลูกค้าแล้ว': [] },
+                'เจมส์': { 'แก้ไขได้ก่อนจัดส่ง': [], 'ส่งถึงหน้าร้านแล้ว': [], 'ส่งถึงลูกค้าแล้ว': [] },
+                'พุช': { 'แก้ไขได้ก่อนจัดส่ง': [], 'ส่งถึงหน้าร้านแล้ว': [], 'ส่งถึงลูกค้าแล้ว': [] },
+                'บรรเลง': { 'แก้ไขได้ก่อนจัดส่ง': [], 'ส่งถึงหน้าร้านแล้ว': [], 'ส่งถึงลูกค้าแล้ว': [] },
+                'ใหม่': { 'แก้ไขได้ก่อนจัดส่ง': [], 'ส่งถึงหน้าร้านแล้ว': [], 'ส่งถึงลูกค้าแล้ว': [] }
+            };
+            let hasAnyNotes = false;
+
+            targetWeekData.forEach(day => {
+                totalVol += (day.volume.transfer + day.volume.pickup + day.volume.upcountry + day.volume.inmarket + day.volume.outmarket);
+                totalErr += day.errors.length;
+                
+                // Collect Customer Notes
+                if (day.customerNotes && day.customerNotes.trim() !== '') {
+                    allCustomerNotesHtml += `
+                        <div class="text-sm bg-blue-50 p-3 rounded-lg border border-blue-100 mb-2">
+                            <span class="text-xs text-blue-600 font-bold block mb-1 border-b border-blue-200 pb-1"><i class="fa-solid fa-calendar-day mr-1"></i> วันที่ ${day.date}</span>
+                            <div class="text-gray-700 whitespace-pre-wrap mt-1 leading-relaxed">${day.customerNotes}</div>
+                        </div>
+                    `;
+                }
+
+                day.errors.forEach(e => {
+                    if(empErrCount[e.emp] !== undefined) empErrCount[e.emp]++;
+                    
+                    if(categorizedNotes[e.emp] && categorizedNotes[e.emp][e.type]) {
+                        categorizedNotes[e.emp][e.type].push({ note: e.note, date: day.date });
+                        hasAnyNotes = true;
+                    }
+                });
+            });
+
+            // Generate HTML for Error Notes
+            let allNotesHtml = '';
+            if (!hasAnyNotes) {
+                allNotesHtml = '<div class="text-center text-gray-400 text-sm py-4">ไม่มีข้อผิดพลาดในสัปดาห์นี้ 🎉</div>';
+            } else {
+                for (const [emp, types] of Object.entries(categorizedNotes)) {
+                    const hasEmpErrors = types['แก้ไขได้ก่อนจัดส่ง'].length > 0 || types['ส่งถึงหน้าร้านแล้ว'].length > 0 || types['ส่งถึงลูกค้าแล้ว'].length > 0;
+                    if (!hasEmpErrors) continue;
+
+                    allNotesHtml += `<div class="mb-4 border border-gray-200 rounded-lg overflow-hidden shadow-sm">`;
+                    allNotesHtml += `<div class="bg-gray-100 px-3 py-2 font-bold text-gray-800 border-b border-gray-200"><i class="fa-solid fa-user text-blue-600 mr-2"></i>${emp}</div>`;
+                    allNotesHtml += `<div class="p-2 space-y-2">`;
+
+                    if (types['แก้ไขได้ก่อนจัดส่ง'].length > 0) {
+                        allNotesHtml += `<div class="bg-yellow-50 rounded border border-yellow-200 p-2">`;
+                        allNotesHtml += `<div class="text-xs font-bold text-yellow-700 mb-1 border-b border-yellow-200 pb-1">1. แก้ไขได้ก่อนจัดส่ง</div>`;
+                        types['แก้ไขได้ก่อนจัดส่ง'].forEach(err => {
+                            allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`;
+                        });
+                        allNotesHtml += `</div>`;
+                    }
+
+                    if (types['ส่งถึงหน้าร้านแล้ว'].length > 0) {
+                        allNotesHtml += `<div class="bg-orange-50 rounded border border-orange-200 p-2">`;
+                        allNotesHtml += `<div class="text-xs font-bold text-orange-700 mb-1 border-b border-orange-200 pb-1">2. ส่งถึงหน้าร้านแล้ว</div>`;
+                        types['ส่งถึงหน้าร้านแล้ว'].forEach(err => {
+                            allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`;
+                        });
+                        allNotesHtml += `</div>`;
+                    }
+
+                    if (types['ส่งถึงลูกค้าแล้ว'].length > 0) {
+                        allNotesHtml += `<div class="bg-red-50 rounded border border-red-200 p-2">`;
+                        allNotesHtml += `<div class="text-xs font-bold text-red-700 mb-1 border-b border-red-200 pb-1">3. ส่งถึงลูกค้าแล้ว</div>`;
+                        types['ส่งถึงลูกค้าแล้ว'].forEach(err => {
+                            allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`;
+                        });
+                        allNotesHtml += `</div>`;
+                    }
+
+                    allNotesHtml += `</div></div>`;
+                }
+            }
+
+            document.getElementById('dash-total-errors').innerText = totalErr;
+            document.getElementById('dash-total-volume').innerText = totalVol;
+            document.getElementById('dash-err-percent').innerText = totalVol > 0 ? ((totalErr / totalVol) * 100).toFixed(1) + '%' : '0%';
+            
+            document.getElementById('dash-error-notes').innerHTML = allNotesHtml || '<div class="text-center text-gray-400 text-sm py-4">ไม่มีข้อผิดพลาดในสัปดาห์นี้ 🎉</div>';
+            document.getElementById('dash-customer-notes').innerHTML = allCustomerNotesHtml || '<div class="text-center text-gray-400 text-sm py-4">ไม่มีบันทึกข้อมูลลูกค้า/การจัดส่ง</div>';
+
+            // Calculate Last Week Data for Comparison
+            const lastWeekStart = new Date(startOfCurrentWeek);
+            lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+            const lastWeekEnd = new Date(endOfWeek);
+            lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+
+            let lastWeekEmpErrCount = { 'หยอง':0, 'เจมส์':0, 'พุช':0, 'บรรเลง':0, 'ใหม่':0 };
+            let lastWeekErrTotal = 0;
+
+            rawData.forEach(d => {
+                const itemD = new Date(d.date);
+                itemD.setHours(0,0,0,0);
+                if(itemD >= lastWeekStart && itemD <= lastWeekEnd) {
+                    lastWeekErrTotal += d.errors.length;
+                    d.errors.forEach(e => {
+                        if(lastWeekEmpErrCount[e.emp] !== undefined) lastWeekEmpErrCount[e.emp]++;
+                    });
+                }
+            });
+
+            // Employee Progress Bars
+            let empHtml = '';
+            let maxErr = Math.max(...Object.values(empErrCount));
+            if(maxErr === 0) maxErr = 1;
+
+            for (const [name, count] of Object.entries(empErrCount)) {
+                let percent = (count / maxErr) * 100;
+                
+                let lastCount = lastWeekEmpErrCount[name];
+                let diff = count - lastCount;
+                let trendHtml = '';
+                
+                if (diff > 0) {
+                    let pChange = lastCount > 0 ? Math.round((diff / lastCount) * 100) : 100;
+                    trendHtml = `<span class="text-[10px] ml-1 text-red-600 bg-red-100 px-1.5 py-0.5 rounded font-medium"><i class="fa-solid fa-arrow-trend-up"></i> +${pChange}%</span>`;
+                } else if (diff < 0) {
+                    let pChange = Math.round((Math.abs(diff) / lastCount) * 100);
+                    trendHtml = `<span class="text-[10px] ml-1 text-green-600 bg-green-100 px-1.5 py-0.5 rounded font-medium"><i class="fa-solid fa-arrow-trend-down"></i> -${pChange}%</span>`;
+                } else {
+                    trendHtml = `<span class="text-[10px] ml-1 text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded font-medium">-</span>`;
+                }
+
+                empHtml += `
+                    <div>
+                        <div class="flex justify-between items-end text-xs mb-1">
+                            <div class="flex items-center">
+                                <span>${name}</span>
+                                ${trendHtml}
+                            </div>
+                            <span class="font-bold ${count > 0 ? 'text-red-500' : 'text-green-500'}">${count} ครั้ง</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-1.5">
+                            <div class="bg-${count > 0 ? 'red' : 'green'}-500 h-1.5 rounded-full" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('dash-emp-breakdown').innerHTML = empHtml;
+
+            // Overall Trend Compare logic
+            let diffTotal = totalErr - lastWeekErrTotal;
+            let diffText = diffTotal > 0 ? `+${diffTotal} ครั้ง (แย่ลง)` : (diffTotal < 0 ? `${diffTotal} ครั้ง (ดีขึ้น)` : 'เท่าเดิม');
+            document.getElementById('dash-err-compare').innerText = `เทียบกับสัปดาห์ก่อน: ${diffText}`;
+        }
+
+        // Initialize App
+        addErrorEntryRow();
+        
+        // เมื่อเปิดแอปมาครั้งแรก ให้ดึงข้อมูลจาก Sheet มาอัปเดต LocalStorage ทันที
+        window.addEventListener('load', () => {
+            syncDataFromSheet();
+        });
+
     </script>
 </body>
 </html>
