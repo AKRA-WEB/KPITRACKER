@@ -13,7 +13,6 @@
         .tab-inactive { color: #9ca3af; }
         .toast { transition: opacity 0.3s, transform 0.3s; transform: translateY(100%); opacity: 0; }
         .toast.show { transform: translateY(0); opacity: 1; }
-        /* Hide scrollbar for clean mobile UI */
         ::-webkit-scrollbar { width: 0px; background: transparent; }
         .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 50; justify-content: center; align-items: center; flex-direction: column; }
     </style>
@@ -44,9 +43,7 @@
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500">
                 <h2 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>โซน 1: บันทึกความผิดพลาด (KPI)</h2>
                 
-                <div id="error-entries-container" class="space-y-3">
-                    <!-- Javascript will populate rows here -->
-                </div>
+                <div id="error-entries-container" class="space-y-3"></div>
                 
                 <button onclick="addErrorEntryRow()" class="mt-3 w-full bg-red-100 text-red-600 border border-red-200 font-bold py-2 rounded-lg text-sm active:bg-red-200 shadow-sm transition-colors">
                     <i class="fa-solid fa-plus mr-1"></i> เพิ่มรายการผิดพลาด
@@ -66,39 +63,67 @@
                             <button onclick="adjVol('vol-transfer', 1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">+</button>
                         </div>
                     </div>
-                    <div class="flex justify-between items-center border-b pb-2">
-                        <span class="text-sm font-medium">ลูกค้ามารับที่ร้าน</span>
-                        <div class="flex items-center space-x-2">
-                            <button onclick="adjVol('vol-pickup', -1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">-</button>
-                            <input type="number" id="vol-pickup" value="0" class="w-12 text-center border rounded p-1 text-sm">
-                            <button onclick="adjVol('vol-pickup', 1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">+</button>
-                        </div>
-                    </div>
                     
-                    <div class="pt-2">
-                        <span class="text-sm font-bold text-gray-700 block mb-2">ไปส่งสินค้า</span>
-                        <div class="grid grid-cols-3 gap-2 text-center">
-                            <div class="bg-gray-50 p-2 rounded border">
-                                <label class="text-xs text-gray-500 block mb-1">ตจว.</label>
-                                <input type="number" id="vol-upcountry" value="0" class="w-full text-center border rounded p-1 text-sm">
-                            </div>
-                            <div class="bg-gray-50 p-2 rounded border">
-                                <label class="text-xs text-gray-500 block mb-1">ในตลาด</label>
-                                <input type="number" id="vol-inmarket" value="0" class="w-full text-center border rounded p-1 text-sm">
-                            </div>
-                            <div class="bg-gray-50 p-2 rounded border">
-                                <label class="text-xs text-gray-500 block mb-1">นอกตลาด</label>
-                                <input type="number" id="vol-outmarket" value="0" class="w-full text-center border rounded p-1 text-sm">
+                    <div class="border-b pb-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium">ลูกค้ามารับที่ร้าน</span>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="adjVol('vol-pickup', -1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">-</button>
+                                <input type="number" id="vol-pickup" value="0" class="w-12 text-center border rounded p-1 text-sm">
+                                <button onclick="adjVol('vol-pickup', 1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">+</button>
                             </div>
                         </div>
+                        <input type="text" id="note-pickup" class="w-full p-2 border border-gray-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="รายชื่อลูกค้า / หมายเหตุ (มารับที่ร้าน)...">
                     </div>
                     
-                    <div class="pt-2 border-t mt-2">
-                        <label class="block text-sm font-bold text-gray-700 mb-1">รายชื่อลูกค้า / หมายเหตุการส่งสินค้า</label>
-                        <p class="text-xs text-gray-500 mb-2">บันทึกชื่อลูกค้าที่มารับเอง หรือสถานที่ส่งสินค้า</p>
-                        <textarea id="vol-customer-notes" rows="3" class="w-full p-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="เช่น:&#10;- รับที่ร้าน: คุณเอ&#10;- ส่งในตลาด: ร้านเจ๊บี&#10;- ส่งตจว: บจก. ซีดี"></textarea>
+                    <div class="border-b pb-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium">ส่งต่างจังหวัด (ตจว.)</span>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="adjVol('vol-upcountry', -1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">-</button>
+                                <input type="number" id="vol-upcountry" value="0" class="w-12 text-center border rounded p-1 text-sm">
+                                <button onclick="adjVol('vol-upcountry', 1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">+</button>
+                            </div>
+                        </div>
+                        <input type="text" id="note-upcountry" class="w-full p-2 border border-gray-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="รายชื่อลูกค้า / สถานที่ส่ง (ตจว.)...">
+                    </div>
+
+                    <div class="border-b pb-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium">ส่งในตลาด</span>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="adjVol('vol-inmarket', -1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">-</button>
+                                <input type="number" id="vol-inmarket" value="0" class="w-12 text-center border rounded p-1 text-sm">
+                                <button onclick="adjVol('vol-inmarket', 1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">+</button>
+                            </div>
+                        </div>
+                        <input type="text" id="note-inmarket" class="w-full p-2 border border-gray-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="รายชื่อลูกค้า / สถานที่ส่ง (ในตลาด)...">
+                    </div>
+
+                    <div class="pb-1">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium">ส่งนอกตลาด</span>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="adjVol('vol-outmarket', -1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">-</button>
+                                <input type="number" id="vol-outmarket" value="0" class="w-12 text-center border rounded p-1 text-sm">
+                                <button onclick="adjVol('vol-outmarket', 1)" class="w-8 h-8 rounded bg-gray-200 text-gray-700 font-bold">+</button>
+                            </div>
+                        </div>
+                        <input type="text" id="note-outmarket" class="w-full p-2 border border-gray-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="รายชื่อลูกค้า / สถานที่ส่ง (นอกตลาด)...">
                     </div>
                 </div>
+            </div>
+
+            <!-- ZONE 3: Weekly Tasks -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500">
+                <h2 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>โซน 3: แผนงานที่ทำในสัปดาห์นี้</h2>
+                <p class="text-xs text-gray-500 mb-3">จดบันทึกและอัปเดตสถานะงาน (Dashboard จะแสดงสถานะล่าสุด)</p>
+                
+                <div id="task-entries-container" class="space-y-2"></div>
+                
+                <button onclick="addTaskEntryRow()" class="mt-3 w-full bg-purple-100 text-purple-600 border border-purple-200 font-bold py-2 rounded-lg text-sm active:bg-purple-200 shadow-sm transition-colors">
+                    <i class="fa-solid fa-plus mr-1"></i> เพิ่มแผนงาน
+                </button>
             </div>
 
             <button onclick="saveDailyRecord()" id="btn-save" class="w-full bg-blue-600 text-white font-bold text-lg py-3 rounded-xl shadow-lg active:bg-blue-700 transition-colors flex justify-center items-center">
@@ -135,6 +160,14 @@
                         <span class="text-3xl font-bold text-gray-800" id="dash-total-volume">0</span>
                     </div>
                      <p class="text-[10px] text-gray-400 mt-1">อัตราผิดพลาด: <span id="dash-err-percent" class="font-bold text-blue-600">0%</span></p>
+                </div>
+            </div>
+
+            <!-- Weekly Tasks (NEW) -->
+            <div class="bg-white p-4 rounded-xl shadow-sm">
+                <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>ตารางงานในสัปดาห์นี้</h3>
+                <div id="dash-weekly-tasks" class="space-y-2">
+                    <!-- Javascript generates tasks here -->
                 </div>
             </div>
 
@@ -178,12 +211,7 @@
         </button>
     </nav>
 
-    <!-- Loading UI & Toast -->
-    <div id="loading" class="loading-overlay">
-        <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500 mb-3"></i>
-        <p class="text-gray-700 font-semibold" id="loading-text">กำลังโหลดข้อมูล...</p>
-    </div>
-
+    <!-- Toast Notification -->
     <div id="toast" class="toast fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center space-x-2 w-max max-w-xs">
         <i class="fa-solid fa-circle-check text-green-400"></i>
         <span id="toast-msg" class="text-sm">บันทึกสำเร็จ</span>
@@ -191,32 +219,25 @@
 
     <script>
         // ================= CONFIGURATION =================
-        // วาง URL ของ Google Apps Script (เว็บแอป) ที่นี่
         const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec"; 
         
         // ================= STATE =================
-        let viewOffsetWeek = 0; // 0 = current week, -1 = last week
-        
-        // Set today's date
+        let viewOffsetWeek = 0; 
         document.getElementById('record-date').valueAsDate = new Date();
 
         // ================= API / SYNC =================
         async function syncDataFromSheet() {
             if(!GOOGLE_APP_SCRIPT_URL) return;
-            
             const btnSync = document.getElementById('btn-sync');
             btnSync.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1"></i> ซิงค์ข้อมูล...';
             btnSync.disabled = true;
 
             try {
-                // Fetch Data from Google Sheet
                 const response = await fetch(GOOGLE_APP_SCRIPT_URL);
                 const data = await response.json();
                 
                 if (Array.isArray(data)) {
                     localStorage.setItem('kpiData', JSON.stringify(data));
-                    
-                    // Update Dashboard if currently viewed
                     if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
                         loadDashboardData();
                     }
@@ -270,7 +291,6 @@
             const html = `
                 <div class="error-entry bg-red-50 p-3 rounded-lg border border-red-100 relative">
                     <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-xmark"></i></button>
-                    
                     <div class="mb-2 pr-6">
                         <label class="block text-xs font-semibold text-gray-600 mb-1">พนักงาน (เลือกได้หลายคน)</label>
                         <div class="flex flex-wrap gap-1.5">
@@ -301,6 +321,23 @@
             container.insertAdjacentHTML('beforeend', html);
         }
 
+        // เพิ่มฟังก์ชันสำหรับโซน 3: ตารางงาน
+        function addTaskEntryRow() {
+            const container = document.getElementById('task-entries-container');
+            const html = `
+                <div class="task-entry flex items-center space-x-2 bg-purple-50 p-2 rounded-lg border border-purple-100 relative">
+                    <input type="text" class="task-name flex-1 p-2 border border-white rounded text-sm outline-none focus:ring-1 focus:ring-purple-500 shadow-sm" placeholder="ชื่องาน / แผนงาน...">
+                    <select class="task-status p-2 border border-white rounded text-xs outline-none focus:ring-1 focus:ring-purple-500 shadow-sm bg-white font-medium">
+                        <option value="ยังไม่เริ่ม" class="text-gray-500">ยังไม่เริ่ม</option>
+                        <option value="กำลังทำ" class="text-blue-500">กำลังทำ</option>
+                        <option value="เสร็จแล้ว" class="text-green-500">เสร็จแล้ว</option>
+                    </select>
+                    <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
         async function saveDailyRecord() {
             const btn = document.getElementById('btn-save');
             const date = document.getElementById('record-date').value;
@@ -314,24 +351,39 @@
                 const checkedCbs = entry.querySelectorAll('.err-emp-cb:checked');
                 const type = entry.querySelector('.err-type').value;
                 const note = entry.querySelector('.err-note').value;
-                
                 if (checkedCbs.length > 0 && note.trim() !== "") {
-                    checkedCbs.forEach(cb => {
-                        currentErrors.push({ id: Date.now() + Math.random(), emp: cb.value, type, note });
-                    });
+                    checkedCbs.forEach(cb => { currentErrors.push({ id: Date.now() + Math.random(), emp: cb.value, type, note }); });
                 } else if (checkedCbs.length > 0 || note.trim() !== "") {
                     hasIncompleteError = true;
                 }
             });
 
-            if (hasIncompleteError) {
-                return showToast("กรุณาเลือกพนักงานและใส่หมายเหตุให้ครบทุกรายการที่กรอกค้างไว้", true);
-            }
+            if (hasIncompleteError) return showToast("กรุณาเลือกพนักงานและใส่หมายเหตุให้ครบ", true);
+
+            // Gather Tasks (NEW)
+            let currentTasks = [];
+            document.querySelectorAll('.task-entry').forEach(entry => {
+                const name = entry.querySelector('.task-name').value.trim();
+                const status = entry.querySelector('.task-status').value;
+                if (name !== "") currentTasks.push({ taskName: name, status: status });
+            });
+
+            // Gather Customer Notes
+            let combinedNotes = [];
+            const nPickup = document.getElementById('note-pickup').value.trim();
+            const nUpcountry = document.getElementById('note-upcountry').value.trim();
+            const nInmarket = document.getElementById('note-inmarket').value.trim();
+            const nOutmarket = document.getElementById('note-outmarket').value.trim();
+            if(nPickup) combinedNotes.push("- รับที่ร้าน: " + nPickup);
+            if(nUpcountry) combinedNotes.push("- ส่งตจว.: " + nUpcountry);
+            if(nInmarket) combinedNotes.push("- ส่งในตลาด: " + nInmarket);
+            if(nOutmarket) combinedNotes.push("- ส่งนอกตลาด: " + nOutmarket);
 
             const payload = {
                 date: date,
                 errors: currentErrors,
-                customerNotes: document.getElementById('vol-customer-notes').value,
+                tasks: currentTasks, // เพิ่ม tasks เข้าไปใน Payload
+                customerNotes: combinedNotes.join('\n'),
                 volume: {
                     transfer: parseInt(document.getElementById('vol-transfer').value) || 0,
                     pickup: parseInt(document.getElementById('vol-pickup').value) || 0,
@@ -341,45 +393,34 @@
                 }
             };
 
-            // === Google Apps Script Integration ===
             if(GOOGLE_APP_SCRIPT_URL) {
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
                 btn.disabled = true;
                 
                 try {
                     await fetch(GOOGLE_APP_SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors', // POST ไปยัง GAS
-                        headers: { 'Content-Type': 'application/json' },
+                        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
                     
-                    // จำลองบันทึกลง Local เครื่องตัวเราเองให้ขึ้นแดชบอร์ดทันทีด้วย
                     let localData = JSON.parse(localStorage.getItem('kpiData') || '[]');
                     localData = localData.filter(d => d.date !== date);
                     localData.push(payload);
                     localStorage.setItem('kpiData', JSON.stringify(localData));
 
-                    // Success Reset
                     showToast("บันทึกข้อมูลเรียบร้อย!");
                     
-                    // Reset Zone 1
-                    document.getElementById('error-entries-container').innerHTML = '';
-                    addErrorEntryRow();
-
-                    // Reset Zone 2
+                    // Reset UI
+                    document.getElementById('error-entries-container').innerHTML = ''; addErrorEntryRow();
+                    document.getElementById('task-entries-container').innerHTML = ''; addTaskEntryRow();
                     ['vol-transfer','vol-pickup','vol-upcountry','vol-inmarket','vol-outmarket'].forEach(id => document.getElementById(id).value = '0');
-                    document.getElementById('vol-customer-notes').value = '';
+                    ['note-pickup','note-upcountry','note-inmarket','note-outmarket'].forEach(id => document.getElementById(id).value = '');
                     
                 } catch(error) {
-                    console.error(error);
-                    showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheet", true);
+                    console.error(error); showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ", true);
                 } finally {
-                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> บันทึกข้อมูลเข้า Google Sheet';
-                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> บันทึกข้อมูลเข้า Google Sheet'; btn.disabled = false;
                 }
-            } else {
-                showToast("กรุณาใส่ URL ของ Google Apps Script ก่อน", true);
             }
         }
 
@@ -396,17 +437,14 @@
             
             const btnNext = document.getElementById('btn-next-week');
             if(viewOffsetWeek === 0) {
-                btnNext.disabled = true;
-                btnNext.innerHTML = '<i class="fa-solid fa-chevron-right text-gray-300"></i>';
+                btnNext.disabled = true; btnNext.innerHTML = '<i class="fa-solid fa-chevron-right text-gray-300"></i>';
             } else {
-                btnNext.disabled = false;
-                btnNext.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+                btnNext.disabled = false; btnNext.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
             }
             loadDashboardData();
         }
 
         function loadDashboardData() {
-            // ดึงข้อมูลที่ sync มาจาก LocalStorage
             const rawData = JSON.parse(localStorage.getItem('kpiData') || '[]');
             
             const today = new Date();
@@ -418,19 +456,18 @@
             document.getElementById('dash-week-label').innerText = viewOffsetWeek === 0 ? "สัปดาห์นี้" : (viewOffsetWeek === -1 ? "สัปดาห์ที่แล้ว" : "อดีต");
             document.getElementById('dash-date-range').innerText = `${startOfCurrentWeek.getDate()}/${startOfCurrentWeek.getMonth()+1} - ${endOfWeek.getDate()}/${endOfWeek.getMonth()+1}`;
 
-            // Calculate Metrics for target week
             let targetWeekData = rawData.filter(d => {
-                const itemDate = new Date(d.date);
-                itemDate.setHours(0,0,0,0);
-                startOfCurrentWeek.setHours(0,0,0,0);
-                endOfWeek.setHours(23,59,59,999);
+                const itemDate = new Date(d.date); itemDate.setHours(0,0,0,0);
+                startOfCurrentWeek.setHours(0,0,0,0); endOfWeek.setHours(23,59,59,999);
                 return itemDate >= startOfCurrentWeek && itemDate <= endOfWeek;
             });
+            // เรียงลำดับข้อมูลตามวันที่เพื่อหา Update ล่าสุด
+            targetWeekData.sort((a,b) => new Date(a.date) - new Date(b.date));
 
-            let totalVol = 0;
-            let totalErr = 0;
+            let totalVol = 0; let totalErr = 0;
             let empErrCount = { 'หยอง':0, 'เจมส์':0, 'พุช':0, 'บรรเลง':0, 'ใหม่':0 };
             let allCustomerNotesHtml = '';
+            let weeklyTasksMap = {}; // เก็บข้อมูล Task เพื่อดึงอันล่าสุด
             
             let categorizedNotes = {
                 'หยอง': { 'แก้ไขได้ก่อนจัดส่ง': [], 'ส่งถึงหน้าร้านแล้ว': [], 'ส่งถึงลูกค้าแล้ว': [] },
@@ -445,7 +482,6 @@
                 totalVol += (day.volume.transfer + day.volume.pickup + day.volume.upcountry + day.volume.inmarket + day.volume.outmarket);
                 totalErr += day.errors.length;
                 
-                // Collect Customer Notes
                 if (day.customerNotes && day.customerNotes.trim() !== '') {
                     allCustomerNotesHtml += `
                         <div class="text-sm bg-blue-50 p-3 rounded-lg border border-blue-100 mb-2">
@@ -457,15 +493,45 @@
 
                 day.errors.forEach(e => {
                     if(empErrCount[e.emp] !== undefined) empErrCount[e.emp]++;
-                    
                     if(categorizedNotes[e.emp] && categorizedNotes[e.emp][e.type]) {
                         categorizedNotes[e.emp][e.type].push({ note: e.note, date: day.date });
                         hasAnyNotes = true;
                     }
                 });
+
+                // อัปเดตสถานะ Tasks
+                if(day.tasks && Array.isArray(day.tasks)) {
+                    day.tasks.forEach(t => {
+                        weeklyTasksMap[t.taskName] = t.status; // ถ้ากรอกชื่อเดิมในวันหลังๆ จะอัปเดตทับเป็นสถานะล่าสุด
+                    });
+                }
             });
 
-            // Generate HTML for Error Notes
+            // Render Tasks (NEW)
+            let tasksHtml = '';
+            if (Object.keys(weeklyTasksMap).length === 0) {
+                tasksHtml = '<div class="text-center text-gray-400 text-sm py-3">ยังไม่มีแผนงานในสัปดาห์นี้</div>';
+            } else {
+                for (const [tName, tStatus] of Object.entries(weeklyTasksMap)) {
+                    let badgeClass = tStatus === 'เสร็จแล้ว' ? 'bg-green-100 text-green-700' :
+                                     tStatus === 'กำลังทำ' ? 'bg-blue-100 text-blue-700' :
+                                     'bg-gray-100 text-gray-600';
+                    let iconClass = tStatus === 'เสร็จแล้ว' ? 'fa-check-circle' :
+                                    tStatus === 'กำลังทำ' ? 'fa-spinner fa-spin' : 'fa-circle-minus';
+                    
+                    tasksHtml += `
+                        <div class="flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100 text-sm">
+                            <span class="text-gray-700 font-medium">${tName}</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap ${badgeClass}">
+                                <i class="fa-solid ${iconClass} mr-1"></i>${tStatus}
+                            </span>
+                        </div>
+                    `;
+                }
+            }
+            document.getElementById('dash-weekly-tasks').innerHTML = tasksHtml;
+
+            // Render Notes & Errors
             let allNotesHtml = '';
             if (!hasAnyNotes) {
                 allNotesHtml = '<div class="text-center text-gray-400 text-sm py-4">ไม่มีข้อผิดพลาดในสัปดาห์นี้ 🎉</div>';
@@ -479,32 +545,20 @@
                     allNotesHtml += `<div class="p-2 space-y-2">`;
 
                     if (types['แก้ไขได้ก่อนจัดส่ง'].length > 0) {
-                        allNotesHtml += `<div class="bg-yellow-50 rounded border border-yellow-200 p-2">`;
-                        allNotesHtml += `<div class="text-xs font-bold text-yellow-700 mb-1 border-b border-yellow-200 pb-1">1. แก้ไขได้ก่อนจัดส่ง</div>`;
-                        types['แก้ไขได้ก่อนจัดส่ง'].forEach(err => {
-                            allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`;
-                        });
+                        allNotesHtml += `<div class="bg-yellow-50 rounded border border-yellow-200 p-2"><div class="text-xs font-bold text-yellow-700 mb-1 border-b border-yellow-200 pb-1">1. แก้ไขได้ก่อนจัดส่ง</div>`;
+                        types['แก้ไขได้ก่อนจัดส่ง'].forEach(err => { allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`; });
                         allNotesHtml += `</div>`;
                     }
-
                     if (types['ส่งถึงหน้าร้านแล้ว'].length > 0) {
-                        allNotesHtml += `<div class="bg-orange-50 rounded border border-orange-200 p-2">`;
-                        allNotesHtml += `<div class="text-xs font-bold text-orange-700 mb-1 border-b border-orange-200 pb-1">2. ส่งถึงหน้าร้านแล้ว</div>`;
-                        types['ส่งถึงหน้าร้านแล้ว'].forEach(err => {
-                            allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`;
-                        });
+                        allNotesHtml += `<div class="bg-orange-50 rounded border border-orange-200 p-2"><div class="text-xs font-bold text-orange-700 mb-1 border-b border-orange-200 pb-1">2. ส่งถึงหน้าร้านแล้ว</div>`;
+                        types['ส่งถึงหน้าร้านแล้ว'].forEach(err => { allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`; });
                         allNotesHtml += `</div>`;
                     }
-
                     if (types['ส่งถึงลูกค้าแล้ว'].length > 0) {
-                        allNotesHtml += `<div class="bg-red-50 rounded border border-red-200 p-2">`;
-                        allNotesHtml += `<div class="text-xs font-bold text-red-700 mb-1 border-b border-red-200 pb-1">3. ส่งถึงลูกค้าแล้ว</div>`;
-                        types['ส่งถึงลูกค้าแล้ว'].forEach(err => {
-                            allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`;
-                        });
+                        allNotesHtml += `<div class="bg-red-50 rounded border border-red-200 p-2"><div class="text-xs font-bold text-red-700 mb-1 border-b border-red-200 pb-1">3. ส่งถึงลูกค้าแล้ว</div>`;
+                        types['ส่งถึงลูกค้าแล้ว'].forEach(err => { allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`; });
                         allNotesHtml += `</div>`;
                     }
-
                     allNotesHtml += `</div></div>`;
                 }
             }
@@ -516,34 +570,25 @@
             document.getElementById('dash-error-notes').innerHTML = allNotesHtml || '<div class="text-center text-gray-400 text-sm py-4">ไม่มีข้อผิดพลาดในสัปดาห์นี้ 🎉</div>';
             document.getElementById('dash-customer-notes').innerHTML = allCustomerNotesHtml || '<div class="text-center text-gray-400 text-sm py-4">ไม่มีบันทึกข้อมูลลูกค้า/การจัดส่ง</div>';
 
-            // Calculate Last Week Data for Comparison
-            const lastWeekStart = new Date(startOfCurrentWeek);
-            lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-            const lastWeekEnd = new Date(endOfWeek);
-            lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+            const lastWeekStart = new Date(startOfCurrentWeek); lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+            const lastWeekEnd = new Date(endOfWeek); lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
 
             let lastWeekEmpErrCount = { 'หยอง':0, 'เจมส์':0, 'พุช':0, 'บรรเลง':0, 'ใหม่':0 };
             let lastWeekErrTotal = 0;
 
             rawData.forEach(d => {
-                const itemD = new Date(d.date);
-                itemD.setHours(0,0,0,0);
+                const itemD = new Date(d.date); itemD.setHours(0,0,0,0);
                 if(itemD >= lastWeekStart && itemD <= lastWeekEnd) {
                     lastWeekErrTotal += d.errors.length;
-                    d.errors.forEach(e => {
-                        if(lastWeekEmpErrCount[e.emp] !== undefined) lastWeekEmpErrCount[e.emp]++;
-                    });
+                    d.errors.forEach(e => { if(lastWeekEmpErrCount[e.emp] !== undefined) lastWeekEmpErrCount[e.emp]++; });
                 }
             });
 
-            // Employee Progress Bars
             let empHtml = '';
-            let maxErr = Math.max(...Object.values(empErrCount));
-            if(maxErr === 0) maxErr = 1;
+            let maxErr = Math.max(...Object.values(empErrCount)); if(maxErr === 0) maxErr = 1;
 
             for (const [name, count] of Object.entries(empErrCount)) {
                 let percent = (count / maxErr) * 100;
-                
                 let lastCount = lastWeekEmpErrCount[name];
                 let diff = count - lastCount;
                 let trendHtml = '';
@@ -561,10 +606,7 @@
                 empHtml += `
                     <div>
                         <div class="flex justify-between items-end text-xs mb-1">
-                            <div class="flex items-center">
-                                <span>${name}</span>
-                                ${trendHtml}
-                            </div>
+                            <div class="flex items-center"><span>${name}</span>${trendHtml}</div>
                             <span class="font-bold ${count > 0 ? 'text-red-500' : 'text-green-500'}">${count} ครั้ง</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-1.5">
@@ -575,16 +617,14 @@
             }
             document.getElementById('dash-emp-breakdown').innerHTML = empHtml;
 
-            // Overall Trend Compare logic
             let diffTotal = totalErr - lastWeekErrTotal;
             let diffText = diffTotal > 0 ? `+${diffTotal} ครั้ง (แย่ลง)` : (diffTotal < 0 ? `${diffTotal} ครั้ง (ดีขึ้น)` : 'เท่าเดิม');
             document.getElementById('dash-err-compare').innerText = `เทียบกับสัปดาห์ก่อน: ${diffText}`;
         }
 
-        // Initialize App
         addErrorEntryRow();
+        addTaskEntryRow(); // สร้างช่องแผนงานว่างๆ ไว้ 1 ช่องตอนโหลด
         
-        // เมื่อเปิดแอปมาครั้งแรก ให้ดึงข้อมูลจาก Sheet มาอัปเดต LocalStorage ทันที
         window.addEventListener('load', () => {
             syncDataFromSheet();
         });
@@ -592,4 +632,3 @@
     </script>
 </body>
 </html>
-
