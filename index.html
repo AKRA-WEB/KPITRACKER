@@ -240,6 +240,8 @@
                     localStorage.setItem('kpiData', JSON.stringify(data));
                     if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
                         loadDashboardData();
+                    } else {
+                        loadTasksForSelectedDate(); // อัปเดตงานในหน้าบันทึกด้วยถ้าอยู่หน้านี้
                     }
                     showToast("ซิงค์ข้อมูลล่าสุดจาก Sheet เรียบร้อย");
                 }
@@ -322,20 +324,63 @@
         }
 
         // เพิ่มฟังก์ชันสำหรับโซน 3: ตารางงาน
-        function addTaskEntryRow() {
+        function addTaskEntryRow(name = "", status = "ยังไม่เริ่ม") {
             const container = document.getElementById('task-entries-container');
+            const safeName = name.replace(/"/g, '&quot;');
             const html = `
                 <div class="task-entry flex items-center space-x-2 bg-purple-50 p-2 rounded-lg border border-purple-100 relative">
-                    <input type="text" class="task-name flex-1 p-2 border border-white rounded text-sm outline-none focus:ring-1 focus:ring-purple-500 shadow-sm" placeholder="ชื่องาน / แผนงาน...">
+                    <input type="text" class="task-name flex-1 p-2 border border-white rounded text-sm outline-none focus:ring-1 focus:ring-purple-500 shadow-sm" placeholder="ชื่องาน / แผนงาน..." value="${safeName}">
                     <select class="task-status p-2 border border-white rounded text-xs outline-none focus:ring-1 focus:ring-purple-500 shadow-sm bg-white font-medium">
-                        <option value="ยังไม่เริ่ม" class="text-gray-500">ยังไม่เริ่ม</option>
-                        <option value="กำลังทำ" class="text-blue-500">กำลังทำ</option>
-                        <option value="เสร็จแล้ว" class="text-green-500">เสร็จแล้ว</option>
+                        <option value="ยังไม่เริ่ม" ${status === 'ยังไม่เริ่ม' ? 'selected' : ''} class="text-gray-500">ยังไม่เริ่ม</option>
+                        <option value="กำลังทำ" ${status === 'กำลังทำ' ? 'selected' : ''} class="text-blue-500">กำลังทำ</option>
+                        <option value="เสร็จแล้ว" ${status === 'เสร็จแล้ว' ? 'selected' : ''} class="text-green-500">เสร็จแล้ว</option>
                     </select>
                     <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             `;
             container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function loadTasksForSelectedDate() {
+            const selectedDateStr = document.getElementById('record-date').value;
+            if(!selectedDateStr) return;
+
+            const selectedDate = new Date(selectedDateStr);
+            const startOfWeek = getStartOfWeek(selectedDate);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+
+            const rawData = JSON.parse(localStorage.getItem('kpiData') || '[]');
+            
+            let targetWeekData = rawData.filter(d => {
+                const itemDate = new Date(d.date); itemDate.setHours(0,0,0,0);
+                startOfWeek.setHours(0,0,0,0); endOfWeek.setHours(23,59,59,999);
+                return itemDate >= startOfWeek && itemDate <= endOfWeek;
+            });
+            targetWeekData.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+            let weeklyTasksMap = {}; 
+            targetWeekData.forEach(day => {
+                if(day.tasks && Array.isArray(day.tasks)) {
+                    day.tasks.forEach(t => {
+                        weeklyTasksMap[t.taskName] = t.status;
+                    });
+                }
+            });
+
+            const container = document.getElementById('task-entries-container');
+            container.innerHTML = '';
+
+            let hasTasks = false;
+            for (const [tName, tStatus] of Object.entries(weeklyTasksMap)) {
+                addTaskEntryRow(tName, tStatus);
+                hasTasks = true;
+            }
+            
+            // ถ้าไม่มีงานเลย ให้แสดงกล่องว่าง 1 กล่อง
+            if(!hasTasks) {
+                addTaskEntryRow();
+            }
         }
 
         async function saveDailyRecord() {
@@ -412,7 +457,7 @@
                     
                     // Reset UI
                     document.getElementById('error-entries-container').innerHTML = ''; addErrorEntryRow();
-                    document.getElementById('task-entries-container').innerHTML = ''; addTaskEntryRow();
+                    loadTasksForSelectedDate(); // โหลดงานของสัปดาห์นี้มาแสดงใหม่เพื่ออัปเดตสถานะ
                     ['vol-transfer','vol-pickup','vol-upcountry','vol-inmarket','vol-outmarket'].forEach(id => document.getElementById(id).value = '0');
                     ['note-pickup','note-upcountry','note-inmarket','note-outmarket'].forEach(id => document.getElementById(id).value = '');
                     
@@ -623,9 +668,12 @@
         }
 
         addErrorEntryRow();
-        addTaskEntryRow(); // สร้างช่องแผนงานว่างๆ ไว้ 1 ช่องตอนโหลด
+        
+        // ผูก Event เมื่อเปลี่ยนวันที่ ให้โหลดงานของสัปดาห์นั้นมาแสดง
+        document.getElementById('record-date').addEventListener('change', loadTasksForSelectedDate);
         
         window.addEventListener('load', () => {
+            loadTasksForSelectedDate(); // สร้าง/โหลด ช่องแผนงานตอนเปิดแอป
             syncDataFromSheet();
         });
 
