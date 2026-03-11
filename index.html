@@ -20,11 +20,16 @@
 <body class="text-gray-800 pb-20">
 
     <!-- Header -->
-    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex justify-between items-center">
-        <h1 class="text-xl font-bold"><i class="fa-solid fa-clipboard-check mr-2"></i> KPI Daily Record</h1>
-        <button onclick="syncDataFromSheet()" id="btn-sync" class="text-white bg-blue-700 px-3 py-1 rounded-full text-xs font-semibold shadow active:bg-blue-800 transition-colors">
-            <i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล
-        </button>
+    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex flex-col space-y-2">
+        <div class="flex justify-between items-center">
+            <h1 class="text-xl font-bold"><i class="fa-solid fa-clipboard-check mr-2"></i> KPI Daily Record</h1>
+            <button onclick="syncDataFromSheet()" id="btn-sync" class="text-white bg-blue-700 px-3 py-1 rounded-full text-xs font-semibold shadow active:bg-blue-800 transition-colors">
+                <i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล
+            </button>
+        </div>
+        <div class="text-xs text-blue-200">
+            <i class="fa-solid fa-user mr-1"></i> ผู้ใช้งาน: <span id="showUserName" class="font-semibold text-white">กำลังตรวจสอบ...</span>
+        </div>
     </header>
 
     <!-- Main Content Area -->
@@ -221,6 +226,53 @@
     </div>
 
     <script>
+        // ================= AUTH & LOGGING SYSTEM =================
+        const CURRENT_APP_NAME = "KPITRACKER"; 
+        
+        // *เปลี่ยนชื่อตัวแปรนี้จาก GOOGLE_APP_SCRIPT_URL เป็น LOG_APP_SCRIPT_URL เพื่อไม่ให้ซ้ำกับตัวบันทึกข้อมูลหลัก
+        const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5PCJ1OlxCQR6zaNubrmZTgaORB-rJK2Ow5_YC3i5kKv-BrrTgJkTJyNZKrzfodK1m/exec";
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentUser = urlParams.get('user');
+
+        if (currentUser) {
+            sessionStorage.setItem('active_user', currentUser);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+            currentUser = sessionStorage.getItem('active_user');
+        }
+
+        if (!currentUser) {
+            alert("กรุณาเข้าสู่ระบบผ่านหน้า Main ก่อนใช้งานครับ");
+            window.location.href = "https://akra-web.github.io/Main/"; 
+        } else {
+            console.log("ยินดีต้อนรับคุณ: " + currentUser);
+            // แสดงชื่อผู้ใช้เมื่อโหลดหน้าเว็บเสร็จ
+            document.addEventListener("DOMContentLoaded", () => {
+                const userNameElement = document.getElementById('showUserName');
+                if (userNameElement) userNameElement.innerText = currentUser;
+            });
+        }
+
+        function sendAppLog(action, details) {
+            if (!currentUser) return;
+            const payload = {
+                user: currentUser,
+                action: action,
+                app: CURRENT_APP_NAME,
+                details: details
+            };
+
+            fetch(LOG_APP_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                console.log(`บันทึก Log สำเร็จ: ${action} โดย ${currentUser}`);
+            }).catch(err => console.error(err));
+        }
+
         // ================= CONFIGURATION =================
         const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec"; 
         
@@ -457,6 +509,7 @@
                     localStorage.setItem('kpiData', JSON.stringify(localData));
 
                     showToast("บันทึกข้อมูลเรียบร้อย!");
+                    sendAppLog("บันทึกข้อมูล", `บันทึกข้อมูล KPI และแผนงาน (วันที่ ${date})`);
                     
                     // Reset UI
                     document.getElementById('error-entries-container').innerHTML = ''; addErrorEntryRow();
