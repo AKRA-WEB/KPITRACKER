@@ -176,6 +176,17 @@
                 </div>
             </div>
 
+            <!-- Gamification / Employee Evaluation (NEW) -->
+            <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-4 rounded-xl shadow-sm border border-yellow-200">
+                <h3 class="font-bold text-yellow-800 mb-3 text-sm flex items-center justify-between">
+                    <span><i class="fa-solid fa-trophy mr-2 text-yellow-500"></i>จัดอันดับทีม (HP ประจำสัปดาห์)</span>
+                    <span class="text-[10px] font-normal text-yellow-700 bg-yellow-200 px-2 py-0.5 rounded-full">เริ่มที่ 100 HP</span>
+                </h3>
+                <div id="dash-gamification" class="space-y-3">
+                    <!-- Javascript generates game stats here -->
+                </div>
+            </div>
+
             <!-- Weekly Tasks (NEW) -->
             <div class="bg-white p-4 rounded-xl shadow-sm">
                 <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>ตารางงานในสัปดาห์นี้</h3>
@@ -754,13 +765,48 @@
             let diffText = diffTotal > 0 ? `+${diffTotal} ครั้ง (แย่ลง)` : (diffTotal < 0 ? `${diffTotal} ครั้ง (ดีขึ้น)` : 'เท่าเดิม');
             document.getElementById('dash-err-compare').innerText = `เทียบกับสัปดาห์ก่อน: ${diffText}`;
 
-            // --- SMART SUMMARY LOGIC (ระบบวิเคราะห์อัตโนมัติ) ---
+            // --- SMART SUMMARY LOGIC (ระบบวิเคราะห์อัตโนมัติแบบเจาะลึกและหลากหลาย) ---
             let errorTypeCounts = {
                 'แก้ไขได้ก่อนจัดส่ง': 0, 'ส่งถึงหน้าร้านแล้ว': 0, 'ส่งถึงลูกค้าแล้ว': 0, 'ผิดพลาดในการรับลงสินค้า': 0
             };
+            
+            // เก็บรวบรวม 'หมายเหตุ' ของข้อผิดพลาดเพื่อนำมาวิเคราะห์
+            let errorNotesList = {
+                'แก้ไขได้ก่อนจัดส่ง': [], 'ส่งถึงหน้าร้านแล้ว': [], 'ส่งถึงลูกค้าแล้ว': [], 'ผิดพลาดในการรับลงสินค้า': []
+            };
+
             targetWeekData.forEach(day => {
-                day.errors.forEach(e => { if(errorTypeCounts[e.type] !== undefined) errorTypeCounts[e.type]++; });
+                day.errors.forEach(e => { 
+                    if(errorTypeCounts[e.type] !== undefined) {
+                        errorTypeCounts[e.type]++; 
+                        if(!errorNotesList[e.type].includes(e.note)) errorNotesList[e.type].push(e.note);
+                    }
+                });
             });
+
+            // คลังคำแนะนำเชิงลึก (3 แนวทางสำหรับแต่ละความผิดพลาด)
+            const suggestionDatabase = {
+                'แก้ไขได้ก่อนจัดส่ง': [
+                    '<b>จัดโซนสินค้าใหม่:</b> อาจเกิดจากการวางสินค้าที่มีลักษณะหรือชื่อคล้ายกันไว้ใกล้กันเกินไป แนะนำให้แยกโซนหรือทำสัญลักษณ์สีแบ่งแยกให้ชัดเจนขึ้น',
+                    '<b>ย้ำเตือนเรื่อง "หน่วยนับ":</b> ชิ้น, แพ็ค, ลัง เป็นจุดที่มักจะสับสนและหยิบผิดบ่อยที่สุด ลองให้พนักงาน "อ่านทวนรายการและหน่วยนับ" ก่อนหยิบลงตะกร้า',
+                    '<b>ทำงานแบบ Buddy ในช่วงพีค:</b> แม้จะตรวจเจอและแก้ทัน แต่ทำให้เสียเวลาทำงาน แนะนำให้จับคู่ช่วยกันรีเช็คก่อนถึงขั้นตอนการแพ็คเพื่อความรวดเร็ว'
+                ],
+                'ส่งถึงหน้าร้านแล้ว': [
+                    '<b>เพิ่มจุดตรวจสอบก่อนขึ้นรถ:</b> ปัญหาหลุดรอดออกจากคลัง แนะนำให้ทำใบ Check-list ให้ผู้จ่ายงานหรือคนขับรถรีเช็คจำนวนกล่อง/รายการอีกครั้งก่อนย้ายของออก',
+                    '<b>ลดความเร่งรีบตอนโหลดของ:</b> อาจเกิดจากความรีบตอนส่ง แนะนำให้กำหนด "รอบเวลาตัดส่ง" ที่ชัดเจน เพื่อให้พนักงานมีเวลาตรวจทานบิลกับสินค้าจริงอย่างละเอียด',
+                    '<b>ป้องกันการหยิบสลับบิล:</b> เช็คว่ามีการติดป้ายชื่อร้านผิดกล่องหรือไม่ ควรใช้ระบบสติกเกอร์สีหรือมาร์คกิ้งกำกับแต่ละบิลให้เด่นชัด ป้องกันคนขับรถหยิบสลับกัน'
+                ],
+                'ส่งถึงลูกค้าแล้ว': [
+                    '<b>บังคับใช้ระบบ Double Check 100%:</b> เป็นข้อผิดพลาดร้ายแรงเพราะกระทบลูกค้าโดยตรง! ต้องมีระบบคนจัด 1 คน และคนตรวจแพ็คอีก 1 คน (แยกกัน) และให้เซ็นชื่อในบิลเสมอ',
+                    '<b>ถ่ายรูปสินค้าก่อนปิดกล่อง/ส่งมอบ:</b> แนะนำให้ถ่ายรูปสินค้าคู่กับบิลทุกครั้ง เพื่อใช้เป็นหลักฐานตรวจสอบย้อนหลังและยืนยันความถูกต้องกับลูกค้า',
+                    '<b>แยกโซนสายรถส่งให้ชัดเจน:</b> สินค้าอาจถูกจัดเตรียมไว้ถูกต้องแล้ว แต่คนขับหยิบสลับไปส่งผิดที่ ต้องจัดแยกโซน "ของรอส่งแยกตามสายรถ" ห้ามวางปะปนกันเด็ดขาด'
+                ],
+                'ผิดพลาดในการรับลงสินค้า': [
+                    '<b>แยกโซนรอตรวจรับอย่างเคร่งครัด:</b> คัดแยกพื้นที่ "สินค้ารอตรวจ" ออกจาก "สินค้าพร้อมขาย" ห้ามนำของขึ้นชั้นวางจนกว่าจะนับยอดตรงกับใบส่งของ 100%',
+                    '<b>ใช้วิธีนับแบบ Blind Check:</b> ให้พนักงานคลังนับยอดของจริงและจดลงกระดาษก่อน แล้วค่อยเอาตัวเลขไปเทียบกับบิลใบเสร็จ เพื่อป้องกันการตรวจนับแบบผ่านๆ',
+                    '<b>ระวังสินค้าที่มีการเปลี่ยนแพ็คเกจ:</b> เมื่อรับเข้าสินค้าที่เปลี่ยนหน้าตาหรือบาร์โค้ดใหม่ ต้องรีบแจ้งอัปเดตกับทีมงานทุกคนทันที เพื่อป้องกันการสับสนในอนาคต'
+                ]
+            };
 
             let smartSummaryHtml = '';
             if (totalErr === 0) {
@@ -784,19 +830,80 @@
                 smartSummaryHtml += `<p>📊 <b>ภาพรวม:</b> สัปดาห์นี้มีงานทั้งหมด ${totalVol} รายการ พบความผิดพลาด ${totalErr} ครั้ง ซึ่ง${trendHtml}</p>`;
                 
                 if(topErrorCount > 0) {
-                    smartSummaryHtml += `<p>⚠️ <b>จุดที่ควรระวัง:</b> ปัญหาหลักคือ <b>"${topErrorType}"</b> (พบ ${topErrorCount} ครั้ง) โดยผู้ที่มีข้อผิดพลาดบ่อยสุดคือ <b>${topEmp}</b> (${topEmpCount} ครั้ง)</p>`;
+                    // ดึงตัวอย่าง 'หมายเหตุ' เพื่อให้เห็นภาพปัญหาชัดเจนขึ้น
+                    let sampleNotes = errorNotesList[topErrorType].slice(0, 2).join(', ');
+                    let noteContext = sampleNotes ? ` <i>(ตัวอย่างอาการ: ${sampleNotes})</i>` : '';
+
+                    smartSummaryHtml += `<p>⚠️ <b>จุดที่ควรระวัง:</b> ปัญหาหลักคือ <b>"${topErrorType}"</b> พบ ${topErrorCount} ครั้ง${noteContext} โดยผู้ที่มีข้อผิดพลาดบ่อยสุดคือ <b>${topEmp}</b></p>`;
                     
-                    // แนะนำแนวทางแก้ไขตามประเภทที่ผิดพลาดบ่อยสุด
-                    let suggestion = '';
-                    if (topErrorType === 'แก้ไขได้ก่อนจัดส่ง') suggestion = 'แม้จะตรวจพบและแก้ไขทัน แต่แสดงว่ามีการหยิบหรือจัดสินค้าผิดแต่แรก ควรเน้นย้ำให้พนักงานดูรายละเอียดและหน่วยนับตอนหยิบให้รอบคอบขึ้น เพื่อลดการทำงานซ้ำซ้อน';
-                    else if (topErrorType === 'ส่งถึงหน้าร้านแล้ว') suggestion = 'ความผิดพลาดหลุดไปจนถึงหน้าร้าน ควรเพิ่มขั้นตอนการตรวจสอบรายการสินค้าเทียบกับบิลอีกครั้งอย่างรัดกุม ก่อนส่งสินค้าออกจากคลังไปหน้าร้าน';
-                    else if (topErrorType === 'ส่งถึงลูกค้าแล้ว') suggestion = 'เป็นข้อผิดพลาดที่ร้ายแรงเพราะกระทบลูกค้าโดยตรง! ต้องเพิ่มมาตรการตรวจสอบอย่างละเอียด (Double Check) ก่อนแพ็คส่งมอบหรือขึ้นรถไปส่งลูกค้าทุกครั้ง';
-                    else if (topErrorType === 'ผิดพลาดในการรับลงสินค้า') suggestion = 'ควรตรวจเช็คยอดรับเข้ากับเอกสารให้ตรงกันก่อนนำสินค้าขึ้นชั้นวาง เพื่อป้องกันสต๊อกคลาดเคลื่อนตั้งแต่ต้นทาง';
+                    // เลือกระบบคำแนะนำให้สลับสับเปลี่ยนกัน (โดยอิงจากตัวเลขยอดรวม เพื่อไม่ให้คำแนะนำเปลี่ยนไปมาทุกครั้งที่กดเข้าแท็บเดิม)
+                    let suggestionIndex = (totalErr + totalVol) % 3;
+                    let selectedSuggestion = suggestionDatabase[topErrorType][suggestionIndex];
                     
-                    smartSummaryHtml += `<p>💡 <b>แนวทางแก้ไขที่แนะนำ:</b> ${suggestion}</p>`;
+                    smartSummaryHtml += `<p>💡 <b>แนวทางแก้ไขเจาะลึก:</b> ${selectedSuggestion}</p>`;
                 }
             }
             document.getElementById('dash-smart-summary').innerHTML = smartSummaryHtml;
+
+            // --- GAMIFICATION LOGIC (มินิเกมประเมินพนักงาน) ---
+            let empHP = { 'หยอง': 100, 'เจมส์': 100, 'พุช': 100, 'บรรเลง': 100, 'ใหม่': 100 };
+            
+            targetWeekData.forEach(day => {
+                day.errors.forEach(e => {
+                    if (e.type === 'แก้ไขได้ก่อนจัดส่ง' || e.type === 'ผิดพลาดในการรับลงสินค้า') {
+                        empHP[e.emp] -= 5;
+                    } else if (e.type === 'ส่งถึงหน้าร้านแล้ว') {
+                        empHP[e.emp] -= 15;
+                    } else if (e.type === 'ส่งถึงลูกค้าแล้ว') {
+                        empHP[e.emp] -= 30;
+                    }
+                });
+            });
+
+            // สร้าง Array สำหรับจัดอันดับ
+            let ranking = [];
+            for (const [name, hp] of Object.entries(empHP)) {
+                let finalHP = hp < 0 ? 0 : hp; // ป้องกันไม่ให้ HP ติดลบ
+                ranking.push({ name: name, hp: finalHP });
+            }
+            
+            // เรียงจาก HP มากไปน้อย
+            ranking.sort((a, b) => b.hp - a.hp);
+
+            let gameHtml = '';
+            ranking.forEach((player, index) => {
+                let hpPercent = player.hp;
+                let hpColor = hpPercent >= 80 ? 'green' : (hpPercent >= 50 ? 'yellow' : 'red');
+                let barColor = hpPercent >= 80 ? 'bg-green-500' : (hpPercent >= 50 ? 'bg-yellow-400' : 'bg-red-500');
+                
+                // แจกฉายา (Badge) ตามเงื่อนไข
+                let badge = '';
+                if (player.hp === 100) {
+                    badge = '<span class="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold ml-2 shadow-sm border border-green-200"><i class="fa-solid fa-shield-halved mr-1"></i>ไร้รอยขีดข่วน</span>';
+                } else if (index === 0 && player.hp > 0) {
+                    badge = '<span class="text-[10px] bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded font-bold ml-2 shadow-sm border border-yellow-300"><i class="fa-solid fa-crown mr-1"></i>MVP ประจำวีค</span>';
+                } else if (index === ranking.length - 1 && player.hp < 100) {
+                    badge = '<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold ml-2 shadow-sm border border-red-200"><i class="fa-solid fa-triangle-exclamation mr-1"></i>ต้องระวัง</span>';
+                }
+
+                gameHtml += `
+                    <div class="bg-white p-2.5 rounded-lg border border-${hpColor}-200 shadow-sm relative overflow-hidden">
+                        <div class="flex justify-between items-end mb-1.5 relative z-10">
+                            <div class="font-bold text-gray-700 text-sm flex items-center">
+                                <span class="w-6 inline-block text-gray-400 text-xs font-normal">#${index+1}</span>
+                                ${player.name}
+                                ${badge}
+                            </div>
+                            <div class="font-bold text-${hpColor}-600 text-xs">${player.hp} HP</div>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5 relative z-10 shadow-inner">
+                            <div class="${barColor} h-2.5 rounded-full transition-all duration-1000 ease-out" style="width: ${hpPercent}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('dash-gamification').innerHTML = gameHtml;
             // --------------------------------------------------
         }
 
