@@ -168,6 +168,14 @@
                 </div>
             </div>
 
+            <!-- Smart Summary / Auto Analysis (NEW) -->
+            <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-xl shadow-sm border border-indigo-100">
+                <h3 class="font-bold text-indigo-800 mb-3 text-sm flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2 text-indigo-500"></i>วิเคราะห์และสรุปผลอัจฉริยะ</h3>
+                <div id="dash-smart-summary" class="text-sm text-gray-800 space-y-2.5 leading-relaxed">
+                    <!-- Javascript generates summary here -->
+                </div>
+            </div>
+
             <!-- Weekly Tasks (NEW) -->
             <div class="bg-white p-4 rounded-xl shadow-sm">
                 <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>ตารางงานในสัปดาห์นี้</h3>
@@ -745,6 +753,51 @@
             let diffTotal = totalErr - lastWeekErrTotal;
             let diffText = diffTotal > 0 ? `+${diffTotal} ครั้ง (แย่ลง)` : (diffTotal < 0 ? `${diffTotal} ครั้ง (ดีขึ้น)` : 'เท่าเดิม');
             document.getElementById('dash-err-compare').innerText = `เทียบกับสัปดาห์ก่อน: ${diffText}`;
+
+            // --- SMART SUMMARY LOGIC (ระบบวิเคราะห์อัตโนมัติ) ---
+            let errorTypeCounts = {
+                'แก้ไขได้ก่อนจัดส่ง': 0, 'ส่งถึงหน้าร้านแล้ว': 0, 'ส่งถึงลูกค้าแล้ว': 0, 'ผิดพลาดในการรับลงสินค้า': 0
+            };
+            targetWeekData.forEach(day => {
+                day.errors.forEach(e => { if(errorTypeCounts[e.type] !== undefined) errorTypeCounts[e.type]++; });
+            });
+
+            let smartSummaryHtml = '';
+            if (totalErr === 0) {
+                smartSummaryHtml = `<p class="text-green-600 font-semibold"><i class="fa-solid fa-face-smile-beam mr-1"></i> ยอดเยี่ยมมาก! สัปดาห์นี้ไม่มีข้อผิดพลาดเกิดขึ้นเลย รักษามาตรฐานการทำงานนี้ไว้นะครับ</p>`;
+            } else {
+                // หาปัญหาที่เกิดบ่อยสุด
+                let topErrorType = ''; let topErrorCount = -1;
+                for (const [type, count] of Object.entries(errorTypeCounts)) {
+                    if (count > topErrorCount) { topErrorCount = count; topErrorType = type; }
+                }
+                
+                // หาพนักงานที่ผิดพลาดบ่อยสุด
+                let topEmp = ''; let topEmpCount = -1;
+                for (const [emp, count] of Object.entries(empErrCount)) {
+                    if (count > topEmpCount) { topEmpCount = count; topEmp = emp; }
+                }
+                
+                let trendHtml = diffTotal > 0 ? `<span class="text-red-600 font-bold">เพิ่มขึ้น ${diffTotal} ครั้ง</span> (แย่ลง)` :
+                                (diffTotal < 0 ? `<span class="text-green-600 font-bold">ลดลง ${Math.abs(diffTotal)} ครั้ง</span> (ดีขึ้น!)` : `<b>เท่ากับสัปดาห์ก่อน</b>`);
+                
+                smartSummaryHtml += `<p>📊 <b>ภาพรวม:</b> สัปดาห์นี้มีงานทั้งหมด ${totalVol} รายการ พบความผิดพลาด ${totalErr} ครั้ง ซึ่ง${trendHtml}</p>`;
+                
+                if(topErrorCount > 0) {
+                    smartSummaryHtml += `<p>⚠️ <b>จุดที่ควรระวัง:</b> ปัญหาหลักคือ <b>"${topErrorType}"</b> (พบ ${topErrorCount} ครั้ง) โดยผู้ที่มีข้อผิดพลาดบ่อยสุดคือ <b>${topEmp}</b> (${topEmpCount} ครั้ง)</p>`;
+                    
+                    // แนะนำแนวทางแก้ไขตามประเภทที่ผิดพลาดบ่อยสุด
+                    let suggestion = '';
+                    if (topErrorType === 'แก้ไขได้ก่อนจัดส่ง') suggestion = 'แม้จะตรวจพบและแก้ไขทัน แต่แสดงว่ามีการหยิบหรือจัดสินค้าผิดแต่แรก ควรเน้นย้ำให้พนักงานดูรายละเอียดและหน่วยนับตอนหยิบให้รอบคอบขึ้น เพื่อลดการทำงานซ้ำซ้อน';
+                    else if (topErrorType === 'ส่งถึงหน้าร้านแล้ว') suggestion = 'ความผิดพลาดหลุดไปจนถึงหน้าร้าน ควรเพิ่มขั้นตอนการตรวจสอบรายการสินค้าเทียบกับบิลอีกครั้งอย่างรัดกุม ก่อนส่งสินค้าออกจากคลังไปหน้าร้าน';
+                    else if (topErrorType === 'ส่งถึงลูกค้าแล้ว') suggestion = 'เป็นข้อผิดพลาดที่ร้ายแรงเพราะกระทบลูกค้าโดยตรง! ต้องเพิ่มมาตรการตรวจสอบอย่างละเอียด (Double Check) ก่อนแพ็คส่งมอบหรือขึ้นรถไปส่งลูกค้าทุกครั้ง';
+                    else if (topErrorType === 'ผิดพลาดในการรับลงสินค้า') suggestion = 'ควรตรวจเช็คยอดรับเข้ากับเอกสารให้ตรงกันก่อนนำสินค้าขึ้นชั้นวาง เพื่อป้องกันสต๊อกคลาดเคลื่อนตั้งแต่ต้นทาง';
+                    
+                    smartSummaryHtml += `<p>💡 <b>แนวทางแก้ไขที่แนะนำ:</b> ${suggestion}</p>`;
+                }
+            }
+            document.getElementById('dash-smart-summary').innerHTML = smartSummaryHtml;
+            // --------------------------------------------------
         }
 
         addErrorEntryRow();
