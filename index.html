@@ -409,18 +409,41 @@
         }
 
         // เพิ่มฟังก์ชันสำหรับโซน 3: ตารางงาน
-        function addTaskEntryRow(name = "", status = "ยังไม่เริ่ม") {
+        function addTaskEntryRow(name = "", status = "ยังไม่เริ่ม", assignee = "") {
             const container = document.getElementById('task-entries-container');
             const safeName = name.replace(/"/g, '&quot;');
+            const rowId = 'task-' + Date.now() + Math.floor(Math.random() * 1000);
+            
+            // แยกชื่อผู้รับผิดชอบเป็น Array (รองรับการเลือกหลายคน)
+            const assigneeArray = assignee ? assignee.split(',').map(a => a.trim()) : [];
+
             const html = `
-                <div class="task-entry flex items-center space-x-2 bg-purple-50 p-2 rounded-lg border border-purple-100 relative">
-                    <input type="text" class="task-name flex-1 p-2 border border-white rounded text-sm outline-none focus:ring-1 focus:ring-purple-500 shadow-sm" placeholder="ชื่องาน / แผนงาน..." value="${safeName}">
-                    <select class="task-status p-2 border border-white rounded text-xs outline-none focus:ring-1 focus:ring-purple-500 shadow-sm bg-white font-medium">
-                        <option value="ยังไม่เริ่ม" ${status === 'ยังไม่เริ่ม' ? 'selected' : ''} class="text-gray-500">ยังไม่เริ่ม</option>
-                        <option value="กำลังทำ" ${status === 'กำลังทำ' ? 'selected' : ''} class="text-blue-500">กำลังทำ</option>
-                        <option value="เสร็จแล้ว" ${status === 'เสร็จแล้ว' ? 'selected' : ''} class="text-green-500">เสร็จแล้ว</option>
-                    </select>
-                    <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-xmark"></i></button>
+                <div class="task-entry flex flex-col space-y-3 bg-purple-50 p-3 rounded-lg border border-purple-100 relative">
+                    <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-xmark"></i></button>
+                    
+                    <div class="pr-6">
+                        <input type="text" class="task-name w-full p-2 border border-white rounded text-sm outline-none focus:ring-1 focus:ring-purple-500 shadow-sm" placeholder="ชื่องาน / แผนงาน..." value="${safeName}">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-[10px] font-semibold text-purple-700 mb-1">ผู้รับผิดชอบ (เลือกได้หลายคน)</label>
+                        <div class="flex flex-wrap gap-1.5 mb-1">
+                            ${['หยอง', 'เจมส์', 'พุช', 'บรรเลง', 'ใหม่'].map((emp, i) => `
+                                <div>
+                                    <input type="checkbox" id="task-emp-${rowId}-${i}" value="${emp}" class="hidden peer task-emp-cb" ${assigneeArray.includes(emp) ? 'checked' : ''}>
+                                    <label for="task-emp-${rowId}-${i}" class="inline-block bg-white border border-gray-300 rounded-full px-2.5 py-1 text-xs cursor-pointer peer-checked:bg-purple-500 peer-checked:text-white peer-checked:border-purple-500 transition-colors">${emp}</label>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div>
+                        <select class="task-status w-full p-2 border border-white rounded text-xs outline-none focus:ring-1 focus:ring-purple-500 shadow-sm bg-white font-medium">
+                            <option value="ยังไม่เริ่ม" ${status === 'ยังไม่เริ่ม' ? 'selected' : ''} class="text-gray-500">ยังไม่เริ่ม</option>
+                            <option value="กำลังทำ" ${status === 'กำลังทำ' ? 'selected' : ''} class="text-blue-500">กำลังทำ</option>
+                            <option value="เสร็จแล้ว" ${status === 'เสร็จแล้ว' ? 'selected' : ''} class="text-green-500">เสร็จแล้ว</option>
+                        </select>
+                    </div>
                 </div>
             `;
             container.insertAdjacentHTML('beforeend', html);
@@ -448,7 +471,7 @@
             targetWeekData.forEach(day => {
                 if(day.tasks && Array.isArray(day.tasks)) {
                     day.tasks.forEach(t => {
-                        weeklyTasksMap[t.taskName] = t.status;
+                        weeklyTasksMap[t.taskName] = { status: t.status, assignee: t.assignee || "" };
                     });
                 }
             });
@@ -457,8 +480,8 @@
             container.innerHTML = '';
 
             let hasTasks = false;
-            for (const [tName, tStatus] of Object.entries(weeklyTasksMap)) {
-                addTaskEntryRow(tName, tStatus);
+            for (const [tName, tData] of Object.entries(weeklyTasksMap)) {
+                addTaskEntryRow(tName, tData.status, tData.assignee);
                 hasTasks = true;
             }
             
@@ -495,7 +518,12 @@
             document.querySelectorAll('.task-entry').forEach(entry => {
                 const name = entry.querySelector('.task-name').value.trim();
                 const status = entry.querySelector('.task-status').value;
-                if (name !== "") currentTasks.push({ taskName: name, status: status });
+                
+                // ดึงชื่อพนักงานทุกคนที่ถูกเลือกในแผนงานนี้
+                const checkedAssignees = Array.from(entry.querySelectorAll('.task-emp-cb:checked')).map(cb => cb.value);
+                const assigneeStr = checkedAssignees.join(', ');
+                
+                if (name !== "") currentTasks.push({ taskName: name, status: status, assignee: assigneeStr });
             });
 
             // Gather Customer Notes
@@ -640,7 +668,7 @@
                 // อัปเดตสถานะ Tasks
                 if(day.tasks && Array.isArray(day.tasks)) {
                     day.tasks.forEach(t => {
-                        weeklyTasksMap[t.taskName] = t.status; // ถ้ากรอกชื่อเดิมในวันหลังๆ จะอัปเดตทับเป็นสถานะล่าสุด
+                        weeklyTasksMap[t.taskName] = { status: t.status, assignee: t.assignee || "" }; // ถ้ากรอกชื่อเดิมในวันหลังๆ จะอัปเดตทับเป็นสถานะล่าสุด
                     });
                 }
             });
@@ -650,16 +678,27 @@
             if (Object.keys(weeklyTasksMap).length === 0) {
                 tasksHtml = '<div class="text-center text-gray-400 text-sm py-3">ยังไม่มีแผนงานในสัปดาห์นี้</div>';
             } else {
-                for (const [tName, tStatus] of Object.entries(weeklyTasksMap)) {
+                for (const [tName, tData] of Object.entries(weeklyTasksMap)) {
+                    let tStatus = tData.status;
+                    let tAssignee = tData.assignee;
                     let badgeClass = tStatus === 'เสร็จแล้ว' ? 'bg-green-100 text-green-700' :
                                      tStatus === 'กำลังทำ' ? 'bg-blue-100 text-blue-700' :
                                      'bg-gray-100 text-gray-600';
                     let iconClass = tStatus === 'เสร็จแล้ว' ? 'fa-check-circle' :
                                     tStatus === 'กำลังทำ' ? 'fa-spinner fa-spin' : 'fa-circle-minus';
                     
+                    let assigneeHtml = '';
+                    if (tAssignee) {
+                        const assignees = tAssignee.split(',').map(a => a.trim());
+                        assigneeHtml = assignees.map(a => `<span class="text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded font-medium mt-1 mr-1 inline-block"><i class="fa-solid fa-user mr-1"></i> ${a}</span>`).join('');
+                    }
+
                     tasksHtml += `
                         <div class="flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100 text-sm">
-                            <span class="text-gray-700 font-medium">${tName}</span>
+                            <div class="flex flex-col">
+                                <span class="text-gray-700 font-medium">${tName}</span>
+                                <div class="flex flex-wrap">${assigneeHtml}</div>
+                            </div>
                             <span class="text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap ${badgeClass}">
                                 <i class="fa-solid ${iconClass} mr-1"></i>${tStatus}
                             </span>
@@ -850,8 +889,10 @@
             
             targetWeekData.forEach(day => {
                 day.errors.forEach(e => {
-                    if (e.type === 'แก้ไขได้ก่อนจัดส่ง' || e.type === 'ผิดพลาดในการรับลงสินค้า') {
+                    if (e.type === 'แก้ไขได้ก่อนจัดส่ง') {
                         empHP[e.emp] -= 5;
+                    } else if (e.type === 'ผิดพลาดในการรับลงสินค้า') {
+                        empHP[e.emp] -= 10;
                     } else if (e.type === 'ส่งถึงหน้าร้านแล้ว') {
                         empHP[e.emp] -= 15;
                     } else if (e.type === 'ส่งถึงลูกค้าแล้ว') {
