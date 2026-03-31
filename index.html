@@ -313,27 +313,27 @@
 
         // ------------------ USER PERMISSIONS ------------------
         const USER_DB = {
-            // เห็นทุกร้าน
-            "250013": ["AKRA", "TRD"],   // CHEN
-            "hhsawyer": ["AKRA", "TRD"], // Herehorr
-            "Stamp111": ["AKRA", "TRD"], // STAMP
-            "เฉิน": ["AKRA", "TRD"],       // สำหรับทดสอบโหมด Preview
+            // เห็นทุกร้าน (รองรับทั้งรหัสพนักงานและชื่ออังกฤษ)
+            "250013": ["AKRA", "TRD"], "CHEN": ["AKRA", "TRD"],
+            "hhsawyer": ["AKRA", "TRD"], "HEREHORR": ["AKRA", "TRD"],
+            "Stamp111": ["AKRA", "TRD"], "STAMP": ["AKRA", "TRD"],
+            "เฉิน": ["AKRA", "TRD"],
 
             // พนักงานสาขา AKRA
-            "250007": ["AKRA"], // YONG
-            "250021": ["AKRA"], // MAI
-            "250022": ["AKRA"], // BUNLENG
-            "250025": ["AKRA"], // PUSH
+            "250007": ["AKRA"], "YONG": ["AKRA"],
+            "250021": ["AKRA"], "MAI": ["AKRA"],
+            "250022": ["AKRA"], "BUNLENG": ["AKRA"],
+            "250025": ["AKRA"], "PUSH": ["AKRA"],
 
             // พนักงานสาขา TRD
-            "250005": ["TRD"], // TOP
-            "250008": ["TRD"], // NONGMAI
-            "250010": ["TRD"], // ENG
-            "250019": ["TRD"], // PAO
-            "250020": ["TRD"], // MHEE
-            "250024": ["TRD"], // BOY
-            "250027": ["TRD"], // JAME
-            "250028": ["TRD"]  // SAN
+            "250005": ["TRD"], "TOP": ["TRD"],
+            "250008": ["TRD"], "NONGMAI": ["TRD"],
+            "250010": ["TRD"], "ENG": ["TRD"],
+            "250019": ["TRD"], "PAO": ["TRD"],
+            "250020": ["TRD"], "MHEE": ["TRD"],
+            "250024": ["TRD"], "BOY": ["TRD"],
+            "250027": ["TRD"], "JAME": ["TRD"],
+            "250028": ["TRD"], "SAN": ["TRD"]
         };
         // ----------------------------------------------------------
 
@@ -398,7 +398,9 @@
 
         // ================= STARTUP LOGIC (PERMISSIONS) =================
         function applyRolePermissions() {
-            const permissions = USER_DB[currentUser] || [];
+            // ค้นหาสิทธิ์แบบไม่สนใจตัวพิมพ์เล็ก/ใหญ่ (เช่น พิมพ์ chen หรือ CHEN ก็เข้าได้)
+            let matchedKey = Object.keys(USER_DB).find(k => k.toLowerCase() === String(currentUser).toLowerCase());
+            const permissions = matchedKey ? USER_DB[matchedKey] : [];
             
             if (permissions.length === 0) {
                 alert(`คุณไม่มีสิทธิ์เข้าใช้งานระบบ KPI Tracker หรือรหัสไม่ถูกต้อง (User ID: ${currentUser})`);
