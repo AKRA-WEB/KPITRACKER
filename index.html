@@ -319,41 +319,70 @@
         };
         // ----------------------------------------------------------
 
-        // ================= AUTH & LOGGING SYSTEM =================
-        const urlParams = new URLSearchParams(window.location.search);
-        let currentUser = urlParams.get('user');
-
-        if (currentUser) {
-            sessionStorage.setItem('active_user', currentUser);
-            window.history.replaceState({}, document.title, window.location.pathname);
-        } else {
-            currentUser = sessionStorage.getItem('active_user');
-        }
-
-        if (!currentUser) {
-            const isPreviewMode = window.self !== window.top || window.location.hostname === '' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            if (isPreviewMode) {
-                currentUser = "เฉิน";
-            } else {
-                alert("กรุณาเข้าสู่ระบบผ่านหน้า Main ก่อนใช้งานครับ");
-                window.location.href = "https://akra-web.github.io/Main/"; 
-            }
-        } 
+        // ================= AUTH & LOGGING SYSTEM (SSO) =================
+        const PORTAL_URL = "https://akra-web.github.io/Main/"; // URL ของหน้าจอหลัก
+        let currentUser = null;
+        let currentRoles = [];
         
         // ================= STATE =================
         let currentBranch = sessionStorage.getItem('active_branch') || "";
         let viewOffsetWeek = 0; 
-        document.getElementById('record-date').valueAsDate = new Date();
 
-        // ================= STARTUP LOGIC =================
-        window.addEventListener('load', () => {
-            document.getElementById('showUserName').innerText = currentUser;
+        // ฟังก์ชันตรวจสอบสิทธิ์ทันทีที่เปิดแอป
+        function checkAuth() {
+            // เช็คว่าเป็นโหมดทดสอบ (Preview) หรือไม่ เพื่อไม่ให้ติดแจ้งเตือนเวลาแก้ไขโค้ด
+            const isPreviewMode = window.self !== window.top || window.location.hostname === '' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             
+            const savedData = localStorage.getItem('akra_sso_user_data');
+            
+            if (!savedData && !isPreviewMode) {
+                // ถ้าไม่มีข้อมูลแปลว่าไม่ได้ Login ผ่าน Main มา ให้เตะกลับไปหน้า Main
+                alert("กรุณาเข้าสู่ระบบผ่านหน้า Portal หลักก่อนใช้งานครับ");
+                window.location.href = PORTAL_URL;
+                return;
+            }
+
+            try {
+                if (isPreviewMode && !savedData) {
+                    currentUser = "เฉิน"; // Mock data สำหรับตอน Preview
+                    currentRoles = ["Admin"];
+                } else {
+                    const userData = JSON.parse(savedData);
+                    currentUser = userData.name;
+                    currentRoles = userData.roles || [];
+                }
+
+                // ตรวจสอบขั้นต่ำว่ามีชื่อหรือไม่
+                if(!currentUser) throw new Error("Invalid User Data");
+
+                console.log(`👤 ผู้ใช้งาน: ${currentUser} | สิทธิ์: ${currentRoles.join(', ')}`);
+                
+                // รอให้หน้าเว็บโหลดเสร็จก่อนจัดการ UI
+                window.addEventListener('DOMContentLoaded', () => {
+                    const userNameDisplay = document.getElementById('showUserName');
+                    if(userNameDisplay) userNameDisplay.innerText = currentUser;
+                    document.getElementById('record-date').valueAsDate = new Date();
+                    
+                    // เรียกใช้งานฟังก์ชันจัดการ UI ตามสิทธิ์สาขา
+                    applyRolePermissions();
+                });
+
+            } catch (e) {
+                if (!isPreviewMode) {
+                    alert("ข้อมูลการเข้าสู่ระบบไม่สมบูรณ์ กรุณาล็อกอินใหม่");
+                    localStorage.removeItem('akra_sso_user_data');
+                    window.location.href = PORTAL_URL;
+                }
+            }
+        }
+
+        // ================= STARTUP LOGIC (PERMISSIONS) =================
+        function applyRolePermissions() {
             const permissions = USER_DB[currentUser] || [];
             
             if (permissions.length === 0) {
                 alert("คุณไม่มีสิทธิ์เข้าใช้งานระบบ KPI Tracker หรือรหัสไม่ถูกต้อง");
-                window.location.href = "https://akra-web.github.io/Main/"; 
+                window.location.href = PORTAL_URL; 
                 return;
             }
 
@@ -366,7 +395,10 @@
                     showBranchSelector(permissions);
                 }
             }
-        });
+        }
+
+        // ทำงานทันทีเมื่อเริ่มโหลดไฟล์ Script
+        checkAuth();
 
         function showBranchSelector(perms) {
             document.getElementById('view-selector').classList.remove('hidden');
