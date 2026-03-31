@@ -900,7 +900,7 @@
             const rawData = JSON.parse(localStorage.getItem('kpiData_' + currentBranch) || '[]');
             
             const today = new Date();
-            const startOfCurrentWeek = getStartOfWeek(today); // <--- แก้ไขตัวแปรที่พิมพ์ผิดตรงนี้แล้วครับ
+            const startOfCurrentWeek = getStartOfWeek(today); 
             startOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + (viewOffsetWeek * 7));
             const endOfWeek = new Date(startOfCurrentWeek);
             endOfWeek.setDate(endOfWeek.getDate() + 6);
@@ -931,6 +931,10 @@
             let totalCustomerNotesCount = 0;
             let weeklyTasksMap = {}; 
             let hasAnyNotes = false;
+            
+            // --- สร้าง Object รองรับข้อมูลสำหรับ Smart Summary ให้อ่านเฉพาะ Note ที่ไม่มี Tag HTML ---
+            let errorTypeCounts = {};
+            let errorNotesList = {};
 
             targetWeekData.forEach(day => {
                 if (day.volume) {
@@ -963,28 +967,41 @@
                     
                     if(!categorizedNotes[e.emp][e.type]) categorizedNotes[e.emp][e.type] = [];
                     
-                    // แปลงหมายเหตุ ถ้าเป็นความผิดอื่น ๆ จะดึงป้ายคะแนนมาโชว์ให้สวยงาม
-                    let displayNote = e.note;
-                    let customPenalty = null;
+                    // เตรียมข้อมูลสำหรับ Smart Summary (ทำความสะอาดหมายเหตุก่อนสร้าง HTML)
+                    if(errorTypeCounts[e.type] === undefined) {
+                        errorTypeCounts[e.type] = 0;
+                        errorNotesList[e.type] = [];
+                    }
+                    errorTypeCounts[e.type]++; 
+
+                    // --- คำนวณ HP ที่ต้องหัก และสร้างป้ายกำกับสำหรับทุกความผิด ---
+                    let penaltyToApply = 0;
+                    let cleanNote = e.note;
+
                     if (e.type === 'ความผิดอื่น ๆ') {
                         let match = e.note.match(/^\[หัก (\d+) HP\]\s*(.*)/);
                         if (match) {
-                            customPenalty = parseInt(match[1]);
-                            displayNote = `<span class="text-red-500 font-bold bg-red-100 px-1 rounded mr-1 shadow-sm border border-red-200 text-[10px]">-${customPenalty} HP</span> ${match[2]}`;
+                            penaltyToApply = parseInt(match[1]);
+                            cleanNote = match[2];
+                        } else {
+                            penaltyToApply = 10;
                         }
+                    } else {
+                        penaltyToApply = HP_PENALTY[e.type] !== undefined ? HP_PENALTY[e.type] : 10;
                     }
+
+                    // บันทึกข้อความแบบไม่มี HTML ลงในคลังของ Smart Summary
+                    if(!errorNotesList[e.type].includes(cleanNote)) errorNotesList[e.type].push(cleanNote);
+
+                    // สร้าง HTML ป้ายกำกับคะแนนที่โดนหักสำหรับแสดงในหน้า UI
+                    let displayNote = `<span class="text-red-500 font-bold bg-red-100 px-1.5 py-0.5 rounded mr-1.5 shadow-sm border border-red-200 text-[9px] inline-block whitespace-nowrap">-${penaltyToApply} HP</span> <span class="text-gray-700">${cleanNote}</span>`;
 
                     categorizedNotes[e.emp][e.type].push({ note: displayNote, date: day.date });
                     hasAnyNotes = true;
 
                     // คำนวณการหัก HP
                     if (empHP[e.emp] !== undefined) {
-                        if (e.type === 'ความผิดอื่น ๆ' && customPenalty !== null) {
-                            empHP[e.emp] -= customPenalty; // หักตามที่เลือกระบุไว้
-                        } else {
-                            let penalty = HP_PENALTY[e.type] !== undefined ? HP_PENALTY[e.type] : 10;
-                            empHP[e.emp] -= penalty;
-                        }
+                        empHP[e.emp] -= penaltyToApply;
                     }
                 });
 
@@ -1050,7 +1067,7 @@
                         allNotesHtml += `<div class="bg-${color}-50 rounded border border-${color}-200 p-2">
                                             <div class="text-xs font-bold text-${color}-700 mb-1 border-b border-${color}-200 pb-1">${errType}</div>`;
                         notes.forEach(err => { 
-                            allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`; 
+                            allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between items-start mb-1.5"><div class="pr-2 flex-1 leading-tight">${err.note}</div><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`; 
                         });
                         allNotesHtml += `</div>`;
                         cIdx++;
@@ -1093,21 +1110,6 @@
             window._empBreakdownData = { count: empErrCount, lastCount: lastWeekEmpErrCount };
             renderEmpBreakdown();
 
-            // --- SMART SUMMARY LOGIC ---
-            let errorTypeCounts = {};
-            let errorNotesList = {};
-
-            targetWeekData.forEach(day => {
-                (day.errors || []).forEach(e => { 
-                    if(errorTypeCounts[e.type] === undefined) {
-                        errorTypeCounts[e.type] = 0;
-                        errorNotesList[e.type] = [];
-                    }
-                    errorTypeCounts[e.type]++; 
-                    if(!errorNotesList[e.type].includes(e.note)) errorNotesList[e.type].push(e.note);
-                });
-            });
-
             let getSuggestion = (type, index) => {
                 const suggestionDatabase = {
                     'แก้ไขได้ก่อนจัดส่ง': ['จัดโซนสินค้าใหม่ให้ชัดเจน', 'ย้ำเตือนเรื่อง "หน่วยนับ" ก่อนหยิบ', 'ทำงานแบบ Buddy จับคู่ช่วยรีเช็ค'],
@@ -1135,8 +1137,6 @@
                 smartSummaryHtml += `<p>📊 <b>ภาพรวม:</b> สัปดาห์นี้พบความผิดพลาด ${totalErr} ครั้ง ซึ่ง${trendHtml}</p>`;
                 if(topErrorCount > 0) {
                     let sampleNotes = errorNotesList[topErrorType].slice(0, 2).join(', ');
-                    // Clean up the HP tag for the summary view if it exists
-                    sampleNotes = sampleNotes.replace(/<span.*?>.*?<\/span>\s*/g, '');
                     let noteContext = sampleNotes ? ` <i>(เช่น: ${sampleNotes})</i>` : '';
                     smartSummaryHtml += `<p>⚠️ <b>จุดควรระวัง:</b> ปัญหาหลักคือ <b>"${topErrorType}"</b> พบ ${topErrorCount} ครั้ง${noteContext} โดยผู้ที่มีข้อผิดพลาดบ่อยสุดคือ <b>${topEmp}</b></p>`;
                     let suggestionIndex = totalErr % 3;
