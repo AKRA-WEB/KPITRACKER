@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KPI Tracker - Daily Record</title>
+    <title>KPI Tracker - Multi Branch</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -14,26 +14,46 @@
         .toast { transition: opacity 0.3s, transform 0.3s; transform: translateY(100%); opacity: 0; }
         .toast.show { transform: translateY(0); opacity: 1; }
         ::-webkit-scrollbar { width: 0px; background: transparent; }
-        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 50; justify-content: center; align-items: center; flex-direction: column; }
+        optgroup { font-weight: bold; color: #4f46e5; background-color: #f8fafc; }
+        option { font-weight: normal; color: #1f2937; background-color: #ffffff; }
     </style>
 </head>
 <body class="text-gray-800 pb-20">
 
+    <!-- ================= VIEW: BRANCH SELECTOR ================= -->
+    <div id="view-selector" class="hidden fixed inset-0 bg-blue-600 z-50 flex flex-col items-center justify-center p-6 text-white">
+        <div class="text-center mb-8">
+            <i class="fa-solid fa-warehouse text-6xl mb-4"></i>
+            <h1 class="text-2xl font-bold">กรุณาเลือกสาขาที่ต้องการเข้า</h1>
+            <p class="text-blue-100 text-sm mt-2" id="selector-user-name">ยินดีต้อนรับ</p>
+        </div>
+        <div class="grid grid-cols-1 gap-4 w-full max-w-xs">
+            <button onclick="selectBranch('AKRA')" id="btn-branch-akra" class="hidden bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-xl active:scale-95 transition-transform flex items-center justify-center border-2 border-orange-400">
+                <i class="fa-solid fa-store mr-2"></i> สาขา AKRA (อัครา)
+            </button>
+            <button onclick="selectBranch('TRD')" id="btn-branch-trd" class="hidden bg-white text-blue-600 font-bold py-4 rounded-2xl shadow-xl active:scale-95 transition-transform flex items-center justify-center">
+                <i class="fa-solid fa-store-alt mr-2"></i> สาขา TRD (หน้าร้าน)
+            </button>
+        </div>
+        <p class="mt-10 text-[10px] text-blue-300">Warehouse Management System</p>
+    </div>
+
     <!-- Header -->
     <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex flex-col space-y-2">
         <div class="flex justify-between items-center">
-            <h1 class="text-xl font-bold"><i class="fa-solid fa-clipboard-check mr-2"></i> KPI Daily Record</h1>
+            <h1 class="text-xl font-bold"><i class="fa-solid fa-clipboard-check mr-2"></i> KPI <span id="header-branch-name" class="text-yellow-300">AKRA</span></h1>
             <button onclick="syncDataFromSheet()" id="btn-sync" class="text-white bg-blue-700 px-3 py-1 rounded-full text-xs font-semibold shadow active:bg-blue-800 transition-colors">
                 <i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล
             </button>
         </div>
-        <div class="text-xs text-blue-200">
-            <i class="fa-solid fa-user mr-1"></i> ผู้ใช้งาน: <span id="showUserName" class="font-semibold text-white">กำลังตรวจสอบ...</span>
+        <div class="flex justify-between items-center text-xs text-blue-200">
+            <div><i class="fa-solid fa-user mr-1"></i> ผู้ใช้งาน: <span id="showUserName" class="font-semibold text-white">กำลังตรวจสอบ...</span></div>
+            <button id="btn-switch-branch" onclick="location.reload()" class="hidden bg-blue-800 px-2 py-0.5 rounded text-white active:bg-blue-900"><i class="fa-solid fa-right-left mr-1"></i> สลับสาขา</button>
         </div>
     </header>
 
     <!-- Main Content Area -->
-    <main id="app-content" class="p-4 max-w-md mx-auto">
+    <main id="app-content" class="p-4 max-w-md mx-auto hidden">
         
         <!-- ================= VIEW: RECORD ================= -->
         <div id="view-record" class="space-y-6">
@@ -44,9 +64,9 @@
                 <input type="date" id="record-date" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
 
-            <!-- ZONE 1: Errors -->
+            <!-- Errors -->
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500">
-                <h2 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>โซน 1: บันทึกความผิดพลาด (KPI)</h2>
+                <h2 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>บันทึกความผิดพลาด (KPI)</h2>
                 
                 <div id="error-entries-container" class="space-y-3"></div>
                 
@@ -55,9 +75,9 @@
                 </button>
             </div>
 
-            <!-- ZONE 2: General Data -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
-                <h2 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-boxes-stacked text-blue-500 mr-2"></i>โซน 2: ข้อมูลงานประจำวัน</h2>
+            <!-- General Data (Hidden for TRD) -->
+            <div id="zone-2-container" class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <h2 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-boxes-stacked text-blue-500 mr-2"></i>ข้อมูลงานประจำวัน</h2>
                 
                 <div class="space-y-4">
                     <div class="flex justify-between items-center border-b pb-2">
@@ -119,9 +139,9 @@
                 </div>
             </div>
 
-            <!-- ZONE 3: Weekly Tasks -->
+            <!-- Weekly Tasks -->
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500">
-                <h2 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>โซน 3: แผนงานที่ทำในสัปดาห์นี้</h2>
+                <h2 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>แผนงานที่ทำในสัปดาห์นี้</h2>
                 <p class="text-xs text-gray-500 mb-3">จดบันทึกและอัปเดตสถานะงาน (Dashboard จะแสดงสถานะล่าสุด)</p>
                 
                 <div id="task-entries-container" class="space-y-2"></div>
@@ -151,7 +171,7 @@
 
             <!-- Overview Cards -->
             <div class="grid grid-cols-2 gap-3">
-                <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-red-500">
+                <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-red-500 col-span-2" id="dash-err-card">
                     <p class="text-xs text-gray-500 font-semibold mb-1">ความผิดพลาดรวม</p>
                     <div class="flex items-end justify-between">
                         <span class="text-3xl font-bold text-gray-800" id="dash-total-errors">0</span>
@@ -159,7 +179,8 @@
                     </div>
                     <p class="text-[10px] text-gray-400 mt-1" id="dash-err-compare">เทียบกับวีคก่อน: -</p>
                 </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-blue-500">
+                <!-- Volume Card (Hidden for TRD) -->
+                <div id="dash-vol-card" class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-blue-500">
                     <p class="text-xs text-gray-500 font-semibold mb-1">ปริมาณงานรวม (บิล+ส่ง)</p>
                     <div class="flex items-end justify-between">
                         <span class="text-3xl font-bold text-gray-800" id="dash-total-volume">0</span>
@@ -168,58 +189,56 @@
                 </div>
             </div>
 
-            <!-- Smart Summary / Auto Analysis (NEW) -->
+            <!-- Smart Summary / Auto Analysis -->
             <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-xl shadow-sm border border-indigo-100">
                 <h3 class="font-bold text-indigo-800 mb-3 text-sm flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2 text-indigo-500"></i>วิเคราะห์และสรุปผลอัจฉริยะ</h3>
-                <div id="dash-smart-summary" class="text-sm text-gray-800 space-y-2.5 leading-relaxed">
-                    <!-- Javascript generates summary here -->
-                </div>
+                <div id="dash-smart-summary" class="text-sm text-gray-800 space-y-2.5 leading-relaxed"></div>
             </div>
 
-            <!-- Gamification / Employee Evaluation (NEW) -->
+            <!-- Gamification / Employee Evaluation -->
             <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-4 rounded-xl shadow-sm border border-yellow-200">
                 <h3 class="font-bold text-yellow-800 mb-3 text-sm flex items-center justify-between">
                     <span><i class="fa-solid fa-trophy mr-2 text-yellow-500"></i>จัดอันดับทีม (HP ประจำสัปดาห์)</span>
                     <span class="text-[10px] font-normal text-yellow-700 bg-yellow-200 px-2 py-0.5 rounded-full">เริ่มที่ 100 HP</span>
                 </h3>
-                <div id="dash-gamification" class="space-y-3">
-                    <!-- Javascript generates game stats here -->
-                </div>
+                <div id="dash-gamification" class="space-y-3"></div>
             </div>
 
-            <!-- Weekly Tasks (NEW) -->
+            <!-- Weekly Tasks -->
             <div class="bg-white p-4 rounded-xl shadow-sm">
                 <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>ตารางงานในสัปดาห์นี้</h3>
-                <div id="dash-weekly-tasks" class="space-y-2">
-                    <!-- Javascript generates tasks here -->
-                </div>
+                <div id="dash-weekly-tasks" class="space-y-2"></div>
             </div>
 
             <!-- Employee Breakdown -->
             <div class="bg-white p-4 rounded-xl shadow-sm">
-                <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2">แยกตามรายบุคคล</h3>
-                <div id="dash-emp-breakdown" class="space-y-3">
-                    <!-- Javascript generates bars here -->
+                <div class="flex justify-between items-center border-b pb-2 mb-3">
+                    <h3 class="font-bold text-gray-800 text-sm">แยกตามรายบุคคล</h3>
+                    <!-- Dropdown Filter สำหรับ TRD จะแสดงขึ้นมาอัตโนมัติ -->
+                    <select id="dash-dept-filter" class="hidden text-xs border border-gray-200 rounded p-1 outline-none text-blue-600 bg-blue-50 focus:ring-1 focus:ring-blue-500 font-semibold" onchange="renderEmpBreakdown()">
+                        <option value="ALL">ดูทุกแผนก</option>
+                        <option value="หน้าร้าน">1. หน้าร้าน</option>
+                        <option value="แคชเชียร์">2. แคชเชียร์</option>
+                        <option value="ในร้าน">3. ในร้าน</option>
+                        <option value="คลัง">4. คลัง</option>
+                    </select>
                 </div>
+                <div id="dash-emp-breakdown" class="space-y-3"></div>
             </div>
 
             <!-- Details Note -->
             <div class="bg-white p-4 rounded-xl shadow-sm">
                 <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2">บันทึกข้อผิดพลาด (หมายเหตุ)</h3>
-                <div id="dash-error-notes" class="space-y-2 max-h-60 overflow-y-auto">
-                    <!-- Javascript generates list here -->
-                </div>
+                <div id="dash-error-notes" class="space-y-2 max-h-60 overflow-y-auto"></div>
             </div>
 
-            <!-- Customer Notes -->
-            <div class="bg-white p-4 rounded-xl shadow-sm">
+            <!-- Customer Notes (Hidden for TRD) -->
+            <div id="dash-customer-notes-container" class="bg-white p-4 rounded-xl shadow-sm">
                 <h3 class="font-bold text-gray-800 mb-3 text-sm border-b pb-2 flex justify-between items-center">
                     <span><i class="fa-solid fa-truck-fast text-blue-500 mr-2"></i>รายชื่อลูกค้า / การจัดส่ง</span>
                     <span id="dash-customer-notes-count" class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-bold">0 รายการ</span>
                 </h3>
-                <div id="dash-customer-notes" class="space-y-2 max-h-60 overflow-y-auto">
-                    <!-- Javascript generates list here -->
-                </div>
+                <div id="dash-customer-notes" class="space-y-2 max-h-60 overflow-y-auto"></div>
             </div>
 
         </div>
@@ -245,12 +264,62 @@
     </div>
 
     <script>
-        // ================= AUTH & LOGGING SYSTEM =================
-        const CURRENT_APP_NAME = "KPITRACKER"; 
-        
-        // *เปลี่ยนชื่อตัวแปรนี้จาก GOOGLE_APP_SCRIPT_URL เป็น LOG_APP_SCRIPT_URL เพื่อไม่ให้ซ้ำกับตัวบันทึกข้อมูลหลัก
+        // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5PCJ1OlxCQR6zaNubrmZTgaORB-rJK2Ow5_YC3i5kKv-BrrTgJkTJyNZKrzfodK1m/exec";
+        const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
 
+        const CURRENT_APP_NAME = "KPITRACKER"; 
+
+        // ------------------ TRD DEPARTMENTS ------------------
+        const TRD_DEPARTMENTS = {
+            "หน้าร้าน": ['ท็อป', 'เปา', 'หมี'],
+            "แคชเชียร์": ['มะปราง'],
+            "ในร้าน": ['น้องใหม่', 'บอย'],
+            "คลัง": ['แสน', 'เอี้ยง']
+        };
+
+        // ------------------ BRANCH CONFIGURATION ------------------
+        const BRANCH_CONFIG = {
+            "AKRA": {
+                employees: ['หยอง', 'ใหม่', 'พุช', 'บันเลง'], 
+                showZone2: true,
+                errorTypes: [
+                    { group: "หมวดหมู่หลัก", options: ["แก้ไขได้ก่อนจัดส่ง", "ส่งถึงหน้าร้านแล้ว", "ส่งถึงลูกค้าแล้ว", "ผิดพลาดในการรับลงสินค้า", "ความผิดอื่น ๆ"] }
+                ]
+            },
+            "TRD": {
+                employees: ['ท็อป', 'เปา', 'หมี', 'มะปราง', 'น้องใหม่', 'บอย', 'แสน', 'เอี้ยง'], // อัปเดตรายชื่อรวม
+                showZone2: false,
+                errorTypes: [
+                    { group: "1. หน้าร้าน", options: ["จัดบิลผิด", "หยิบของผิด", "จำนวนไม่ครบ", "ลูกค้ารอสินค้านานเกิน 15 นาที", "ปล่อยของผิดถึงลูกค้า (Checker)"] },
+                    { group: "2. แคชเชียร์/แอดมิน", options: ["คิดเงินทอนเงินผิด", "ตอบแชทช้า", "ให้ข้อมูลสินค้าผิด", "เปิดบิลผิด", "คิดเงินพลาด", "ของหมดไม่แจ้ง (เห็นผ่านหน้าระบบ)"] },
+                    { group: "3. ในร้าน", options: ["ไม่ช่วยใส่ถุง", "ไม่แนะนำสินค้า", "ไม่เดินดูแลลูกค้าเดินช้อป", "บริการไม่สุภาพ", "ปล่อยชั้นวางว่าง (เรียงของเติม)"] },
+                    { group: "4. คลังหน้าร้าน", options: ["สต๊อคสินค้าไม่พอใช้", "ของหมดไม่แจ้ง"] },
+                    { group: "5. อื่น ๆ", options: ["ความผิดอื่น ๆ"] }
+                ]
+            }
+        };
+
+        // ------------------ HP PENALTY (ตั้งค่าคะแนนติดลบ) ------------------
+        const HP_PENALTY = {
+            'แก้ไขได้ก่อนจัดส่ง': 5, 'ผิดพลาดในการรับลงสินค้า': 10, 'ส่งถึงหน้าร้านแล้ว': 15, 'ส่งถึงลูกค้าแล้ว': 30,
+            
+            // TRD
+            'จัดบิลผิด': 5, 'หยิบของผิด': 5, 'จำนวนไม่ครบ': 5, 'ลูกค้ารอสินค้านานเกิน 15 นาที': 10, 'ปล่อยของผิดถึงลูกค้า (Checker)': 30,
+            'คิดเงินทอนเงินผิด': 15, 'ตอบแชทช้า': 10, 'ให้ข้อมูลสินค้าผิด': 5, 'เปิดบิลผิด': 10, 'คิดเงินพลาด': 15, 'ของหมดไม่แจ้ง (เห็นผ่านหน้าระบบ)': 5,
+            'ไม่ช่วยใส่ถุง': 5, 'ไม่แนะนำสินค้า': 5, 'ไม่เดินดูแลลูกค้าเดินช้อป': 5, 'บริการไม่สุภาพ': 20, 'ปล่อยชั้นวางว่าง (เรียงของเติม)': 10,
+            'สต๊อคสินค้าไม่พอใช้': 10, 'ของหมดไม่แจ้ง': 10
+        };
+
+        // ------------------ USER PERMISSIONS ------------------
+        const USER_DB = {
+            "250013": ["AKRA", "TRD"], "hhsawyer": ["AKRA", "TRD"], "Stamp111": ["AKRA", "TRD"], "เฉิน": ["AKRA", "TRD"],
+            "250007": ["AKRA"], "250021": ["AKRA"], "250022": ["AKRA"], "250025": ["AKRA"],
+            "250005": ["TRD"], "250008": ["TRD"], "250010": ["TRD"], "250019": ["TRD"], "250020": ["TRD"], "250024": ["TRD"], "250027": ["TRD"], "250028": ["TRD"]
+        };
+        // ----------------------------------------------------------
+
+        // ================= AUTH & LOGGING SYSTEM =================
         const urlParams = new URLSearchParams(window.location.search);
         let currentUser = urlParams.get('user');
 
@@ -262,72 +331,121 @@
         }
 
         if (!currentUser) {
-            // ตรวจสอบว่ากำลังเปิดในโหมด Preview (เช่น ในหน้าต่าง Editor, เครื่องตัวเอง, หรือเปิดไฟล์ตรงๆ)
             const isPreviewMode = window.self !== window.top || window.location.hostname === '' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            
             if (isPreviewMode) {
-                currentUser = "Guest (Preview)";
-                console.log("เข้าใช้งานในโหมด Preview");
+                currentUser = "เฉิน";
             } else {
                 alert("กรุณาเข้าสู่ระบบผ่านหน้า Main ก่อนใช้งานครับ");
                 window.location.href = "https://akra-web.github.io/Main/"; 
             }
         } 
         
-        if (currentUser) {
-            console.log("ยินดีต้อนรับคุณ: " + currentUser);
-            // แสดงชื่อผู้ใช้เมื่อโหลดหน้าเว็บเสร็จ
-            document.addEventListener("DOMContentLoaded", () => {
-                const userNameElement = document.getElementById('showUserName');
-                if (userNameElement) userNameElement.innerText = currentUser;
-            });
+        // ================= STATE =================
+        let currentBranch = sessionStorage.getItem('active_branch') || "";
+        let viewOffsetWeek = 0; 
+        document.getElementById('record-date').valueAsDate = new Date();
+
+        // ================= STARTUP LOGIC =================
+        window.addEventListener('load', () => {
+            document.getElementById('showUserName').innerText = currentUser;
+            
+            const permissions = USER_DB[currentUser] || [];
+            
+            if (permissions.length === 0) {
+                alert("คุณไม่มีสิทธิ์เข้าใช้งานระบบ KPI Tracker หรือรหัสไม่ถูกต้อง");
+                window.location.href = "https://akra-web.github.io/Main/"; 
+                return;
+            }
+
+            if (currentBranch && permissions.includes(currentBranch)) {
+                initApp(currentBranch, permissions);
+            } else {
+                if (permissions.length === 1) {
+                    selectBranch(permissions[0], permissions);
+                } else {
+                    showBranchSelector(permissions);
+                }
+            }
+        });
+
+        function showBranchSelector(perms) {
+            document.getElementById('view-selector').classList.remove('hidden');
+            document.getElementById('selector-user-name').innerText = "รหัสผู้ใช้งาน: " + currentUser;
+            if (perms.includes('AKRA')) document.getElementById('btn-branch-akra').classList.remove('hidden');
+            if (perms.includes('TRD')) document.getElementById('btn-branch-trd').classList.remove('hidden');
+        }
+
+        function selectBranch(branch, perms = null) {
+            currentBranch = branch;
+            sessionStorage.setItem('active_branch', branch);
+            document.getElementById('view-selector').classList.add('hidden');
+            if(!perms) perms = USER_DB[currentUser] || [];
+            initApp(branch, perms);
+        }
+
+        function initApp(branch, permissions) {
+            document.getElementById('app-content').classList.remove('hidden');
+            document.getElementById('header-branch-name').innerText = branch;
+            if(branch === 'TRD') {
+                document.getElementById('header-branch-name').className = 'text-orange-300';
+                document.getElementById('dash-dept-filter').classList.remove('hidden');
+                document.getElementById('dash-dept-filter').value = 'ALL';
+            } else {
+                document.getElementById('header-branch-name').className = 'text-yellow-300';
+                document.getElementById('dash-dept-filter').classList.add('hidden');
+            }
+
+            if(permissions.length > 1) {
+                document.getElementById('btn-switch-branch').classList.remove('hidden');
+            }
+            
+            if (BRANCH_CONFIG[branch].showZone2) {
+                document.getElementById('zone-2-container').classList.remove('hidden');
+                document.getElementById('dash-vol-card').classList.remove('hidden');
+                document.getElementById('dash-customer-notes-container').classList.remove('hidden');
+                document.getElementById('dash-err-card').classList.remove('col-span-2');
+            } else {
+                document.getElementById('zone-2-container').classList.add('hidden');
+                document.getElementById('dash-vol-card').classList.add('hidden');
+                document.getElementById('dash-customer-notes-container').classList.add('hidden');
+                document.getElementById('dash-err-card').classList.add('col-span-2'); 
+            }
+
+            document.getElementById('error-entries-container').innerHTML = '';
+            document.getElementById('task-entries-container').innerHTML = '';
+
+            addErrorEntryRow();
+            loadTasksForSelectedDate();
+            syncDataFromSheet();
         }
 
         function sendAppLog(action, details) {
             if (!currentUser) return;
-            const payload = {
-                user: currentUser,
-                action: action,
-                app: CURRENT_APP_NAME,
-                details: details
-            };
-
-            fetch(LOG_APP_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).then(() => {
-                console.log(`บันทึก Log สำเร็จ: ${action} โดย ${currentUser}`);
-            }).catch(err => console.error(err));
+            const payload = { user: currentUser, action: action, app: CURRENT_APP_NAME, details: details };
+            fetch(LOG_APP_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+            .catch(err => console.error(err));
         }
-
-        // ================= CONFIGURATION =================
-        const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec"; 
-        
-        // ================= STATE =================
-        let viewOffsetWeek = 0; 
-        document.getElementById('record-date').valueAsDate = new Date();
 
         // ================= API / SYNC =================
         async function syncDataFromSheet() {
-            if(!GOOGLE_APP_SCRIPT_URL) return;
+            if(!GOOGLE_APP_SCRIPT_URL || !currentBranch) return;
             const btnSync = document.getElementById('btn-sync');
-            btnSync.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1"></i> ซิงค์ข้อมูล...';
+            btnSync.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1"></i> ซิงค์...';
             btnSync.disabled = true;
 
             try {
-                const response = await fetch(GOOGLE_APP_SCRIPT_URL);
+                const fetchUrl = GOOGLE_APP_SCRIPT_URL + "?branch=" + currentBranch;
+                const response = await fetch(fetchUrl);
                 const data = await response.json();
                 
                 if (Array.isArray(data)) {
-                    localStorage.setItem('kpiData', JSON.stringify(data));
+                    localStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
                     if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
                         loadDashboardData();
                     } else {
-                        loadTasksForSelectedDate(); // อัปเดตงานในหน้าบันทึกด้วยถ้าอยู่หน้านี้
+                        loadTasksForSelectedDate();
                     }
-                    showToast("ซิงค์ข้อมูลล่าสุดจาก Sheet เรียบร้อย");
+                    showToast("ซิงค์ข้อมูลล่าสุดเรียบร้อย");
                 }
             } catch (error) {
                 console.error(error);
@@ -370,37 +488,89 @@
             el.value = newVal;
         }
 
+        function getErrorTypeOptionsHtml(branch) {
+            const groups = BRANCH_CONFIG[branch].errorTypes;
+            return groups.map(g => {
+                if(g.group === "หมวดหมู่หลัก") {
+                    return g.options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+                } else {
+                    return `<optgroup label="${g.group}">` + g.options.map(opt => `<option value="${opt}">${opt}</option>`).join('') + `</optgroup>`;
+                }
+            }).join('');
+        }
+
+        function getTRDDept(empName) {
+            for (const [dept, emps] of Object.entries(TRD_DEPARTMENTS)) {
+                if (emps.includes(empName)) return dept;
+            }
+            return "";
+        }
+
+        function togglePenalty(selectEl) {
+            const container = selectEl.closest('.error-entry').querySelector('.penalty-container');
+            if (selectEl.value === 'ความผิดอื่น ๆ') {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
         // ================= RECORD LOGIC =================
         function addErrorEntryRow() {
             const container = document.getElementById('error-entries-container');
             const rowId = Date.now() + Math.floor(Math.random() * 1000);
+            const typeOptionsHtml = getErrorTypeOptionsHtml(currentBranch);
+
+            let empsHtml = '';
+            if (currentBranch === 'TRD') {
+                for (const [dept, emps] of Object.entries(TRD_DEPARTMENTS)) {
+                    empsHtml += `<div class="mb-2"><span class="text-[10px] text-purple-600 font-bold block mb-0.5">${dept}</span><div class="flex flex-wrap gap-1.5">`;
+                    empsHtml += emps.map((emp, i) => `
+                        <div>
+                            <input type="checkbox" id="emp-${rowId}-${dept}-${i}" value="${emp}" class="hidden peer err-emp-cb">
+                            <label for="emp-${rowId}-${dept}-${i}" class="inline-block bg-white border border-gray-300 rounded-full px-2 py-0.5 text-[11px] cursor-pointer peer-checked:bg-red-500 peer-checked:text-white peer-checked:border-red-500 transition-colors">${emp}</label>
+                        </div>
+                    `).join('');
+                    empsHtml += `</div></div>`;
+                }
+            } else {
+                const emps = BRANCH_CONFIG[currentBranch].employees;
+                empsHtml += `<div class="flex flex-wrap gap-1.5">`;
+                empsHtml += emps.map((emp, i) => `
+                    <div>
+                        <input type="checkbox" id="emp-${rowId}-${i}" value="${emp}" class="hidden peer err-emp-cb">
+                        <label for="emp-${rowId}-${i}" class="inline-block bg-white border border-gray-300 rounded-full px-2.5 py-1 text-xs cursor-pointer peer-checked:bg-red-500 peer-checked:text-white peer-checked:border-red-500 transition-colors">${emp}</label>
+                    </div>
+                `).join('');
+                empsHtml += `</div>`;
+            }
+
             const html = `
                 <div class="error-entry bg-red-50 p-3 rounded-lg border border-red-100 relative">
                     <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-xmark"></i></button>
-                    <div class="mb-2 pr-6">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">พนักงาน (เลือกได้หลายคน)</label>
-                        <div class="flex flex-wrap gap-1.5">
-                            ${['หยอง', 'เจมส์', 'พุช', 'บรรเลง', 'ใหม่'].map((emp, i) => `
-                                <div>
-                                    <input type="checkbox" id="emp-${rowId}-${i}" value="${emp}" class="hidden peer err-emp-cb">
-                                    <label for="emp-${rowId}-${i}" class="inline-block bg-white border border-gray-300 rounded-full px-2.5 py-1 text-xs cursor-pointer peer-checked:bg-red-500 peer-checked:text-white peer-checked:border-red-500 transition-colors">${emp}</label>
-                                </div>
-                            `).join('')}
-                        </div>
+                    <div class="mb-3 pr-6">
+                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">ผู้กระทำผิด (เลือกได้หลายคน)</label>
+                        ${empsHtml}
                     </div>
                     <div class="grid grid-cols-1 gap-2">
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1">ประเภท</label>
-                            <select class="err-type w-full p-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-red-500">
-                                <option value="แก้ไขได้ก่อนจัดส่ง">1. แก้ไขได้ก่อนจัดส่ง</option>
-                                <option value="ส่งถึงหน้าร้านแล้ว">2. ส่งถึงหน้าร้านแล้ว</option>
-                                <option value="ส่งถึงลูกค้าแล้ว">3. ส่งถึงลูกค้าแล้ว</option>
-                                <option value="ผิดพลาดในการรับลงสินค้า">4. ผิดพลาดในการรับลงสินค้า</option>
+                            <select class="err-type w-full p-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-red-500 bg-white" onchange="togglePenalty(this)">
+                                ${typeOptionsHtml}
+                            </select>
+                        </div>
+                        <div class="penalty-container hidden bg-red-100 p-2 rounded-lg border border-red-200">
+                            <label class="block text-xs font-semibold text-red-700 mb-1">หักคะแนน HP (สำหรับหมวดอื่น ๆ)</label>
+                            <select class="err-penalty w-full p-2 border border-red-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-red-500 bg-white text-red-700 font-bold">
+                                <option value="5">-5 HP</option>
+                                <option value="10">-10 HP</option>
+                                <option value="15">-15 HP</option>
+                                <option value="30">-30 HP</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1">หมายเหตุ / อาการ</label>
-                            <input type="text" class="err-note w-full p-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-red-500" placeholder="เช่น หยิบสินค้าเกิน, หยิบตักเป็นแพค...">
+                            <input type="text" class="err-note w-full p-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-red-500" placeholder="เช่น หยิบของผิดไซส์, ลืมทอนเงิน...">
                         </div>
                     </div>
                 </div>
@@ -408,35 +578,46 @@
             container.insertAdjacentHTML('beforeend', html);
         }
 
-        // เพิ่มฟังก์ชันสำหรับโซน 3: ตารางงาน
         function addTaskEntryRow(name = "", status = "ยังไม่เริ่ม", assignee = "") {
             const container = document.getElementById('task-entries-container');
             const safeName = name.replace(/"/g, '&quot;');
             const rowId = 'task-' + Date.now() + Math.floor(Math.random() * 1000);
-            
-            // แยกชื่อผู้รับผิดชอบเป็น Array (รองรับการเลือกหลายคน)
             const assigneeArray = assignee ? assignee.split(',').map(a => a.trim()) : [];
+
+            let empsHtml = '';
+            if (currentBranch === 'TRD') {
+                for (const [dept, emps] of Object.entries(TRD_DEPARTMENTS)) {
+                    empsHtml += `<div class="mb-1"><span class="text-[10px] text-purple-600 font-bold block mb-0.5">${dept}</span><div class="flex flex-wrap gap-1.5">`;
+                    empsHtml += emps.map((emp, i) => `
+                        <div>
+                            <input type="checkbox" id="task-emp-${rowId}-${dept}-${i}" value="${emp}" class="hidden peer task-emp-cb" ${assigneeArray.includes(emp) ? 'checked' : ''}>
+                            <label for="task-emp-${rowId}-${dept}-${i}" class="inline-block bg-white border border-gray-300 rounded-full px-2 py-0.5 text-[11px] cursor-pointer peer-checked:bg-purple-500 peer-checked:text-white peer-checked:border-purple-500 transition-colors">${emp}</label>
+                        </div>
+                    `).join('');
+                    empsHtml += `</div></div>`;
+                }
+            } else {
+                const emps = BRANCH_CONFIG[currentBranch].employees;
+                empsHtml += `<div class="flex flex-wrap gap-1.5">`;
+                empsHtml += emps.map((emp, i) => `
+                    <div>
+                        <input type="checkbox" id="task-emp-${rowId}-${i}" value="${emp}" class="hidden peer task-emp-cb" ${assigneeArray.includes(emp) ? 'checked' : ''}>
+                        <label for="task-emp-${rowId}-${i}" class="inline-block bg-white border border-gray-300 rounded-full px-2.5 py-1 text-xs cursor-pointer peer-checked:bg-purple-500 peer-checked:text-white peer-checked:border-purple-500 transition-colors">${emp}</label>
+                    </div>
+                `).join('');
+                empsHtml += `</div>`;
+            }
 
             const html = `
                 <div class="task-entry flex flex-col space-y-3 bg-purple-50 p-3 rounded-lg border border-purple-100 relative">
                     <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-xmark"></i></button>
-                    
                     <div class="pr-6">
                         <input type="text" class="task-name w-full p-2 border border-white rounded text-sm outline-none focus:ring-1 focus:ring-purple-500 shadow-sm" placeholder="ชื่องาน / แผนงาน..." value="${safeName}">
                     </div>
-                    
                     <div>
-                        <label class="block text-[10px] font-semibold text-purple-700 mb-1">ผู้รับผิดชอบ (เลือกได้หลายคน)</label>
-                        <div class="flex flex-wrap gap-1.5 mb-1">
-                            ${['หยอง', 'เจมส์', 'พุช', 'บรรเลง', 'ใหม่'].map((emp, i) => `
-                                <div>
-                                    <input type="checkbox" id="task-emp-${rowId}-${i}" value="${emp}" class="hidden peer task-emp-cb" ${assigneeArray.includes(emp) ? 'checked' : ''}>
-                                    <label for="task-emp-${rowId}-${i}" class="inline-block bg-white border border-gray-300 rounded-full px-2.5 py-1 text-xs cursor-pointer peer-checked:bg-purple-500 peer-checked:text-white peer-checked:border-purple-500 transition-colors">${emp}</label>
-                                </div>
-                            `).join('')}
-                        </div>
+                        <label class="block text-[10px] font-semibold text-purple-700 mb-1.5">ผู้รับผิดชอบ (เลือกได้หลายคน)</label>
+                        ${empsHtml}
                     </div>
-
                     <div>
                         <select class="task-status w-full p-2 border border-white rounded text-xs outline-none focus:ring-1 focus:ring-purple-500 shadow-sm bg-white font-medium">
                             <option value="ยังไม่เริ่ม" ${status === 'ยังไม่เริ่ม' ? 'selected' : ''} class="text-gray-500">ยังไม่เริ่ม</option>
@@ -458,7 +639,7 @@
             const endOfWeek = new Date(startOfWeek);
             endOfWeek.setDate(endOfWeek.getDate() + 6);
 
-            const rawData = JSON.parse(localStorage.getItem('kpiData') || '[]');
+            const rawData = JSON.parse(localStorage.getItem('kpiData_' + currentBranch) || '[]');
             
             let targetWeekData = rawData.filter(d => {
                 const itemDate = new Date(d.date); itemDate.setHours(0,0,0,0);
@@ -484,18 +665,15 @@
                 addTaskEntryRow(tName, tData.status, tData.assignee);
                 hasTasks = true;
             }
-            
-            // ถ้าไม่มีงานเลย ให้แสดงกล่องว่าง 1 กล่อง
-            if(!hasTasks) {
-                addTaskEntryRow();
-            }
+            if(!hasTasks) addTaskEntryRow();
         }
+
+        document.getElementById('record-date').addEventListener('change', loadTasksForSelectedDate);
 
         async function saveDailyRecord() {
             const btn = document.getElementById('btn-save');
             const date = document.getElementById('record-date').value;
             
-            // Gather Errors
             let currentErrors = [];
             const entries = document.querySelectorAll('.error-entry');
             let hasIncompleteError = false;
@@ -503,7 +681,14 @@
             entries.forEach(entry => {
                 const checkedCbs = entry.querySelectorAll('.err-emp-cb:checked');
                 const type = entry.querySelector('.err-type').value;
-                const note = entry.querySelector('.err-note').value;
+                let note = entry.querySelector('.err-note').value;
+                
+                // หากเลือกความผิดอื่น ๆ ให้แนบคะแนนที่จะหักไปกับหมายเหตุด้วย
+                if (type === 'ความผิดอื่น ๆ') {
+                    const penalty = entry.querySelector('.err-penalty').value;
+                    note = `[หัก ${penalty} HP] ${note}`;
+                }
+
                 if (checkedCbs.length > 0 && note.trim() !== "") {
                     checkedCbs.forEach(cb => { currentErrors.push({ id: Date.now() + Math.random(), emp: cb.value, type, note }); });
                 } else if (checkedCbs.length > 0 || note.trim() !== "") {
@@ -513,42 +698,44 @@
 
             if (hasIncompleteError) return showToast("กรุณาเลือกพนักงานและใส่หมายเหตุให้ครบ", true);
 
-            // Gather Tasks (NEW)
             let currentTasks = [];
             document.querySelectorAll('.task-entry').forEach(entry => {
                 const name = entry.querySelector('.task-name').value.trim();
                 const status = entry.querySelector('.task-status').value;
-                
-                // ดึงชื่อพนักงานทุกคนที่ถูกเลือกในแผนงานนี้
                 const checkedAssignees = Array.from(entry.querySelectorAll('.task-emp-cb:checked')).map(cb => cb.value);
                 const assigneeStr = checkedAssignees.join(', ');
-                
                 if (name !== "") currentTasks.push({ taskName: name, status: status, assignee: assigneeStr });
             });
 
-            // Gather Customer Notes
             let combinedNotes = [];
-            const nPickup = document.getElementById('note-pickup').value.trim();
-            const nUpcountry = document.getElementById('note-upcountry').value.trim();
-            const nInmarket = document.getElementById('note-inmarket').value.trim();
-            const nOutmarket = document.getElementById('note-outmarket').value.trim();
-            if(nPickup) combinedNotes.push("- รับที่ร้าน: " + nPickup);
-            if(nUpcountry) combinedNotes.push("- ส่งตจว.: " + nUpcountry);
-            if(nInmarket) combinedNotes.push("- ส่งในตลาด: " + nInmarket);
-            if(nOutmarket) combinedNotes.push("- ส่งนอกตลาด: " + nOutmarket);
+            let volumeData = { transfer: 0, pickup: 0, upcountry: 0, inmarket: 0, outmarket: 0 };
 
-            const payload = {
-                date: date,
-                errors: currentErrors,
-                tasks: currentTasks, // เพิ่ม tasks เข้าไปใน Payload
-                customerNotes: combinedNotes.join('\n'),
-                volume: {
+            if (BRANCH_CONFIG[currentBranch].showZone2) {
+                const nPickup = document.getElementById('note-pickup').value.trim();
+                const nUpcountry = document.getElementById('note-upcountry').value.trim();
+                const nInmarket = document.getElementById('note-inmarket').value.trim();
+                const nOutmarket = document.getElementById('note-outmarket').value.trim();
+                if(nPickup) combinedNotes.push("- รับที่ร้าน: " + nPickup);
+                if(nUpcountry) combinedNotes.push("- ส่งตจว.: " + nUpcountry);
+                if(nInmarket) combinedNotes.push("- ส่งในตลาด: " + nInmarket);
+                if(nOutmarket) combinedNotes.push("- ส่งนอกตลาด: " + nOutmarket);
+
+                volumeData = {
                     transfer: parseInt(document.getElementById('vol-transfer').value) || 0,
                     pickup: parseInt(document.getElementById('vol-pickup').value) || 0,
                     upcountry: parseInt(document.getElementById('vol-upcountry').value) || 0,
                     inmarket: parseInt(document.getElementById('vol-inmarket').value) || 0,
                     outmarket: parseInt(document.getElementById('vol-outmarket').value) || 0
-                }
+                };
+            }
+
+            const payload = {
+                branch: currentBranch, 
+                date: date,
+                errors: currentErrors,
+                tasks: currentTasks,
+                customerNotes: combinedNotes.join('\n'),
+                volume: volumeData
             };
 
             if(GOOGLE_APP_SCRIPT_URL) {
@@ -561,20 +748,20 @@
                         body: JSON.stringify(payload)
                     });
                     
-                    let localData = JSON.parse(localStorage.getItem('kpiData') || '[]');
+                    let localData = JSON.parse(localStorage.getItem('kpiData_' + currentBranch) || '[]');
                     localData = localData.filter(d => d.date !== date);
                     localData.push(payload);
-                    localStorage.setItem('kpiData', JSON.stringify(localData));
+                    localStorage.setItem('kpiData_' + currentBranch, JSON.stringify(localData));
 
                     showToast("บันทึกข้อมูลเรียบร้อย!");
-                    sendAppLog("บันทึกข้อมูล", `บันทึกข้อมูล KPI และแผนงาน (วันที่ ${date})`);
+                    sendAppLog("บันทึกข้อมูล", `บันทึกข้อมูลสาขา ${currentBranch} (วันที่ ${date})`);
                     
-                    // Reset UI
                     document.getElementById('error-entries-container').innerHTML = ''; addErrorEntryRow();
-                    loadTasksForSelectedDate(); // โหลดงานของสัปดาห์นี้มาแสดงใหม่เพื่ออัปเดตสถานะ
-                    ['vol-transfer','vol-pickup','vol-upcountry','vol-inmarket','vol-outmarket'].forEach(id => document.getElementById(id).value = '0');
-                    ['note-pickup','note-upcountry','note-inmarket','note-outmarket'].forEach(id => document.getElementById(id).value = '');
-                    
+                    loadTasksForSelectedDate(); 
+                    if (BRANCH_CONFIG[currentBranch].showZone2) {
+                        ['vol-transfer','vol-pickup','vol-upcountry','vol-inmarket','vol-outmarket'].forEach(id => document.getElementById(id).value = '0');
+                        ['note-pickup','note-upcountry','note-inmarket','note-outmarket'].forEach(id => document.getElementById(id).value = '');
+                    }
                 } catch(error) {
                     console.error(error); showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ", true);
                 } finally {
@@ -603,11 +790,63 @@
             loadDashboardData();
         }
 
+        function renderEmpBreakdown() {
+            if (!window._empBreakdownData) return;
+            
+            let empCount = window._empBreakdownData.count;
+            let lastEmpCount = window._empBreakdownData.lastCount;
+            let filterDept = document.getElementById('dash-dept-filter').value;
+            let maxErr = Math.max(...Object.values(empCount)); if(maxErr === 0) maxErr = 1;
+
+            let empsToRender = [];
+            if (currentBranch === 'TRD' && filterDept !== 'ALL') {
+                empsToRender = TRD_DEPARTMENTS[filterDept] || [];
+            } else {
+                empsToRender = BRANCH_CONFIG[currentBranch].employees;
+            }
+
+            let empHtml = '';
+            if (empsToRender.length === 0) {
+                empHtml = '<div class="text-center text-gray-400 text-xs py-2">ไม่มีข้อมูลพนักงานในหมวดนี้</div>';
+            } else {
+                empsToRender.forEach(name => {
+                    let count = empCount[name] || 0;
+                    let lastCount = lastEmpCount[name] || 0;
+                    let percent = (count / maxErr) * 100;
+                    let diff = count - lastCount;
+                    let trendHtml = '';
+                    
+                    if (diff > 0) {
+                        let pChange = lastCount > 0 ? Math.round((diff / lastCount) * 100) : 100;
+                        trendHtml = `<span class="text-[10px] ml-1 text-red-600 bg-red-100 px-1.5 py-0.5 rounded font-medium"><i class="fa-solid fa-arrow-trend-up"></i> +${pChange}%</span>`;
+                    } else if (diff < 0) {
+                        let pChange = Math.round((Math.abs(diff) / lastCount) * 100);
+                        trendHtml = `<span class="text-[10px] ml-1 text-green-600 bg-green-100 px-1.5 py-0.5 rounded font-medium"><i class="fa-solid fa-arrow-trend-down"></i> -${pChange}%</span>`;
+                    } else {
+                        trendHtml = `<span class="text-[10px] ml-1 text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded font-medium">-</span>`;
+                    }
+
+                    empHtml += `
+                        <div>
+                            <div class="flex justify-between items-end text-xs mb-1">
+                                <div class="flex items-center"><span>${name}</span>${trendHtml}</div>
+                                <span class="font-bold ${count > 0 ? 'text-red-500' : 'text-green-500'}">${count} ครั้ง</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="bg-${count > 0 ? 'red' : 'green'}-500 h-1.5 rounded-full" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('dash-emp-breakdown').innerHTML = empHtml;
+        }
+
         function loadDashboardData() {
-            const rawData = JSON.parse(localStorage.getItem('kpiData') || '[]');
+            const rawData = JSON.parse(localStorage.getItem('kpiData_' + currentBranch) || '[]');
             
             const today = new Date();
-            const startOfCurrentWeek = getStartOfWeek(today);
+            const startOfCurrentWeek = getStartOfWeek(today); // <--- แก้ไขตัวแปรที่พิมพ์ผิดตรงนี้แล้วครับ
             startOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + (viewOffsetWeek * 7));
             const endOfWeek = new Date(startOfCurrentWeek);
             endOfWeek.setDate(endOfWeek.getDate() + 6);
@@ -620,32 +859,34 @@
                 startOfCurrentWeek.setHours(0,0,0,0); endOfWeek.setHours(23,59,59,999);
                 return itemDate >= startOfCurrentWeek && itemDate <= endOfWeek;
             });
-            // เรียงลำดับข้อมูลตามวันที่เพื่อหา Update ล่าสุด
             targetWeekData.sort((a,b) => new Date(a.date) - new Date(b.date));
 
             let totalVol = 0; let totalErr = 0;
-            let empErrCount = { 'หยอง':0, 'เจมส์':0, 'พุช':0, 'บรรเลง':0, 'ใหม่':0 };
+            
+            let empErrCount = {};
+            let empHP = {};
+            let categorizedNotes = {}; 
+            
+            BRANCH_CONFIG[currentBranch].employees.forEach(emp => {
+                empErrCount[emp] = 0;
+                empHP[emp] = 100;
+                categorizedNotes[emp] = {};
+            });
+
             let allCustomerNotesHtml = '';
             let totalCustomerNotesCount = 0;
-            let weeklyTasksMap = {}; // เก็บข้อมูล Task เพื่อดึงอันล่าสุด
-            
-            let categorizedNotes = {
-                'หยอง': { 'แก้ไขได้ก่อนจัดส่ง': [], 'ส่งถึงหน้าร้านแล้ว': [], 'ส่งถึงลูกค้าแล้ว': [], 'ผิดพลาดในการรับลงสินค้า': [] },
-                'เจมส์': { 'แก้ไขได้ก่อนจัดส่ง': [], 'ส่งถึงหน้าร้านแล้ว': [], 'ส่งถึงลูกค้าแล้ว': [], 'ผิดพลาดในการรับลงสินค้า': [] },
-                'พุช': { 'แก้ไขได้ก่อนจัดส่ง': [], 'ส่งถึงหน้าร้านแล้ว': [], 'ส่งถึงลูกค้าแล้ว': [], 'ผิดพลาดในการรับลงสินค้า': [] },
-                'บรรเลง': { 'แก้ไขได้ก่อนจัดส่ง': [], 'ส่งถึงหน้าร้านแล้ว': [], 'ส่งถึงลูกค้าแล้ว': [], 'ผิดพลาดในการรับลงสินค้า': [] },
-                'ใหม่': { 'แก้ไขได้ก่อนจัดส่ง': [], 'ส่งถึงหน้าร้านแล้ว': [], 'ส่งถึงลูกค้าแล้ว': [], 'ผิดพลาดในการรับลงสินค้า': [] }
-            };
+            let weeklyTasksMap = {}; 
             let hasAnyNotes = false;
 
             targetWeekData.forEach(day => {
-                totalVol += (day.volume.transfer + day.volume.pickup + day.volume.upcountry + day.volume.inmarket + day.volume.outmarket);
-                totalErr += day.errors.length;
+                if (day.volume) {
+                    totalVol += (day.volume.transfer + day.volume.pickup + day.volume.upcountry + day.volume.inmarket + day.volume.outmarket);
+                }
+                totalErr += (day.errors || []).length;
                 
-                if (day.customerNotes && day.customerNotes.trim() !== '') {
+                if (BRANCH_CONFIG[currentBranch].showZone2 && day.customerNotes && day.customerNotes.trim() !== '') {
                     let notesLines = day.customerNotes.split('\n').filter(line => line.trim() !== '');
                     totalCustomerNotesCount += notesLines.length;
-
                     allCustomerNotesHtml += `
                         <div class="text-sm bg-blue-50 p-3 rounded-lg border border-blue-100 mb-2">
                             <span class="text-xs text-blue-600 font-bold block mb-1 border-b border-blue-200 pb-1 flex justify-between items-center">
@@ -657,23 +898,50 @@
                     `;
                 }
 
-                day.errors.forEach(e => {
-                    if(empErrCount[e.emp] !== undefined) empErrCount[e.emp]++;
-                    if(categorizedNotes[e.emp] && categorizedNotes[e.emp][e.type]) {
-                        categorizedNotes[e.emp][e.type].push({ note: e.note, date: day.date });
-                        hasAnyNotes = true;
+                (day.errors || []).forEach(e => {
+                    if(empErrCount[e.emp] === undefined) {
+                        empErrCount[e.emp] = 0;
+                        empHP[e.emp] = 100;
+                        categorizedNotes[e.emp] = {};
+                    }
+                    
+                    empErrCount[e.emp]++;
+                    
+                    if(!categorizedNotes[e.emp][e.type]) categorizedNotes[e.emp][e.type] = [];
+                    
+                    // แปลงหมายเหตุ ถ้าเป็นความผิดอื่น ๆ จะดึงป้ายคะแนนมาโชว์ให้สวยงาม
+                    let displayNote = e.note;
+                    let customPenalty = null;
+                    if (e.type === 'ความผิดอื่น ๆ') {
+                        let match = e.note.match(/^\[หัก (\d+) HP\]\s*(.*)/);
+                        if (match) {
+                            customPenalty = parseInt(match[1]);
+                            displayNote = `<span class="text-red-500 font-bold bg-red-100 px-1 rounded mr-1 shadow-sm border border-red-200 text-[10px]">-${customPenalty} HP</span> ${match[2]}`;
+                        }
+                    }
+
+                    categorizedNotes[e.emp][e.type].push({ note: displayNote, date: day.date });
+                    hasAnyNotes = true;
+
+                    // คำนวณการหัก HP
+                    if (empHP[e.emp] !== undefined) {
+                        if (e.type === 'ความผิดอื่น ๆ' && customPenalty !== null) {
+                            empHP[e.emp] -= customPenalty; // หักตามที่เลือกระบุไว้
+                        } else {
+                            let penalty = HP_PENALTY[e.type] !== undefined ? HP_PENALTY[e.type] : 10;
+                            empHP[e.emp] -= penalty;
+                        }
                     }
                 });
 
-                // อัปเดตสถานะ Tasks
                 if(day.tasks && Array.isArray(day.tasks)) {
                     day.tasks.forEach(t => {
-                        weeklyTasksMap[t.taskName] = { status: t.status, assignee: t.assignee || "" }; // ถ้ากรอกชื่อเดิมในวันหลังๆ จะอัปเดตทับเป็นสถานะล่าสุด
+                        weeklyTasksMap[t.taskName] = { status: t.status, assignee: t.assignee || "" };
                     });
                 }
             });
 
-            // Render Tasks (NEW)
+            // Render Tasks
             let tasksHtml = '';
             if (Object.keys(weeklyTasksMap).length === 0) {
                 tasksHtml = '<div class="text-center text-gray-400 text-sm py-3">ยังไม่มีแผนงานในสัปดาห์นี้</div>';
@@ -708,38 +976,30 @@
             }
             document.getElementById('dash-weekly-tasks').innerHTML = tasksHtml;
 
-            // Render Notes & Errors
+            // Render Notes & Errors (Dynamic Rendering)
             let allNotesHtml = '';
+            const colorClasses = ['red', 'orange', 'yellow', 'blue', 'purple', 'teal'];
+            
             if (!hasAnyNotes) {
                 allNotesHtml = '<div class="text-center text-gray-400 text-sm py-4">ไม่มีข้อผิดพลาดในสัปดาห์นี้ 🎉</div>';
             } else {
                 for (const [emp, types] of Object.entries(categorizedNotes)) {
-                    const hasEmpErrors = types['แก้ไขได้ก่อนจัดส่ง'].length > 0 || types['ส่งถึงหน้าร้านแล้ว'].length > 0 || types['ส่งถึงลูกค้าแล้ว'].length > 0 || types['ผิดพลาดในการรับลงสินค้า'].length > 0;
-                    if (!hasEmpErrors) continue;
+                    if (Object.keys(types).length === 0) continue;
 
                     allNotesHtml += `<div class="mb-4 border border-gray-200 rounded-lg overflow-hidden shadow-sm">`;
                     allNotesHtml += `<div class="bg-gray-100 px-3 py-2 font-bold text-gray-800 border-b border-gray-200"><i class="fa-solid fa-user text-blue-600 mr-2"></i>${emp}</div>`;
                     allNotesHtml += `<div class="p-2 space-y-2">`;
 
-                    if (types['แก้ไขได้ก่อนจัดส่ง'].length > 0) {
-                        allNotesHtml += `<div class="bg-yellow-50 rounded border border-yellow-200 p-2"><div class="text-xs font-bold text-yellow-700 mb-1 border-b border-yellow-200 pb-1">1. แก้ไขได้ก่อนจัดส่ง</div>`;
-                        types['แก้ไขได้ก่อนจัดส่ง'].forEach(err => { allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`; });
+                    let cIdx = 0;
+                    for (const [errType, notes] of Object.entries(types)) {
+                        let color = colorClasses[cIdx % colorClasses.length];
+                        allNotesHtml += `<div class="bg-${color}-50 rounded border border-${color}-200 p-2">
+                                            <div class="text-xs font-bold text-${color}-700 mb-1 border-b border-${color}-200 pb-1">${errType}</div>`;
+                        notes.forEach(err => { 
+                            allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`; 
+                        });
                         allNotesHtml += `</div>`;
-                    }
-                    if (types['ส่งถึงหน้าร้านแล้ว'].length > 0) {
-                        allNotesHtml += `<div class="bg-orange-50 rounded border border-orange-200 p-2"><div class="text-xs font-bold text-orange-700 mb-1 border-b border-orange-200 pb-1">2. ส่งถึงหน้าร้านแล้ว</div>`;
-                        types['ส่งถึงหน้าร้านแล้ว'].forEach(err => { allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`; });
-                        allNotesHtml += `</div>`;
-                    }
-                    if (types['ส่งถึงลูกค้าแล้ว'].length > 0) {
-                        allNotesHtml += `<div class="bg-red-50 rounded border border-red-200 p-2"><div class="text-xs font-bold text-red-700 mb-1 border-b border-red-200 pb-1">3. ส่งถึงลูกค้าแล้ว</div>`;
-                        types['ส่งถึงลูกค้าแล้ว'].forEach(err => { allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`; });
-                        allNotesHtml += `</div>`;
-                    }
-                    if (types['ผิดพลาดในการรับลงสินค้า'].length > 0) {
-                        allNotesHtml += `<div class="bg-blue-50 rounded border border-blue-200 p-2"><div class="text-xs font-bold text-blue-700 mb-1 border-b border-blue-200 pb-1">4. ผิดพลาดในการรับลงสินค้า</div>`;
-                        types['ผิดพลาดในการรับลงสินค้า'].forEach(err => { allNotesHtml += `<div class="text-sm text-gray-700 flex justify-between"><span class="pr-2">- ${err.note}</span><span class="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">${err.date}</span></div>`; });
-                        allNotesHtml += `</div>`;
+                        cIdx++;
                     }
                     allNotesHtml += `</div></div>`;
                 }
@@ -749,166 +1009,93 @@
             document.getElementById('dash-total-volume').innerText = totalVol;
             document.getElementById('dash-err-percent').innerText = totalVol > 0 ? ((totalErr / totalVol) * 100).toFixed(1) + '%' : '0%';
             
-            document.getElementById('dash-error-notes').innerHTML = allNotesHtml || '<div class="text-center text-gray-400 text-sm py-4">ไม่มีข้อผิดพลาดในสัปดาห์นี้ 🎉</div>';
+            document.getElementById('dash-error-notes').innerHTML = allNotesHtml;
             document.getElementById('dash-customer-notes').innerHTML = allCustomerNotesHtml || '<div class="text-center text-gray-400 text-sm py-4">ไม่มีบันทึกข้อมูลลูกค้า/การจัดส่ง</div>';
             document.getElementById('dash-customer-notes-count').innerText = `${totalCustomerNotesCount} รายการ`;
 
             const lastWeekStart = new Date(startOfCurrentWeek); lastWeekStart.setDate(lastWeekStart.getDate() - 7);
             const lastWeekEnd = new Date(endOfWeek); lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
 
-            let lastWeekEmpErrCount = { 'หยอง':0, 'เจมส์':0, 'พุช':0, 'บรรเลง':0, 'ใหม่':0 };
+            let lastWeekEmpErrCount = {};
+            BRANCH_CONFIG[currentBranch].employees.forEach(emp => lastWeekEmpErrCount[emp] = 0);
             let lastWeekErrTotal = 0;
 
             rawData.forEach(d => {
                 const itemD = new Date(d.date); itemD.setHours(0,0,0,0);
                 if(itemD >= lastWeekStart && itemD <= lastWeekEnd) {
-                    lastWeekErrTotal += d.errors.length;
-                    d.errors.forEach(e => { if(lastWeekEmpErrCount[e.emp] !== undefined) lastWeekEmpErrCount[e.emp]++; });
+                    lastWeekErrTotal += (d.errors || []).length;
+                    (d.errors || []).forEach(e => { 
+                        if(lastWeekEmpErrCount[e.emp] === undefined) lastWeekEmpErrCount[e.emp] = 0;
+                        lastWeekEmpErrCount[e.emp]++; 
+                    });
                 }
             });
-
-            let empHtml = '';
-            let maxErr = Math.max(...Object.values(empErrCount)); if(maxErr === 0) maxErr = 1;
-
-            for (const [name, count] of Object.entries(empErrCount)) {
-                let percent = (count / maxErr) * 100;
-                let lastCount = lastWeekEmpErrCount[name];
-                let diff = count - lastCount;
-                let trendHtml = '';
-                
-                if (diff > 0) {
-                    let pChange = lastCount > 0 ? Math.round((diff / lastCount) * 100) : 100;
-                    trendHtml = `<span class="text-[10px] ml-1 text-red-600 bg-red-100 px-1.5 py-0.5 rounded font-medium"><i class="fa-solid fa-arrow-trend-up"></i> +${pChange}%</span>`;
-                } else if (diff < 0) {
-                    let pChange = Math.round((Math.abs(diff) / lastCount) * 100);
-                    trendHtml = `<span class="text-[10px] ml-1 text-green-600 bg-green-100 px-1.5 py-0.5 rounded font-medium"><i class="fa-solid fa-arrow-trend-down"></i> -${pChange}%</span>`;
-                } else {
-                    trendHtml = `<span class="text-[10px] ml-1 text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded font-medium">-</span>`;
-                }
-
-                empHtml += `
-                    <div>
-                        <div class="flex justify-between items-end text-xs mb-1">
-                            <div class="flex items-center"><span>${name}</span>${trendHtml}</div>
-                            <span class="font-bold ${count > 0 ? 'text-red-500' : 'text-green-500'}">${count} ครั้ง</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-${count > 0 ? 'red' : 'green'}-500 h-1.5 rounded-full" style="width: ${percent}%"></div>
-                        </div>
-                    </div>
-                `;
-            }
-            document.getElementById('dash-emp-breakdown').innerHTML = empHtml;
 
             let diffTotal = totalErr - lastWeekErrTotal;
             let diffText = diffTotal > 0 ? `+${diffTotal} ครั้ง (แย่ลง)` : (diffTotal < 0 ? `${diffTotal} ครั้ง (ดีขึ้น)` : 'เท่าเดิม');
             document.getElementById('dash-err-compare').innerText = `เทียบกับสัปดาห์ก่อน: ${diffText}`;
 
-            // --- SMART SUMMARY LOGIC (ระบบวิเคราะห์อัตโนมัติแบบเจาะลึกและหลากหลาย) ---
-            let errorTypeCounts = {
-                'แก้ไขได้ก่อนจัดส่ง': 0, 'ส่งถึงหน้าร้านแล้ว': 0, 'ส่งถึงลูกค้าแล้ว': 0, 'ผิดพลาดในการรับลงสินค้า': 0
-            };
-            
-            // เก็บรวบรวม 'หมายเหตุ' ของข้อผิดพลาดเพื่อนำมาวิเคราะห์
-            let errorNotesList = {
-                'แก้ไขได้ก่อนจัดส่ง': [], 'ส่งถึงหน้าร้านแล้ว': [], 'ส่งถึงลูกค้าแล้ว': [], 'ผิดพลาดในการรับลงสินค้า': []
-            };
+            // เซฟข้อมูลไว้ให้ฟังก์ชัน renderEmpBreakdown ใช้งาน
+            window._empBreakdownData = { count: empErrCount, lastCount: lastWeekEmpErrCount };
+            renderEmpBreakdown();
+
+            // --- SMART SUMMARY LOGIC ---
+            let errorTypeCounts = {};
+            let errorNotesList = {};
 
             targetWeekData.forEach(day => {
-                day.errors.forEach(e => { 
-                    if(errorTypeCounts[e.type] !== undefined) {
-                        errorTypeCounts[e.type]++; 
-                        if(!errorNotesList[e.type].includes(e.note)) errorNotesList[e.type].push(e.note);
+                (day.errors || []).forEach(e => { 
+                    if(errorTypeCounts[e.type] === undefined) {
+                        errorTypeCounts[e.type] = 0;
+                        errorNotesList[e.type] = [];
                     }
+                    errorTypeCounts[e.type]++; 
+                    if(!errorNotesList[e.type].includes(e.note)) errorNotesList[e.type].push(e.note);
                 });
             });
 
-            // คลังคำแนะนำเชิงลึก (3 แนวทางสำหรับแต่ละความผิดพลาด)
-            const suggestionDatabase = {
-                'แก้ไขได้ก่อนจัดส่ง': [
-                    '<b>จัดโซนสินค้าใหม่:</b> อาจเกิดจากการวางสินค้าที่มีลักษณะหรือชื่อคล้ายกันไว้ใกล้กันเกินไป แนะนำให้แยกโซนหรือทำสัญลักษณ์สีแบ่งแยกให้ชัดเจนขึ้น',
-                    '<b>ย้ำเตือนเรื่อง "หน่วยนับ":</b> ชิ้น, แพ็ค, ลัง เป็นจุดที่มักจะสับสนและหยิบผิดบ่อยที่สุด ลองให้พนักงาน "อ่านทวนรายการและหน่วยนับ" ก่อนหยิบลงตะกร้า',
-                    '<b>ทำงานแบบ Buddy ในช่วงพีค:</b> แม้จะตรวจเจอและแก้ทัน แต่ทำให้เสียเวลาทำงาน แนะนำให้จับคู่ช่วยกันรีเช็คก่อนถึงขั้นตอนการแพ็คเพื่อความรวดเร็ว'
-                ],
-                'ส่งถึงหน้าร้านแล้ว': [
-                    '<b>เพิ่มจุดตรวจสอบก่อนขึ้นรถ:</b> ปัญหาหลุดรอดออกจากคลัง แนะนำให้ทำใบ Check-list ให้ผู้จ่ายงานหรือคนขับรถรีเช็คจำนวนกล่อง/รายการอีกครั้งก่อนย้ายของออก',
-                    '<b>ลดความเร่งรีบตอนโหลดของ:</b> อาจเกิดจากความรีบตอนส่ง แนะนำให้กำหนด "รอบเวลาตัดส่ง" ที่ชัดเจน เพื่อให้พนักงานมีเวลาตรวจทานบิลกับสินค้าจริงอย่างละเอียด',
-                    '<b>ป้องกันการหยิบสลับบิล:</b> เช็คว่ามีการติดป้ายชื่อร้านผิดกล่องหรือไม่ ควรใช้ระบบสติกเกอร์สีหรือมาร์คกิ้งกำกับแต่ละบิลให้เด่นชัด ป้องกันคนขับรถหยิบสลับกัน'
-                ],
-                'ส่งถึงลูกค้าแล้ว': [
-                    '<b>บังคับใช้ระบบ Double Check 100%:</b> เป็นข้อผิดพลาดร้ายแรงเพราะกระทบลูกค้าโดยตรง! ต้องมีระบบคนจัด 1 คน และคนตรวจแพ็คอีก 1 คน (แยกกัน) และให้เซ็นชื่อในบิลเสมอ',
-                    '<b>ถ่ายรูปสินค้าก่อนปิดกล่อง/ส่งมอบ:</b> แนะนำให้ถ่ายรูปสินค้าคู่กับบิลทุกครั้ง เพื่อใช้เป็นหลักฐานตรวจสอบย้อนหลังและยืนยันความถูกต้องกับลูกค้า',
-                    '<b>แยกโซนสายรถส่งให้ชัดเจน:</b> สินค้าอาจถูกจัดเตรียมไว้ถูกต้องแล้ว แต่คนขับหยิบสลับไปส่งผิดที่ ต้องจัดแยกโซน "ของรอส่งแยกตามสายรถ" ห้ามวางปะปนกันเด็ดขาด'
-                ],
-                'ผิดพลาดในการรับลงสินค้า': [
-                    '<b>แยกโซนรอตรวจรับอย่างเคร่งครัด:</b> คัดแยกพื้นที่ "สินค้ารอตรวจ" ออกจาก "สินค้าพร้อมขาย" ห้ามนำของขึ้นชั้นวางจนกว่าจะนับยอดตรงกับใบส่งของ 100%',
-                    '<b>ใช้วิธีนับแบบ Blind Check:</b> ให้พนักงานคลังนับยอดของจริงและจดลงกระดาษก่อน แล้วค่อยเอาตัวเลขไปเทียบกับบิลใบเสร็จ เพื่อป้องกันการตรวจนับแบบผ่านๆ',
-                    '<b>ระวังสินค้าที่มีการเปลี่ยนแพ็คเกจ:</b> เมื่อรับเข้าสินค้าที่เปลี่ยนหน้าตาหรือบาร์โค้ดใหม่ ต้องรีบแจ้งอัปเดตกับทีมงานทุกคนทันที เพื่อป้องกันการสับสนในอนาคต'
-                ]
-            };
+            let getSuggestion = (type, index) => {
+                const suggestionDatabase = {
+                    'แก้ไขได้ก่อนจัดส่ง': ['จัดโซนสินค้าใหม่ให้ชัดเจน', 'ย้ำเตือนเรื่อง "หน่วยนับ" ก่อนหยิบ', 'ทำงานแบบ Buddy จับคู่ช่วยรีเช็ค'],
+                    'ส่งถึงหน้าร้านแล้ว': ['เพิ่มจุดตรวจสอบก่อนขึ้นรถขนส่ง', 'ลดความเร่งรีบตอนโหลดของขึ้นรถ', 'ใช้สติกเกอร์สีหรือมาร์คกิ้งแยกบิลให้ชัด'],
+                    'ส่งถึงลูกค้าแล้ว': ['บังคับใช้ระบบ Double Check 100%', 'ถ่ายรูปสินค้าก่อนปิดกล่อง/ส่งมอบ', 'แยกโซนรอจัดส่งแยกตามสายรถให้ชัดเจน'],
+                    'ผิดพลาดในการรับลงสินค้า': ['แยกโซนรอตรวจรับออกจากสินค้าพร้อมขาย', 'ใช้วิธีนับแบบ Blind Check', 'ระวังสินค้าที่เปลี่ยนแพ็คเกจหรือบาร์โค้ด']
+                };
+                if(suggestionDatabase[type]) return suggestionDatabase[type][index % suggestionDatabase[type].length];
+                return `ควรนำข้อผิดพลาดเรื่อง "<b>${type}</b>" มาพูดคุยในทีมเพื่อหาสาเหตุและแนวทางป้องกันร่วมกันครับ`;
+            }
 
             let smartSummaryHtml = '';
             if (totalErr === 0) {
-                smartSummaryHtml = `<p class="text-green-600 font-semibold"><i class="fa-solid fa-face-smile-beam mr-1"></i> ยอดเยี่ยมมาก! สัปดาห์นี้ไม่มีข้อผิดพลาดเกิดขึ้นเลย รักษามาตรฐานการทำงานนี้ไว้นะครับ</p>`;
+                smartSummaryHtml = `<p class="text-green-600 font-semibold"><i class="fa-solid fa-face-smile-beam mr-1"></i> ยอดเยี่ยมมาก! สัปดาห์นี้สาขา ${currentBranch} ไม่มีข้อผิดพลาดเลย</p>`;
             } else {
-                // หาปัญหาที่เกิดบ่อยสุด
                 let topErrorType = ''; let topErrorCount = -1;
-                for (const [type, count] of Object.entries(errorTypeCounts)) {
-                    if (count > topErrorCount) { topErrorCount = count; topErrorType = type; }
-                }
+                for (const [type, count] of Object.entries(errorTypeCounts)) { if (count > topErrorCount) { topErrorCount = count; topErrorType = type; } }
                 
-                // หาพนักงานที่ผิดพลาดบ่อยสุด
                 let topEmp = ''; let topEmpCount = -1;
-                for (const [emp, count] of Object.entries(empErrCount)) {
-                    if (count > topEmpCount) { topEmpCount = count; topEmp = emp; }
-                }
+                for (const [emp, count] of Object.entries(empErrCount)) { if (count > topEmpCount) { topEmpCount = count; topEmp = emp; } }
                 
                 let trendHtml = diffTotal > 0 ? `<span class="text-red-600 font-bold">เพิ่มขึ้น ${diffTotal} ครั้ง</span> (แย่ลง)` :
                                 (diffTotal < 0 ? `<span class="text-green-600 font-bold">ลดลง ${Math.abs(diffTotal)} ครั้ง</span> (ดีขึ้น!)` : `<b>เท่ากับสัปดาห์ก่อน</b>`);
                 
-                smartSummaryHtml += `<p>📊 <b>ภาพรวม:</b> สัปดาห์นี้มีงานทั้งหมด ${totalVol} รายการ พบความผิดพลาด ${totalErr} ครั้ง ซึ่ง${trendHtml}</p>`;
-                
+                smartSummaryHtml += `<p>📊 <b>ภาพรวม:</b> สัปดาห์นี้พบความผิดพลาด ${totalErr} ครั้ง ซึ่ง${trendHtml}</p>`;
                 if(topErrorCount > 0) {
-                    // ดึงตัวอย่าง 'หมายเหตุ' เพื่อให้เห็นภาพปัญหาชัดเจนขึ้น
                     let sampleNotes = errorNotesList[topErrorType].slice(0, 2).join(', ');
-                    let noteContext = sampleNotes ? ` <i>(ตัวอย่างอาการ: ${sampleNotes})</i>` : '';
-
-                    smartSummaryHtml += `<p>⚠️ <b>จุดที่ควรระวัง:</b> ปัญหาหลักคือ <b>"${topErrorType}"</b> พบ ${topErrorCount} ครั้ง${noteContext} โดยผู้ที่มีข้อผิดพลาดบ่อยสุดคือ <b>${topEmp}</b></p>`;
-                    
-                    // เลือกระบบคำแนะนำให้สลับสับเปลี่ยนกัน (โดยอิงจากตัวเลขยอดรวม เพื่อไม่ให้คำแนะนำเปลี่ยนไปมาทุกครั้งที่กดเข้าแท็บเดิม)
-                    let suggestionIndex = (totalErr + totalVol) % 3;
-                    let selectedSuggestion = suggestionDatabase[topErrorType][suggestionIndex];
-                    
-                    smartSummaryHtml += `<p>💡 <b>แนวทางแก้ไขเจาะลึก:</b> ${selectedSuggestion}</p>`;
+                    // Clean up the HP tag for the summary view if it exists
+                    sampleNotes = sampleNotes.replace(/<span.*?>.*?<\/span>\s*/g, '');
+                    let noteContext = sampleNotes ? ` <i>(เช่น: ${sampleNotes})</i>` : '';
+                    smartSummaryHtml += `<p>⚠️ <b>จุดควรระวัง:</b> ปัญหาหลักคือ <b>"${topErrorType}"</b> พบ ${topErrorCount} ครั้ง${noteContext} โดยผู้ที่มีข้อผิดพลาดบ่อยสุดคือ <b>${topEmp}</b></p>`;
+                    let suggestionIndex = totalErr % 3;
+                    smartSummaryHtml += `<p>💡 <b>แนวทางแก้ไข:</b> ${getSuggestion(topErrorType, suggestionIndex)}</p>`;
                 }
             }
             document.getElementById('dash-smart-summary').innerHTML = smartSummaryHtml;
 
-            // --- GAMIFICATION LOGIC (มินิเกมประเมินพนักงาน) ---
-            let empHP = { 'หยอง': 100, 'เจมส์': 100, 'พุช': 100, 'บรรเลง': 100, 'ใหม่': 100 };
-            
-            targetWeekData.forEach(day => {
-                day.errors.forEach(e => {
-                    if (e.type === 'แก้ไขได้ก่อนจัดส่ง') {
-                        empHP[e.emp] -= 5;
-                    } else if (e.type === 'ผิดพลาดในการรับลงสินค้า') {
-                        empHP[e.emp] -= 10;
-                    } else if (e.type === 'ส่งถึงหน้าร้านแล้ว') {
-                        empHP[e.emp] -= 15;
-                    } else if (e.type === 'ส่งถึงลูกค้าแล้ว') {
-                        empHP[e.emp] -= 30;
-                    }
-                });
-            });
-
-            // สร้าง Array สำหรับจัดอันดับ
+            // --- GAMIFICATION LOGIC ---
             let ranking = [];
             for (const [name, hp] of Object.entries(empHP)) {
-                let finalHP = hp < 0 ? 0 : hp; // ป้องกันไม่ให้ HP ติดลบ
-                ranking.push({ name: name, hp: finalHP });
+                ranking.push({ name: name, hp: hp < 0 ? 0 : hp });
             }
-            
-            // เรียงจาก HP มากไปน้อย
             ranking.sort((a, b) => b.hp - a.hp);
 
             let gameHtml = '';
@@ -917,14 +1104,15 @@
                 let hpColor = hpPercent >= 80 ? 'green' : (hpPercent >= 50 ? 'yellow' : 'red');
                 let barColor = hpPercent >= 80 ? 'bg-green-500' : (hpPercent >= 50 ? 'bg-yellow-400' : 'bg-red-500');
                 
-                // แจกฉายา (Badge) ตามเงื่อนไข
                 let badge = '';
-                if (player.hp === 100) {
-                    badge = '<span class="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold ml-2 shadow-sm border border-green-200"><i class="fa-solid fa-shield-halved mr-1"></i>ไร้รอยขีดข่วน</span>';
-                } else if (index === 0 && player.hp > 0) {
-                    badge = '<span class="text-[10px] bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded font-bold ml-2 shadow-sm border border-yellow-300"><i class="fa-solid fa-crown mr-1"></i>MVP ประจำวีค</span>';
-                } else if (index === ranking.length - 1 && player.hp < 100) {
-                    badge = '<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold ml-2 shadow-sm border border-red-200"><i class="fa-solid fa-triangle-exclamation mr-1"></i>ต้องระวัง</span>';
+                if (player.hp === 100) badge = '<span class="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold ml-2 border border-green-200"><i class="fa-solid fa-shield-halved mr-1"></i>ไร้รอยขีดข่วน</span>';
+                else if (index === 0 && player.hp > 0) badge = '<span class="text-[10px] bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded font-bold ml-2 border border-yellow-300"><i class="fa-solid fa-crown mr-1"></i>MVP ประจำวีค</span>';
+                else if (index === ranking.length - 1 && player.hp < 100) badge = '<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold ml-2 border border-red-200"><i class="fa-solid fa-triangle-exclamation mr-1"></i>ต้องระวัง</span>';
+
+                let deptTag = '';
+                if (currentBranch === 'TRD') {
+                    let dept = getTRDDept(player.name);
+                    if (dept) deptTag = `<span class="text-[9px] text-gray-500 ml-1 font-normal border border-gray-200 px-1 rounded bg-gray-50">${dept}</span>`;
                 }
 
                 gameHtml += `
@@ -932,32 +1120,18 @@
                         <div class="flex justify-between items-end mb-1.5 relative z-10">
                             <div class="font-bold text-gray-700 text-sm flex items-center">
                                 <span class="w-6 inline-block text-gray-400 text-xs font-normal">#${index+1}</span>
-                                ${player.name}
-                                ${badge}
+                                ${player.name} ${deptTag} ${badge}
                             </div>
                             <div class="font-bold text-${hpColor}-600 text-xs">${player.hp} HP</div>
                         </div>
-                        <div class="w-full bg-gray-100 rounded-full h-2.5 relative z-10 shadow-inner">
-                            <div class="${barColor} h-2.5 rounded-full transition-all duration-1000 ease-out" style="width: ${hpPercent}%"></div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5 relative z-10">
+                            <div class="${barColor} h-2.5 rounded-full transition-all duration-1000" style="width: ${hpPercent}%"></div>
                         </div>
                     </div>
                 `;
             });
-            
             document.getElementById('dash-gamification').innerHTML = gameHtml;
-            // --------------------------------------------------
         }
-
-        addErrorEntryRow();
-        
-        // ผูก Event เมื่อเปลี่ยนวันที่ ให้โหลดงานของสัปดาห์นั้นมาแสดง
-        document.getElementById('record-date').addEventListener('change', loadTasksForSelectedDate);
-        
-        window.addEventListener('load', () => {
-            loadTasksForSelectedDate(); // สร้าง/โหลด ช่องแผนงานตอนเปิดแอป
-            syncDataFromSheet();
-        });
-
     </script>
 </body>
 </html>
