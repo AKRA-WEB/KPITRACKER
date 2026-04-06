@@ -24,6 +24,13 @@
 </head>
 <body class="text-gray-800 pb-20">
 
+    <!-- ================= VIEW: SYSTEM LOADING ================= -->
+    <div id="system-loading" class="fixed inset-0 bg-white z-[60] flex flex-col items-center justify-center">
+        <i class="fa-solid fa-circle-notch fa-spin text-5xl text-blue-600 mb-4"></i>
+        <p class="text-gray-600 font-bold tracking-wide mt-4 animate-pulse">กำลังซิงค์ข้อมูลระบบ...</p>
+    </div>
+
+    <!-- ================= VIEW: BRANCH SELECTOR ================= -->
     <div id="view-selector" class="hidden fixed inset-0 bg-blue-600 z-50 flex flex-col items-center justify-center p-6 text-white">
         <div class="text-center mb-8">
             <i class="fa-solid fa-warehouse text-6xl mb-4"></i>
@@ -41,6 +48,7 @@
         <p class="mt-10 text-[10px] text-blue-300">Warehouse Management System</p>
     </div>
 
+    <!-- Header -->
     <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex flex-col space-y-2">
         <div class="flex justify-between items-center">
             <h1 class="text-xl font-bold"><i class="fa-solid fa-clipboard-check mr-2"></i> KPI <span id="header-branch-name" class="text-yellow-300">AKRA</span></h1>
@@ -54,15 +62,19 @@
         </div>
     </header>
 
+    <!-- Main Content Area -->
     <main id="app-content" class="p-4 max-w-md mx-auto hidden">
         
+        <!-- ================= VIEW: RECORD ================= -->
         <div id="view-record" class="space-y-6">
             
+            <!-- Date Selection -->
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <label class="block text-sm font-bold text-gray-700 mb-2"><i class="fa-regular fa-calendar text-blue-500 mr-1.5"></i>วันที่บันทึก</label>
                 <input type="date" id="record-date" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 font-medium">
             </div>
 
+            <!-- Errors -->
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500 border-y border-r border-gray-100">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
                     <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>บันทึกความผิดพลาด (KPI)</h2>
@@ -75,6 +87,7 @@
                 </button>
             </div>
 
+            <!-- General Data (Hidden for TRD) -->
             <div id="zone-2-container" class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 border-y border-r border-gray-100">
                 <h2 class="text-lg font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2"><i class="fa-solid fa-boxes-stacked text-blue-500 mr-2"></i>ข้อมูลงานประจำวัน</h2>
                 
@@ -138,6 +151,7 @@
                 </div>
             </div>
 
+            <!-- Weekly Tasks -->
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500 border-y border-r border-gray-100">
                 <div class="border-b border-gray-100 pb-2 mb-4">
                     <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>แผนงาน (สัปดาห์นี้)</h2>
@@ -154,8 +168,10 @@
             <button onclick="saveDailyRecord()" id="btn-save" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-lg py-4 rounded-xl shadow-lg active:scale-[0.98] transition-transform flex justify-center items-center border border-blue-800">
                 <i class="fa-solid fa-cloud-arrow-up mr-2 text-xl"></i> บันทึกข้อมูลส่งเข้าระบบ
             </button>
-            <div class="h-6"></div> </div>
+            <div class="h-6"></div> <!-- Extra spacing at bottom -->
+        </div>
 
+        <!-- ================= VIEW: DASHBOARD ================= -->
         <div id="view-dashboard" class="hidden space-y-3 pb-6">
             
             <div class="flex justify-between items-center bg-white p-2 rounded-xl shadow-sm border border-gray-100">
@@ -167,6 +183,7 @@
                 <button onclick="changeWeek(1)" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400" id="btn-next-week" disabled><i class="fa-solid fa-chevron-right"></i></button>
             </div>
 
+            <!-- Overview Cards -->
             <div class="grid grid-cols-2 gap-2.5">
                 <div class="bg-white p-3 rounded-xl shadow-sm border-b-4 border-red-500 col-span-2 border border-gray-100 flex flex-col justify-center" id="dash-err-card">
                     <p class="text-[11px] text-gray-500 font-bold mb-1 uppercase tracking-wider">ยอดความผิดพลาดรวม</p>
@@ -179,6 +196,7 @@
                         <p class="text-[10px] text-gray-500 font-medium" id="dash-err-compare">เทียบกับวีคก่อน: -</p>
                     </div>
                 </div>
+                <!-- Volume Card (Hidden for TRD) -->
                 <div id="dash-vol-card" class="bg-white p-3 rounded-xl shadow-sm border-b-4 border-blue-500 border border-gray-100 flex flex-col justify-center">
                     <p class="text-[11px] text-gray-500 font-bold mb-1 uppercase tracking-wider">ปริมาณงานรวม</p>
                     <div class="flex items-end justify-between mt-1 mb-1">
@@ -188,12 +206,14 @@
                 </div>
             </div>
 
+            <!-- Smart Summary / Auto Analysis -->
             <div class="bg-gradient-to-br from-[#eef2ff] to-[#f5f3ff] p-3 rounded-xl shadow-sm border border-indigo-100 relative overflow-hidden">
                 <div class="absolute top-0 right-0 -mt-2 -mr-2 text-indigo-100 opacity-40"><i class="fa-solid fa-wand-magic-sparkles text-5xl"></i></div>
                 <h3 class="font-bold text-indigo-800 mb-2 text-sm flex items-center relative z-10"><i class="fa-solid fa-lightbulb mr-2 text-indigo-500"></i>บทวิเคราะห์อัจฉริยะ</h3>
                 <div id="dash-smart-summary" class="text-xs text-gray-700 space-y-1.5 leading-relaxed relative z-10 font-medium"></div>
             </div>
 
+            <!-- Gamification / Employee Evaluation -->
             <div class="bg-gradient-to-br from-[#fffbeb] to-[#fff7ed] p-3 rounded-xl shadow-sm border border-yellow-200">
                 <h3 class="font-bold text-yellow-800 mb-2 text-sm flex items-center justify-between">
                     <span class="flex items-center"><i class="fa-solid fa-trophy mr-2 text-yellow-500"></i>จัดอันดับทีม (HP)</span>
@@ -202,29 +222,31 @@
                 <div id="dash-gamification" class="space-y-1.5"></div>
             </div>
 
+            <!-- Weekly Tasks -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
                 <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>สถานะแผนงานสัปดาห์นี้</h3>
                 <div id="dash-weekly-tasks" class="space-y-1.5"></div>
             </div>
 
+            <!-- Employee Breakdown -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
                 <div class="flex justify-between items-center border-b border-gray-50 pb-2 mb-2">
                     <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-chart-bar text-blue-500 mr-2"></i>แยกตามบุคคล</h3>
+                    <!-- Dropdown Filter สำหรับ TRD จะแสดงขึ้นมาอัตโนมัติ -->
                     <select id="dash-dept-filter" class="hidden text-[10px] border border-blue-200 rounded-md p-1 outline-none text-blue-700 bg-blue-50 focus:ring-1 focus:ring-blue-500 font-bold shadow-sm cursor-pointer" onchange="renderEmpBreakdown()">
                         <option value="ALL">ดูรวมทุกแผนก</option>
-                        <option value="หน้าร้าน/ในร้าน">📍 หน้าร้าน / ในร้าน</option>
-                        <option value="แคชเชียร์">💰 แคชเชียร์</option>
-                        <option value="คลัง">📦 คลัง</option>
                     </select>
                 </div>
                 <div id="dash-emp-breakdown" class="space-y-2.5"></div>
             </div>
 
+            <!-- Details Note -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
                 <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2"><i class="fa-solid fa-book-open text-red-500 mr-2"></i>ประวัติหมายเหตุความผิด</h3>
                 <div id="dash-error-notes" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
             </div>
 
+            <!-- Customer Notes (Hidden for TRD) -->
             <div id="dash-customer-notes-container" class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
                 <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2 flex justify-between items-center">
                     <span><i class="fa-solid fa-truck-fast text-blue-500 mr-2"></i>ข้อมูลลูกค้าจัดส่ง</span>
@@ -235,22 +257,101 @@
             <div class="h-4"></div>
         </div>
 
+        <!-- ================= VIEW: ADMIN PANEL ================= -->
+        <div id="view-admin" class="hidden space-y-4 pb-6">
+            
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-lg font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2"><i class="fa-solid fa-user-plus text-blue-500 mr-2"></i>เพิ่มพนักงานใหม่</h2>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 mb-1">รหัสพนักงาน (หรือชื่อภาษาอังกฤษ)</label>
+                        <input type="text" id="admin-input-uid" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" placeholder="เช่น 250099 หรือ jame">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 mb-1">ชื่อพนักงาน (ภาษาไทย สำหรับแสดงผล)</label>
+                        <input type="text" id="admin-input-name" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" placeholder="เช่น สมชาย">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 mb-1.5">สาขาที่เข้าได้</label>
+                        <div class="flex space-x-3">
+                            <label class="flex items-center space-x-2 cursor-pointer bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg flex-1">
+                                <input type="checkbox" id="admin-input-branch-akra" value="AKRA" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                <span class="text-sm font-semibold text-gray-700">AKRA</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg flex-1">
+                                <input type="checkbox" id="admin-input-branch-trd" value="TRD" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" onchange="toggleAdminDept()">
+                                <span class="text-sm font-semibold text-gray-700">TRD</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="admin-dept-container" class="hidden opacity-0 transition-opacity duration-300">
+                        <label class="block text-[11px] font-bold text-gray-600 mb-1">แผนก (สำหรับสาขา TRD)</label>
+                        <select id="admin-input-dept" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-semibold text-gray-700">
+                            <option value="">-- ไม่ระบุ --</option>
+                            <option value="หน้าร้าน/ในร้าน">หน้าร้าน/ในร้าน</option>
+                            <option value="แคชเชียร์">แคชเชียร์</option>
+                            <option value="คลัง">คลัง</option>
+                        </select>
+                    </div>
+                    
+                    <button onclick="addEmployeeFromAdmin()" class="mt-2 w-full bg-blue-100 text-blue-700 border border-blue-200 font-bold py-3 rounded-xl text-sm active:bg-blue-200 shadow-sm transition-all hover:bg-blue-200 flex justify-center items-center">
+                        <i class="fa-solid fa-plus mr-2 text-lg"></i> เพิ่มเข้าสู่รายชื่อ
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center border-b border-gray-50 pb-2 mb-3">
+                     <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-users text-purple-500 mr-2"></i>รายชื่อพนักงานทั้งหมด</h3>
+                     <span id="admin-emp-count" class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold">0 คน</span>
+                </div>
+                
+                <div id="admin-employee-list" class="space-y-2 max-h-96 overflow-y-auto pr-1">
+                    <!-- Employee cards will be injected here -->
+                </div>
+                
+                <button onclick="saveAdminConfig()" id="btn-save-admin" class="mt-4 w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-transform flex justify-center items-center">
+                    <i class="fa-solid fa-cloud-arrow-up mr-2"></i> อัปเดตเข้าระบบฐานข้อมูล
+                </button>
+            </div>
+            <div class="h-6"></div>
+        </div>
+
     </main>
 
+    <!-- Bottom Navigation -->
     <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around p-1.5 pb-safe z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
-        <button onclick="switchTab('record')" id="tab-record" class="flex flex-col items-center p-2 w-1/2 tab-active transition-colors rounded-xl mx-1 hover:bg-blue-50">
+        <button onclick="switchTab('record')" id="tab-record" class="flex flex-col items-center p-2 w-full max-w-[33%] tab-active transition-colors rounded-xl mx-0.5 hover:bg-blue-50">
             <i class="fa-solid fa-pen-to-square text-xl mb-1 mt-0.5"></i>
             <span class="text-[10px] font-bold tracking-wide">บันทึกข้อมูล</span>
         </button>
-        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex flex-col items-center p-2 w-1/2 tab-inactive transition-colors rounded-xl mx-1 hover:bg-gray-50">
+        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex flex-col items-center p-2 w-full max-w-[33%] tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50">
             <i class="fa-solid fa-chart-pie text-xl mb-1 mt-0.5"></i>
             <span class="text-[10px] font-bold tracking-wide">แดชบอร์ด</span>
         </button>
+        <button onclick="switchTab('admin')" id="tab-admin" class="hidden flex-col items-center p-2 w-full max-w-[33%] tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50">
+            <i class="fa-solid fa-users-gear text-xl mb-1 mt-0.5"></i>
+            <span class="text-[10px] font-bold tracking-wide">ตั้งค่า</span>
+        </button>
     </nav>
 
+    <!-- Toast Notification -->
     <div id="toast" class="toast fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-900/95 backdrop-blur-sm text-white px-5 py-3 rounded-2xl shadow-xl z-50 flex items-center space-x-3 w-max max-w-[90%] border border-gray-700">
         <i class="fa-solid fa-circle-check text-green-400 text-lg shadow-sm"></i>
         <span id="toast-msg" class="text-sm font-medium tracking-wide">บันทึกสำเร็จ</span>
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="hidden fixed inset-0 bg-gray-900/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-200">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-200" id="custom-modal-content">
+            <div class="p-6 text-center">
+                <div id="custom-modal-icon" class="mb-3"></div>
+                <h3 id="custom-modal-title" class="text-lg font-bold text-gray-800 mb-2">แจ้งเตือน</h3>
+                <p id="custom-modal-text" class="text-sm text-gray-600 mb-6 leading-relaxed"></p>
+                <div id="custom-modal-actions" class="flex justify-center gap-3"></div>
+            </div>
+        </div>
     </div>
 
     <style>
@@ -262,29 +363,63 @@
 
     <script>
         // ================= CONFIGURATION =================
-        const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5PCJ1OlxCQR6zaNubrmZTgaORB-rJK2Ow5_YC3i5kKv-BrrTgJkTJyNZKrzfodK1m/exec";
-        const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
-
+        const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
 
-        // ------------------ TRD DEPARTMENTS ------------------
-        const TRD_DEPARTMENTS = {
-            "หน้าร้าน/ในร้าน": ['ท็อป', 'เปา', 'หมี', 'น้องใหม่', 'บอย'],
+        // ================= DYNAMIC DATA CONTAINERS =================
+        // ข้อมูลพนักงานเริ่มต้น (Default) ในกรณีที่ดึงจาก Sheet ไม่สำเร็จ
+        let GLOBAL_CONFIG_LIST = [
+            { uid: "250013", name: "เฉิน", branches: "AKRA,TRD", dept: "Admin" },
+            { uid: "hhsawyer", name: "Herehorr", branches: "AKRA,TRD", dept: "Admin" },
+            { uid: "stamp111", name: "Stamp", branches: "AKRA,TRD", dept: "Admin" },
+            { uid: "250007", name: "หยอง", branches: "AKRA", dept: "" },
+            { uid: "250022", name: "บันเลง", branches: "AKRA", dept: "" },
+            { uid: "250025", name: "พุช", branches: "AKRA", dept: "" },
+            { uid: "250005", name: "ท็อป", branches: "TRD", dept: "หน้าร้าน/ในร้าน" },
+            { uid: "250019", name: "เปา", branches: "TRD", dept: "หน้าร้าน/ในร้าน" },
+            { uid: "250020", name: "หมี", branches: "TRD", dept: "หน้าร้าน/ในร้าน" },
+            { uid: "250008", name: "น้องใหม่", branches: "TRD", dept: "หน้าร้าน/ในร้าน" },
+            { uid: "250024", name: "บอย", branches: "TRD", dept: "หน้าร้าน/ในร้าน" },
+            { uid: "250027", name: "เจมส์", branches: "TRD", dept: "หน้าร้าน/ในร้าน" },
+            { uid: "250023", name: "มะปราง", branches: "TRD", dept: "แคชเชียร์" },
+            { uid: "250028", name: "แสน", branches: "TRD", dept: "คลัง" },
+            { uid: "250010", name: "เอี้ยง", branches: "TRD", dept: "คลัง" }
+        ]; 
+
+        let TRD_DEPARTMENTS = {
+            "หน้าร้าน/ในร้าน": ['ท็อป', 'เปา', 'หมี', 'น้องใหม่', 'บอย', 'เจมส์'],
             "แคชเชียร์": ['มะปราง'],
             "คลัง": ['แสน', 'เอี้ยง']
         };
 
-        // ------------------ BRANCH CONFIGURATION ------------------
-        const BRANCH_CONFIG = {
+        let USER_DB = {
+            "250013": ["AKRA", "TRD"], "chen": ["AKRA", "TRD"], "เฉิน": ["AKRA", "TRD"],
+            "hhsawyer": ["AKRA", "TRD"], "herehorr": ["AKRA", "TRD"],
+            "stamp111": ["AKRA", "TRD"], "stamp": ["AKRA", "TRD"],
+            "250007": ["AKRA"], "yong": ["AKRA"],
+            "250022": ["AKRA"], "bunleng": ["AKRA"],
+            "250025": ["AKRA"], "push": ["AKRA"],
+            "250005": ["TRD"], "top": ["TRD"],
+            "250008": ["TRD"], "nongmai": ["TRD"],
+            "250010": ["TRD"], "eng": ["TRD"],
+            "250019": ["TRD"], "pao": ["TRD"],
+            "250020": ["TRD"], "mhee": ["TRD"],
+            "250023": ["TRD"], "maprang": ["TRD"],
+            "250024": ["TRD"], "boy": ["TRD"],
+            "250027": ["TRD"], "jame": ["TRD"], "เจมส์": ["TRD"],
+            "250028": ["TRD"], "san": ["TRD"]
+        };
+
+        let BRANCH_CONFIG = {
             "AKRA": {
-                employees: ['หยอง', 'พุช', 'บันเลง'], // 'ใหม่' ถูกนำออกแล้ว
+                employees: ['หยอง', 'พุช', 'บันเลง'], 
                 showZone2: true,
                 errorTypes: [
                     { group: "หมวดหมู่หลัก", options: ["แก้ไขได้ก่อนจัดส่ง", "ส่งถึงหน้าร้านแล้ว", "ส่งถึงลูกค้าแล้ว", "ผิดพลาดในการรับลงสินค้า", "ความผิดอื่น ๆ"] }
                 ]
             },
             "TRD": {
-                employees: ['ท็อป', 'เปา', 'หมี', 'มะปราง', 'น้องใหม่', 'บอย', 'แสน', 'เอี้ยง'], 
+                employees: ['ท็อป', 'เปา', 'หมี', 'น้องใหม่', 'บอย', 'เจมส์', 'มะปราง', 'แสน', 'เอี้ยง'], 
                 showZone2: false,
                 errorTypes: [
                     { group: "1. หน้าร้าน / ในร้าน", options: ["จัดบิลผิด", "หยิบของผิด", "จำนวนไม่ครบ", "ลูกค้ารอสินค้านานเกิน 15 นาที", "ปล่อยของผิดถึงลูกค้า (Checker)", "ไม่ช่วยใส่ถุง", "ไม่แนะนำสินค้า", "ไม่เดินดูแลลูกค้าเดินช้อป", "บริการไม่สุภาพ", "ปล่อยชั้นวางว่าง (เรียงของเติม)"] },
@@ -298,32 +433,10 @@
         // ------------------ HP PENALTY ------------------
         const HP_PENALTY = {
             'แก้ไขได้ก่อนจัดส่ง': 5, 'ผิดพลาดในการรับลงสินค้า': 10, 'ส่งถึงหน้าร้านแล้ว': 15, 'ส่งถึงลูกค้าแล้ว': 30,
-            // TRD
             'จัดบิลผิด': 5, 'หยิบของผิด': 5, 'จำนวนไม่ครบ': 5, 'ลูกค้ารอสินค้านานเกิน 15 นาที': 10, 'ปล่อยของผิดถึงลูกค้า (Checker)': 30,
             'คิดเงินทอนเงินผิด': 15, 'ตอบแชทช้า': 10, 'ให้ข้อมูลสินค้าผิด': 5, 'เปิดบิลผิด': 10, 'คิดเงินพลาด': 15, 'ของหมดไม่แจ้ง (เห็นผ่านหน้าระบบ)': 5,
             'ไม่ช่วยใส่ถุง': 5, 'ไม่แนะนำสินค้า': 5, 'ไม่เดินดูแลลูกค้าเดินช้อป': 5, 'บริการไม่สุภาพ': 20, 'ปล่อยชั้นวางว่าง (เรียงของเติม)': 10,
             'สต๊อคสินค้าไม่พอใช้': 10, 'ของหมดไม่แจ้ง': 10
-        };
-
-        // ------------------ USER PERMISSIONS ------------------
-        const USER_DB = {
-            "250013": ["AKRA", "TRD"], "CHEN": ["AKRA", "TRD"],
-            "hhsawyer": ["AKRA", "TRD"], "HEREHORR": ["AKRA", "TRD"],
-            "Stamp111": ["AKRA", "TRD"], "STAMP": ["AKRA", "TRD"],
-            "เฉิน": ["AKRA", "TRD"],
-            "250007": ["AKRA"], "YONG": ["AKRA"],
-            // "250021": ["AKRA"], "MAI": ["AKRA"], // ระงับสิทธิ์ 'ใหม่' สาขา AKRA
-            "250022": ["AKRA"], "BUNLENG": ["AKRA"],
-            "250025": ["AKRA"], "PUSH": ["AKRA"],
-            "250005": ["TRD"], "TOP": ["TRD"],
-            "250008": ["TRD"], "NONGMAI": ["TRD"],
-            "250010": ["TRD"], "ENG": ["TRD"],
-            "250019": ["TRD"], "PAO": ["TRD"],
-            "250020": ["TRD"], "MHEE": ["TRD"],
-            "250023": ["TRD"], "MAPRANG": ["TRD"],
-            "250024": ["TRD"], "BOY": ["TRD"],
-            "250027": ["TRD"], "JAME": ["TRD"],
-            "250028": ["TRD"], "SAN": ["TRD"]
         };
 
         // ================= AUTH & STATE =================
@@ -333,6 +446,7 @@
         let currentRoles = [];
         let currentBranch = sessionStorage.getItem('active_branch') || "";
         let viewOffsetWeek = 0; 
+        let IS_ADMIN = false;
 
         // ================= HELPER FUNCTIONS =================
         function getTRDDept(empName) {
@@ -342,14 +456,140 @@
             return "";
         }
 
-        // ================= STARTUP LOGIC =================
+        // ================= UI / MODAL FUNCTIONS =================
+        function showModal(title, message, type = 'alert', onConfirm = null) {
+            const modal = document.getElementById('custom-modal');
+            const iconEl = document.getElementById('custom-modal-icon');
+            const titleEl = document.getElementById('custom-modal-title');
+            const textEl = document.getElementById('custom-modal-text');
+            const actionsEl = document.getElementById('custom-modal-actions');
+
+            titleEl.innerText = title;
+            textEl.innerHTML = message;
+            
+            const closeModal = () => {
+                document.getElementById('custom-modal-content').classList.replace('scale-100', 'scale-95');
+                setTimeout(() => modal.classList.add('hidden'), 200);
+            };
+
+            modal.classList.remove('hidden');
+            setTimeout(() => document.getElementById('custom-modal-content').classList.replace('scale-95', 'scale-100'), 10);
+
+            if (type === 'alert') {
+                iconEl.innerHTML = '<i class="fa-solid fa-circle-exclamation text-4xl text-orange-500"></i>';
+                actionsEl.innerHTML = `<button id="modal-btn-ok" class="w-full bg-blue-600 text-white font-bold py-2.5 rounded-xl active:bg-blue-700 transition-colors shadow-sm">ตกลง</button>`;
+                document.getElementById('modal-btn-ok').onclick = () => { closeModal(); if(onConfirm) onConfirm(); };
+            } else if (type === 'error') {
+                iconEl.innerHTML = '<i class="fa-solid fa-circle-xmark text-4xl text-red-500"></i>';
+                actionsEl.innerHTML = `<button id="modal-btn-ok" class="w-full bg-red-600 text-white font-bold py-2.5 rounded-xl active:bg-red-700 transition-colors shadow-sm">รับทราบ</button>`;
+                document.getElementById('modal-btn-ok').onclick = () => { closeModal(); if(onConfirm) onConfirm(); };
+            } else if (type === 'confirm') {
+                iconEl.innerHTML = '<i class="fa-solid fa-circle-question text-4xl text-blue-500"></i>';
+                actionsEl.innerHTML = `
+                    <button id="modal-btn-cancel" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2.5 rounded-xl active:bg-gray-200 transition-colors border border-gray-200 shadow-sm">ยกเลิก</button>
+                    <button id="modal-btn-confirm" class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded-xl active:bg-blue-700 transition-colors shadow-sm">ยืนยัน</button>
+                `;
+                document.getElementById('modal-btn-cancel').onclick = closeModal;
+                document.getElementById('modal-btn-confirm').onclick = () => { closeModal(); if(onConfirm) onConfirm(); };
+            }
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = message;
+            toast.querySelector('i').className = isError ? 'fa-solid fa-circle-xmark text-red-400 text-lg shadow-sm' : 'fa-solid fa-circle-check text-green-400 text-lg shadow-sm';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // ================= STARTUP LOGIC (DYNAMIC CONFIG) =================
+        async function initSystem() {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // เซ็ต Timeout 10 วินาที
+
+            try {
+                // โหลดการตั้งค่าพนักงานจาก Google Sheet
+                const response = await fetch(LOG_APP_SCRIPT_URL + "?action=getConfig", { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) throw new Error("Network response was not ok");
+                const configList = await response.json();
+                
+                if (Array.isArray(configList) && configList.length > 0) {
+                    GLOBAL_CONFIG_LIST = configList; // Save for Admin Panel
+                    
+                    // ล้างค่า Default
+                    USER_DB = {};
+                    TRD_DEPARTMENTS = {};
+                    BRANCH_CONFIG["AKRA"].employees = [];
+                    BRANCH_CONFIG["TRD"].employees = [];
+
+                    // แปลงข้อมูลใส่ระบบ
+                    configList.forEach(user => {
+                        if (!user.uid) return;
+                        const uidStr = String(user.uid).toLowerCase();
+                        const branches = user.branches.split(',').map(b => b.trim().toUpperCase()).filter(b => b);
+                        
+                        USER_DB[uidStr] = branches;
+
+                        // ตรวจสอบว่าเป็นแอดมินหรือไม่ ถ้าใช่ให้ข้ามการเอาชื่อไปใส่ในลิสต์พนักงาน
+                        const isSystemAdmin = user.dept && user.dept.toLowerCase() === 'admin';
+
+                        if (user.name && !isSystemAdmin) {
+                            if (branches.includes('AKRA')) {
+                                if (!BRANCH_CONFIG["AKRA"].employees.includes(user.name)) {
+                                    BRANCH_CONFIG["AKRA"].employees.push(user.name);
+                                }
+                            }
+                            if (branches.includes('TRD')) {
+                                if (!BRANCH_CONFIG["TRD"].employees.includes(user.name)) {
+                                    BRANCH_CONFIG["TRD"].employees.push(user.name);
+                                }
+                                if (user.dept) {
+                                    if (!TRD_DEPARTMENTS[user.dept]) TRD_DEPARTMENTS[user.dept] = [];
+                                    if (!TRD_DEPARTMENTS[user.dept].includes(user.name)) {
+                                        TRD_DEPARTMENTS[user.dept].push(user.name);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch(e) {
+                console.warn("⚠️ แจ้งเตือน: ไม่สามารถดึงรายชื่อจาก Google Sheet ได้ ระบบจะใช้รายชื่อพนักงานตั้งต้น (Fallback) แทน");
+            } finally {
+                // หากดึงไม่ได้จริงๆ ระบบจะเอาข้อมูลตั้งต้นไปใช้แทน ซึ่งได้อัปเดตข้อมูลล่าสุดไว้ด้านบนแล้ว
+                if (Object.keys(USER_DB).length === 0) {
+                     GLOBAL_CONFIG_LIST.forEach(u => {
+                         USER_DB[u.uid.toLowerCase()] = u.branches.split(',').map(b=>b.trim().toUpperCase());
+                     });
+                }
+
+                // อัปเดต Dropdown Filter ใน Dashboard
+                const deptFilter = document.getElementById('dash-dept-filter');
+                if (deptFilter) {
+                    deptFilter.innerHTML = '<option value="ALL">ดูรวมทุกแผนก</option>';
+                    Object.keys(TRD_DEPARTMENTS).forEach(dept => {
+                        deptFilter.innerHTML += `<option value="${dept}">🏷️ ${dept}</option>`;
+                    });
+                }
+
+                // ปิดหน้าต่างโหลด และไปเช็คสิทธิ์ล็อกอิน
+                const loader = document.getElementById('system-loading');
+                if (loader) loader.classList.add('hidden');
+                
+                checkAuth();
+            }
+        }
+
         function checkAuth() {
             const isPreviewMode = window.self !== window.top || window.location.hostname === '' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             const savedData = localStorage.getItem('akra_sso_user_data');
             
             if (!savedData && !isPreviewMode) {
-                alert("กรุณาเข้าสู่ระบบผ่านหน้า Portal หลักก่อนใช้งานครับ");
-                window.location.href = PORTAL_URL;
+                showModal("ปฏิเสธการเข้าถึง", "กรุณาเข้าสู่ระบบผ่านหน้า Portal หลักก่อนใช้งานครับ", "error", () => {
+                    window.location.href = PORTAL_URL;
+                });
                 return;
             }
 
@@ -373,23 +613,34 @@
                 const recordDate = document.getElementById('record-date');
                 if(recordDate) recordDate.valueAsDate = new Date();
                 
+                // ตรวจสอบว่าเป็น Admin หรือไม่
+                IS_ADMIN = currentRoles.includes('Admin') || currentRoles.includes('admin') || 
+                           ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111'].includes(String(currentUser).toLowerCase());
+                
+                if(IS_ADMIN) {
+                    document.getElementById('tab-admin').classList.remove('hidden');
+                    document.getElementById('tab-admin').classList.add('flex');
+                    renderAdminPanel(); 
+                }
+
                 applyRolePermissions();
             } catch (e) {
                 if (!isPreviewMode) {
-                    alert("ข้อมูลการเข้าสู่ระบบไม่สมบูรณ์ กรุณาล็อกอินใหม่");
-                    localStorage.removeItem('akra_sso_user_data');
-                    window.location.href = PORTAL_URL;
+                    showModal("ข้อมูลไม่สมบูรณ์", "ข้อมูลการเข้าสู่ระบบมีปัญหา กรุณาล็อกอินเข้าสู่ระบบใหม่อีกครั้ง", "error", () => {
+                        localStorage.removeItem('akra_sso_user_data');
+                        window.location.href = PORTAL_URL;
+                    });
                 }
             }
         }
 
         function applyRolePermissions() {
-            let matchedKey = Object.keys(USER_DB).find(k => k.toLowerCase() === String(currentUser).toLowerCase());
-            const permissions = matchedKey ? USER_DB[matchedKey] : [];
+            const permissions = USER_DB[String(currentUser).toLowerCase()] || [];
             
             if (permissions.length === 0) {
-                alert(`คุณไม่มีสิทธิ์เข้าใช้งานระบบ KPI Tracker หรือรหัสไม่ถูกต้อง (User ID: ${currentUser})`);
-                window.location.href = PORTAL_URL; 
+                showModal("ไม่มีสิทธิ์เข้าใช้งาน", `คุณไม่มีสิทธิ์เข้าใช้งานระบบ KPI Tracker หรือรหัสไม่ถูกต้อง (User ID: ${currentUser})`, "error", () => {
+                    window.location.href = PORTAL_URL;
+                });
                 return;
             }
 
@@ -404,7 +655,8 @@
             }
         }
 
-        checkAuth();
+        // เรียกใช้งานระบบตอนโหลดหน้าเว็บเสร็จ
+        window.addEventListener('DOMContentLoaded', initSystem);
 
         function showBranchSelector(perms) {
             document.getElementById('view-selector').classList.remove('hidden');
@@ -417,7 +669,7 @@
             currentBranch = branch;
             sessionStorage.setItem('active_branch', branch);
             document.getElementById('view-selector').classList.add('hidden');
-            if(!perms) perms = USER_DB[currentUser] || [];
+            if(!perms) perms = USER_DB[String(currentUser).toLowerCase()] || [];
             initApp(branch, perms);
         }
 
@@ -457,6 +709,7 @@
             syncDataFromSheet();
         }
 
+        // ================= API / SYNC =================
         function sendAppLog(action, details) {
             if (!currentUser) return;
             const payload = { user: currentUser, action: action, app: CURRENT_APP_NAME, details: details };
@@ -464,16 +717,21 @@
             .catch(err => console.error(err));
         }
 
-        // ================= API / SYNC =================
         async function syncDataFromSheet() {
-            if(!GOOGLE_APP_SCRIPT_URL || !currentBranch) return;
+            if(!LOG_APP_SCRIPT_URL || !currentBranch) return;
             const btnSync = document.getElementById('btn-sync');
-            btnSync.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1"></i> ซิงค์...';
-            btnSync.disabled = true;
+            if (btnSync) {
+                btnSync.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1"></i> ซิงค์...';
+                btnSync.disabled = true;
+            }
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000); // เซ็ต Timeout 12 วินาที ป้องกันหมุนไม่หยุด
 
             try {
-                const fetchUrl = GOOGLE_APP_SCRIPT_URL + "?branch=" + currentBranch;
-                const response = await fetch(fetchUrl);
+                const fetchUrl = LOG_APP_SCRIPT_URL + "?action=getData&branch=" + currentBranch;
+                const response = await fetch(fetchUrl, { signal: controller.signal });
+                clearTimeout(timeoutId);
                 const data = await response.json();
                 
                 if (Array.isArray(data)) {
@@ -486,40 +744,160 @@
                     showToast("ซิงค์ข้อมูลล่าสุดเรียบร้อย");
                 }
             } catch (error) {
-                console.error(error);
-                showToast("ไม่สามารถดึงข้อมูลจาก Sheet ได้", true);
+                console.warn("⚠️ แจ้งเตือน: ไม่สามารถดึงข้อมูล KPI จาก Sheet ได้ ระบบจะแสดงผลจากข้อมูลล่าสุดที่ถูกบันทึกไว้ในเครื่องแทน");
+                showToast("ทำงานโหมดออฟไลน์ (เชื่อมต่อข้อมูลไม่สำเร็จ)", true);
             } finally {
-                btnSync.innerHTML = '<i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล';
-                btnSync.disabled = false;
+                if (btnSync) {
+                    btnSync.innerHTML = '<i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล';
+                    btnSync.disabled = false;
+                }
+            }
+        }
+
+        // ================= ADMIN FUNCTIONS =================
+        function toggleAdminDept() {
+            const trdChecked = document.getElementById('admin-input-branch-trd').checked;
+            const deptContainer = document.getElementById('admin-dept-container');
+            if (trdChecked) {
+                deptContainer.classList.remove('hidden');
+                setTimeout(() => deptContainer.classList.remove('opacity-0'), 10);
+            } else {
+                deptContainer.classList.add('opacity-0');
+                setTimeout(() => deptContainer.classList.add('hidden'), 300);
+            }
+        }
+
+        function renderAdminPanel() {
+            const container = document.getElementById('admin-employee-list');
+            document.getElementById('admin-emp-count').innerText = `${GLOBAL_CONFIG_LIST.length} คน`;
+            let html = '';
+            
+            GLOBAL_CONFIG_LIST.forEach((emp, index) => {
+                let branchesBadge = emp.branches.split(',').map(b => `<span class="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 mr-1">${b}</span>`).join('');
+                let deptBadge = emp.dept ? `<span class="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded border border-purple-100">${emp.dept}</span>` : '';
+                
+                html += `
+                    <div class="bg-gray-50/50 p-3 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center mb-2 transition-all hover:bg-white">
+                        <div>
+                            <div class="font-bold text-gray-800 text-sm flex items-center">
+                                ${emp.name} <span class="text-[10px] text-gray-400 font-medium ml-1.5 bg-white px-1 border border-gray-100 rounded">ID: ${emp.uid}</span>
+                            </div>
+                            <div class="text-[10px] text-gray-600 mt-1.5 flex flex-wrap gap-1">
+                                ${branchesBadge} ${deptBadge}
+                            </div>
+                        </div>
+                        <button onclick="removeEmployeeFromAdmin(${index})" class="text-red-400 bg-white border border-red-100 w-8 h-8 flex justify-center items-center rounded-lg hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors shadow-sm">
+                            <i class="fa-solid fa-trash-can text-sm"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html || '<div class="text-center text-gray-400 text-sm py-4">ไม่พบรายชื่อพนักงาน</div>';
+        }
+
+        function addEmployeeFromAdmin() {
+            const uid = document.getElementById('admin-input-uid').value.trim();
+            const name = document.getElementById('admin-input-name').value.trim();
+            const isAkra = document.getElementById('admin-input-branch-akra').checked;
+            const isTrd = document.getElementById('admin-input-branch-trd').checked;
+            const dept = document.getElementById('admin-input-dept').value;
+
+            if (!uid || !name) return showToast("กรุณาระบุรหัสพนักงานและชื่อให้ครบถ้วน", true);
+            if (!isAkra && !isTrd) return showToast("กรุณาเลือกสาขาอย่างน้อย 1 สาขา", true);
+            if (isTrd && !dept) return showToast("กรุณาเลือกแผนกสำหรับสาขา TRD", true);
+
+            const exists = GLOBAL_CONFIG_LIST.find(e => String(e.uid).toLowerCase() === String(uid).toLowerCase() || e.name === name);
+            if (exists) {
+                showModal("พบข้อมูลซ้ำ", `พบข้อมูลรหัสพนักงานหรือชื่อนี้ในระบบแล้ว (${exists.name}) ต้องการเพิ่มทับข้อมูลเดิมหรือไม่?`, "confirm", () => {
+                    GLOBAL_CONFIG_LIST = GLOBAL_CONFIG_LIST.filter(e => String(e.uid).toLowerCase() !== String(uid).toLowerCase() && e.name !== name);
+                    proceedAddAdminEmp(uid, name, isAkra, isTrd, dept);
+                });
+                return;
+            }
+            proceedAddAdminEmp(uid, name, isAkra, isTrd, dept);
+        }
+
+        function proceedAddAdminEmp(uid, name, isAkra, isTrd, dept) {
+            let branches = [];
+            if (isAkra) branches.push("AKRA");
+            if (isTrd) branches.push("TRD");
+
+            GLOBAL_CONFIG_LIST.push({
+                uid: uid,
+                name: name,
+                branches: branches.join(","),
+                dept: isTrd ? dept : ""
+            });
+
+            document.getElementById('admin-input-uid').value = '';
+            document.getElementById('admin-input-name').value = '';
+            document.getElementById('admin-input-branch-akra').checked = false;
+            document.getElementById('admin-input-branch-trd').checked = false;
+            document.getElementById('admin-input-dept').value = '';
+            toggleAdminDept();
+
+            renderAdminPanel();
+            showToast(`เพิ่ม ${name} สำเร็จ (อย่าลืมกดอัปเดต)`);
+        }
+
+        function removeEmployeeFromAdmin(index) {
+            const empName = GLOBAL_CONFIG_LIST[index].name;
+            showModal("ยืนยันการลบ", `คุณต้องการลบรายชื่อ "<b>${empName}</b>" ออกจากระบบใช่หรือไม่?`, "confirm", () => {
+                GLOBAL_CONFIG_LIST.splice(index, 1);
+                renderAdminPanel();
+            });
+        }
+
+        async function saveAdminConfig() {
+            const btn = document.getElementById('btn-save-admin');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังอัปเดตระบบ...';
+            btn.disabled = true;
+
+            const payload = { action: "saveConfig", configData: GLOBAL_CONFIG_LIST };
+
+            try {
+                const response = await fetch(LOG_APP_SCRIPT_URL, {
+                    method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                showToast("อัปเดตการตั้งค่าเข้าระบบกลางเรียบร้อย");
+                setTimeout(() => location.reload(), 1500); 
+            } catch (error) {
+                console.error(error); 
+                showToast("เกิดข้อผิดพลาด ไม่สามารถส่งข้อมูลได้", true);
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> อัปเดตเข้าระบบฐานข้อมูล';
+                btn.disabled = false;
             }
         }
 
         // ================= UI FUNCTIONS =================
         function switchTab(tab) {
-            if(tab === 'record') {
-                document.getElementById('view-record').classList.remove('hidden');
-                document.getElementById('view-dashboard').classList.add('hidden');
-                document.getElementById('tab-record').classList.replace('tab-inactive', 'tab-active');
-                document.getElementById('tab-record').classList.add('bg-blue-50');
-                document.getElementById('tab-dashboard').classList.replace('tab-active', 'tab-inactive');
-                document.getElementById('tab-dashboard').classList.remove('bg-blue-50');
-            } else {
-                document.getElementById('view-record').classList.add('hidden');
-                document.getElementById('view-dashboard').classList.remove('hidden');
-                document.getElementById('tab-dashboard').classList.replace('tab-inactive', 'tab-active');
-                document.getElementById('tab-dashboard').classList.add('bg-blue-50');
-                document.getElementById('tab-record').classList.replace('tab-active', 'tab-inactive');
-                document.getElementById('tab-record').classList.remove('bg-blue-50');
-                loadDashboardData();
-            }
-        }
+            const views = ['view-record', 'view-dashboard', 'view-admin'];
+            const tabs = ['tab-record', 'tab-dashboard', 'tab-admin'];
+            
+            views.forEach(v => {
+                const el = document.getElementById(v);
+                if(el) el.classList.add('hidden');
+            });
+            tabs.forEach(t => {
+                const el = document.getElementById(t);
+                if(el) {
+                    el.classList.replace('tab-active', 'tab-inactive');
+                    el.classList.remove('bg-blue-50');
+                }
+            });
 
-        function showToast(message, isError = false) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = message;
-            toast.querySelector('i').className = isError ? 'fa-solid fa-circle-xmark text-red-400 text-lg shadow-sm' : 'fa-solid fa-circle-check text-green-400 text-lg shadow-sm';
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+            document.getElementById('view-' + tab).classList.remove('hidden');
+            const activeTab = document.getElementById('tab-' + tab);
+            activeTab.classList.replace('tab-inactive', 'tab-active');
+            activeTab.classList.add('bg-blue-50');
+
+            if(tab === 'dashboard') {
+                loadDashboardData();
+            } else if (tab === 'admin') {
+                renderAdminPanel();
+            }
         }
 
         function adjVol(id, val) {
@@ -564,10 +942,12 @@
                     "แคชเชียร์": { bg: "bg-pink-50/70", border: "border-pink-100", text: "text-pink-700", icon: "fa-cash-register", activeBg: "peer-checked:bg-pink-500", activeBorder: "peer-checked:border-pink-500" },
                     "คลัง": { bg: "bg-orange-50/70", border: "border-orange-100", text: "text-orange-700", icon: "fa-boxes-stacked", activeBg: "peer-checked:bg-orange-500", activeBorder: "peer-checked:border-orange-500" }
                 };
+                const defaultTheme = { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-700", icon: "fa-users", activeBg: "peer-checked:bg-gray-500", activeBorder: "peer-checked:border-gray-500" };
 
                 empsHtml += `<div class="grid grid-cols-1 gap-2.5 mb-2 mt-1">`;
                 for (const [dept, emps] of Object.entries(TRD_DEPARTMENTS)) {
-                    const theme = deptTheme[dept];
+                    if(emps.length === 0) continue;
+                    const theme = deptTheme[dept] || defaultTheme;
                     empsHtml += `
                         <div class="${theme.bg} border ${theme.border} rounded-xl p-3 shadow-sm">
                             <div class="${theme.text} text-[11px] font-extrabold mb-2.5 flex items-center tracking-wide">
@@ -657,10 +1037,12 @@
                     "แคชเชียร์": { bg: "bg-pink-50/70", border: "border-pink-100", text: "text-pink-700", icon: "fa-cash-register", activeBg: "peer-checked:bg-purple-500", activeBorder: "peer-checked:border-purple-500" },
                     "คลัง": { bg: "bg-orange-50/70", border: "border-orange-100", text: "text-orange-700", icon: "fa-boxes-stacked", activeBg: "peer-checked:bg-purple-500", activeBorder: "peer-checked:border-purple-500" }
                 };
+                const defaultTheme = { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-700", icon: "fa-users", activeBg: "peer-checked:bg-purple-500", activeBorder: "peer-checked:border-purple-500" };
 
                 empsHtml += `<div class="grid grid-cols-1 gap-2 mt-1">`;
                 for (const [dept, emps] of Object.entries(TRD_DEPARTMENTS)) {
-                    const theme = deptTheme[dept];
+                    if(emps.length === 0) continue;
+                    const theme = deptTheme[dept] || defaultTheme;
                     empsHtml += `
                         <div class="${theme.bg} border ${theme.border} rounded-xl p-2.5 shadow-sm">
                             <div class="${theme.text} text-[10px] font-extrabold mb-2 flex items-center">
@@ -834,12 +1216,12 @@
                 volume: volumeData
             };
 
-            if(GOOGLE_APP_SCRIPT_URL) {
+            if(LOG_APP_SCRIPT_URL) {
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2 text-xl"></i> กำลังบันทึกข้อมูล...';
                 btn.disabled = true;
                 
                 try {
-                    await fetch(GOOGLE_APP_SCRIPT_URL, {
+                    await fetch(LOG_APP_SCRIPT_URL, {
                         method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
@@ -859,7 +1241,8 @@
                         ['note-pickup','note-upcountry','note-inmarket','note-outmarket'].forEach(id => document.getElementById(id).value = '');
                     }
                 } catch(error) {
-                    console.error(error); showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ", true);
+                    console.warn("⚠️ แจ้งเตือน: ไม่สามารถอัปโหลดข้อมูลไปยัง Sheet ได้ ระบบจะบันทึกข้อมูลไว้ในเครื่อง (ออฟไลน์) เพื่อรอการซิงค์ในครั้งหน้า");
+                    showToast("บันทึกโหมดออฟไลน์ (เชื่อมต่อเซิร์ฟเวอร์ไม่ได้)", false);
                 } finally {
                     btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2 text-xl"></i> บันทึกข้อมูลส่งเข้าระบบ'; 
                     btn.disabled = false;
@@ -999,15 +1382,17 @@
                 }
 
                 (day.errors || []).forEach(e => {
-                    if(empErrCount[e.emp] === undefined) {
-                        empErrCount[e.emp] = 0;
-                        empHP[e.emp] = 100;
-                        categorizedNotes[e.emp] = {};
+                    let empName = (e.emp || "").trim(); 
+
+                    if(empErrCount[empName] === undefined) {
+                        empErrCount[empName] = 0;
+                        empHP[empName] = 100;
+                        categorizedNotes[empName] = {};
                     }
                     
-                    empErrCount[e.emp]++;
+                    empErrCount[empName]++;
                     
-                    if(!categorizedNotes[e.emp][e.type]) categorizedNotes[e.emp][e.type] = [];
+                    if(!categorizedNotes[empName][e.type]) categorizedNotes[empName][e.type] = [];
                     
                     if(errorTypeCounts[e.type] === undefined) {
                         errorTypeCounts[e.type] = 0;
@@ -1055,11 +1440,11 @@
 
                     let displayNote = `<span class="text-red-600 font-black bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 shadow-sm border border-red-200 text-[9px] inline-block whitespace-nowrap align-middle">-${penaltyToApply} HP</span>${stageBadge}<span class="text-gray-700 leading-snug">${cleanNote}</span>`;
 
-                    categorizedNotes[e.emp][e.type].push({ note: displayNote, date: day.date });
+                    categorizedNotes[empName][e.type].push({ note: displayNote, date: day.date });
                     hasAnyNotes = true;
 
-                    if (empHP[e.emp] !== undefined) {
-                        empHP[e.emp] -= penaltyToApply;
+                    if (empHP[empName] !== undefined) {
+                        empHP[empName] -= penaltyToApply;
                     }
                 });
 
@@ -1160,8 +1545,9 @@
                 if(itemD >= lastWeekStart && itemD <= lastWeekEnd) {
                     lastWeekErrTotal += (d.errors || []).length;
                     (d.errors || []).forEach(e => { 
-                        if(lastWeekEmpErrCount[e.emp] === undefined) lastWeekEmpErrCount[e.emp] = 0;
-                        lastWeekEmpErrCount[e.emp]++; 
+                        let empName = (e.emp || "").trim(); 
+                        if(lastWeekEmpErrCount[empName] === undefined) lastWeekEmpErrCount[empName] = 0;
+                        lastWeekEmpErrCount[empName]++; 
                     });
                 }
             });
