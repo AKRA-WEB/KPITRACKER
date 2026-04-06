@@ -24,7 +24,6 @@
 </head>
 <body class="text-gray-800 pb-20">
 
-    <!-- ================= VIEW: BRANCH SELECTOR ================= -->
     <div id="view-selector" class="hidden fixed inset-0 bg-blue-600 z-50 flex flex-col items-center justify-center p-6 text-white">
         <div class="text-center mb-8">
             <i class="fa-solid fa-warehouse text-6xl mb-4"></i>
@@ -42,7 +41,6 @@
         <p class="mt-10 text-[10px] text-blue-300">Warehouse Management System</p>
     </div>
 
-    <!-- Header -->
     <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex flex-col space-y-2">
         <div class="flex justify-between items-center">
             <h1 class="text-xl font-bold"><i class="fa-solid fa-clipboard-check mr-2"></i> KPI <span id="header-branch-name" class="text-yellow-300">AKRA</span></h1>
@@ -56,19 +54,15 @@
         </div>
     </header>
 
-    <!-- Main Content Area -->
     <main id="app-content" class="p-4 max-w-md mx-auto hidden">
         
-        <!-- ================= VIEW: RECORD ================= -->
         <div id="view-record" class="space-y-6">
             
-            <!-- Date Selection -->
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <label class="block text-sm font-bold text-gray-700 mb-2"><i class="fa-regular fa-calendar text-blue-500 mr-1.5"></i>วันที่บันทึก</label>
                 <input type="date" id="record-date" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 font-medium">
             </div>
 
-            <!-- Errors -->
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500 border-y border-r border-gray-100">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
                     <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>บันทึกความผิดพลาด (KPI)</h2>
@@ -81,7 +75,6 @@
                 </button>
             </div>
 
-            <!-- General Data (Hidden for TRD) -->
             <div id="zone-2-container" class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 border-y border-r border-gray-100">
                 <h2 class="text-lg font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2"><i class="fa-solid fa-boxes-stacked text-blue-500 mr-2"></i>ข้อมูลงานประจำวัน</h2>
                 
@@ -145,7 +138,6 @@
                 </div>
             </div>
 
-            <!-- Weekly Tasks -->
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500 border-y border-r border-gray-100">
                 <div class="border-b border-gray-100 pb-2 mb-4">
                     <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>แผนงาน (สัปดาห์นี้)</h2>
@@ -162,10 +154,8 @@
             <button onclick="saveDailyRecord()" id="btn-save" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-lg py-4 rounded-xl shadow-lg active:scale-[0.98] transition-transform flex justify-center items-center border border-blue-800">
                 <i class="fa-solid fa-cloud-arrow-up mr-2 text-xl"></i> บันทึกข้อมูลส่งเข้าระบบ
             </button>
-            <div class="h-6"></div> <!-- Extra spacing at bottom -->
-        </div>
+            <div class="h-6"></div> </div>
 
-        <!-- ================= VIEW: DASHBOARD (CLEANED) ================= -->
         <div id="view-dashboard" class="hidden space-y-3 pb-6">
             
             <div class="flex justify-between items-center bg-white p-2 rounded-xl shadow-sm border border-gray-100">
@@ -177,7 +167,6 @@
                 <button onclick="changeWeek(1)" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400" id="btn-next-week" disabled><i class="fa-solid fa-chevron-right"></i></button>
             </div>
 
-            <!-- Overview Cards -->
             <div class="grid grid-cols-2 gap-2.5">
                 <div class="bg-white p-3 rounded-xl shadow-sm border-b-4 border-red-500 col-span-2 border border-gray-100 flex flex-col justify-center" id="dash-err-card">
                     <p class="text-[11px] text-gray-500 font-bold mb-1 uppercase tracking-wider">ยอดความผิดพลาดรวม</p>
@@ -190,7 +179,6 @@
                         <p class="text-[10px] text-gray-500 font-medium" id="dash-err-compare">เทียบกับวีคก่อน: -</p>
                     </div>
                 </div>
-                <!-- Volume Card (Hidden for TRD) -->
                 <div id="dash-vol-card" class="bg-white p-3 rounded-xl shadow-sm border-b-4 border-blue-500 border border-gray-100 flex flex-col justify-center">
                     <p class="text-[11px] text-gray-500 font-bold mb-1 uppercase tracking-wider">ปริมาณงานรวม</p>
                     <div class="flex items-end justify-between mt-1 mb-1">
@@ -200,14 +188,12 @@
                 </div>
             </div>
 
-            <!-- Smart Summary / Auto Analysis -->
             <div class="bg-gradient-to-br from-[#eef2ff] to-[#f5f3ff] p-3 rounded-xl shadow-sm border border-indigo-100 relative overflow-hidden">
                 <div class="absolute top-0 right-0 -mt-2 -mr-2 text-indigo-100 opacity-40"><i class="fa-solid fa-wand-magic-sparkles text-5xl"></i></div>
                 <h3 class="font-bold text-indigo-800 mb-2 text-sm flex items-center relative z-10"><i class="fa-solid fa-lightbulb mr-2 text-indigo-500"></i>บทวิเคราะห์อัจฉริยะ</h3>
                 <div id="dash-smart-summary" class="text-xs text-gray-700 space-y-1.5 leading-relaxed relative z-10 font-medium"></div>
             </div>
 
-            <!-- Gamification / Employee Evaluation -->
             <div class="bg-gradient-to-br from-[#fffbeb] to-[#fff7ed] p-3 rounded-xl shadow-sm border border-yellow-200">
                 <h3 class="font-bold text-yellow-800 mb-2 text-sm flex items-center justify-between">
                     <span class="flex items-center"><i class="fa-solid fa-trophy mr-2 text-yellow-500"></i>จัดอันดับทีม (HP)</span>
@@ -216,17 +202,14 @@
                 <div id="dash-gamification" class="space-y-1.5"></div>
             </div>
 
-            <!-- Weekly Tasks -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
                 <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>สถานะแผนงานสัปดาห์นี้</h3>
                 <div id="dash-weekly-tasks" class="space-y-1.5"></div>
             </div>
 
-            <!-- Employee Breakdown -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
                 <div class="flex justify-between items-center border-b border-gray-50 pb-2 mb-2">
                     <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-chart-bar text-blue-500 mr-2"></i>แยกตามบุคคล</h3>
-                    <!-- Dropdown Filter สำหรับ TRD จะแสดงขึ้นมาอัตโนมัติ -->
                     <select id="dash-dept-filter" class="hidden text-[10px] border border-blue-200 rounded-md p-1 outline-none text-blue-700 bg-blue-50 focus:ring-1 focus:ring-blue-500 font-bold shadow-sm cursor-pointer" onchange="renderEmpBreakdown()">
                         <option value="ALL">ดูรวมทุกแผนก</option>
                         <option value="หน้าร้าน/ในร้าน">📍 หน้าร้าน / ในร้าน</option>
@@ -237,13 +220,11 @@
                 <div id="dash-emp-breakdown" class="space-y-2.5"></div>
             </div>
 
-            <!-- Details Note -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
                 <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2"><i class="fa-solid fa-book-open text-red-500 mr-2"></i>ประวัติหมายเหตุความผิด</h3>
                 <div id="dash-error-notes" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
             </div>
 
-            <!-- Customer Notes (Hidden for TRD) -->
             <div id="dash-customer-notes-container" class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
                 <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2 flex justify-between items-center">
                     <span><i class="fa-solid fa-truck-fast text-blue-500 mr-2"></i>ข้อมูลลูกค้าจัดส่ง</span>
@@ -256,7 +237,6 @@
 
     </main>
 
-    <!-- Bottom Navigation -->
     <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around p-1.5 pb-safe z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
         <button onclick="switchTab('record')" id="tab-record" class="flex flex-col items-center p-2 w-1/2 tab-active transition-colors rounded-xl mx-1 hover:bg-blue-50">
             <i class="fa-solid fa-pen-to-square text-xl mb-1 mt-0.5"></i>
@@ -268,7 +248,6 @@
         </button>
     </nav>
 
-    <!-- Toast Notification -->
     <div id="toast" class="toast fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-900/95 backdrop-blur-sm text-white px-5 py-3 rounded-2xl shadow-xl z-50 flex items-center space-x-3 w-max max-w-[90%] border border-gray-700">
         <i class="fa-solid fa-circle-check text-green-400 text-lg shadow-sm"></i>
         <span id="toast-msg" class="text-sm font-medium tracking-wide">บันทึกสำเร็จ</span>
@@ -298,7 +277,7 @@
         // ------------------ BRANCH CONFIGURATION ------------------
         const BRANCH_CONFIG = {
             "AKRA": {
-                employees: ['หยอง', 'ใหม่', 'พุช', 'บันเลง'], 
+                employees: ['หยอง', 'พุช', 'บันเลง'], // 'ใหม่' ถูกนำออกแล้ว
                 showZone2: true,
                 errorTypes: [
                     { group: "หมวดหมู่หลัก", options: ["แก้ไขได้ก่อนจัดส่ง", "ส่งถึงหน้าร้านแล้ว", "ส่งถึงลูกค้าแล้ว", "ผิดพลาดในการรับลงสินค้า", "ความผิดอื่น ๆ"] }
@@ -333,7 +312,7 @@
             "Stamp111": ["AKRA", "TRD"], "STAMP": ["AKRA", "TRD"],
             "เฉิน": ["AKRA", "TRD"],
             "250007": ["AKRA"], "YONG": ["AKRA"],
-            "250021": ["AKRA"], "MAI": ["AKRA"],
+            // "250021": ["AKRA"], "MAI": ["AKRA"], // ระงับสิทธิ์ 'ใหม่' สาขา AKRA
             "250022": ["AKRA"], "BUNLENG": ["AKRA"],
             "250025": ["AKRA"], "PUSH": ["AKRA"],
             "250005": ["TRD"], "TOP": ["TRD"],
@@ -571,7 +550,6 @@
             }
         }
 
-        // ================= RECORD LOGIC =================
         // ================= RECORD LOGIC (BEAUTIFIED) =================
         function addErrorEntryRow() {
             const container = document.getElementById('error-entries-container');
@@ -639,6 +617,14 @@
                                     ${typeOptionsHtml}
                                 </select>
                             </div>
+                            ${currentBranch === 'TRD' ? `
+                            <div>
+                                <select class="err-stage w-full p-2.5 border border-orange-200 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500 bg-orange-50/50 cursor-pointer text-orange-700">
+                                    <option value="ถึงลูกค้าแล้ว">🚨 หลุดถึงลูกค้าแล้ว</option>
+                                    <option value="แก้ไขได้ก่อนส่ง">🛡️ แก้ไขทันก่อนส่ง</option>
+                                </select>
+                            </div>
+                            ` : ''}
                             <div class="penalty-container hidden bg-red-50 p-3 rounded-lg border border-red-100">
                                 <label class="block text-xs font-bold text-red-700 mb-1.5"><i class="fa-solid fa-arrow-down-short-wide mr-1"></i> เลือกระดับคะแนนที่หัก (HP)</label>
                                 <select class="err-penalty w-full p-2 border border-red-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-red-500 bg-white text-red-700 font-bold cursor-pointer">
@@ -787,9 +773,16 @@
                 const type = entry.querySelector('.err-type').value;
                 let note = entry.querySelector('.err-note').value;
                 
+                let stageSelect = entry.querySelector('.err-stage');
+                let stage = stageSelect ? stageSelect.value : '';
+                
                 if (type === 'ความผิดอื่น ๆ') {
                     const penalty = entry.querySelector('.err-penalty').value;
                     note = `[หัก ${penalty} HP] ${note}`;
+                }
+
+                if (stage) {
+                    note = `[${stage}] ${note}`;
                 }
 
                 if (checkedCbs.length > 0 && note.trim() !== "") {
@@ -1024,9 +1017,20 @@
 
                     let penaltyToApply = 0;
                     let cleanNote = e.note;
+                    
+                    let isReachedCustomer = false;
+                    let isFixedBefore = false;
+
+                    if (cleanNote.includes('[ถึงลูกค้าแล้ว]')) {
+                        isReachedCustomer = true;
+                        cleanNote = cleanNote.replace(/^\[ถึงลูกค้าแล้ว\]\s*/, '');
+                    } else if (cleanNote.includes('[แก้ไขได้ก่อนส่ง]')) {
+                        isFixedBefore = true;
+                        cleanNote = cleanNote.replace(/^\[แก้ไขได้ก่อนส่ง\]\s*/, '');
+                    }
 
                     if (e.type === 'ความผิดอื่น ๆ') {
-                        let match = e.note.match(/^\[หัก (\d+) HP\]\s*(.*)/);
+                        let match = cleanNote.match(/^\[หัก (\d+) HP\]\s*(.*)/);
                         if (match) {
                             penaltyToApply = parseInt(match[1]);
                             cleanNote = match[2];
@@ -1035,11 +1039,21 @@
                         }
                     } else {
                         penaltyToApply = HP_PENALTY[e.type] !== undefined ? HP_PENALTY[e.type] : 10;
+                        
+                        if (isReachedCustomer) {
+                            penaltyToApply = 30;
+                        } else if (isFixedBefore) {
+                            penaltyToApply = 5;
+                        }
                     }
 
                     if(!errorNotesList[e.type].includes(cleanNote)) errorNotesList[e.type].push(cleanNote);
 
-                    let displayNote = `<span class="text-red-600 font-black bg-red-100 px-1.5 py-0.5 rounded-md mr-2 shadow-sm border border-red-200 text-[9px] inline-block whitespace-nowrap align-middle">-${penaltyToApply} HP</span><span class="text-gray-700 leading-snug">${cleanNote}</span>`;
+                    let stageBadge = '';
+                    if (isReachedCustomer) stageBadge = `<span class="text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-red-200 shadow-sm align-middle whitespace-nowrap">🚨 ถึงลูกค้า</span>`;
+                    else if (isFixedBefore) stageBadge = `<span class="text-emerald-600 font-bold bg-emerald-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-emerald-200 shadow-sm align-middle whitespace-nowrap">🛡️ แก้ทัน</span>`;
+
+                    let displayNote = `<span class="text-red-600 font-black bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 shadow-sm border border-red-200 text-[9px] inline-block whitespace-nowrap align-middle">-${penaltyToApply} HP</span>${stageBadge}<span class="text-gray-700 leading-snug">${cleanNote}</span>`;
 
                     categorizedNotes[e.emp][e.type].push({ note: displayNote, date: day.date });
                     hasAnyNotes = true;
@@ -1077,12 +1091,12 @@
                     }
 
                     tasksHtml += `
-                        <div class="flex justify-between items-center bg-gray-50/50 p-2 rounded-xl border border-gray-100 shadow-sm mb-1.5">
+                        <div class="flex justify-between items-center bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 shadow-sm mb-2">
                             <div class="flex flex-col">
                                 <span class="text-gray-800 font-bold text-sm">${tName}</span>
                                 <div class="flex flex-wrap">${assigneeHtml}</div>
                             </div>
-                            <span class="text-[10px] font-black px-2 py-1 rounded-lg border shadow-sm whitespace-nowrap ${badgeClass}">
+                            <span class="text-[10px] font-black px-2.5 py-1 rounded-lg border shadow-sm whitespace-nowrap ${badgeClass}">
                                 <i class="fa-solid ${iconClass} mr-1"></i>${tStatus}
                             </span>
                         </div>
@@ -1107,7 +1121,7 @@
                 for (const [emp, types] of Object.entries(categorizedNotes)) {
                     if (Object.keys(types).length === 0) continue;
 
-                    allNotesHtml += `<div class="mb-2 border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">`;
+                    allNotesHtml += `<div class="mb-3 border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">`;
                     allNotesHtml += `<div class="bg-gray-50 px-2.5 py-1.5 font-black text-gray-800 border-b border-gray-200 flex items-center text-xs"><i class="fa-solid fa-user-tag text-blue-500 mr-2"></i>${emp}</div>`;
                     allNotesHtml += `<div class="p-2 space-y-2">`;
 
@@ -1161,7 +1175,6 @@
 
             let getSuggestion = (type, index) => {
                 const suggestionDatabase = {
-                    // AKRA (คลังใหญ่)
                     'แก้ไขได้ก่อนจัดส่ง': [
                         'จัดโซนสินค้าใหม่ให้ชัดเจน แยกประเภทตามกลุ่มการใช้งาน', 
                         'ย้ำเตือนเรื่อง "หน่วยนับ" (กิโล/กรัม/ลัง) ก่อนหยิบทุกครั้ง', 
@@ -1189,8 +1202,6 @@
                         'ตรวจเช็ควันหมดอายุ (FIFO/FEFO) ตอนรับเข้าทันที', 
                         'หลีกเลี่ยงการลงของหน้าร้านในช่วงที่ลูกค้าเยอะจัด'
                     ],
-
-                    // TRD - หน้าร้าน
                     'จัดบิลผิด': [
                         'อ่านบิลให้ละเอียด ทวนรายการและหน่วยนับในใจ', 
                         'หากลายมือลูกค้า/เซลส์อ่านยาก ให้ถามกลับทันที ห้ามเดา', 
@@ -1220,8 +1231,6 @@
                         'ทวนรายการทวนจำนวนพร้อมกับลูกค้าอีกรอบตอนส่งมอบ', 
                         'เน้นย้ำให้ Checker สังเกต "วันหมดอายุ" ก่อนปล่อยของ'
                     ],
-
-                    // TRD - แคชเชียร์/แอดมิน
                     'คิดเงินทอนเงินผิด': [
                         'ทวนยอดเงินที่รับมา และยอดเงินทอนให้ลูกค้าฟังดังๆ ทุกครั้ง', 
                         'จัดระเบียบลิ้นชักเงินให้เรียบร้อย ไม่ปนแบงก์', 
@@ -1255,8 +1264,6 @@
                         'แอดมินต้องเช็คสต็อกก่อนตอบรับออเดอร์แชทเสมอ', 
                         'มีกระดานไวท์บอร์ดหรือไลน์กลุ่ม อัปเดต "สินค้าหมดประจำวัน" ทันที'
                     ],
-
-                    // TRD - ในร้าน
                     'ไม่ช่วยใส่ถุง': [
                         'จัดเตรียมถุงพลาสติก/กล่อง ไว้ใกล้จุดชำระเงินให้หยิบง่าย', 
                         'สังเกตปริมาณของลูกค้า ถ้าของเยอะต้องรีบเข้าไปช่วยแพ็คทันที', 
@@ -1286,8 +1293,6 @@
                         'ดึงสินค้าจากด้านในออกมาด้านหน้า (Face up) ให้ดูเต็มชั้นสวยงาม', 
                         'แบ่งโซนรับผิดชอบชั้นวาง ให้พนักงานแต่ละคนดูแลชัดเจน'
                     ],
-
-                    // TRD - คลังหน้าร้าน
                     'สต๊อคสินค้าไม่พอใช้': [
                         'คำนวณ Safety Stock ของสินค้าขายดีให้แม่นยำขึ้น', 
                         'ประสานงานขอเบิกของจากคลังใหญ่ (AKRA) ล่วงหน้าอย่างน้อย 1-2 วัน', 
@@ -1299,7 +1304,6 @@
                         'ใช้ป้าย "สินค้าหมดชั่วคราว" แปะที่ชั้นวาง พร้อมระบุวันของเข้า (ถ้าทราบ)', 
                         'อัปเดตข้อมูลลงไลน์กลุ่มร้านทันทีที่เห็นของในคลังพร่องมาก'
                     ],
-
                     'ความผิดอื่น ๆ': [
                         'นำข้อผิดพลาดนี้มาหารือในที่ประชุม (Morning Brief) เพื่อหาสาเหตุรากเหง้า (Root Cause)',
                         'กำหนดเป็นกรณีศึกษา (Case Study) ให้พนักงานเรียนรู้ร่วมกัน',
@@ -1338,10 +1342,8 @@
                 }
 
                 // --- ADVANCED FEATURE: KEYWORD ANALYSIS FROM NOTES ---
-                // รวบรวมหมายเหตุทั้งหมดในสัปดาห์มาตรวจสอบหาคีย์เวิร์ด
                 let combinedNotesStr = Object.values(errorNotesList).flat().join(" ").toLowerCase();
                 
-                // คลังความรู้ (Keywords Database) สำหรับร้านเบเกอรี่
                 const keywordInsights = [
                     { keys: ["ไซส์", "ขนาด", "กรัม", "กิโล", "g", "kg", "ml", "ลิตร"], msg: "มีการสับสนเรื่องขนาด/น้ำหนักของสินค้า ควรจัดชั้นวางแยกไซส์ หรือติดป้ายสีให้เห็นชัดเจน" },
                     { keys: ["ยี่ห้อ", "แบรนด์", "ผิดยี่ห้อ"], msg: "มีการหยิบ/จัด ผิดยี่ห้อบ่อย ควรทวนชื่อยี่ห้อกับลูกค้าซ้ำ และอ่านฉลากให้ละเอียดก่อนหยิบ" },
@@ -1355,13 +1357,11 @@
 
                 let foundInsights = [];
                 keywordInsights.forEach(insight => {
-                    // ถ้าในหมายเหตุมีคำใดคำหนึ่งตรงกับ keys ให้ดึงคำแนะนำนั้นมา
                     if (insight.keys.some(k => combinedNotesStr.includes(k))) {
                         foundInsights.push(insight.msg);
                     }
                 });
 
-                // ถ้าพบ Insight ให้แสดงผลเพิ่มในหน้า Dashboard (จำกัดแสดงแค่ 2 ข้อเด่นๆ เพื่อไม่ให้ล้น)
                 if (foundInsights.length > 0) {
                     let displayInsights = foundInsights.slice(0, 2).map(msg => `<li class="mb-1">${msg}</li>`).join("");
                     smartSummaryHtml += `
@@ -1371,7 +1371,6 @@
                         </div>
                     `;
                 }
-                // -----------------------------------------------------
             }
             document.getElementById('dash-smart-summary').innerHTML = smartSummaryHtml;
 
@@ -1389,9 +1388,9 @@
                 let barColor = hpPercent >= 80 ? 'bg-green-500' : (hpPercent >= 50 ? 'bg-yellow-400' : 'bg-red-500');
                 
                 let badge = '';
-                if (player.hp === 100) badge = '<span class="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-black ml-2 border border-green-200 shadow-sm uppercase"><i class="fa-solid fa-shield-halved mr-1"></i>Perfect</span>';
-                else if (index === 0 && player.hp > 0) badge = '<span class="text-[9px] bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded font-black ml-2 border border-yellow-300 shadow-sm uppercase"><i class="fa-solid fa-crown mr-1"></i>MVP</span>';
-                else if (index === ranking.length - 1 && player.hp < 100) badge = '<span class="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-black ml-2 border border-red-200 shadow-sm uppercase"><i class="fa-solid fa-skull-crossbones mr-1"></i>Danger</span>';
+                if (player.hp === 100) badge = '<span class="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-md font-black ml-2 border border-green-200 shadow-sm uppercase"><i class="fa-solid fa-shield-halved mr-1"></i>Perfect</span>';
+                else if (index === 0 && player.hp > 0) badge = '<span class="text-[9px] bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded-md font-black ml-2 border border-yellow-300 shadow-sm uppercase"><i class="fa-solid fa-crown mr-1"></i>MVP</span>';
+                else if (index === ranking.length - 1 && player.hp < 100) badge = '<span class="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-md font-black ml-2 border border-red-200 shadow-sm uppercase"><i class="fa-solid fa-skull-crossbones mr-1"></i>Danger</span>';
 
                 let deptTag = '';
                 if (currentBranch === 'TRD') {
