@@ -183,8 +183,11 @@
                 <button onclick="changeWeek(1)" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400" id="btn-next-week" disabled><i class="fa-solid fa-chevron-right"></i></button>
             </div>
 
+            <!-- Team KPI Card (Injected here via JS) -->
+            <div id="dash-team-kpi" class="mb-1"></div>
+
             <!-- Overview Cards -->
-            <div class="grid grid-cols-2 gap-2.5">
+            <div class="grid grid-cols-2 gap-2.5 mt-2">
                 <div class="bg-white p-3 rounded-xl shadow-sm border-b-4 border-red-500 col-span-2 border border-gray-100 flex flex-col justify-center" id="dash-err-card">
                     <p class="text-[11px] text-gray-500 font-bold mb-1 uppercase tracking-wider">ยอดความผิดพลาดรวม</p>
                     <div class="flex items-end justify-between">
@@ -583,55 +586,50 @@
         }
 
         function checkAuth() {
-            const isPreviewMode = window.self !== window.top || window.location.hostname === '' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             const savedData = localStorage.getItem('akra_sso_user_data');
             
-            if (!savedData && !isPreviewMode) {
-                showModal("ปฏิเสธการเข้าถึง", "กรุณาเข้าสู่ระบบผ่านหน้า Portal หลักก่อนใช้งานครับ", "error", () => {
-                    window.location.href = PORTAL_URL;
-                });
-                return;
+            function setupGuestUser() {
+                currentUser = "guest_admin";
+                displayUserName = "ผู้เยี่ยมชม (Guest)";
+                currentRoles = ["Admin"];
+                
+                // ตรวจสอบให้แน่ใจว่า Guest มีสิทธิ์เข้าถึงทุกสาขา
+                if (!USER_DB["guest_admin"]) {
+                    USER_DB["guest_admin"] = ["AKRA", "TRD"];
+                }
             }
 
-            try {
-                if (isPreviewMode && !savedData) {
-                    currentUser = "เฉิน"; 
-                    displayUserName = "คุณเฉิน (Preview)";
-                    currentRoles = ["Admin"];
-                } else {
+            if (savedData) {
+                try {
                     const userData = JSON.parse(savedData);
                     currentUser = userData.username || userData.id || userData.name;
                     displayUserName = userData.name || currentUser;
                     currentRoles = userData.roles || [];
+                } catch (e) {
+                    setupGuestUser();
                 }
-
-                if(!currentUser) throw new Error("Invalid User Data");
-
-                const userNameDisplay = document.getElementById('showUserName');
-                if(userNameDisplay) userNameDisplay.innerText = displayUserName;
-                
-                const recordDate = document.getElementById('record-date');
-                if(recordDate) recordDate.valueAsDate = new Date();
-                
-                // ตรวจสอบว่าเป็น Admin หรือไม่
-                IS_ADMIN = currentRoles.includes('Admin') || currentRoles.includes('admin') || 
-                           ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111'].includes(String(currentUser).toLowerCase());
-                
-                if(IS_ADMIN) {
-                    document.getElementById('tab-admin').classList.remove('hidden');
-                    document.getElementById('tab-admin').classList.add('flex');
-                    renderAdminPanel(); 
-                }
-
-                applyRolePermissions();
-            } catch (e) {
-                if (!isPreviewMode) {
-                    showModal("ข้อมูลไม่สมบูรณ์", "ข้อมูลการเข้าสู่ระบบมีปัญหา กรุณาล็อกอินเข้าสู่ระบบใหม่อีกครั้ง", "error", () => {
-                        localStorage.removeItem('akra_sso_user_data');
-                        window.location.href = PORTAL_URL;
-                    });
-                }
+            } else {
+                // หากไม่มีการล็อกอิน ให้ใช้สิทธิ์ Guest ทำงานต่อได้เลย (Bypass Login)
+                setupGuestUser();
             }
+
+            const userNameDisplay = document.getElementById('showUserName');
+            if(userNameDisplay) userNameDisplay.innerText = displayUserName;
+            
+            const recordDate = document.getElementById('record-date');
+            if(recordDate) recordDate.valueAsDate = new Date();
+            
+            // ตรวจสอบว่าเป็น Admin หรือไม่
+            IS_ADMIN = currentRoles.includes('Admin') || currentRoles.includes('admin') || 
+                       ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'guest_admin'].includes(String(currentUser).toLowerCase());
+            
+            if(IS_ADMIN) {
+                document.getElementById('tab-admin').classList.remove('hidden');
+                document.getElementById('tab-admin').classList.add('flex');
+                renderAdminPanel(); 
+            }
+
+            applyRolePermissions();
         }
 
         function applyRolePermissions() {
@@ -1360,6 +1358,7 @@
             
             let errorTypeCounts = {};
             let errorNotesList = {};
+            let teamLostHP = 0; // เก็บ HP รวมที่เสียไปของสาขา
 
             targetWeekData.forEach(day => {
                 if (day.volume) {
@@ -1432,6 +1431,8 @@
                         }
                     }
 
+                    teamLostHP += penaltyToApply; // หัก HP ของทีมรวมด้วย
+
                     if(!errorNotesList[e.type].includes(cleanNote)) errorNotesList[e.type].push(cleanNote);
 
                     let stageBadge = '';
@@ -1454,6 +1455,59 @@
                     });
                 }
             });
+
+            // --- TEAM KPI RENDER LOGIC ---
+            let branchStartHP = BRANCH_CONFIG[currentBranch].employees.length * 100;
+            let branchCurrentHP = Math.max(0, branchStartHP - teamLostHP);
+            let branchHPPercent = branchStartHP > 0 ? (branchCurrentHP / branchStartHP) * 100 : 0;
+
+            let grade = 'F';
+            let gradeText = 'ต้องปรับปรุงด่วน';
+            let tColor = { text: 'text-red-500', bar: 'bg-red-500', badge: 'text-red-700 bg-red-100 border-red-200' };
+
+            if (branchHPPercent === 100) { 
+                grade = 'S'; gradeText = 'ยอดเยี่ยมไร้ที่ติ!'; 
+                tColor = { text: 'text-green-500', bar: 'bg-green-500', badge: 'text-green-700 bg-green-100 border-green-200' };
+            } else if (branchHPPercent >= 90) { 
+                grade = 'A'; gradeText = 'ผลงานดีเยี่ยม'; 
+                tColor = { text: 'text-blue-500', bar: 'bg-blue-500', badge: 'text-blue-700 bg-blue-100 border-blue-200' };
+            } else if (branchHPPercent >= 75) { 
+                grade = 'B'; gradeText = 'ตามเกณฑ์มาตรฐาน'; 
+                tColor = { text: 'text-yellow-500', bar: 'bg-yellow-400', badge: 'text-yellow-700 bg-yellow-100 border-yellow-300' };
+            } else if (branchHPPercent >= 60) { 
+                grade = 'C'; gradeText = 'เฝ้าระวังข้อผิดพลาด'; 
+                tColor = { text: 'text-orange-500', bar: 'bg-orange-400', badge: 'text-orange-700 bg-orange-100 border-orange-200' };
+            }
+
+            let teamKpiHtml = `
+                <div class="bg-white p-3.5 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-2.5 relative z-10">
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-users text-gray-400 mr-1.5"></i>ภาพรวมสาขา ${currentBranch}</h3>
+                            <p class="text-[10px] text-gray-500 mt-0.5">Team Health Point สัปดาห์นี้</p>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <div class="flex items-baseline">
+                                <span class="text-3xl font-black ${tColor.text} leading-none drop-shadow-sm">${grade}</span>
+                            </div>
+                            <span class="text-[9px] font-bold ${tColor.badge} px-1.5 py-0.5 rounded mt-1 shadow-sm border">${gradeText}</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 relative z-10">
+                        <div class="flex justify-between text-[10px] font-bold mb-1">
+                            <span class="text-gray-500">พลังชีวิตทีม (HP)</span>
+                            <span class="${tColor.text}">${branchCurrentHP} <span class="text-gray-400">/ ${branchStartHP}</span></span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200 shadow-inner">
+                            <div class="${tColor.bar} h-full rounded-full transition-all duration-1000 relative" style="width: ${branchHPPercent}%">
+                                <div class="absolute inset-0 bg-white/20"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('dash-team-kpi').innerHTML = teamKpiHtml;
+            // -----------------------------
 
             // Render Tasks
             let tasksHtml = '';
