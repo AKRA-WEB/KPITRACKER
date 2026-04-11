@@ -183,7 +183,7 @@
                 <button onclick="changeWeek(1)" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400" id="btn-next-week" disabled><i class="fa-solid fa-chevron-right"></i></button>
             </div>
 
-            <!-- Team KPI Card (Injected here via JS) -->
+            <!-- Team KPI Card -->
             <div id="dash-team-kpi" class="mb-1"></div>
 
             <!-- Overview Cards -->
@@ -260,7 +260,68 @@
             <div class="h-4"></div>
         </div>
 
-        <!-- ================= VIEW: ADMIN PANEL ================= -->
+        <!-- ================= VIEW: ADMIN DASHBOARD (ภาพรวมผู้บริหาร) ================= -->
+        <div id="view-admin-dash" class="hidden space-y-4 pb-6">
+            <div class="bg-gradient-to-br from-indigo-600 to-blue-700 p-4 rounded-xl shadow-md text-white">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold mb-1"><i class="fa-solid fa-chart-line text-blue-200 mr-2"></i>ภาพรวมผู้บริหาร</h2>
+                        <p class="text-[11px] text-blue-100 opacity-90">ข้อมูลความผิดพลาดเชิงลึกแบบรายเดือน</p>
+                    </div>
+                    <!-- ปุ่ม Export CSV -->
+                    <button onclick="exportAdminDataCSV()" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 transition-all text-white px-3 py-2 rounded-lg text-xs font-bold shadow-md flex items-center border border-emerald-400">
+                        <i class="fa-solid fa-file-csv mr-1.5 text-sm"></i> Export
+                    </button>
+                </div>
+                
+                <!-- Filters -->
+                <div class="flex flex-col space-y-2 bg-white/10 p-3 rounded-lg backdrop-blur-sm">
+                    <input type="month" id="admin-dash-month" class="w-full p-2 border-0 rounded-md text-sm outline-none bg-white text-gray-800 font-bold" onchange="renderAdminDashboard()">
+                    <div class="flex space-x-2">
+                        <select id="admin-dash-branch" class="flex-1 p-2 border-0 rounded-md text-sm outline-none bg-white text-gray-800 font-bold" onchange="populateAdminEmpFilter(); renderAdminDashboard()">
+                            <option value="ALL">รวมทุกสาขา</option>
+                            <option value="AKRA">เฉพาะ AKRA</option>
+                            <option value="TRD">เฉพาะ TRD</option>
+                        </select>
+                        <select id="admin-dash-emp" class="flex-1 p-2 border-0 rounded-md text-sm outline-none bg-white text-gray-800 font-bold" onchange="renderAdminDashboard()">
+                            <option value="ALL">ทุกคน</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-red-100 flex flex-col justify-center items-center text-center">
+                    <div class="w-10 h-10 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2"><i class="fa-solid fa-triangle-exclamation text-lg"></i></div>
+                    <h4 class="text-3xl font-black text-gray-800 leading-none mb-1" id="admin-stat-err">0</h4>
+                    <p class="text-[11px] text-gray-500 font-bold">ความผิดพลาดรวม (ครั้ง)</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-blue-100 flex flex-col justify-center items-center text-center">
+                    <div class="w-10 h-10 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mb-2"><i class="fa-solid fa-boxes-stacked text-lg"></i></div>
+                    <h4 class="text-3xl font-black text-gray-800 leading-none mb-1" id="admin-stat-vol">0</h4>
+                    <p class="text-[11px] text-gray-500 font-bold">ปริมาณงานรวมรอบนี้ (บิล)</p>
+                </div>
+            </div>
+
+            <!-- Top Error Makers -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="font-bold text-gray-800 text-sm mb-3 border-b border-gray-100 pb-2"><i class="fa-solid fa-ranking-star text-orange-500 mr-2"></i>พนักงานที่ผิดพลาดบ่อย (Top 5)</h3>
+                <div id="admin-top-errors" class="space-y-2.5"></div>
+            </div>
+
+            <!-- Data Log (Everything) -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center border-b border-gray-100 pb-2 mb-3">
+                    <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-database text-purple-500 mr-2"></i>บันทึกความผิดพลาดทั้งหมด</h3>
+                    <span id="admin-log-count" class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] font-bold">0 รายการ</span>
+                </div>
+                <div id="admin-data-log" class="space-y-2.5 max-h-[400px] overflow-y-auto pr-1"></div>
+            </div>
+            <div class="h-6"></div>
+        </div>
+
+        <!-- ================= VIEW: ADMIN PANEL (ตั้งค่า) ================= -->
         <div id="view-admin" class="hidden space-y-4 pb-6">
             
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
@@ -325,15 +386,20 @@
 
     <!-- Bottom Navigation -->
     <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around p-1.5 pb-safe z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
-        <button onclick="switchTab('record')" id="tab-record" class="flex flex-col items-center p-2 w-full max-w-[33%] tab-active transition-colors rounded-xl mx-0.5 hover:bg-blue-50">
+        <button onclick="switchTab('record')" id="tab-record" class="flex flex-col items-center p-2 flex-1 tab-active transition-colors rounded-xl mx-0.5 hover:bg-blue-50">
             <i class="fa-solid fa-pen-to-square text-xl mb-1 mt-0.5"></i>
-            <span class="text-[10px] font-bold tracking-wide">บันทึกข้อมูล</span>
+            <span class="text-[10px] font-bold tracking-wide">บันทึก</span>
         </button>
-        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex flex-col items-center p-2 w-full max-w-[33%] tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50">
+        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50">
             <i class="fa-solid fa-chart-pie text-xl mb-1 mt-0.5"></i>
             <span class="text-[10px] font-bold tracking-wide">แดชบอร์ด</span>
         </button>
-        <button onclick="switchTab('admin')" id="tab-admin" class="hidden flex-col items-center p-2 w-full max-w-[33%] tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50">
+        <!-- เพิ่ม Tab Admin Dash (ซ่อนไว้สำหรับคนที่ไม่ใช่ Admin) -->
+        <button onclick="switchTab('admin-dash')" id="tab-admin-dash" class="hidden flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50">
+            <i class="fa-solid fa-chart-line text-xl mb-1 mt-0.5"></i>
+            <span class="text-[10px] font-bold tracking-wide">ภาพรวม</span>
+        </button>
+        <button onclick="switchTab('admin')" id="tab-admin" class="hidden flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50">
             <i class="fa-solid fa-users-gear text-xl mb-1 mt-0.5"></i>
             <span class="text-[10px] font-bold tracking-wide">ตั้งค่า</span>
         </button>
@@ -370,7 +436,6 @@
         const CURRENT_APP_NAME = "KPITRACKER"; 
 
         // ================= DYNAMIC DATA CONTAINERS =================
-        // ข้อมูลพนักงานเริ่มต้น (Default) ในกรณีที่ดึงจาก Sheet ไม่สำเร็จ
         let GLOBAL_CONFIG_LIST = [
             { uid: "250013", name: "เฉิน", branches: "AKRA,TRD", dept: "Admin" },
             { uid: "hhsawyer", name: "Herehorr", branches: "AKRA,TRD", dept: "Admin" },
@@ -505,13 +570,12 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // ================= STARTUP LOGIC (DYNAMIC CONFIG) =================
+        // ================= STARTUP LOGIC =================
         async function initSystem() {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // เซ็ต Timeout 10 วินาที
+            const timeoutId = setTimeout(() => controller.abort(), 10000); 
 
             try {
-                // โหลดการตั้งค่าพนักงานจาก Google Sheet
                 const response = await fetch(LOG_APP_SCRIPT_URL + "?action=getConfig", { signal: controller.signal });
                 clearTimeout(timeoutId);
 
@@ -519,56 +583,41 @@
                 const configList = await response.json();
                 
                 if (Array.isArray(configList) && configList.length > 0) {
-                    GLOBAL_CONFIG_LIST = configList; // Save for Admin Panel
-                    
-                    // ล้างค่า Default
+                    GLOBAL_CONFIG_LIST = configList; 
                     USER_DB = {};
                     TRD_DEPARTMENTS = {};
                     BRANCH_CONFIG["AKRA"].employees = [];
                     BRANCH_CONFIG["TRD"].employees = [];
 
-                    // แปลงข้อมูลใส่ระบบ
                     configList.forEach(user => {
                         if (!user.uid) return;
                         const uidStr = String(user.uid).toLowerCase();
                         const branches = user.branches.split(',').map(b => b.trim().toUpperCase()).filter(b => b);
                         
                         USER_DB[uidStr] = branches;
-
-                        // ตรวจสอบว่าเป็นแอดมินหรือไม่ ถ้าใช่ให้ข้ามการเอาชื่อไปใส่ในลิสต์พนักงาน
                         const isSystemAdmin = user.dept && user.dept.toLowerCase() === 'admin';
 
                         if (user.name && !isSystemAdmin) {
                             if (branches.includes('AKRA')) {
-                                if (!BRANCH_CONFIG["AKRA"].employees.includes(user.name)) {
-                                    BRANCH_CONFIG["AKRA"].employees.push(user.name);
-                                }
+                                if (!BRANCH_CONFIG["AKRA"].employees.includes(user.name)) BRANCH_CONFIG["AKRA"].employees.push(user.name);
                             }
                             if (branches.includes('TRD')) {
-                                if (!BRANCH_CONFIG["TRD"].employees.includes(user.name)) {
-                                    BRANCH_CONFIG["TRD"].employees.push(user.name);
-                                }
+                                if (!BRANCH_CONFIG["TRD"].employees.includes(user.name)) BRANCH_CONFIG["TRD"].employees.push(user.name);
                                 if (user.dept) {
                                     if (!TRD_DEPARTMENTS[user.dept]) TRD_DEPARTMENTS[user.dept] = [];
-                                    if (!TRD_DEPARTMENTS[user.dept].includes(user.name)) {
-                                        TRD_DEPARTMENTS[user.dept].push(user.name);
-                                    }
+                                    if (!TRD_DEPARTMENTS[user.dept].includes(user.name)) TRD_DEPARTMENTS[user.dept].push(user.name);
                                 }
                             }
                         }
                     });
                 }
             } catch(e) {
-                console.warn("⚠️ แจ้งเตือน: ไม่สามารถดึงรายชื่อจาก Google Sheet ได้ ระบบจะใช้รายชื่อพนักงานตั้งต้น (Fallback) แทน");
+                console.warn("ใช้รายชื่อพนักงานตั้งต้น (Fallback)");
             } finally {
-                // หากดึงไม่ได้จริงๆ ระบบจะเอาข้อมูลตั้งต้นไปใช้แทน ซึ่งได้อัปเดตข้อมูลล่าสุดไว้ด้านบนแล้ว
                 if (Object.keys(USER_DB).length === 0) {
-                     GLOBAL_CONFIG_LIST.forEach(u => {
-                         USER_DB[u.uid.toLowerCase()] = u.branches.split(',').map(b=>b.trim().toUpperCase());
-                     });
+                     GLOBAL_CONFIG_LIST.forEach(u => USER_DB[u.uid.toLowerCase()] = u.branches.split(',').map(b=>b.trim().toUpperCase()));
                 }
 
-                // อัปเดต Dropdown Filter ใน Dashboard
                 const deptFilter = document.getElementById('dash-dept-filter');
                 if (deptFilter) {
                     deptFilter.innerHTML = '<option value="ALL">ดูรวมทุกแผนก</option>';
@@ -577,10 +626,10 @@
                     });
                 }
 
-                // ปิดหน้าต่างโหลด และไปเช็คสิทธิ์ล็อกอิน
                 const loader = document.getElementById('system-loading');
                 if (loader) loader.classList.add('hidden');
                 
+                populateAdminEmpFilter(); // ใส่ข้อมูล Filter พนักงานให้แอดมินล่วงหน้า
                 checkAuth();
             }
         }
@@ -592,11 +641,7 @@
                 currentUser = "guest_admin";
                 displayUserName = "ผู้เยี่ยมชม (Guest)";
                 currentRoles = ["Admin"];
-                
-                // ตรวจสอบให้แน่ใจว่า Guest มีสิทธิ์เข้าถึงทุกสาขา
-                if (!USER_DB["guest_admin"]) {
-                    USER_DB["guest_admin"] = ["AKRA", "TRD"];
-                }
+                if (!USER_DB["guest_admin"]) USER_DB["guest_admin"] = ["AKRA", "TRD"];
             }
 
             if (savedData) {
@@ -605,13 +650,8 @@
                     currentUser = userData.username || userData.id || userData.name;
                     displayUserName = userData.name || currentUser;
                     currentRoles = userData.roles || [];
-                } catch (e) {
-                    setupGuestUser();
-                }
-            } else {
-                // หากไม่มีการล็อกอิน ให้ใช้สิทธิ์ Guest ทำงานต่อได้เลย (Bypass Login)
-                setupGuestUser();
-            }
+                } catch (e) { setupGuestUser(); }
+            } else { setupGuestUser(); }
 
             const userNameDisplay = document.getElementById('showUserName');
             if(userNameDisplay) userNameDisplay.innerText = displayUserName;
@@ -619,14 +659,19 @@
             const recordDate = document.getElementById('record-date');
             if(recordDate) recordDate.valueAsDate = new Date();
             
-            // ตรวจสอบว่าเป็น Admin หรือไม่
             IS_ADMIN = currentRoles.includes('Admin') || currentRoles.includes('admin') || 
                        ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'guest_admin'].includes(String(currentUser).toLowerCase());
             
             if(IS_ADMIN) {
                 document.getElementById('tab-admin').classList.remove('hidden');
                 document.getElementById('tab-admin').classList.add('flex');
+                
+                // โชว์ Tab Admin Dashboard
+                document.getElementById('tab-admin-dash').classList.remove('hidden');
+                document.getElementById('tab-admin-dash').classList.add('flex');
+                
                 renderAdminPanel(); 
+                syncAllBranchesForAdmin(); // ดึงข้อมูลทุกสาขามารอไว้สำหรับ Admin
             }
 
             applyRolePermissions();
@@ -645,15 +690,11 @@
             if (currentBranch && permissions.includes(currentBranch)) {
                 initApp(currentBranch, permissions);
             } else {
-                if (permissions.length === 1) {
-                    selectBranch(permissions[0], permissions);
-                } else {
-                    showBranchSelector(permissions);
-                }
+                if (permissions.length === 1) selectBranch(permissions[0], permissions);
+                else showBranchSelector(permissions);
             }
         }
 
-        // เรียกใช้งานระบบตอนโหลดหน้าเว็บเสร็จ
         window.addEventListener('DOMContentLoaded', initSystem);
 
         function showBranchSelector(perms) {
@@ -683,9 +724,7 @@
                 document.getElementById('dash-dept-filter').classList.add('hidden');
             }
 
-            if(permissions.length > 1) {
-                document.getElementById('btn-switch-branch').classList.remove('hidden');
-            }
+            if(permissions.length > 1) document.getElementById('btn-switch-branch').classList.remove('hidden');
             
             if (BRANCH_CONFIG[branch].showZone2) {
                 document.getElementById('zone-2-container').classList.remove('hidden');
@@ -711,20 +750,16 @@
         function sendAppLog(action, details) {
             if (!currentUser) return;
             const payload = { user: currentUser, action: action, app: CURRENT_APP_NAME, details: details };
-            fetch(LOG_APP_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-            .catch(err => console.error(err));
+            fetch(LOG_APP_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(err => console.error(err));
         }
 
         async function syncDataFromSheet() {
             if(!LOG_APP_SCRIPT_URL || !currentBranch) return;
             const btnSync = document.getElementById('btn-sync');
-            if (btnSync) {
-                btnSync.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1"></i> ซิงค์...';
-                btnSync.disabled = true;
-            }
+            if (btnSync) { btnSync.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1"></i> ซิงค์...'; btnSync.disabled = true; }
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000); // เซ็ต Timeout 12 วินาที ป้องกันหมุนไม่หยุด
+            const timeoutId = setTimeout(() => controller.abort(), 12000); 
 
             try {
                 const fetchUrl = LOG_APP_SCRIPT_URL + "?action=getData&branch=" + currentBranch;
@@ -736,20 +771,233 @@
                     localStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
                     if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
                         loadDashboardData();
+                    } else if (!document.getElementById('view-admin-dash').classList.contains('hidden')) {
+                        renderAdminDashboard();
                     } else {
                         loadTasksForSelectedDate();
                     }
                     showToast("ซิงค์ข้อมูลล่าสุดเรียบร้อย");
                 }
             } catch (error) {
-                console.warn("⚠️ แจ้งเตือน: ไม่สามารถดึงข้อมูล KPI จาก Sheet ได้ ระบบจะแสดงผลจากข้อมูลล่าสุดที่ถูกบันทึกไว้ในเครื่องแทน");
                 showToast("ทำงานโหมดออฟไลน์ (เชื่อมต่อข้อมูลไม่สำเร็จ)", true);
             } finally {
-                if (btnSync) {
-                    btnSync.innerHTML = '<i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล';
-                    btnSync.disabled = false;
-                }
+                if (btnSync) { btnSync.innerHTML = '<i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล'; btnSync.disabled = false; }
             }
+        }
+
+        // ================= ADMIN DASHBOARD FUNCTIONS =================
+        function populateAdminEmpFilter() {
+            const branchFilter = document.getElementById('admin-dash-branch').value;
+            const select = document.getElementById('admin-dash-emp');
+            const currentVal = select.value;
+            
+            let emps = [];
+            GLOBAL_CONFIG_LIST.forEach(e => {
+                if (!e.name || e.dept === "Admin") return; // ข้าม Admin
+                const bArr = e.branches.split(',').map(b => b.trim());
+                if (branchFilter === 'ALL' || bArr.includes(branchFilter)) {
+                    emps.push(e.name);
+                }
+            });
+            
+            emps = [...new Set(emps)]; // ตัดตัวซ้ำ
+            emps.sort(); // เรียงตามตัวอักษร
+            
+            let html = '<option value="ALL">พนักงานทุกคน</option>';
+            emps.forEach(emp => {
+                html += `<option value="${emp}">${emp}</option>`;
+            });
+            
+            select.innerHTML = html;
+            // ถ้าชื่อเดิมยังอยู่ในลิสต์ให้เลือกอันเดิม ถ้าไม่มีให้กลับไป ALL
+            if (emps.includes(currentVal)) {
+                select.value = currentVal;
+            } else {
+                select.value = 'ALL';
+            }
+        }
+
+        async function syncAllBranchesForAdmin() {
+            if (!IS_ADMIN) return;
+            try {
+                const resAkra = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=AKRA");
+                const dataAkra = await resAkra.json();
+                localStorage.setItem('kpiData_AKRA', JSON.stringify(dataAkra));
+
+                const resTrd = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=TRD");
+                const dataTrd = await resTrd.json();
+                localStorage.setItem('kpiData_TRD', JSON.stringify(dataTrd));
+                
+                if(!document.getElementById('view-admin-dash').classList.contains('hidden')) {
+                    renderAdminDashboard();
+                }
+            } catch(e) {
+                console.error("Admin background sync failed", e);
+            }
+        }
+
+        function renderAdminDashboard() {
+            if (!IS_ADMIN) return;
+            
+            let monthInput = document.getElementById('admin-dash-month').value;
+            if (!monthInput) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                monthInput = `${yyyy}-${mm}`;
+                document.getElementById('admin-dash-month').value = monthInput;
+            }
+            
+            const branchFilter = document.getElementById('admin-dash-branch').value;
+            const empFilter = document.getElementById('admin-dash-emp').value;
+            
+            let allData = [];
+            if (branchFilter === 'ALL' || branchFilter === 'AKRA') {
+                let d = JSON.parse(localStorage.getItem('kpiData_AKRA') || '[]');
+                d.forEach(x => x.sourceBranch = 'AKRA');
+                allData = allData.concat(d);
+            }
+            if (branchFilter === 'ALL' || branchFilter === 'TRD') {
+                let d = JSON.parse(localStorage.getItem('kpiData_TRD') || '[]');
+                d.forEach(x => x.sourceBranch = 'TRD');
+                allData = allData.concat(d);
+            }
+            
+            // กรองตามเดือน (Year-Month)
+            let filteredData = allData.filter(d => {
+                if (!d.date) return false;
+                return d.date.startsWith(monthInput);
+            });
+            
+            // เรียงวันที่ล่าสุดขึ้นก่อน
+            filteredData.sort((a,b) => new Date(b.date) - new Date(a.date));
+            
+            let totalErrors = 0;
+            let totalVol = 0;
+            let empErrorMap = {};
+            let logHtml = '';
+            
+            filteredData.forEach(day => {
+                // ปริมาณงาน (คิดเฉพาะกรณีไม่ฟิลเตอร์คน หรือรวมของวันนั้นๆ)
+                if (day.volume) {
+                    totalVol += ((day.volume.transfer||0) + (day.volume.pickup||0) + (day.volume.upcountry||0) + (day.volume.inmarket||0) + (day.volume.outmarket||0));
+                }
+                
+                (day.errors || []).forEach(err => {
+                    let empName = (err.emp || "").trim();
+                    
+                    // ข้ามถ้าถูกฟิลเตอร์ตัวบุคคลไว้
+                    if (empFilter !== 'ALL' && empName !== empFilter) return;
+
+                    totalErrors++;
+                    if (!empErrorMap[empName]) empErrorMap[empName] = 0;
+                    empErrorMap[empName]++;
+                    
+                    let branchBadge = day.sourceBranch === 'AKRA' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-blue-100 text-blue-700 border-blue-200';
+                    
+                    logHtml += `
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs shadow-sm flex flex-col gap-1.5 transition-colors hover:bg-white">
+                            <div class="flex justify-between items-center border-b border-gray-200 pb-1.5">
+                                <span class="font-bold text-gray-600"><i class="fa-regular fa-calendar-days mr-1.5 opacity-70"></i>${day.date}</span>
+                                <span class="font-bold text-[10px] px-1.5 py-0.5 rounded border shadow-sm ${branchBadge}">${day.sourceBranch}</span>
+                            </div>
+                            <div class="flex items-start mt-0.5">
+                                <div class="font-black text-red-600 w-[28%] break-words leading-tight"><i class="fa-solid fa-user text-gray-400 mr-1.5"></i>${empName}</div>
+                                <div class="w-[72%] pl-2 border-l border-gray-200">
+                                    <div class="font-bold text-gray-800 mb-0.5 text-[11px] leading-tight">${err.type}</div>
+                                    <div class="text-gray-500 text-[10px] leading-relaxed break-words">${err.note}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+            
+            if (!logHtml) logHtml = '<div class="text-center text-gray-400 text-sm py-6 bg-gray-50 border border-dashed border-gray-200 rounded-xl">ไม่พบข้อมูลความผิดพลาดในเดือนนี้ 🎉</div>';
+            
+            document.getElementById('admin-stat-err').innerText = totalErrors;
+            document.getElementById('admin-stat-vol').innerText = totalVol;
+            document.getElementById('admin-log-count').innerText = `${totalErrors} รายการ`;
+            document.getElementById('admin-data-log').innerHTML = logHtml;
+            
+            // ข้อมูลผู้ที่ผิดพลาดบ่อย (Top Errors)
+            let topErrorsArr = Object.keys(empErrorMap).map(k => ({ name: k, count: empErrorMap[k] }));
+            topErrorsArr.sort((a,b) => b.count - a.count);
+            
+            let topHtml = '';
+            if (topErrorsArr.length === 0) {
+                topHtml = '<div class="text-center text-gray-400 text-xs py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">ยังไม่มีข้อมูลพนักงานทำผิดในเดือนนี้</div>';
+            } else {
+                topErrorsArr.slice(0, 5).forEach((p, i) => { 
+                    let rankIcon = i === 0 ? '<i class="fa-solid fa-crown text-yellow-500 mr-1"></i>' : (i === 1 ? '<i class="fa-solid fa-medal text-gray-400 mr-1"></i>' : (i === 2 ? '<i class="fa-solid fa-medal text-orange-400 mr-1"></i>' : `<span class="text-gray-400 mr-2 font-black">#${i+1}</span>`));
+                    topHtml += `
+                        <div class="flex justify-between items-center bg-gray-50 border border-gray-100 p-2.5 rounded-lg shadow-sm">
+                            <span class="text-xs font-bold text-gray-800 flex items-center">${rankIcon} ${p.name}</span>
+                            <span class="text-xs font-black text-red-600 bg-red-100 px-2 py-0.5 rounded-md border border-red-200">${p.count} <span class="text-[9px] text-red-500 font-bold ml-0.5">ครั้ง</span></span>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('admin-top-errors').innerHTML = topHtml;
+        }
+
+        // ================= EXPORT CSV =================
+        function exportAdminDataCSV() {
+            const monthInput = document.getElementById('admin-dash-month').value;
+            const branchFilter = document.getElementById('admin-dash-branch').value;
+            const empFilter = document.getElementById('admin-dash-emp').value;
+            
+            let allData = [];
+            if (branchFilter === 'ALL' || branchFilter === 'AKRA') {
+                let d = JSON.parse(localStorage.getItem('kpiData_AKRA') || '[]');
+                d.forEach(x => x.sourceBranch = 'AKRA');
+                allData = allData.concat(d);
+            }
+            if (branchFilter === 'ALL' || branchFilter === 'TRD') {
+                let d = JSON.parse(localStorage.getItem('kpiData_TRD') || '[]');
+                d.forEach(x => x.sourceBranch = 'TRD');
+                allData = allData.concat(d);
+            }
+            
+            let filteredData = allData.filter(d => d.date && d.date.startsWith(monthInput));
+            filteredData.sort((a,b) => new Date(b.date) - new Date(a.date)); // เรียงวันล่าสุด
+            
+            // สร้าง Header ของ CSV และใส่ BOM เพื่อให้ Excel แสดงผลภาษาไทยได้ถูกต้อง
+            let csvContent = "\uFEFF"; 
+            csvContent += "วันที่,สาขา,ชื่อพนักงาน,ประเภทความผิดพลาด,หมายเหตุ\n";
+            
+            let hasData = false;
+            filteredData.forEach(day => {
+                (day.errors || []).forEach(err => {
+                    let empName = (err.emp || "").trim();
+                    if (empFilter !== 'ALL' && empName !== empFilter) return; // กรองพนักงาน
+                    
+                    hasData = true;
+                    // ล้างอักขระพิเศษ (เช่น ขึ้นบรรทัดใหม่) ที่ทำให้ CSV พัง
+                    let safeType = (err.type || "").replace(/"/g, '""').replace(/\n/g, ' ');
+                    let safeNote = (err.note || "").replace(/"/g, '""').replace(/\n/g, ' ');
+                    
+                    csvContent += `"${day.date}","${day.sourceBranch}","${empName}","${safeType}","${safeNote}"\n`;
+                });
+            });
+            
+            if (!hasData) {
+                showToast("ไม่มีข้อมูลสำหรับ Export ในรอบนี้", true);
+                return;
+            }
+            
+            // สั่งโหลดไฟล์
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `KPI_Report_${monthInput}_${branchFilter}_${empFilter}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast("ส่งออกไฟล์ CSV สำเร็จ");
         }
 
         // ================= ADMIN FUNCTIONS =================
@@ -871,8 +1119,8 @@
 
         // ================= UI FUNCTIONS =================
         function switchTab(tab) {
-            const views = ['view-record', 'view-dashboard', 'view-admin'];
-            const tabs = ['tab-record', 'tab-dashboard', 'tab-admin'];
+            const views = ['view-record', 'view-dashboard', 'view-admin-dash', 'view-admin'];
+            const tabs = ['tab-record', 'tab-dashboard', 'tab-admin-dash', 'tab-admin'];
             
             views.forEach(v => {
                 const el = document.getElementById(v);
@@ -893,6 +1141,8 @@
 
             if(tab === 'dashboard') {
                 loadDashboardData();
+            } else if (tab === 'admin-dash') {
+                renderAdminDashboard();
             } else if (tab === 'admin') {
                 renderAdminPanel();
             }
@@ -926,7 +1176,7 @@
             }
         }
 
-        // ================= RECORD LOGIC (BEAUTIFIED) =================
+        // ================= RECORD LOGIC =================
         function addErrorEntryRow() {
             const container = document.getElementById('error-entries-container');
             const rowId = Date.now() + Math.floor(Math.random() * 1000);
@@ -1358,7 +1608,7 @@
             
             let errorTypeCounts = {};
             let errorNotesList = {};
-            let teamLostHP = 0; // เก็บ HP รวมที่เสียไปของสาขา
+            let teamLostHP = 0; 
 
             targetWeekData.forEach(day => {
                 if (day.volume) {
@@ -1431,7 +1681,7 @@
                         }
                     }
 
-                    teamLostHP += penaltyToApply; // หัก HP ของทีมรวมด้วย
+                    teamLostHP += penaltyToApply; 
 
                     if(!errorNotesList[e.type].includes(cleanNote)) errorNotesList[e.type].push(cleanNote);
 
@@ -1507,7 +1757,6 @@
                 </div>
             `;
             document.getElementById('dash-team-kpi').innerHTML = teamKpiHtml;
-            // -----------------------------
 
             // Render Tasks
             let tasksHtml = '';
@@ -1615,144 +1864,31 @@
 
             let getSuggestion = (type, index) => {
                 const suggestionDatabase = {
-                    'แก้ไขได้ก่อนจัดส่ง': [
-                        'จัดโซนสินค้าใหม่ให้ชัดเจน แยกประเภทตามกลุ่มการใช้งาน', 
-                        'ย้ำเตือนเรื่อง "หน่วยนับ" (กิโล/กรัม/ลัง) ก่อนหยิบทุกครั้ง', 
-                        'ทำงานแบบ Buddy จับคู่ช่วยรีเช็คออเดอร์ใหญ่', 
-                        'ใช้ตะกร้าหรือกระบะสีแยกบิลตอนหยิบ ป้องกันของปนกัน', 
-                        'ปรินท์รูปสินค้าหรือตัวอย่างแพ็คเกจแปะหน้าชั้นวางให้ชัดเจน'
-                    ],
-                    'ส่งถึงหน้าร้านแล้ว': [
-                        'เพิ่มจุดตรวจสอบ (Check-point) ก่อนขึ้นรถขนส่ง', 
-                        'ลดความเร่งรีบตอนโหลดของขึ้นรถ จัดสรรเวลาให้ดีขึ้น', 
-                        'ใช้สติกเกอร์สีหรือมาร์คกิ้งแยกบิล/แยกสาขาให้ชัดเจน', 
-                        'ทำ Checklist ตรวจสอบท้ายรถก่อนรถออกทุกครั้ง'
-                    ],
-                    'ส่งถึงลูกค้าแล้ว': [
-                        'บังคับใช้ระบบ Double Check 100% สำหรับบิลขายส่ง', 
-                        'ถ่ายรูปสินค้าพร้อมบิลก่อนปิดกล่อง/ส่งมอบให้ลูกค้า', 
-                        'แยกโซนรอจัดส่งตามสายรถหรือเส้นทางให้ชัดเจน', 
-                        'โทรคอนเฟิร์มรายการกับลูกค้าก่อนรถส่งของออก', 
-                        'ใส่ใบ Checklist ลายเซ็นคนจัดลงในกล่องให้ลูกค้าเช็คด้วย'
-                    ],
-                    'ผิดพลาดในการรับลงสินค้า': [
-                        'แยกโซนรอตรวจรับออกจากสินค้าพร้อมขายอย่างเด็ดขาด', 
-                        'ใช้วิธีนับแบบ Blind Check (คนนับไม่เห็นยอดในบิลก่อน)', 
-                        'ระวังสินค้าที่เปลี่ยนแพ็คเกจหรือบาร์โค้ดใหม่ (เบเกอรี่เจอบ่อย)', 
-                        'ตรวจเช็ควันหมดอายุ (FIFO/FEFO) ตอนรับเข้าทันที', 
-                        'หลีกเลี่ยงการลงของหน้าร้านในช่วงที่ลูกค้าเยอะจัด'
-                    ],
-                    'จัดบิลผิด': [
-                        'อ่านบิลให้ละเอียด ทวนรายการและหน่วยนับในใจ', 
-                        'หากลายมือลูกค้า/เซลส์อ่านยาก ให้ถามกลับทันที ห้ามเดา', 
-                        'แยกบิลขายปลีก/ขายส่ง ออกจากกันชัดเจน', 
-                        'ใช้ปากกาไฮไลท์ขีดรายการสินค้าที่จัดเสร็จแล้วทีละบรรทัด'
-                    ],
-                    'หยิบของผิด': [
-                        'ดู "ยี่ห้อ" และ "ขนาด" ให้ชัวร์ (วัตถุดิบเบเกอรี่หน้าตาคล้ายกันเยอะ)', 
-                        'จัดเรียงสินค้าตระกูลเดียวกันไว้ใกล้กัน แต่อย่าปนกัน', 
-                        'ติดป้ายเตือน "ระวังหยิบผิด!" ตรงชั้นวางสินค้าที่หน้าตาคล้ายกัน',
-                        'เช็คบาร์โค้ดสินค้ากับบิลทุกครั้งก่อนแพ็ค'
-                    ],
-                    'จำนวนไม่ครบ': [
-                        'นับซ้ำ 2 รอบเสมอ (ตอนหยิบจากชั้น และ ตอนแพ็คลงถุง/กล่อง)', 
-                        'ของชิ้นเล็ก (เช่น สีผสมอาหาร, กลิ่น, ของตกแต่ง) ให้นับใส่ตะกร้าเล็กแยกไว้', 
-                        'จัดของเสร็จแล้วให้เรียกเพื่อนช่วยสแกนด้วยสายตาอีกรอบ'
-                    ],
-                    'ลูกค้ารอสินค้านานเกิน 15 นาที': [
-                        'จัดคิวตามลำดับบิลชัดเจน อาจใช้ระบบบัตรคิว', 
-                        'ดึงพนักงานคลัง/แอดมิน มาช่วยซัพพอร์ตช่วง Peak Hour', 
-                        'ถ้าเป็นบิลขายส่งใหญ่ ให้แยกคนจัดต่างหาก ไม่กวนบิลเล็กหน้าร้าน', 
-                        'แจ้งระยะเวลารอให้ลูกค้ารับทราบล่วงหน้า เพื่อลดความหงุดหงิด'
-                    ],
-                    'ปล่อยของผิดถึงลูกค้า (Checker)': [
-                        'Checker ต้องเป็นคนละคนกับคนจัดของเสมอ เพื่อหาจุดบอด', 
-                        'Checker ทำเครื่องหมายติ๊กถูกทุกรายการบนบิลเมื่อเช็คจบ', 
-                        'ทวนรายการทวนจำนวนพร้อมกับลูกค้าอีกรอบตอนส่งมอบ', 
-                        'เน้นย้ำให้ Checker สังเกต "วันหมดอายุ" ก่อนปล่อยของ'
-                    ],
-                    'คิดเงินทอนเงินผิด': [
-                        'ทวนยอดเงินที่รับมา และยอดเงินทอนให้ลูกค้าฟังดังๆ ทุกครั้ง', 
-                        'จัดระเบียบลิ้นชักเงินให้เรียบร้อย ไม่ปนแบงก์', 
-                        'ตอนคนเยอะ ต้องมีสติ ไม่คุยเล่นขณะทอนเงิน', 
-                        'เช็คหน้าจอ POS ให้มั่นใจก่อนกดรับเงิน'
-                    ],
-                    'ตอบแชทช้า': [
-                        'จัดตารางเวรแอดมินตอบแชทให้ชัดเจน ไม่เกี่ยงกัน', 
-                        'สร้างข้อความตอบกลับอัตโนมัติ (Quick Reply) สำหรับคำถามยอดฮิต', 
-                        'ช่วงร้านวุ่นวาย ให้ตั้ง Auto-reply แจ้งลูกค้าว่าอาจตอบช้าเล็กน้อย'
-                    ],
-                    'ให้ข้อมูลสินค้าผิด': [
-                        'จัดอบรมความรู้วัตถุดิบเบเกอรี่เบื้องต้น (เช่น แป้งเค้ก vs แป้งขนมปัง)', 
-                        'ทำคู่มือ/Catalog เล่มเล็กๆ ไว้ที่โต๊ะแอดมินเพื่อเปิดเทียบ', 
-                        'ถ้าไม่ชัวร์ ให้ถามฝ่ายคลังหรือหน้าร้าน ห้ามเดาเอาเองเด็ดขาด'
-                    ],
-                    'เปิดบิลผิด': [
-                        'ทวนรายชื่อสินค้าและ "ยี่ห้อ" ให้ตรงกับที่ลูกค้าสั่งเป๊ะๆ ก่อนพิมพ์บิล', 
-                        'ระวังเรื่อง "หน่วยนับ" (เช่น ถุง/กิโล/ลัง) ตรวจสอบให้แน่ใจก่อนกดบันทึก', 
-                        'หากชื่อสินค้าคล้ายกัน ควรอ่านทวนรายการให้ลูกค้าฟังอีกรอบเพื่อคอนเฟิร์ม', 
-                        'ก่อนกดบันทึกออเดอร์ ควรอ่านทวนรายการทั้งหมดเร็วๆ อีก 1 รอบ'
-                    ],
-                    'คิดเงินพลาด': [
-                        'สแกนบาร์โค้ดทุกชิ้น เลี่ยงการพิมพ์รหัสหรือค้นหาชื่อเองถ้าไม่จำเป็น', 
-                        'สินค้ายกแพ็ค/ยกลัง ต้องสแกนบาร์โค้ดลัง ไม่ใช่บาร์โค้ดชิ้น', 
-                        'ถ้ารายการเยอะ ให้ใช้ตะกร้าแยกของที่สแกนแล้วกับยังไม่สแกน', 
-                        'ตรวจสอบราคาป้ายหน้าร้านกับระบบ POS ให้ตรงกันเสมอ'
-                    ],
-                    'ของหมดไม่แจ้ง (เห็นผ่านหน้าระบบ)': [
-                        'ตั้งระบบแจ้งเตือน Minimum Stock ในระบบ POS', 
-                        'แอดมินต้องเช็คสต็อกก่อนตอบรับออเดอร์แชทเสมอ', 
-                        'มีกระดานไวท์บอร์ดหรือไลน์กลุ่ม อัปเดต "สินค้าหมดประจำวัน" ทันที'
-                    ],
-                    'ไม่ช่วยใส่ถุง': [
-                        'จัดเตรียมถุงพลาสติก/กล่อง ไว้ใกล้จุดชำระเงินให้หยิบง่าย', 
-                        'สังเกตปริมาณของลูกค้า ถ้าของเยอะต้องรีบเข้าไปช่วยแพ็คทันที', 
-                        'จัดของหนัก (เนย, แป้ง) ไว้ล่าง ของบอบบาง (ช็อกโกแลต) ไว้บน', 
-                        'แยกของกลิ่นแรง ออกจากวัตถุดิบอื่น'
-                    ],
-                    'ไม่แนะนำสินค้า': [
-                        'สังเกตลูกค้าที่ยืนงง หรือเดินหาของนานๆ แล้วเข้าไปสอบถาม', 
-                        'เสนอสินค้าทดแทน (ยี่ห้ออื่น) ถ้ายี่ห้อที่ลูกค้าหาหมด', 
-                        'แนะนำโปรโมชั่นหรือสินค้าเข้าใหม่ให้ลูกค้าฟัง', 
-                        'ศึกษาเทรนด์เบเกอรี่ (เมนูฮิต) จะได้แนะนำวัตถุดิบได้ตรงจุด'
-                    ],
-                    'ไม่เดินดูแลลูกค้าเดินช้อป': [
-                        'จัดพนักงานประจำโซน (Standby) ในช่วงที่คนเยอะ', 
-                        'กวาดสายตามองรอบร้านเสมอ ไม่จับกลุ่มคุยกันหรือเล่นมือถือ', 
-                        'ทักทายลูกค้า "สวัสดีครับ/ค่ะ หาอะไรสอบถามได้นะคะ" เมื่อลูกค้าเดินผ่าน'
-                    ],
-                    'บริการไม่สุภาพ': [
-                        'ควบคุมอารมณ์และน้ำเสียง แม้ในช่วงที่ร้านวุ่นวายหรือเหนื่อย', 
-                        'ใช้คำว่า "ขอโทษครับ/ค่ะ" และ "ขอบคุณครับ/ค่ะ" ให้เป็นนิสัย', 
-                        'ใจเย็นรับฟังความต้องการลูกค้า แม้ลูกค้าจะถามเยอะหรือเปลี่ยนใจ', 
-                        'จัดอบรม Service Mind สั้นๆ ให้ทีมงานเดือนละครั้ง'
-                    ],
-                    'ปล่อยชั้นวางว่าง (เรียงของเติม)': [
-                        'จัดรอบเดินเช็คชั้นวางสินค้า (Store Walk) ทุกๆ 1-2 ชั่วโมง', 
-                        'สินค้าขายดี (แป้ง, เนย, น้ำตาล) ต้องเติมให้เต็มเสมอ', 
-                        'ดึงสินค้าจากด้านในออกมาด้านหน้า (Face up) ให้ดูเต็มชั้นสวยงาม', 
-                        'แบ่งโซนรับผิดชอบชั้นวาง ให้พนักงานแต่ละคนดูแลชัดเจน'
-                    ],
-                    'สต๊อคสินค้าไม่พอใช้': [
-                        'คำนวณ Safety Stock ของสินค้าขายดีให้แม่นยำขึ้น', 
-                        'ประสานงานขอเบิกของจากคลังใหญ่ (AKRA) ล่วงหน้าอย่างน้อย 1-2 วัน', 
-                        'จดบันทึกสินค้าที่ลูกค้าถามหาบ่อยๆ แต่ร้านไม่มี เพื่อพิจารณาสั่งมาขาย', 
-                        'จับตาดูเทศกาล (ปีใหม่, วาเลนไทน์) แล้วตุนของที่เกี่ยวข้องล่วงหน้า'
-                    ],
-                    'ของหมดไม่แจ้ง': [
-                        'เมื่อพนักงานหยิบของชิ้นสุดท้าย/ลังสุดท้าย ต้องแจ้งหัวหน้าหรือแอดมินทันที', 
-                        'ใช้ป้าย "สินค้าหมดชั่วคราว" แปะที่ชั้นวาง พร้อมระบุวันของเข้า (ถ้าทราบ)', 
-                        'อัปเดตข้อมูลลงไลน์กลุ่มร้านทันทีที่เห็นของในคลังพร่องมาก'
-                    ],
-                    'ความผิดอื่น ๆ': [
-                        'นำข้อผิดพลาดนี้มาหารือในที่ประชุม (Morning Brief) เพื่อหาสาเหตุรากเหง้า (Root Cause)',
-                        'กำหนดเป็นกรณีศึกษา (Case Study) ให้พนักงานเรียนรู้ร่วมกัน',
-                        'ตรวจสอบว่ามีคู่มือหรือมาตรฐาน (SOP) รองรับการทำงานส่วนนี้หรือไม่ ถ้าไม่มีให้สร้างขึ้นมา'
-                    ]
+                    'แก้ไขได้ก่อนจัดส่ง': ['จัดโซนสินค้าใหม่ให้ชัดเจน แยกประเภทตามกลุ่มการใช้งาน', 'ย้ำเตือนเรื่อง "หน่วยนับ" (กิโล/กรัม/ลัง) ก่อนหยิบทุกครั้ง', 'ทำงานแบบ Buddy จับคู่ช่วยรีเช็คออเดอร์ใหญ่', 'ใช้ตะกร้าหรือกระบะสีแยกบิลตอนหยิบ ป้องกันของปนกัน', 'ปรินท์รูปสินค้าหรือตัวอย่างแพ็คเกจแปะหน้าชั้นวางให้ชัดเจน'],
+                    'ส่งถึงหน้าร้านแล้ว': ['เพิ่มจุดตรวจสอบ (Check-point) ก่อนขึ้นรถขนส่ง', 'ลดความเร่งรีบตอนโหลดของขึ้นรถ จัดสรรเวลาให้ดีขึ้น', 'ใช้สติกเกอร์สีหรือมาร์คกิ้งแยกบิล/แยกสาขาให้ชัดเจน', 'ทำ Checklist ตรวจสอบท้ายรถก่อนรถออกทุกครั้ง'],
+                    'ส่งถึงลูกค้าแล้ว': ['บังคับใช้ระบบ Double Check 100% สำหรับบิลขายส่ง', 'ถ่ายรูปสินค้าพร้อมบิลก่อนปิดกล่อง/ส่งมอบให้ลูกค้า', 'แยกโซนรอจัดส่งตามสายรถหรือเส้นทางให้ชัดเจน', 'โทรคอนเฟิร์มรายการกับลูกค้าก่อนรถส่งของออก', 'ใส่ใบ Checklist ลายเซ็นคนจัดลงในกล่องให้ลูกค้าเช็คด้วย'],
+                    'ผิดพลาดในการรับลงสินค้า': ['แยกโซนรอตรวจรับออกจากสินค้าพร้อมขายอย่างเด็ดขาด', 'ใช้วิธีนับแบบ Blind Check (คนนับไม่เห็นยอดในบิลก่อน)', 'ระวังสินค้าที่เปลี่ยนแพ็คเกจหรือบาร์โค้ดใหม่ (เบเกอรี่เจอบ่อย)', 'ตรวจเช็ควันหมดอายุ (FIFO/FEFO) ตอนรับเข้าทันที', 'หลีกเลี่ยงการลงของหน้าร้านในช่วงที่ลูกค้าเยอะจัด'],
+                    'จัดบิลผิด': ['อ่านบิลให้ละเอียด ทวนรายการและหน่วยนับในใจ', 'หากลายมือลูกค้า/เซลส์อ่านยาก ให้ถามกลับทันที ห้ามเดา', 'แยกบิลขายปลีก/ขายส่ง ออกจากกันชัดเจน', 'ใช้ปากกาไฮไลท์ขีดรายการสินค้าที่จัดเสร็จแล้วทีละบรรทัด'],
+                    'หยิบของผิด': ['ดู "ยี่ห้อ" และ "ขนาด" ให้ชัวร์ (วัตถุดิบเบเกอรี่หน้าตาคล้ายกันเยอะ)', 'จัดเรียงสินค้าตระกูลเดียวกันไว้ใกล้กัน แต่อย่าปนกัน', 'ติดป้ายเตือน "ระวังหยิบผิด!" ตรงชั้นวางสินค้าที่หน้าตาคล้ายกัน','เช็คบาร์โค้ดสินค้ากับบิลทุกครั้งก่อนแพ็ค'],
+                    'จำนวนไม่ครบ': ['นับซ้ำ 2 รอบเสมอ (ตอนหยิบจากชั้น และ ตอนแพ็คลงถุง/กล่อง)', 'ของชิ้นเล็ก (เช่น สีผสมอาหาร, กลิ่น, ของตกแต่ง) ให้นับใส่ตะกร้าเล็กแยกไว้', 'จัดของเสร็จแล้วให้เรียกเพื่อนช่วยสแกนด้วยสายตาอีกรอบ'],
+                    'ลูกค้ารอสินค้านานเกิน 15 นาที': ['จัดคิวตามลำดับบิลชัดเจน อาจใช้ระบบบัตรคิว', 'ดึงพนักงานคลัง/แอดมิน มาช่วยซัพพอร์ตช่วง Peak Hour', 'ถ้าเป็นบิลขายส่งใหญ่ ให้แยกคนจัดต่างหาก ไม่กวนบิลเล็กหน้าร้าน', 'แจ้งระยะเวลารอให้ลูกค้ารับทราบล่วงหน้า เพื่อลดความหงุดหงิด'],
+                    'ปล่อยของผิดถึงลูกค้า (Checker)': ['Checker ต้องเป็นคนละคนกับคนจัดของเสมอ เพื่อหาจุดบอด', 'Checker ทำเครื่องหมายติ๊กถูกทุกรายการบนบิลเมื่อเช็คจบ', 'ทวนรายการทวนจำนวนพร้อมกับลูกค้าอีกรอบตอนส่งมอบ', 'เน้นย้ำให้ Checker สังเกต "วันหมดอายุ" ก่อนปล่อยของ'],
+                    'คิดเงินทอนเงินผิด': ['ทวนยอดเงินที่รับมา และยอดเงินทอนให้ลูกค้าฟังดังๆ ทุกครั้ง', 'จัดระเบียบลิ้นชักเงินให้เรียบร้อย ไม่ปนแบงก์', 'ตอนคนเยอะ ต้องมีสติ ไม่คุยเล่นขณะทอนเงิน', 'เช็คหน้าจอ POS ให้มั่นใจก่อนกดรับเงิน'],
+                    'ตอบแชทช้า': ['จัดตารางเวรแอดมินตอบแชทให้ชัดเจน ไม่เกี่ยงกัน', 'สร้างข้อความตอบกลับอัตโนมัติ (Quick Reply) สำหรับคำถามยอดฮิต', 'ช่วงร้านวุ่นวาย ให้ตั้ง Auto-reply แจ้งลูกค้าว่าอาจตอบช้าเล็กน้อย'],
+                    'ให้ข้อมูลสินค้าผิด': ['จัดอบรมความรู้วัตถุดิบเบเกอรี่เบื้องต้น (เช่น แป้งเค้ก vs แป้งขนมปัง)', 'ทำคู่มือ/Catalog เล่มเล็กๆ ไว้ที่โต๊ะแอดมินเพื่อเปิดเทียบ', 'ถ้าไม่ชัวร์ ให้ถามฝ่ายคลังหรือหน้าร้าน ห้ามเดาเอาเองเด็ดขาด'],
+                    'เปิดบิลผิด': ['ทวนรายชื่อสินค้าและ "ยี่ห้อ" ให้ตรงกับที่ลูกค้าสั่งเป๊ะๆ ก่อนพิมพ์บิล', 'ระวังเรื่อง "หน่วยนับ" (เช่น ถุง/กิโล/ลัง) ตรวจสอบให้แน่ใจก่อนกดบันทึก', 'หากชื่อสินค้าคล้ายกัน ควรอ่านทวนรายการให้ลูกค้าฟังอีกรอบเพื่อคอนเฟิร์ม', 'ก่อนกดบันทึกออเดอร์ ควรอ่านทวนรายการทั้งหมดเร็วๆ อีก 1 รอบ'],
+                    'คิดเงินพลาด': ['สแกนบาร์โค้ดทุกชิ้น เลี่ยงการพิมพ์รหัสหรือค้นหาชื่อเองถ้าไม่จำเป็น', 'สินค้ายกแพ็ค/ยกลัง ต้องสแกนบาร์โค้ดลัง ไม่ใช่บาร์โค้ดชิ้น', 'ถ้ารายการเยอะ ให้ใช้ตะกร้าแยกของที่สแกนแล้วกับยังไม่สแกน', 'ตรวจสอบราคาป้ายหน้าร้านกับระบบ POS ให้ตรงกันเสมอ'],
+                    'ของหมดไม่แจ้ง (เห็นผ่านหน้าระบบ)': ['ตั้งระบบแจ้งเตือน Minimum Stock ในระบบ POS', 'แอดมินต้องเช็คสต็อกก่อนตอบรับออเดอร์แชทเสมอ', 'มีกระดานไวท์บอร์ดหรือไลน์กลุ่ม อัปเดต "สินค้าหมดประจำวัน" ทันที'],
+                    'ไม่ช่วยใส่ถุง': ['จัดเตรียมถุงพลาสติก/กล่อง ไว้ใกล้จุดชำระเงินให้หยิบง่าย', 'สังเกตปริมาณของลูกค้า ถ้าของเยอะต้องรีบเข้าไปช่วยแพ็คทันที', 'จัดของหนัก (เนย, แป้ง) ไว้ล่าง ของบอบบาง (ช็อกโกแลต) ไว้บน', 'แยกของกลิ่นแรง ออกจากวัตถุดิบอื่น'],
+                    'ไม่แนะนำสินค้า': ['สังเกตลูกค้าที่ยืนงง หรือเดินหาของนานๆ แล้วเข้าไปสอบถาม', 'เสนอสินค้าทดแทน (ยี่ห้ออื่น) ถ้ายี่ห้อที่ลูกค้าหาหมด', 'แนะนำโปรโมชั่นหรือสินค้าเข้าใหม่ให้ลูกค้าฟัง', 'ศึกษาเทรนด์เบเกอรี่ (เมนูฮิต) จะได้แนะนำวัตถุดิบได้ตรงจุด'],
+                    'ไม่เดินดูแลลูกค้าเดินช้อป': ['จัดพนักงานประจำโซน (Standby) ในช่วงที่คนเยอะ', 'กวาดสายตามองรอบร้านเสมอ ไม่จับกลุ่มคุยกันหรือเล่นมือถือ', 'ทักทายลูกค้า "สวัสดีครับ/ค่ะ หาอะไรสอบถามได้นะคะ" เมื่อลูกค้าเดินผ่าน'],
+                    'บริการไม่สุภาพ': ['ควบคุมอารมณ์และน้ำเสียง แม้ในช่วงที่ร้านวุ่นวายหรือเหนื่อย', 'ใช้คำว่า "ขอโทษครับ/ค่ะ" และ "ขอบคุณครับ/ค่ะ" ให้เป็นนิสัย', 'ใจเย็นรับฟังความต้องการลูกค้า แม้ลูกค้าจะถามเยอะหรือเปลี่ยนใจ', 'จัดอบรม Service Mind สั้นๆ ให้ทีมงานเดือนละครั้ง'],
+                    'ปล่อยชั้นวางว่าง (เรียงของเติม)': ['จัดรอบเดินเช็คชั้นวางสินค้า (Store Walk) ทุกๆ 1-2 ชั่วโมง', 'สินค้าขายดี (แป้ง, เนย, น้ำตาล) ต้องเติมให้เต็มเสมอ', 'ดึงสินค้าจากด้านในออกมาด้านหน้า (Face up) ให้ดูเต็มชั้นสวยงาม', 'แบ่งโซนรับผิดชอบชั้นวาง ให้พนักงานแต่ละคนดูแลชัดเจน'],
+                    'สต๊อคสินค้าไม่พอใช้': ['คำนวณ Safety Stock ของสินค้าขายดีให้แม่นยำขึ้น', 'ประสานงานขอเบิกของจากคลังใหญ่ (AKRA) ล่วงหน้าอย่างน้อย 1-2 วัน', 'จดบันทึกสินค้าที่ลูกค้าถามหาบ่อยๆ แต่ร้านไม่มี เพื่อพิจารณาสั่งมาขาย', 'จับตาดูเทศกาล (ปีใหม่, วาเลนไทน์) แล้วตุนของที่เกี่ยวข้องล่วงหน้า'],
+                    'ของหมดไม่แจ้ง': ['เมื่อพนักงานหยิบของชิ้นสุดท้าย/ลังสุดท้าย ต้องแจ้งหัวหน้าหรือแอดมินทันที', 'ใช้ป้าย "สินค้าหมดชั่วคราว" แปะที่ชั้นวาง พร้อมระบุวันของเข้า (ถ้าทราบ)', 'อัปเดตข้อมูลลงไลน์กลุ่มร้านทันทีที่เห็นของในคลังพร่องมาก'],
+                    'ความผิดอื่น ๆ': ['นำข้อผิดพลาดนี้มาหารือในที่ประชุม (Morning Brief) เพื่อหาสาเหตุรากเหง้า (Root Cause)','กำหนดเป็นกรณีศึกษา (Case Study) ให้พนักงานเรียนรู้ร่วมกัน','ตรวจสอบว่ามีคู่มือหรือมาตรฐาน (SOP) รองรับการทำงานส่วนนี้หรือไม่ ถ้าไม่มีให้สร้างขึ้นมา']
                 };
-                if(suggestionDatabase[type] && suggestionDatabase[type].length > 0) {
-                    return suggestionDatabase[type][index % suggestionDatabase[type].length];
-                }
+                if(suggestionDatabase[type] && suggestionDatabase[type].length > 0) return suggestionDatabase[type][index % suggestionDatabase[type].length];
                 return `ควรนำข้อผิดพลาดเรื่อง "<b>${type}</b>" มาพูดคุยเพื่อหาแนวทางป้องกันร่วมกันครับ`;
             }
 
@@ -1797,9 +1933,7 @@
 
                 let foundInsights = [];
                 keywordInsights.forEach(insight => {
-                    if (insight.keys.some(k => combinedNotesStr.includes(k))) {
-                        foundInsights.push(insight.msg);
-                    }
+                    if (insight.keys.some(k => combinedNotesStr.includes(k))) { foundInsights.push(insight.msg); }
                 });
 
                 if (foundInsights.length > 0) {
@@ -1821,6 +1955,11 @@
             }
             ranking.sort((a, b) => b.hp - a.hp);
 
+            // ค้นหาคะแนนสูงสุด(ที่ไม่ใช่ 100) และคะแนนต่ำสุด สำหรับแจกป้ายกรณีคะแนนเท่ากัน
+            let scores = ranking.map(p => p.hp);
+            let highestNonPerfect = Math.max(...scores.filter(hp => hp < 100), -1);
+            let lowestScore = Math.min(...scores);
+
             let gameHtml = '';
             ranking.forEach((player, index) => {
                 let hpPercent = player.hp;
@@ -1828,9 +1967,14 @@
                 let barColor = hpPercent >= 80 ? 'bg-green-500' : (hpPercent >= 50 ? 'bg-yellow-400' : 'bg-red-500');
                 
                 let badge = '';
-                if (player.hp === 100) badge = '<span class="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-md font-black ml-2 border border-green-200 shadow-sm uppercase"><i class="fa-solid fa-shield-halved mr-1"></i>Perfect</span>';
-                else if (index === 0 && player.hp > 0) badge = '<span class="text-[9px] bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded-md font-black ml-2 border border-yellow-300 shadow-sm uppercase"><i class="fa-solid fa-crown mr-1"></i>MVP</span>';
-                else if (index === ranking.length - 1 && player.hp < 100) badge = '<span class="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-md font-black ml-2 border border-red-200 shadow-sm uppercase"><i class="fa-solid fa-skull-crossbones mr-1"></i>Danger</span>';
+                // แจกป้ายตาม "คะแนน" ไม่ใช่ "ลำดับ" (แก้ปัญหาคนคะแนนเท่ากันไม่ได้ป้าย)
+                if (player.hp === 100) {
+                    badge = '<span class="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-md font-black ml-2 border border-green-200 shadow-sm uppercase"><i class="fa-solid fa-shield-halved mr-1"></i>Perfect</span>';
+                } else if (player.hp === highestNonPerfect && player.hp > 0) {
+                    badge = '<span class="text-[9px] bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded-md font-black ml-2 border border-yellow-300 shadow-sm uppercase"><i class="fa-solid fa-crown mr-1"></i>MVP</span>';
+                } else if (player.hp === lowestScore && player.hp < 100) {
+                    badge = '<span class="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-md font-black ml-2 border border-red-200 shadow-sm uppercase"><i class="fa-solid fa-skull-crossbones mr-1"></i>Danger</span>';
+                }
 
                 let deptTag = '';
                 if (currentBranch === 'TRD') {
