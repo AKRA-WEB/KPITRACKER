@@ -530,16 +530,12 @@
             return "";
         }
 
-        // ฟังก์ชันแปลงวันที่จาก YYYY-MM-DD เป็น DD/MM/YY 
         function formatDisplayDate(dateStr) {
             if (!dateStr) return "";
-            
             let cleanStr = String(dateStr);
-            // ตัดส่วนเวลา (Timezone) ทิ้งให้เหลือแต่วันที่ เช่น "2026-04-05T17:00:00.000Z" -> "2026-04-05"
             if (cleanStr.includes('T')) {
                 cleanStr = cleanStr.split('T')[0];
             }
-            
             if (cleanStr.includes('-')) {
                 const [y, m, d] = cleanStr.split('-');
                 return `${d}/${m}/${y.substring(2)}`;
@@ -547,12 +543,193 @@
             return cleanStr;
         }
 
-        // 🌟ฟังก์ชัน Normalize ชื่อพนักงานที่บันทึกผิดในอดีต🌟
-        // หากเจอชื่อเก่าในฐานข้อมูล จะถูกแปลงเป็นชื่อใหม่ก่อนนำไปประมวลผล เพื่อให้สถิติรันต่อได้
         function normalizeEmpName(name) {
             let n = (name || "").trim();
             if (n === "บันเลง") return "บรรเลง";
             return n;
+        }
+
+        function getStartOfWeek(d) {
+            d = new Date(d);
+            var day = d.getDay(), diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        // ================= AI SUGGESTION & INSIGHTS (DRY) =================
+        function getSmartSuggestion(type, index) {
+            const suggestionDatabase = {
+                'สินค้าขาดสต๊อก': [
+                    'ควรทำสต๊อกการ์ด (Stock Card) แบบเรียลไทม์ หรือใช้เครื่องยิงบาร์โค้ดตัดสต๊อกทันที',
+                    'กำหนดจุดสั่งซื้อ (Re-order point) ให้ชัดเจน โดยเฉพาะสินค้าขายดีช่วงเทศกาล',
+                    'ประสานงานฝ่ายจัดซื้อล่วงหน้าอย่างน้อย 3-5 วันเมื่อสินค้าใกล้ถึงจุดสั่งซื้อ',
+                    'ทำป้ายแจ้งเตือน "สินค้าใกล้หมด" แปะไว้ที่ชั้นวางหรือตะกร้าสต๊อก',
+                    'หัวหน้าแผนกควรเดินตรวจสต๊อก (Store Walk) ทุกเช้าก่อนเปิดร้าน'
+                ],
+                'แก้ไขได้ก่อนจัดส่ง': [
+                    'ดีเยี่ยม! ให้เพิ่มการเน้นย้ำจุดที่มักจะเกือบพลาดในที่ประชุม (Morning Talk)',
+                    'จัดทำสมุดจด "เกือบพลาด" (Near Miss Record) เพื่อใช้วิเคราะห์หาจุดบอดของกระบวนการ',
+                    'ถ้าเป็นการหยิบผิด ให้ทบทวนการจัดเรียงสินค้าบนชั้นว่าชวนสับสนหรือไม่',
+                    'ชื่นชมพนักงาน Checker ที่สามารถตรวจจับข้อผิดพลาดได้ก่อนส่ง'
+                ],
+                'ส่งถึงหน้าร้านแล้ว': [
+                    'คนจัดและคนขับรถต้องสื่อสารกันให้ชัดเจนขึ้น ย้ำจำนวนบิลและปลายทางก่อนออกรถ',
+                    'ใช้ระบบบาร์โค้ดสแกนรับ-ส่งสินค้าระหว่างคลังกับหน้าร้าน',
+                    'ทำพื้นที่รับของ (Receiving Area) ที่หน้าร้านให้เป็นสัดส่วน ป้องกันของปนกับของขาย',
+                    'พนักงานหน้าร้านต้องเช็คยอดกับใบส่งของทันทีที่ของลงรถ ห้ามดองไว้'
+                ],
+                'ส่งถึงลูกค้าแล้ว': [
+                    'เพิ่มการถ่ายรูปสินค้าคู่กับบิลจัดส่งลงไลน์กลุ่มก่อนซีลกล่อง/ขึ้นรถ ทุกครั้ง!',
+                    'สร้างแคมเปญ "ส่งถูก 100%" หากทำได้ตามเป้ามีรางวัลเล็กๆ น้อยๆ ให้ทีม',
+                    'กรณีลูกค้าเคลม ต้องสืบสวนหาคนจัดและคนเช็คทันที เพื่อหาสาเหตุที่แท้จริง ไม่ใช่แค่ลงโทษ',
+                    'บังคับใช้กระบวนการ "ชี้-เรียก-นับ" (Point and Call) ตอนส่งมอบของให้ลูกค้า',
+                    'พิจารณาใช้กล้องวงจรปิดเหนือโต๊ะแพ็ค เพื่อเป็นหลักฐานกรณีลูกค้าเคลมว่าของไม่ครบ'
+                ],
+                'ผิดพลาดในการรับลงสินค้า': [
+                    'ทำโซนกักกัน (Quarantine Zone) สำหรับสินค้ามาใหม่ที่ยังไม่ได้ตรวจนับ ห้ามนำไปขายเด็ดขาด',
+                    'ตรวจเช็ควันหมดอายุ (Shelf life) ทุกกล่อง/ทุกลัง ก่อนเซ็นรับของจาก Supplier',
+                    'หากสินค้ามีรอยบุบ ฉีกขาด หรือเปียกชื้น ให้ปฏิเสธการรับ หรือจดหมายเหตุไว้ทันที',
+                    'จัดตารางรับสินค้าไม่ให้ตรงกับช่วงเวลาที่หน้าร้านยุ่งที่สุด (Peak Hour)'
+                ],
+                'จัดบิลผิด': [
+                    'ใช้ปากกาเน้นข้อความ (Highlighter) ขีดทับรายการที่จัดเสร็จแล้ว ป้องกันการมองข้าม',
+                    'ถ้ารายการในบิลอ่านยาก/กำกวม ให้ถามแอดมินหรือเซลส์ทันที ห้ามเดาเอาเอง',
+                    'จัดระเบียบคลิปหนีบบิล แบ่งเป็น "รอจัด", "กำลังจัด", "จัดเสร็จรอเช็ค" ให้ชัดเจน',
+                    'สำหรับออเดอร์ใหญ่ ให้แบ่งจัดทีละโซน (เช่น โซนแห้ง โซนเย็น โซนแพ็คเกจจิ้ง)'
+                ],
+                'หยิบของผิด': [
+                    'ติดป้ายราคาและชื่อสินค้าให้ตัวใหญ่และชัดเจน โดยเฉพาะยี่ห้อที่หน้าตาคล้ายกัน',
+                    'สอนให้พนักงานดู "บาร์โค้ด 3 ตัวท้าย" เพื่อคอนเฟิร์มสินค้าที่แพ็คเกจคล้ายกัน',
+                    'แยกสินค้าชนิดเดียวกันแต่คนละยี่ห้อ/ขนาด ให้อยู่ห่างกัน (ห้ามวางติดกัน)',
+                    'มีรูปภาพสินค้าสีสันสดใสติดไว้ที่ใบจัดสินค้าสำหรับพนักงานใหม่'
+                ],
+                'จำนวนไม่ครบ': [
+                    'ใช้วิธีจัดของใส่ตะกร้าก่อน แล้วนับจำนวนชิ้นออกจากตะกร้าลงกล่องแพ็คอีกรอบ (Double count)',
+                    'สินค้าชิ้นเล็ก/ของจุกจิก ให้แพ็ครวมใส่ถุงใสใบใหญ่ก่อนหนึ่งชั้น ป้องกันการร่วงหล่น',
+                    'นับจำนวนชิ้นรวมในบิล และจำนวนชิ้นของจริง ก่อนปิดกล่องเสมอ',
+                    'สอนให้พนักงานจัดของเป็นกองๆ ละ 10 ชิ้น จะช่วยให้นับจำนวนหลักสิบ/ร้อย ได้เร็วและแม่นยำ'
+                ],
+                'ลูกค้ารอสินค้านานเกิน 15 นาที': [
+                    'ใช้ระบบบัตรคิว หรือ Pager เรียกคิวเมื่อจัดของเสร็จ เพื่อลดความแออัดหน้าเคาน์เตอร์',
+                    'กำหนดให้พนักงาน 1 คน จัดบิลลูกค้าหน้าร้าน (Walk-in) เป็นลำดับแรกสุดเสมอ',
+                    'จัดทำโซน "สินค้าขายดี/หยิบบ่อย" ไว้ใกล้โต๊ะแพ็ค/แคชเชียร์ เพื่อให้หยิบได้ทันที',
+                    'กรณีคิวเยอะ ให้มีพนักงานคอยเดินแจกน้ำ หรือแจ้งระยะเวลารอโดยประมาณให้ลูกค้าทราบ'
+                ],
+                'ปล่อยของผิดถึงลูกค้า (Checker)': [
+                    'Checker ต้องเป็นคนละคนกับคนจัดของ 100% ห้ามเป็นคนเดียวกันเด็ดขาด',
+                    'Checker ต้องมีอำนาจในการสั่งให้คนจัดไปเปลี่ยน/เติมของให้ถูกต้อง',
+                    'เพิ่มแสงสว่างบริเวณโต๊ะ Checker เพื่อให้เห็นรายละเอียดสินค้าชัดเจนขึ้น',
+                    'จัดอบรมทบทวนความรู้เรื่องสินค้า (Product Knowledge) ให้ Checker เป็นประจำ'
+                ],
+                'คิดเงินทอนเงินผิด': [
+                    'บังคับพนักงานพูดทวนยอดรับและยอดทอน "รับมา 1,000 บาท ทอน 250 บาทนะคะ" ทุกครั้ง',
+                    'ไม่วางเงินที่รับจากลูกค้าลงลิ้นชักจนกว่าจะส่งเงินทอนให้ลูกค้าเสร็จ (วางไว้บนเครื่องก่อน)',
+                    'เปลี่ยนกะแคชเชียร์ ต้องมีการส่งมอบเงินทอนและนับกระทบยอด (X-Read) ให้ชัดเจน',
+                    'ห้ามพนักงานใช้โทรศัพท์มือถือ หรือพูดคุยเรื่องส่วนตัวขณะทำรายการคิดเงิน'
+                ],
+                'ตอบแชทช้า': [
+                    'จัดตารางเวรแอดมินตอบแชทรายชั่วโมง พร้อมกำหนด KPI เวลาตอบกลับ (Response Time) เช่น ไม่เกิน 15 นาที',
+                    'เตรียมชุดข้อความมาตรฐาน (Quick Replies) สำหรับคำถามที่เจอบ่อย (ราคา, ค่าส่ง, สต๊อก)',
+                    'ใช้ Chatbot เบื้องต้นในการรับเรื่อง หรือคัดกรองประเภทคำถามในช่วงนอกเวลาทำการ',
+                    'แอดมินต้องมีช่องทางลัด (Fast Track) ในการถามสต๊อกกับฝ่ายคลังโดยตรง'
+                ],
+                'ให้ข้อมูลสินค้าผิด': [
+                    'จัดทำคู่มือเทียบสเปคสินค้า (เช่น แป้งเค้กตรา A แทนตรา B ได้ไหม) ให้แอดมิน/หน้าร้านเปิดดูได้ง่าย',
+                    'สร้างแคมเปญ "วันละตัว" ให้พนักงานเรียนรู้จุดเด่นของสินค้าวันละ 1 รายการในช่วงเช้า',
+                    'เมื่อมีสินค้าใหม่เข้า ต้องนำมาให้ทีมงานดูและจับของจริง พร้อมบรีฟสรรพคุณสั้นๆ',
+                    'ถ้าพนักงานไม่แน่ใจ ต้องฝึกให้พูดว่า "ขออนุญาตตรวจสอบข้อมูลที่ถูกต้องสักครู่นะคะ" ห้ามเดา'
+                ],
+                'เปิดบิลผิด': [
+                    'ย้ำให้แอดมิน/แคชเชียร์ ตรวจสอบ "หน่วยนับ" (ชิ้น/แพ็ค/ลัง) ให้ตรงกับราคาที่แสดง',
+                    'หากชื่อสินค้าในระบบ POS มีหลายตัวที่คล้ายกัน ให้ใส่ Keyword ให้ชัดเจน (เช่น แป้งเค้ก-พัดโบก-1kg)',
+                    'ทวนรายการทวนจำนวนกับลูกค้าทางโทรศัพท์/แชท ก่อนกดพิมพ์บิลทุกครั้ง',
+                    'สำหรับลูกค้าประจำ ให้เช็คประวัติการสั่งซื้อเพื่อช่วยรีเช็คว่าปกติลูกค้าใช้ยี่ห้อนี้หรือไม่'
+                ],
+                'คิดเงินพลาด': [
+                    'เข้มงวดการยิงบาร์โค้ด 100% ยกเว้นสินค้าที่บาร์โค้ดพังจริงๆ ถึงจะอนุญาตให้คีย์มือ',
+                    'ระวังบาร์โค้ดซ้อน! (สินค้าบางตัวมีบาร์โค้ดขายปลีก และบาร์โค้ดขายส่งยกลังบนแพ็คเกจเดียวกัน)',
+                    'สุ่มตรวจราคาป้ายหน้าเชลฟ์กับราคาในระบบ POS สัปดาห์ละ 1 หมวดหมู่สินค้า',
+                    'จัดระเบียบโต๊ะแคชเชียร์ แบ่งฝั่งของที่ "ยังไม่ยิง" กับ "ยิงแล้ว" ให้ชัดเจน'
+                ],
+                'ของหมดไม่แจ้ง (เห็นผ่านหน้าระบบ)': [
+                    'กำหนดรอบดึงรายงานสินค้าใกล้หมด (Low Stock Report) ทุกเช้า เพื่อไปเช็คของจริง',
+                    'มีกระดานไวท์บอร์ดหลังร้าน อัปเดตรายการ "Out of Stock" ประจำวันให้ทุกคนเห็นตรงกัน',
+                    'พนักงานหน้าร้านต้องรีบแจ้งแอดมินทันทีที่หยิบสินค้าชิ้นสุดท้ายบนเชลฟ์',
+                    'เชื่อมโยงระบบสต๊อกหน้าร้านและออนไลน์ให้ตัดพร้อมกันแบบ Real-time (ถ้าทำได้)'
+                ],
+                'ไม่ช่วยใส่ถุง': [
+                    'จัดเตรียมถุงและอุปกรณ์แพ็ค (สก็อตเทป, ยางวง, คัตเตอร์) ไว้ที่แคชเชียร์ให้พร้อมใช้งานเสมอ',
+                    'สอนเทคนิคการจัดของลงถุง (ของแข็ง/หนักอยู่ล่าง ของเบา/แตกง่ายอยู่บน ของมีกลิ่นใส่ถุงแยก)',
+                    'หากลูกค้าซื้อเยอะ ให้พนักงานหน้าร้าน (ว่างอยู่) เข้ามาช่วยแคชเชียร์จัดของลงถุง/ลัง ทันที',
+                    'สอบถามลูกค้าก่อนเสมอว่า "รับถุงเพิ่มไหมคะ" หรือ "ใส่กล่องลังให้ไหมคะ จะได้ยกง่าย"'
+                ],
+                'ไม่แนะนำสินค้า': [
+                    'ฝึกทักษะการทำ Cross-selling (เช่น ลูกค้าซื้อแป้ง ให้เสนอผงฟูหรือเนยเพิ่ม)',
+                    'สังเกตตะกร้าลูกค้า หากลูกค้าทำเบเกอรี่ชนิดไหน ให้แนะนำวัตถุดิบตัวใหม่ที่ตอบโจทย์',
+                    'เตรียมป้าย "สินค้าขายดี" หรือ "สินค้าแนะนำ" ติดที่เชลฟ์ เพื่อช่วยดึงดูดความสนใจลูกค้า',
+                    'เมื่อมีโปรโมชั่นใกล้จะหมดอายุ ให้นำมาตั้งโชว์หน้าแคชเชียร์และให้พนักงานกล่าวแนะนำทุกคน'
+                ],
+                'ไม่เดินดูแลลูกค้าเดินช้อป': [
+                    'แบ่งโซนรับผิดชอบ (Zone Defense) ให้พนักงานแต่ละคนยืนประจำจุด ไม่กระจุกตัวกัน',
+                    'ใช้กฎ 10 ก้าว (Ten-foot Rule): เมื่อลูกค้าเดินเข้ามาในรัศมี 10 ก้าว ต้องสบตา ยิ้ม และทักทาย',
+                    'หากเห็นลูกค้าถือของเต็มมือ ให้รีบนำตะกร้าช้อปปิ้งไปให้ทันทีโดยไม่ต้องรอให้ขอ',
+                    'กวาดสายตามองลูกค้าที่ยืนอ่านฉลากสินค้านานๆ แล้วเข้าไปถามว่า "สอบถามข้อมูลได้นะคะ"'
+                ],
+                'บริการไม่สุภาพ': [
+                    'ห้ามพนักงานใช้คำว่า "ไม่มี" ห้วนๆ ให้เปลี่ยนเป็น "ขออภัยค่ะ สินค้าหมดชั่วคราว รับเป็น...แทนไหมคะ"',
+                    'ควบคุมน้ำเสียงและสีหน้า (Tone & Body Language) แม้จะใส่แมสก์ ลูกค้าก็สัมผัสได้จากแววตา',
+                    'เมื่อลูกค้ามีอารมณ์โกรธ ให้รับฟังอย่างตั้งใจ กล่าวคำขอโทษ และเรียกผู้จัดการมาช่วยรับมือ',
+                    'จัดกิจกรรมชมเชยพนักงาน (Staff of the Month) ที่ได้รับคำชมเรื่องบริการจากลูกค้า'
+                ],
+                'ปล่อยชั้นวางว่าง (เรียงของเติม)': [
+                    'กำหนดเวลาลงของ/เติมเชลฟ์ (Fill-up Time) ให้ชัดเจน เช่น ก่อนเปิดร้าน และ หลัง 15:00 น.',
+                    'ดึงสินค้าจากด้านในออกมาโชว์ด้านหน้าเชลฟ์ (Face-up / Block) ตลอดวันเมื่อมีเวลาว่าง',
+                    'ทำความสะอาดเชลฟ์ทุกครั้งก่อนนำสินค้าล็อตใหม่ขึ้นจัดเรียง',
+                    'ใช้หลัก FIFO (First In, First Out) ดันของเก่าไว้หน้า ของใหม่ไว้หลัง เสมอ'
+                ],
+                'สต๊อคสินค้าไม่พอใช้': [
+                    'วิเคราะห์ข้อมูลการขายย้อนหลัง (Sale History) เพื่อคาดการณ์ยอดสั่งซื้อในเดือนถัดไป',
+                    'จับตาดูเทศกาลเบเกอรี่ (เช่น วาเลนไทน์, ปีใหม่, ไหว้พระจันทร์) และเผื่อเวลาสั่งของล่วงหน้า 1-2 เดือน',
+                    'ทำความสัมพันธ์อันดีกับ Supplier เผื่อกรณีฉุกเฉินต้องขอแทรกคิวจัดส่ง',
+                    'หาสินค้าทดแทน (Substitute Products) เตรียมไว้ ในกรณีที่ยี่ห้อหลักขาดตลาดจริงๆ'
+                ],
+                'ของหมดไม่แจ้ง': [
+                    'ปรับ Mindset ให้พนักงานเข้าใจว่า การแจ้งของหมด ไม่ใช่ความผิด แต่เป็นการช่วยรักษายอดขาย',
+                    'กำหนดเป็นกฎเหล็ก: ใครหยิบของชิ้นสุดท้าย/ลังสุดท้าย ต้องตะโกนบอก หรือไลน์แจ้งทีมทันที',
+                    'หัวหน้าแผนกต้องหมั่นสุ่มตรวจเชลฟ์สินค้ากลุ่มเคลื่อนไหวเร็ว (Fast Moving) เป็นประจำ'
+                ],
+                'ความผิดอื่น ๆ': [
+                    'นำข้อผิดพลาดนี้มาบันทึกเป็น "บทเรียน" (Lesson Learned) และแชร์ในไลน์กลุ่มสาขา',
+                    'ตั้งคำถาม "ทำไม 5 ครั้ง" (5 Whys Analysis) เพื่อเจาะลึกหาสาเหตุที่แท้จริง ไม่ใช่แค่แก้ปัญหาปลายเหตุ',
+                    'หากเป็นปัญหาที่เกิดซ้ำซาก แสดงว่าระบบการทำงาน (SOP) มีช่องโหว่ ต้องรื้อระบบและปรับปรุงใหม่',
+                    'เปิดโอกาสให้พนักงานระดับปฏิบัติการเสนอไอเดียแก้ปัญหา (Bottom-up) เพราะเขาอยู่หน้างานจริง'
+                ]
+            };
+            if(suggestionDatabase[type] && suggestionDatabase[type].length > 0) return suggestionDatabase[type][index % suggestionDatabase[type].length];
+            return `ควรนำข้อผิดพลาดเรื่อง "<b>${type}</b>" มาพูดคุยเพื่อหาแนวทางป้องกันร่วมกันครับ`;
+        }
+
+        function analyzeKeywordInsights(combinedNotesStr) {
+            const keywordInsights = [
+                { keys: ["ไซส์", "ขนาด", "กรัม", "กิโล", "g", "kg", "ml", "ลิตร", "ออนซ์", "ใหญ่", "เล็ก"], msg: "พบความสับสนเรื่องขนาด/น้ำหนักสินค้า แนะนำให้ใช้ตะกร้าสีแยกไซส์ หรือทำป้ายป๊อปอัปหน้าเชลฟ์" },
+                { keys: ["ยี่ห้อ", "แบรนด์", "ผิดยี่ห้อ", "ตรา"], msg: "มีการหยิบผิดยี่ห้อบ่อย ควรจัดวางแยกโซนกันให้ชัดเจน และย้ำให้อ่านชื่อเต็มหรือบาร์โค้ดทุกครั้งก่อนหยิบ" },
+                { keys: ["แตก", "หัก", "ละลาย", "เสียหาย", "รั่ว", "เละ", "ยับ", "ซึม", "บุบ", "เหลว"], msg: "สินค้าเสียหายระหว่างจัดส่ง ควรทบทวนมาตรฐานการห่อหุ้ม (บับเบิ้ล/ลูกฟูก) และกำชับเรื่องการซ้อนลัง" },
+                { keys: ["หมดอายุ", "exp", "อายุ", "เสีย", "บูด", "ขึ้นรา", "เก่า", "หมดสภาพ"], msg: "พบสินค้าเสื่อมสภาพ แสดงว่าการจัดสต๊อกแบบ FIFO/FEFO บกพร่อง ต้องจัดเวรตรวจเช็ค Shelf life ด่วน" },
+                { keys: ["ลืม", "ขาด", "ไม่ครบ", "ตกหล่น", "หาย", "ไม่ได้ใส่", "เกิน"], msg: "การจัดของไม่ครบ/เกิน บ่งบอกว่าขั้นตอน Check หละหลวม ควรเพิ่มจุด Double Check ทวนรายการอีกรอบ" },
+                { keys: ["ทอน", "เงิน", "บาท", "คิดผิด", "สลิป", "โอน", "เกิน", "ขาด", "แบงค์", "แบงก์"], msg: "ข้อผิดพลาดทางการเงิน ควรย้ำให้แคชเชียร์ทวนยอดรับและทอนเสียงดัง ตรวจสลิปโอนให้ละเอียด" },
+                { keys: ["ช้า", "รอนาน", "คิว", "รอคิว", "เร่ง", "ตามของ"], msg: "ลูกค้ารอนาน แสดงถึงคอขวดในกระบวนการจัดของ ควรดึงพนักงานส่วนอื่นมาเสริมในช่วง Peak Hour" },
+                { keys: ["ไม่สุภาพ", "พูด", "อารมณ์", "หน้าหงิก", "เหวี่ยง", "ตะคอก", "มารยาท", "บริการ", "โวยวาย", "ชักสีหน้า"], msg: "พบข้อติชมเรื่อง Service Mind สาขาควรเรียกประชุมปรับทัศนคติ และหาแนวทางลดความเครียดให้พนักงาน" },
+                { keys: ["แมลง", "หนู", "มด", "มอด", "สกปรก", "ฝุ่น", "เปื้อน", "แมลงสาบ"], msg: "พบสัตว์พาหะหรือความสกปรก ต้องรีบทำ Big Cleaning จัดการระบบ Pest Control และห้ามนำอาหารเข้าคลัง" },
+                { keys: ["ระบบ", "pos", "คอม", "เครื่อง", "ค้าง", "แฮงค์", "อินเตอร์เน็ต", "เน็ต", "พัง"], msg: "ปัญหาระบบหลังบ้านขัดข้อง ควรมีแผนสำรอง (Manual Backup) และแจ้งฝ่ายไอทีเพื่อตรวจสอบเสถียรภาพ" },
+                { keys: ["สต๊อก", "ของหมด", "ไม่มีของ", "หมด", "ของขาด", "ศูนย์"], msg: "สินค้าขาดสต๊อก ควรวิเคราะห์ข้อมูลยอดขายใหม่และปรับจุดสั่งซื้อให้เร็วขึ้น เพื่อป้องกันการเสียโอกาส" },
+                { keys: ["ละลาย", "ชื้น", "แฉะ", "น้ำแข็ง", "ตู้แช่", "อุณหภูมิ"], msg: "พบปัญหาสินค้าชื้นหรือละลาย ตรวจสอบอุณหภูมิห้องจัดเก็บ/ตู้แช่ด่วน ห้ามวางของติดผนังหรือพื้นตู้มากไป" },
+                { keys: ["ป้าย", "ราคาไม่ตรง", "ราคาผิด", "โปร", "โปรโมชั่น"], msg: "ราคาป้ายไม่ตรงกับ POS ควรจัดพนักงานเดินตรวจเช็คราคาสินค้าหมวดต่างๆ หมุนเวียนเป็นประจำทุกสัปดาห์" },
+                { keys: ["หาไม่เจอ", "ผิดที่", "วางปน", "ปนกัน"], msg: "สินค้าวางผิดที่ เข้มงวดการทำ 5ส และจัดหมวดหมู่ (Zoning) ห้ามวางสินค้าต่างชนิดปนในช่องตระกร้าเดียวกัน" }
+            ];
+            let foundInsights = [];
+            keywordInsights.forEach(insight => {
+                if (insight.keys.some(k => combinedNotesStr.includes(k))) { foundInsights.push(insight.msg); }
+            });
+            return foundInsights;
         }
 
         // ================= UI / MODAL FUNCTIONS =================
@@ -815,6 +992,374 @@
             }
         }
 
+        // ================= DASHBOARD LOGIC =================
+        function changeWeek(offset) {
+            viewOffsetWeek += offset;
+            if(viewOffsetWeek > 0) viewOffsetWeek = 0;
+            
+            const btnNext = document.getElementById('btn-next-week');
+            if (btnNext) {
+                if(viewOffsetWeek === 0) {
+                    btnNext.disabled = true; 
+                } else {
+                    btnNext.disabled = false; 
+                }
+            }
+            loadDashboardData();
+        }
+
+        function renderEmpBreakdown() {
+            if (!window._empBreakdownData) return;
+            
+            let empCount = window._empBreakdownData.count;
+            let lastEmpCount = window._empBreakdownData.lastCount;
+            let filterDept = document.getElementById('dash-dept-filter').value;
+            let maxErr = Math.max(...Object.values(empCount)); if(maxErr === 0) maxErr = 1;
+
+            let empsToRender = [];
+            if (currentBranch === 'TRD' && filterDept !== 'ALL') {
+                empsToRender = TRD_DEPARTMENTS[filterDept] || [];
+            } else {
+                empsToRender = BRANCH_CONFIG[currentBranch].employees;
+            }
+
+            let empHtml = '';
+            if (empsToRender.length === 0) {
+                empHtml = '<div class="text-center text-gray-400 text-xs py-2">ไม่มีข้อมูลพนักงานในหมวดนี้</div>';
+            } else {
+                empsToRender.forEach(name => {
+                    let count = empCount[name] || 0;
+                    let lastCount = lastEmpCount[name] || 0;
+                    let percent = (count / maxErr) * 100;
+                    let diff = count - lastCount;
+                    let trendHtml = '';
+                    
+                    if (diff > 0) {
+                        let pChange = lastCount > 0 ? Math.round((diff / lastCount) * 100) : 100;
+                        trendHtml = `<span class="text-[10px] ml-1 text-red-600 bg-red-100 px-1.5 py-0.5 rounded-md font-bold"><i class="fa-solid fa-arrow-trend-up"></i> +${pChange}%</span>`;
+                    } else if (diff < 0) {
+                        let pChange = Math.round((Math.abs(diff) / lastCount) * 100);
+                        trendHtml = `<span class="text-[10px] ml-1 text-green-600 bg-green-100 px-1.5 py-0.5 rounded-md font-bold"><i class="fa-solid fa-arrow-trend-down"></i> -${pChange}%</span>`;
+                    } else {
+                        trendHtml = `<span class="text-[10px] ml-1 text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-md font-bold">-</span>`;
+                    }
+
+                    empHtml += `
+                        <div class="mb-2">
+                            <div class="flex justify-between items-end text-xs mb-1.5">
+                                <div class="flex items-center"><span class="font-semibold text-gray-700">${name}</span>${trendHtml}</div>
+                                <span class="font-black ${count > 0 ? 'text-red-500' : 'text-green-500'}">${count} <span class="text-[10px] font-medium text-gray-400">ครั้ง</span></span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden border border-gray-200">
+                                <div class="bg-${count > 0 ? 'red' : 'green'}-500 h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('dash-emp-breakdown').innerHTML = empHtml;
+        }
+
+        function loadDashboardData() {
+            const rawData = JSON.parse(localStorage.getItem('kpiData_' + currentBranch) || '[]');
+            
+            const today = new Date();
+            const startOfCurrentWeek = getStartOfWeek(today); 
+            startOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + (viewOffsetWeek * 7));
+            const endOfWeek = new Date(startOfCurrentWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+
+            document.getElementById('dash-week-label').innerText = viewOffsetWeek === 0 ? "สัปดาห์นี้" : (viewOffsetWeek === -1 ? "สัปดาห์ที่แล้ว" : "อดีต");
+            
+            const formatDateObj = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${String(d.getFullYear()).substring(2)}`;
+            document.getElementById('dash-date-range').innerText = `${formatDateObj(startOfCurrentWeek)} - ${formatDateObj(endOfWeek)}`;
+
+            let targetWeekData = rawData.filter(d => {
+                const itemDate = new Date(d.date); itemDate.setHours(0,0,0,0);
+                startOfCurrentWeek.setHours(0,0,0,0); endOfWeek.setHours(23,59,59,999);
+                return itemDate >= startOfCurrentWeek && itemDate <= endOfWeek;
+            });
+            targetWeekData.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+            let totalVol = 0; let totalErr = 0;
+            let empErrCount = {};
+            let empHP = {};
+            let categorizedNotes = {}; 
+            
+            BRANCH_CONFIG[currentBranch].employees.forEach(emp => {
+                empErrCount[emp] = 0;
+                empHP[emp] = 100;
+                categorizedNotes[emp] = {};
+            });
+
+            let allCustomerNotesHtml = '';
+            let totalCustomerNotesCount = 0;
+            let weeklyTasksMap = {}; 
+            let hasAnyNotes = false;
+            let errorTypeCounts = {};
+            let errorNotesList = {};
+            let teamLostHP = 0; 
+
+            targetWeekData.forEach(day => {
+                if (day.volume) {
+                    totalVol += (day.volume.transfer + day.volume.pickup + day.volume.upcountry + day.volume.inmarket + day.volume.outmarket);
+                }
+                totalErr += (day.errors || []).length;
+                
+                if (BRANCH_CONFIG[currentBranch].showZone2 && day.customerNotes && day.customerNotes.trim() !== '') {
+                    let notesLines = day.customerNotes.split('\n').filter(line => line.trim() !== '');
+                    totalCustomerNotesCount += notesLines.length;
+                    allCustomerNotesHtml += `
+                        <div class="text-sm bg-blue-50/50 p-2.5 rounded-lg border border-blue-100 mb-2">
+                            <span class="text-xs text-blue-700 font-bold block mb-1 border-b border-blue-200/50 pb-1.5 flex justify-between items-center">
+                                <span><i class="fa-solid fa-calendar-day mr-1.5 opacity-70"></i> วันที่ ${formatDisplayDate(day.date)}</span>
+                                <span class="bg-white text-blue-600 px-2 py-0.5 rounded-md text-[10px] shadow-sm border border-blue-100">${notesLines.length} รายการ</span>
+                            </span>
+                            <div class="text-gray-700 whitespace-pre-wrap mt-1.5 leading-relaxed pl-1">${day.customerNotes}</div>
+                        </div>
+                    `;
+                }
+
+                (day.errors || []).forEach(e => {
+                    let empName = normalizeEmpName(e.emp); 
+
+                    if(empErrCount[empName] === undefined) {
+                        empErrCount[empName] = 0;
+                        empHP[empName] = 100;
+                        categorizedNotes[empName] = {};
+                    }
+                    
+                    empErrCount[empName]++;
+                    if(!categorizedNotes[empName][e.type]) categorizedNotes[empName][e.type] = [];
+                    if(errorTypeCounts[e.type] === undefined) {
+                        errorTypeCounts[e.type] = 0;
+                        errorNotesList[e.type] = [];
+                    }
+                    errorTypeCounts[e.type]++; 
+
+                    let penaltyToApply = 0;
+                    let cleanNote = e.note;
+                    let isReachedCustomer = false;
+                    let isFixedBefore = false;
+
+                    if (cleanNote.includes('[ถึงลูกค้าแล้ว]')) {
+                        isReachedCustomer = true;
+                        cleanNote = cleanNote.replace(/^\[ถึงลูกค้าแล้ว\]\s*/, '');
+                    } else if (cleanNote.includes('[แก้ไขได้ก่อนส่ง]')) {
+                        isFixedBefore = true;
+                        cleanNote = cleanNote.replace(/^\[แก้ไขได้ก่อนส่ง\]\s*/, '');
+                    }
+
+                    if (e.type === 'ความผิดอื่น ๆ') {
+                        let match = cleanNote.match(/^\[หัก (\d+) HP\]\s*(.*)/);
+                        if (match) {
+                            penaltyToApply = parseInt(match[1]);
+                            cleanNote = match[2];
+                        } else {
+                            penaltyToApply = 10;
+                        }
+                    } else {
+                        penaltyToApply = HP_PENALTY[e.type] !== undefined ? HP_PENALTY[e.type] : 10;
+                        if (isReachedCustomer) penaltyToApply = 30;
+                        else if (isFixedBefore) penaltyToApply = 5;
+                    }
+
+                    teamLostHP += penaltyToApply; 
+                    if(!errorNotesList[e.type].includes(cleanNote)) errorNotesList[e.type].push(cleanNote);
+
+                    let stageBadge = '';
+                    if (isReachedCustomer) stageBadge = `<span class="text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-red-200 shadow-sm align-middle whitespace-nowrap">🚨 ถึงลูกค้า</span>`;
+                    else if (isFixedBefore) stageBadge = `<span class="text-emerald-600 font-bold bg-emerald-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-emerald-200 shadow-sm align-middle whitespace-nowrap">🛡️ แก้ทัน</span>`;
+
+                    let displayNote = `<span class="text-red-600 font-black bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 shadow-sm border border-red-200 text-[9px] inline-block whitespace-nowrap align-middle">-${penaltyToApply} HP</span>${stageBadge}<span class="text-gray-700 leading-snug">${cleanNote}</span>`;
+
+                    categorizedNotes[empName][e.type].push({ note: displayNote, date: day.date });
+                    hasAnyNotes = true;
+
+                    if (empHP[empName] !== undefined) {
+                        empHP[empName] -= penaltyToApply;
+                    }
+                });
+
+                if(day.tasks && Array.isArray(day.tasks)) {
+                    day.tasks.forEach(t => {
+                        let assignees = (t.assignee || "").split(',').map(a => normalizeEmpName(a)).filter(a => a).join(', ');
+                        weeklyTasksMap[t.taskName] = { status: t.status, assignee: assignees };
+                    });
+                }
+            });
+
+            // --- TEAM KPI RENDER LOGIC ---
+            let branchStartHP = BRANCH_CONFIG[currentBranch].employees.length * 100;
+            let branchCurrentHP = Math.max(0, branchStartHP - teamLostHP);
+            let branchHPPercent = branchStartHP > 0 ? (branchCurrentHP / branchStartHP) * 100 : 0;
+
+            let grade = 'F'; let gradeText = 'ต้องปรับปรุงด่วน'; let tColor = { text: 'text-red-500', bar: 'bg-red-500', badge: 'text-red-700 bg-red-100 border-red-200' };
+            if (branchHPPercent === 100) { grade = 'S'; gradeText = 'ยอดเยี่ยมไร้ที่ติ!'; tColor = { text: 'text-green-500', bar: 'bg-green-500', badge: 'text-green-700 bg-green-100 border-green-200' }; } 
+            else if (branchHPPercent >= 90) { grade = 'A'; gradeText = 'ผลงานดีเยี่ยม'; tColor = { text: 'text-blue-500', bar: 'bg-blue-500', badge: 'text-blue-700 bg-blue-100 border-blue-200' }; } 
+            else if (branchHPPercent >= 75) { grade = 'B'; gradeText = 'ตามเกณฑ์มาตรฐาน'; tColor = { text: 'text-yellow-500', bar: 'bg-yellow-400', badge: 'text-yellow-700 bg-yellow-100 border-yellow-300' }; } 
+            else if (branchHPPercent >= 60) { grade = 'C'; gradeText = 'เฝ้าระวังข้อผิดพลาด'; tColor = { text: 'text-orange-500', bar: 'bg-orange-400', badge: 'text-orange-700 bg-orange-100 border-orange-200' }; }
+
+            document.getElementById('dash-team-kpi').innerHTML = `
+                <div class="bg-white p-3.5 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-2.5 relative z-10">
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-users text-gray-400 mr-1.5"></i>ภาพรวมสาขา ${currentBranch}</h3>
+                            <p class="text-[10px] text-gray-500 mt-0.5">Team Health Point สัปดาห์นี้</p>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <div class="flex items-baseline"><span class="text-3xl font-black ${tColor.text} leading-none drop-shadow-sm">${grade}</span></div>
+                            <span class="text-[9px] font-bold ${tColor.badge} px-1.5 py-0.5 rounded mt-1 shadow-sm border">${gradeText}</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 relative z-10">
+                        <div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-gray-500">พลังชีวิตทีม (HP)</span><span class="${tColor.text}">${branchCurrentHP} <span class="text-gray-400">/ ${branchStartHP}</span></span></div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200 shadow-inner">
+                            <div class="${tColor.bar} h-full rounded-full transition-all duration-1000 relative" style="width: ${branchHPPercent}%"><div class="absolute inset-0 bg-white/20"></div></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Render Tasks
+            let tasksHtml = '';
+            if (Object.keys(weeklyTasksMap).length === 0) {
+                tasksHtml = '<div class="text-center text-gray-400 text-sm py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">ยังไม่มีแผนงานในสัปดาห์นี้</div>';
+            } else {
+                for (const [tName, tData] of Object.entries(weeklyTasksMap)) {
+                    let badgeClass = tData.status === 'เสร็จแล้ว' ? 'bg-green-100 text-green-700 border-green-200' : (tData.status === 'กำลังทำ' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-600 border-gray-200');
+                    let iconClass = tData.status === 'เสร็จแล้ว' ? 'fa-check-circle' : (tData.status === 'กำลังทำ' ? 'fa-spinner fa-spin' : 'fa-circle-minus');
+                    let assigneeHtml = (tData.assignee || "").split(',').filter(a=>a).map(a => `<span class="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-md font-bold mt-1.5 mr-1.5 inline-block border border-purple-200 shadow-sm"><i class="fa-solid fa-user mr-1 opacity-70"></i>${a.trim()}</span>`).join('');
+                    
+                    tasksHtml += `
+                        <div class="flex justify-between items-center bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 shadow-sm mb-2">
+                            <div class="flex flex-col"><span class="text-gray-800 font-bold text-sm">${tName}</span><div class="flex flex-wrap">${assigneeHtml}</div></div>
+                            <span class="text-[10px] font-black px-2.5 py-1 rounded-lg border shadow-sm whitespace-nowrap ${badgeClass}"><i class="fa-solid ${iconClass} mr-1"></i>${tData.status}</span>
+                        </div>
+                    `;
+                }
+            }
+            document.getElementById('dash-weekly-tasks').innerHTML = tasksHtml;
+
+            // Render Notes & Errors
+            let allNotesHtml = '';
+            const colorThemes = [{bg: 'red-50', border: 'red-100', text: 'red-700', icon: 'red-500'}, {bg: 'orange-50', border: 'orange-100', text: 'orange-700', icon: 'orange-500'}, {bg: 'amber-50', border: 'amber-100', text: 'amber-700', icon: 'amber-500'}, {bg: 'blue-50', border: 'blue-100', text: 'blue-700', icon: 'blue-500'}, {bg: 'purple-50', border: 'purple-100', text: 'purple-700', icon: 'purple-500'}];
+            
+            if (!hasAnyNotes) {
+                allNotesHtml = '<div class="text-center text-gray-400 text-sm py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200"><i class="fa-regular fa-face-smile-beam text-2xl mb-2 block text-green-400"></i>ไม่มีข้อผิดพลาดในสัปดาห์นี้ 🎉</div>';
+            } else {
+                for (const [emp, types] of Object.entries(categorizedNotes)) {
+                    if (Object.keys(types).length === 0) continue;
+                    allNotesHtml += `<div class="mb-3 border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white"><div class="bg-gray-50 px-2.5 py-1.5 font-black text-gray-800 border-b border-gray-200 flex items-center text-xs"><i class="fa-solid fa-user-tag text-blue-500 mr-2"></i>${emp}</div><div class="p-2 space-y-2">`;
+                    let cIdx = 0;
+                    for (const [errType, notes] of Object.entries(types)) {
+                        let theme = colorThemes[cIdx % colorThemes.length];
+                        allNotesHtml += `<div class="bg-${theme.bg} rounded-lg border border-${theme.border} p-2"><div class="text-xs font-black text-${theme.text} mb-1 border-b border-${theme.border} pb-1 flex items-center"><i class="fa-solid fa-caret-right mr-1.5 text-${theme.icon}"></i>${errType}</div>`;
+                        notes.forEach(err => { allNotesHtml += `<div class="text-[12px] flex justify-between items-start mb-1.5 last:mb-0"><div class="pr-2 flex-1">${err.note}</div><span class="text-[9px] text-gray-400 font-medium whitespace-nowrap mt-0.5 bg-white px-1.5 py-0.5 rounded border border-gray-100 shadow-sm">${formatDisplayDate(err.date)}</span></div>`; });
+                        allNotesHtml += `</div>`; cIdx++;
+                    }
+                    allNotesHtml += `</div></div>`;
+                }
+            }
+
+            document.getElementById('dash-total-errors').innerText = totalErr;
+            document.getElementById('dash-total-volume').innerText = totalVol;
+            document.getElementById('dash-err-percent').innerText = totalVol > 0 ? ((totalErr / totalVol) * 100).toFixed(1) + '%' : '0%';
+            document.getElementById('dash-error-notes').innerHTML = allNotesHtml;
+            document.getElementById('dash-customer-notes').innerHTML = allCustomerNotesHtml || '<div class="text-center text-gray-400 text-sm py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">ไม่มีบันทึกข้อมูลลูกค้า</div>';
+            document.getElementById('dash-customer-notes-count').innerText = `${totalCustomerNotesCount} รายการ`;
+
+            const lastWeekStart = new Date(startOfCurrentWeek); lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+            const lastWeekEnd = new Date(endOfWeek); lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+            let lastWeekEmpErrCount = {}; BRANCH_CONFIG[currentBranch].employees.forEach(emp => lastWeekEmpErrCount[emp] = 0);
+            let lastWeekErrTotal = 0;
+
+            rawData.forEach(d => {
+                const itemD = new Date(d.date); itemD.setHours(0,0,0,0);
+                if(itemD >= lastWeekStart && itemD <= lastWeekEnd) {
+                    lastWeekErrTotal += (d.errors || []).length;
+                    (d.errors || []).forEach(e => { 
+                        let empName = normalizeEmpName(e.emp); 
+                        if(lastWeekEmpErrCount[empName] === undefined) lastWeekEmpErrCount[empName] = 0;
+                        lastWeekEmpErrCount[empName]++; 
+                    });
+                }
+            });
+
+            let diffTotal = totalErr - lastWeekErrTotal;
+            let diffText = diffTotal > 0 ? `+${diffTotal} ครั้ง <span class="text-red-500">(แย่ลง)</span>` : (diffTotal < 0 ? `${diffTotal} ครั้ง <span class="text-green-500">(ดีขึ้น)</span>` : 'เท่าเดิม');
+            document.getElementById('dash-err-compare').innerHTML = `เทียบกับสัปดาห์ก่อน: <b>${diffText}</b>`;
+
+            window._empBreakdownData = { count: empErrCount, lastCount: lastWeekEmpErrCount };
+            renderEmpBreakdown();
+
+            // Smart Summary Rendering
+            let smartSummaryHtml = '';
+            if (totalErr === 0) {
+                smartSummaryHtml = `<p class="text-green-600 font-bold flex items-center"><i class="fa-solid fa-face-smile-beam mr-2 text-xl"></i> ยอดเยี่ยมมาก! สัปดาห์นี้ไม่มีข้อผิดพลาดเลย</p>`;
+            } else {
+                let topErrorType = ''; let topErrorCount = -1;
+                for (const [type, count] of Object.entries(errorTypeCounts)) { if (count > topErrorCount) { topErrorCount = count; topErrorType = type; } }
+                
+                let trendHtml = diffTotal > 0 ? `<span class="text-red-600 font-black">เพิ่มขึ้น ${diffTotal} ครั้ง</span>` : (diffTotal < 0 ? `<span class="text-green-600 font-black">ลดลง ${Math.abs(diffTotal)} ครั้ง</span>` : `<span class="font-bold">เท่ากับสัปดาห์ก่อน</span>`);
+                
+                smartSummaryHtml += `<div class="mb-2 pb-2 border-b border-indigo-200/50"><i class="fa-solid fa-chart-pie text-indigo-400 mr-1.5"></i><b>ภาพรวม:</b> สัปดาห์นี้พบความผิดพลาดรวม <b>${totalErr}</b> ครั้ง ซึ่ง${trendHtml}</div>`;
+                
+                if(topErrorCount > 0) {
+                    let sampleNotes = errorNotesList[topErrorType].slice(0, 2).join(', ').replace(/<span.*?>.*?<\/span>\s*/g, '');
+                    let noteContext = sampleNotes ? ` <span class="text-[11px] text-gray-500 block mt-1">(ตย. ${sampleNotes})</span>` : '';
+                    smartSummaryHtml += `<div class="mb-2 pb-2 border-b border-indigo-200/50"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1.5"></i><b>จุดที่ต้องระวัง:</b> ปัญหาที่พบมากที่สุดคือ <span class="text-orange-600 font-bold bg-orange-50 px-1 rounded">"${topErrorType}"</span> (${topErrorCount} ครั้ง)${noteContext}</div>`;
+                    smartSummaryHtml += `<div><i class="fa-regular fa-lightbulb text-yellow-500 mr-1.5"></i><b>ข้อเสนอแนะ:</b> ${getSmartSuggestion(topErrorType, totalErr)}</div>`;
+                }
+
+                let combinedNotesStr = Object.values(errorNotesList).flat().join(" ").toLowerCase();
+                let foundInsights = analyzeKeywordInsights(combinedNotesStr);
+                if (foundInsights.length > 0) {
+                    let displayInsights = foundInsights.slice(0, 2).map(msg => `<li class="mb-1">${msg}</li>`).join("");
+                    smartSummaryHtml += `<div class="mt-3 pt-3 border-t border-indigo-200/50"><i class="fa-solid fa-magnifying-glass text-indigo-500 mr-1.5"></i><b>Insight จากหมายเหตุ:</b><ul class="list-disc pl-6 mt-1.5 text-xs text-indigo-900 font-medium">${displayInsights}</ul></div>`;
+                }
+            }
+            document.getElementById('dash-smart-summary').innerHTML = smartSummaryHtml;
+
+            // Gamification
+            let ranking = [];
+            for (const [name, hp] of Object.entries(empHP)) { ranking.push({ name: name, hp: hp < 0 ? 0 : hp }); }
+            ranking.sort((a, b) => b.hp - a.hp);
+
+            let scores = ranking.map(p => p.hp);
+            let highestNonPerfect = Math.max(...scores.filter(hp => hp < 100), -1);
+            let lowestScore = Math.min(...scores);
+
+            let gameHtml = '';
+            ranking.forEach((player, index) => {
+                let hpPercent = player.hp;
+                let hpColor = hpPercent >= 80 ? 'green' : (hpPercent >= 50 ? 'yellow' : 'red');
+                let barColor = hpPercent >= 80 ? 'bg-green-500' : (hpPercent >= 50 ? 'bg-yellow-400' : 'bg-red-500');
+                
+                let badge = '';
+                if (player.hp === 100) badge = '<span class="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-md font-black ml-2 border border-green-200 shadow-sm uppercase"><i class="fa-solid fa-shield-halved mr-1"></i>Perfect</span>';
+                else if (player.hp === highestNonPerfect && player.hp > 0) badge = '<span class="text-[9px] bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded-md font-black ml-2 border border-yellow-300 shadow-sm uppercase"><i class="fa-solid fa-crown mr-1"></i>MVP</span>';
+                else if (player.hp === lowestScore && player.hp < 100) badge = '<span class="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-md font-black ml-2 border border-red-200 shadow-sm uppercase"><i class="fa-solid fa-skull-crossbones mr-1"></i>Danger</span>';
+
+                let deptTag = '';
+                if (currentBranch === 'TRD') {
+                    let dept = getTRDDept(player.name);
+                    if (dept) deptTag = `<span class="text-[9px] text-gray-500 ml-1.5 font-bold border border-gray-200 px-1.5 py-0.5 rounded bg-gray-50 shadow-sm">${dept}</span>`;
+                }
+
+                gameHtml += `
+                    <div class="bg-white p-2 rounded-lg border border-${hpColor}-200 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
+                        <div class="flex justify-between items-center mb-1.5 relative z-10">
+                            <div class="font-bold text-gray-800 text-xs flex items-center"><span class="w-5 h-5 inline-flex justify-center items-center bg-gray-100 text-gray-500 text-[9px] font-black rounded-full mr-2 border border-gray-200">#${index+1}</span>${player.name} ${deptTag} ${badge}</div>
+                            <div class="font-black text-${hpColor}-600 text-xs bg-${hpColor}-50 px-1.5 py-0.5 rounded border border-${hpColor}-100">${player.hp} <span class="text-[8px] font-bold">HP</span></div>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2 relative z-10 border border-gray-200 overflow-hidden"><div class="${barColor} h-full rounded-full transition-all duration-1000 relative" style="width: ${hpPercent}%"><div class="absolute inset-0 bg-white/20"></div></div></div>
+                    </div>
+                `;
+            });
+            document.getElementById('dash-gamification').innerHTML = gameHtml;
+        }
+
         // ================= ADMIN DASHBOARD FUNCTIONS =================
         function populateAdminEmpFilter() {
             const branchFilter = document.getElementById('admin-dash-branch').value;
@@ -823,27 +1368,17 @@
             
             let emps = [];
             GLOBAL_CONFIG_LIST.forEach(e => {
-                if (!e.name || e.dept === "Admin") return; // ข้าม Admin
+                if (!e.name || e.dept === "Admin") return; 
                 const bArr = e.branches.split(',').map(b => b.trim());
-                if (branchFilter === 'ALL' || bArr.includes(branchFilter)) {
-                    emps.push(e.name);
-                }
+                if (branchFilter === 'ALL' || bArr.includes(branchFilter)) { emps.push(e.name); }
             });
             
-            emps = [...new Set(emps)]; 
-            emps.sort(); 
-            
+            emps = [...new Set(emps)].sort(); 
             let html = '<option value="ALL">พนักงานทุกคน</option>';
-            emps.forEach(emp => {
-                html += `<option value="${emp}">${emp}</option>`;
-            });
+            emps.forEach(emp => { html += `<option value="${emp}">${emp}</option>`; });
             
             select.innerHTML = html;
-            if (emps.includes(currentVal)) {
-                select.value = currentVal;
-            } else {
-                select.value = 'ALL';
-            }
+            if (emps.includes(currentVal)) select.value = currentVal; else select.value = 'ALL';
         }
 
         async function syncAllBranchesForAdmin() {
@@ -896,194 +1431,25 @@
                 if (!d.date) return false;
                 return d.date.startsWith(monthInput);
             });
-            
             filteredData.sort((a,b) => new Date(b.date) - new Date(a.date));
             
-            let totalErrors = 0;
-            let totalVol = 0;
-            let empErrorMap = {};
-            let logHtml = '';
-            
-            // ใช้โครงสร้าง Suggestion Database ฉบับสมบูรณ์
-            let getSuggestion = (type, index) => {
-                const suggestionDatabase = {
-                    'สินค้าขาดสต๊อก': [
-                        'ควรทำสต๊อกการ์ด (Stock Card) แบบเรียลไทม์ หรือใช้เครื่องยิงบาร์โค้ดตัดสต๊อกทันที',
-                        'กำหนดจุดสั่งซื้อ (Re-order point) ให้ชัดเจน โดยเฉพาะสินค้าขายดีช่วงเทศกาล',
-                        'ประสานงานฝ่ายจัดซื้อล่วงหน้าอย่างน้อย 3-5 วันเมื่อสินค้าใกล้ถึงจุดสั่งซื้อ',
-                        'ทำป้ายแจ้งเตือน "สินค้าใกล้หมด" แปะไว้ที่ชั้นวางหรือตะกร้าสต๊อก',
-                        'หัวหน้าแผนกควรเดินตรวจสต๊อก (Store Walk) ทุกเช้าก่อนเปิดร้าน'
-                    ],
-                    'แก้ไขได้ก่อนจัดส่ง': [
-                        'ดีเยี่ยม! ให้เพิ่มการเน้นย้ำจุดที่มักจะเกือบพลาดในที่ประชุม (Morning Talk)',
-                        'จัดทำสมุดจด "เกือบพลาด" (Near Miss Record) เพื่อใช้วิเคราะห์หาจุดบอดของกระบวนการ',
-                        'ถ้าเป็นการหยิบผิด ให้ทบทวนการจัดเรียงสินค้าบนชั้นว่าชวนสับสนหรือไม่',
-                        'ชื่นชมพนักงาน Checker ที่สามารถตรวจจับข้อผิดพลาดได้ก่อนส่ง'
-                    ],
-                    'ส่งถึงหน้าร้านแล้ว': [
-                        'คนจัดและคนขับรถต้องสื่อสารกันให้ชัดเจนขึ้น ย้ำจำนวนบิลและปลายทางก่อนออกรถ',
-                        'ใช้ระบบบาร์โค้ดสแกนรับ-ส่งสินค้าระหว่างคลังกับหน้าร้าน',
-                        'ทำพื้นที่รับของ (Receiving Area) ที่หน้าร้านให้เป็นสัดส่วน ป้องกันของปนกับของขาย',
-                        'พนักงานหน้าร้านต้องเช็คยอดกับใบส่งของทันทีที่ของลงรถ ห้ามดองไว้'
-                    ],
-                    'ส่งถึงลูกค้าแล้ว': [
-                        'เพิ่มการถ่ายรูปสินค้าคู่กับบิลจัดส่งลงไลน์กลุ่มก่อนซีลกล่อง/ขึ้นรถ ทุกครั้ง!',
-                        'สร้างแคมเปญ "ส่งถูก 100%" หากทำได้ตามเป้ามีรางวัลเล็กๆ น้อยๆ ให้ทีม',
-                        'กรณีลูกค้าเคลม ต้องสืบสวนหาคนจัดและคนเช็คทันที เพื่อหาสาเหตุที่แท้จริง ไม่ใช่แค่ลงโทษ',
-                        'บังคับใช้กระบวนการ "ชี้-เรียก-นับ" (Point and Call) ตอนส่งมอบของให้ลูกค้า',
-                        'พิจารณาใช้กล้องวงจรปิดเหนือโต๊ะแพ็ค เพื่อเป็นหลักฐานกรณีลูกค้าเคลมว่าของไม่ครบ'
-                    ],
-                    'ผิดพลาดในการรับลงสินค้า': [
-                        'ทำโซนกักกัน (Quarantine Zone) สำหรับสินค้ามาใหม่ที่ยังไม่ได้ตรวจนับ ห้ามนำไปขายเด็ดขาด',
-                        'ตรวจเช็ควันหมดอายุ (Shelf life) ทุกกล่อง/ทุกลัง ก่อนเซ็นรับของจาก Supplier',
-                        'หากสินค้ามีรอยบุบ ฉีกขาด หรือเปียกชื้น ให้ปฏิเสธการรับ หรือจดหมายเหตุไว้ทันที',
-                        'จัดตารางรับสินค้าไม่ให้ตรงกับช่วงเวลาที่หน้าร้านยุ่งที่สุด (Peak Hour)'
-                    ],
-                    'จัดบิลผิด': [
-                        'ใช้ปากกาเน้นข้อความ (Highlighter) ขีดทับรายการที่จัดเสร็จแล้ว ป้องกันการมองข้าม',
-                        'ถ้ารายการในบิลอ่านยาก/กำกวม ให้ถามแอดมินหรือเซลส์ทันที ห้ามเดาเอาเอง',
-                        'จัดระเบียบคลิปหนีบบิล แบ่งเป็น "รอจัด", "กำลังจัด", "จัดเสร็จรอเช็ค" ให้ชัดเจน',
-                        'สำหรับออเดอร์ใหญ่ ให้แบ่งจัดทีละโซน (เช่น โซนแห้ง โซนเย็น โซนแพ็คเกจจิ้ง)'
-                    ],
-                    'หยิบของผิด': [
-                        'ติดป้ายราคาและชื่อสินค้าให้ตัวใหญ่และชัดเจน โดยเฉพาะยี่ห้อที่หน้าตาคล้ายกัน',
-                        'สอนให้พนักงานดู "บาร์โค้ด 3 ตัวท้าย" เพื่อคอนเฟิร์มสินค้าที่แพ็คเกจคล้ายกัน',
-                        'แยกสินค้าชนิดเดียวกันแต่คนละยี่ห้อ/ขนาด ให้อยู่ห่างกัน (ห้ามวางติดกัน)',
-                        'มีรูปภาพสินค้าสีสันสดใสติดไว้ที่ใบจัดสินค้าสำหรับพนักงานใหม่'
-                    ],
-                    'จำนวนไม่ครบ': [
-                        'ใช้วิธีจัดของใส่ตะกร้าก่อน แล้วนับจำนวนชิ้นออกจากตะกร้าลงกล่องแพ็คอีกรอบ (Double count)',
-                        'สินค้าชิ้นเล็ก/ของจุกจิก ให้แพ็ครวมใส่ถุงใสใบใหญ่ก่อนหนึ่งชั้น ป้องกันการร่วงหล่น',
-                        'นับจำนวนชิ้นรวมในบิล และจำนวนชิ้นของจริง ก่อนปิดกล่องเสมอ',
-                        'สอนให้พนักงานจัดของเป็นกองๆ ละ 10 ชิ้น จะช่วยให้นับจำนวนหลักสิบ/ร้อย ได้เร็วและแม่นยำ'
-                    ],
-                    'ลูกค้ารอสินค้านานเกิน 15 นาที': [
-                        'ใช้ระบบบัตรคิว หรือ Pager เรียกคิวเมื่อจัดของเสร็จ เพื่อลดความแออัดหน้าเคาน์เตอร์',
-                        'กำหนดให้พนักงาน 1 คน จัดบิลลูกค้าหน้าร้าน (Walk-in) เป็นลำดับแรกสุดเสมอ',
-                        'จัดทำโซน "สินค้าขายดี/หยิบบ่อย" ไว้ใกล้โต๊ะแพ็ค/แคชเชียร์ เพื่อให้หยิบได้ทันที',
-                        'กรณีคิวเยอะ ให้มีพนักงานคอยเดินแจกน้ำ หรือแจ้งระยะเวลารอโดยประมาณให้ลูกค้าทราบ'
-                    ],
-                    'ปล่อยของผิดถึงลูกค้า (Checker)': [
-                        'Checker ต้องเป็นคนละคนกับคนจัดของ 100% ห้ามเป็นคนเดียวกันเด็ดขาด',
-                        'Checker ต้องมีอำนาจในการสั่งให้คนจัดไปเปลี่ยน/เติมของให้ถูกต้อง',
-                        'เพิ่มแสงสว่างบริเวณโต๊ะ Checker เพื่อให้เห็นรายละเอียดสินค้าชัดเจนขึ้น',
-                        'จัดอบรมทบทวนความรู้เรื่องสินค้า (Product Knowledge) ให้ Checker เป็นประจำ'
-                    ],
-                    'คิดเงินทอนเงินผิด': [
-                        'บังคับพนักงานพูดทวนยอดรับและยอดทอน "รับมา 1,000 บาท ทอน 250 บาทนะคะ" ทุกครั้ง',
-                        'ไม่วางเงินที่รับจากลูกค้าลงลิ้นชักจนกว่าจะส่งเงินทอนให้ลูกค้าเสร็จ (วางไว้บนเครื่องก่อน)',
-                        'เปลี่ยนกะแคชเชียร์ ต้องมีการส่งมอบเงินทอนและนับกระทบยอด (X-Read) ให้ชัดเจน',
-                        'ห้ามพนักงานใช้โทรศัพท์มือถือ หรือพูดคุยเรื่องส่วนตัวขณะทำรายการคิดเงิน'
-                    ],
-                    'ตอบแชทช้า': [
-                        'จัดตารางเวรแอดมินตอบแชทรายชั่วโมง พร้อมกำหนด KPI เวลาตอบกลับ (Response Time) เช่น ไม่เกิน 15 นาที',
-                        'เตรียมชุดข้อความมาตรฐาน (Quick Replies) สำหรับคำถามที่เจอบ่อย (ราคา, ค่าส่ง, สต๊อก)',
-                        'ใช้ Chatbot เบื้องต้นในการรับเรื่อง หรือคัดกรองประเภทคำถามในช่วงนอกเวลาทำการ',
-                        'แอดมินต้องมีช่องทางลัด (Fast Track) ในการถามสต๊อกกับฝ่ายคลังโดยตรง'
-                    ],
-                    'ให้ข้อมูลสินค้าผิด': [
-                        'จัดทำคู่มือเทียบสเปคสินค้า (เช่น แป้งเค้กตรา A แทนตรา B ได้ไหม) ให้แอดมิน/หน้าร้านเปิดดูได้ง่าย',
-                        'สร้างแคมเปญ "วันละตัว" ให้พนักงานเรียนรู้จุดเด่นของสินค้าวันละ 1 รายการในช่วงเช้า',
-                        'เมื่อมีสินค้าใหม่เข้า ต้องนำมาให้ทีมงานดูและจับของจริง พร้อมบรีฟสรรพคุณสั้นๆ',
-                        'ถ้าพนักงานไม่แน่ใจ ต้องฝึกให้พูดว่า "ขออนุญาตตรวจสอบข้อมูลที่ถูกต้องสักครู่นะคะ" ห้ามเดา'
-                    ],
-                    'เปิดบิลผิด': [
-                        'ย้ำให้แอดมิน/แคชเชียร์ ตรวจสอบ "หน่วยนับ" (ชิ้น/แพ็ค/ลัง) ให้ตรงกับราคาที่แสดง',
-                        'หากชื่อสินค้าในระบบ POS มีหลายตัวที่คล้ายกัน ให้ใส่ Keyword ให้ชัดเจน (เช่น แป้งเค้ก-พัดโบก-1kg)',
-                        'ทวนรายการทวนจำนวนกับลูกค้าทางโทรศัพท์/แชท ก่อนกดพิมพ์บิลทุกครั้ง',
-                        'สำหรับลูกค้าประจำ ให้เช็คประวัติการสั่งซื้อเพื่อช่วยรีเช็คว่าปกติลูกค้าใช้ยี่ห้อนี้หรือไม่'
-                    ],
-                    'คิดเงินพลาด': [
-                        'เข้มงวดการยิงบาร์โค้ด 100% ยกเว้นสินค้าที่บาร์โค้ดพังจริงๆ ถึงจะอนุญาตให้คีย์มือ',
-                        'ระวังบาร์โค้ดซ้อน! (สินค้าบางตัวมีบาร์โค้ดขายปลีก และบาร์โค้ดขายส่งยกลังบนแพ็คเกจเดียวกัน)',
-                        'สุ่มตรวจราคาป้ายหน้าเชลฟ์กับราคาในระบบ POS สัปดาห์ละ 1 หมวดหมู่สินค้า',
-                        'จัดระเบียบโต๊ะแคชเชียร์ แบ่งฝั่งของที่ "ยังไม่ยิง" กับ "ยิงแล้ว" ให้ชัดเจน'
-                    ],
-                    'ของหมดไม่แจ้ง (เห็นผ่านหน้าระบบ)': [
-                        'กำหนดรอบดึงรายงานสินค้าใกล้หมด (Low Stock Report) ทุกเช้า เพื่อไปเช็คของจริง',
-                        'มีกระดานไวท์บอร์ดหลังร้าน อัปเดตรายการ "Out of Stock" ประจำวันให้ทุกคนเห็นตรงกัน',
-                        'พนักงานหน้าร้านต้องรีบแจ้งแอดมินทันทีที่หยิบสินค้าชิ้นสุดท้ายบนเชลฟ์',
-                        'เชื่อมโยงระบบสต๊อกหน้าร้านและออนไลน์ให้ตัดพร้อมกันแบบ Real-time (ถ้าทำได้)'
-                    ],
-                    'ไม่ช่วยใส่ถุง': [
-                        'จัดเตรียมถุงและอุปกรณ์แพ็ค (สก็อตเทป, ยางวง, คัตเตอร์) ไว้ที่แคชเชียร์ให้พร้อมใช้งานเสมอ',
-                        'สอนเทคนิคการจัดของลงถุง (ของแข็ง/หนักอยู่ล่าง ของเบา/แตกง่ายอยู่บน ของมีกลิ่นใส่ถุงแยก)',
-                        'หากลูกค้าซื้อเยอะ ให้พนักงานหน้าร้าน (ว่างอยู่) เข้ามาช่วยแคชเชียร์จัดของลงถุง/ลัง ทันที',
-                        'สอบถามลูกค้าก่อนเสมอว่า "รับถุงเพิ่มไหมคะ" หรือ "ใส่กล่องลังให้ไหมคะ จะได้ยกง่าย"'
-                    ],
-                    'ไม่แนะนำสินค้า': [
-                        'ฝึกทักษะการทำ Cross-selling (เช่น ลูกค้าซื้อแป้ง ให้เสนอผงฟูหรือเนยเพิ่ม)',
-                        'สังเกตตะกร้าลูกค้า หากลูกค้าทำเบเกอรี่ชนิดไหน ให้แนะนำวัตถุดิบตัวใหม่ที่ตอบโจทย์',
-                        'เตรียมป้าย "สินค้าขายดี" หรือ "สินค้าแนะนำ" ติดที่เชลฟ์ เพื่อช่วยดึงดูดความสนใจลูกค้า',
-                        'เมื่อมีโปรโมชั่นใกล้จะหมดอายุ ให้นำมาตั้งโชว์หน้าแคชเชียร์และให้พนักงานกล่าวแนะนำทุกคน'
-                    ],
-                    'ไม่เดินดูแลลูกค้าเดินช้อป': [
-                        'แบ่งโซนรับผิดชอบ (Zone Defense) ให้พนักงานแต่ละคนยืนประจำจุด ไม่กระจุกตัวกัน',
-                        'ใช้กฎ 10 ก้าว (Ten-foot Rule): เมื่อลูกค้าเดินเข้ามาในรัศมี 10 ก้าว ต้องสบตา ยิ้ม และทักทาย',
-                        'หากเห็นลูกค้าถือของเต็มมือ ให้รีบนำตะกร้าช้อปปิ้งไปให้ทันทีโดยไม่ต้องรอให้ขอ',
-                        'กวาดสายตามองลูกค้าที่ยืนอ่านฉลากสินค้านานๆ แล้วเข้าไปถามว่า "สอบถามข้อมูลได้นะคะ"'
-                    ],
-                    'บริการไม่สุภาพ': [
-                        'ห้ามพนักงานใช้คำว่า "ไม่มี" ห้วนๆ ให้เปลี่ยนเป็น "ขออภัยค่ะ สินค้าหมดชั่วคราว รับเป็น...แทนไหมคะ"',
-                        'ควบคุมน้ำเสียงและสีหน้า (Tone & Body Language) แม้จะใส่แมสก์ ลูกค้าก็สัมผัสได้จากแววตา',
-                        'เมื่อลูกค้ามีอารมณ์โกรธ ให้รับฟังอย่างตั้งใจ กล่าวคำขอโทษ และเรียกผู้จัดการมาช่วยรับมือ',
-                        'จัดกิจกรรมชมเชยพนักงาน (Staff of the Month) ที่ได้รับคำชมเรื่องบริการจากลูกค้า'
-                    ],
-                    'ปล่อยชั้นวางว่าง (เรียงของเติม)': [
-                        'กำหนดเวลาลงของ/เติมเชลฟ์ (Fill-up Time) ให้ชัดเจน เช่น ก่อนเปิดร้าน และ หลัง 15:00 น.',
-                        'ดึงสินค้าจากด้านในออกมาโชว์ด้านหน้าเชลฟ์ (Face-up / Block) ตลอดวันเมื่อมีเวลาว่าง',
-                        'ทำความสะอาดเชลฟ์ทุกครั้งก่อนนำสินค้าล็อตใหม่ขึ้นจัดเรียง',
-                        'ใช้หลัก FIFO (First In, First Out) ดันของเก่าไว้หน้า ของใหม่ไว้หลัง เสมอ'
-                    ],
-                    'สต๊อคสินค้าไม่พอใช้': [
-                        'วิเคราะห์ข้อมูลการขายย้อนหลัง (Sale History) เพื่อคาดการณ์ยอดสั่งซื้อในเดือนถัดไป',
-                        'จับตาดูเทศกาลเบเกอรี่ (เช่น วาเลนไทน์, ปีใหม่, ไหว้พระจันทร์) และเผื่อเวลาสั่งของล่วงหน้า 1-2 เดือน',
-                        'ทำความสัมพันธ์อันดีกับ Supplier เผื่อกรณีฉุกเฉินต้องขอแทรกคิวจัดส่ง',
-                        'หาสินค้าทดแทน (Substitute Products) เตรียมไว้ ในกรณีที่ยี่ห้อหลักขาดตลาดจริงๆ'
-                    ],
-                    'ของหมดไม่แจ้ง': [
-                        'ปรับ Mindset ให้พนักงานเข้าใจว่า การแจ้งของหมด ไม่ใช่ความผิด แต่เป็นการช่วยรักษายอดขาย',
-                        'กำหนดเป็นกฎเหล็ก: ใครหยิบของชิ้นสุดท้าย/ลังสุดท้าย ต้องตะโกนบอก หรือไลน์แจ้งทีมทันที',
-                        'หัวหน้าแผนกต้องหมั่นสุ่มตรวจเชลฟ์สินค้ากลุ่มเคลื่อนไหวเร็ว (Fast Moving) เป็นประจำ'
-                    ],
-                    'ความผิดอื่น ๆ': [
-                        'นำข้อผิดพลาดนี้มาบันทึกเป็น "บทเรียน" (Lesson Learned) และแชร์ในไลน์กลุ่มสาขา',
-                        'ตั้งคำถาม "ทำไม 5 ครั้ง" (5 Whys Analysis) เพื่อเจาะลึกหาสาเหตุที่แท้จริง ไม่ใช่แค่แก้ปัญหาปลายเหตุ',
-                        'หากเป็นปัญหาที่เกิดซ้ำซาก แสดงว่าระบบการทำงาน (SOP) มีช่องโหว่ ต้องรื้อระบบและปรับปรุงใหม่',
-                        'เปิดโอกาสให้พนักงานระดับปฏิบัติการเสนอไอเดียแก้ปัญหา (Bottom-up) เพราะเขาอยู่หน้างานจริง'
-                    ]
-                };
-                if(suggestionDatabase[type] && suggestionDatabase[type].length > 0) return suggestionDatabase[type][index % suggestionDatabase[type].length];
-                return `ควรนำข้อผิดพลาดเรื่อง "<b>${type}</b>" มาพูดคุยเพื่อหาแนวทางป้องกันร่วมกันครับ`;
-            }
-
-            let errorTypeCounts = {};
-            let errorNotesList = {};
+            let totalErrors = 0; let totalVol = 0;
+            let empErrorMap = {}; let logsHtmlContent = '';
             
             filteredData.forEach(day => {
-                if (day.volume) {
-                    totalVol += ((day.volume.transfer||0) + (day.volume.pickup||0) + (day.volume.upcountry||0) + (day.volume.inmarket||0) + (day.volume.outmarket||0));
-                }
+                if (day.volume) totalVol += ((day.volume.transfer||0) + (day.volume.pickup||0) + (day.volume.upcountry||0) + (day.volume.inmarket||0) + (day.volume.outmarket||0));
                 
                 (day.errors || []).forEach(err => {
                     let empName = normalizeEmpName(err.emp);
-                    
                     if (empFilter !== 'ALL' && empName !== empFilter) return;
 
                     totalErrors++;
                     if (!empErrorMap[empName]) empErrorMap[empName] = 0;
                     empErrorMap[empName]++;
-
-                    if(!errorTypeCounts[err.type]) {
-                        errorTypeCounts[err.type] = 0;
-                        errorNotesList[err.type] = [];
-                    }
-                    errorTypeCounts[err.type]++;
-                    if(!errorNotesList[err.type].includes(err.note)) errorNotesList[err.type].push(err.note);
                     
                     let branchBadge = day.sourceBranch === 'AKRA' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-blue-100 text-blue-700 border-blue-200';
                     
-                    logHtml += `
+                    logsHtmlContent += `
                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs shadow-sm flex flex-col gap-1.5 transition-colors hover:bg-white">
                             <div class="flex justify-between items-center border-b border-gray-200 pb-1.5">
                                 <span class="font-bold text-gray-600"><i class="fa-regular fa-calendar-days mr-1.5 opacity-70"></i>${formatDisplayDate(day.date)}</span>
@@ -1101,12 +1467,12 @@
                 });
             });
             
-            if (!logHtml) logHtml = '<div class="text-center text-gray-400 text-sm py-6 bg-gray-50 border border-dashed border-gray-200 rounded-xl">ไม่พบข้อมูลความผิดพลาดในเดือนนี้ 🎉</div>';
+            if (!logsHtmlContent) logsHtmlContent = '<div class="text-center text-gray-400 text-sm py-6 bg-gray-50 border border-dashed border-gray-200 rounded-xl">ไม่พบข้อมูลความผิดพลาดในเดือนนี้ 🎉</div>';
             
             document.getElementById('admin-stat-err').innerText = totalErrors;
             document.getElementById('admin-stat-vol').innerText = totalVol;
             document.getElementById('admin-log-count').innerText = `${totalErrors} รายการ`;
-            document.getElementById('admin-data-log').innerHTML = logHtml;
+            document.getElementById('admin-data-log').innerHTML = logsHtmlContent;
             
             let topErrorsArr = Object.keys(empErrorMap).map(k => ({ name: k, count: empErrorMap[k] }));
             topErrorsArr.sort((a,b) => b.count - a.count);
@@ -1744,639 +2110,6 @@
                     btn.disabled = false;
                 }
             }
-        }
-
-        // ================= DASHBOARD LOGIC =================
-        function getStartOfWeek(d) {
-            d = new Date(d);
-            var day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1);
-            return new Date(d.setDate(diff));
-        }
-
-        function changeWeek(offset) {
-            viewOffsetWeek += offset;
-            if(viewOffsetWeek > 0) viewOffsetWeek = 0;
-            
-            const btnNext = document.getElementById('btn-next-week');
-            if(viewOffsetWeek === 0) {
-                btnNext.disabled = true; 
-            } else {
-                btnNext.disabled = false; 
-            }
-            loadDashboardData();
-        }
-
-        function renderEmpBreakdown() {
-            if (!window._empBreakdownData) return;
-            
-            let empCount = window._empBreakdownData.count;
-            let lastEmpCount = window._empBreakdownData.lastCount;
-            let filterDept = document.getElementById('dash-dept-filter').value;
-            let maxErr = Math.max(...Object.values(empCount)); if(maxErr === 0) maxErr = 1;
-
-            let empsToRender = [];
-            if (currentBranch === 'TRD' && filterDept !== 'ALL') {
-                empsToRender = TRD_DEPARTMENTS[filterDept] || [];
-            } else {
-                empsToRender = BRANCH_CONFIG[currentBranch].employees;
-            }
-
-            let empHtml = '';
-            if (empsToRender.length === 0) {
-                empHtml = '<div class="text-center text-gray-400 text-xs py-2">ไม่มีข้อมูลพนักงานในหมวดนี้</div>';
-            } else {
-                empsToRender.forEach(name => {
-                    let count = empCount[name] || 0;
-                    let lastCount = lastEmpCount[name] || 0;
-                    let percent = (count / maxErr) * 100;
-                    let diff = count - lastCount;
-                    let trendHtml = '';
-                    
-                    if (diff > 0) {
-                        let pChange = lastCount > 0 ? Math.round((diff / lastCount) * 100) : 100;
-                        trendHtml = `<span class="text-[10px] ml-1 text-red-600 bg-red-100 px-1.5 py-0.5 rounded-md font-bold"><i class="fa-solid fa-arrow-trend-up"></i> +${pChange}%</span>`;
-                    } else if (diff < 0) {
-                        let pChange = Math.round((Math.abs(diff) / lastCount) * 100);
-                        trendHtml = `<span class="text-[10px] ml-1 text-green-600 bg-green-100 px-1.5 py-0.5 rounded-md font-bold"><i class="fa-solid fa-arrow-trend-down"></i> -${pChange}%</span>`;
-                    } else {
-                        trendHtml = `<span class="text-[10px] ml-1 text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-md font-bold">-</span>`;
-                    }
-
-                    empHtml += `
-                        <div class="mb-2">
-                            <div class="flex justify-between items-end text-xs mb-1.5">
-                                <div class="flex items-center"><span class="font-semibold text-gray-700">${name}</span>${trendHtml}</div>
-                                <span class="font-black ${count > 0 ? 'text-red-500' : 'text-green-500'}">${count} <span class="text-[10px] font-medium text-gray-400">ครั้ง</span></span>
-                            </div>
-                            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden border border-gray-200">
-                                <div class="bg-${count > 0 ? 'red' : 'green'}-500 h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            document.getElementById('dash-emp-breakdown').innerHTML = empHtml;
-        }
-
-        function loadDashboardData() {
-            const rawData = JSON.parse(localStorage.getItem('kpiData_' + currentBranch) || '[]');
-            
-            const today = new Date();
-            const startOfCurrentWeek = getStartOfWeek(today); 
-            startOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + (viewOffsetWeek * 7));
-            const endOfWeek = new Date(startOfCurrentWeek);
-            endOfWeek.setDate(endOfWeek.getDate() + 6);
-
-            document.getElementById('dash-week-label').innerText = viewOffsetWeek === 0 ? "สัปดาห์นี้" : (viewOffsetWeek === -1 ? "สัปดาห์ที่แล้ว" : "อดีต");
-            
-            // ปรับรูปแบบวันที่หัวตารางแดชบอร์ดให้เป็น DD/MM/YY
-            const formatDateObj = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${String(d.getFullYear()).substring(2)}`;
-            document.getElementById('dash-date-range').innerText = `${formatDateObj(startOfCurrentWeek)} - ${formatDateObj(endOfWeek)}`;
-
-            let targetWeekData = rawData.filter(d => {
-                const itemDate = new Date(d.date); itemDate.setHours(0,0,0,0);
-                startOfCurrentWeek.setHours(0,0,0,0); endOfWeek.setHours(23,59,59,999);
-                return itemDate >= startOfCurrentWeek && itemDate <= endOfWeek;
-            });
-            targetWeekData.sort((a,b) => new Date(a.date) - new Date(b.date));
-
-            let totalVol = 0; let totalErr = 0;
-            
-            let empErrCount = {};
-            let empHP = {};
-            let categorizedNotes = {}; 
-            
-            BRANCH_CONFIG[currentBranch].employees.forEach(emp => {
-                empErrCount[emp] = 0;
-                empHP[emp] = 100;
-                categorizedNotes[emp] = {};
-            });
-
-            let allCustomerNotesHtml = '';
-            let totalCustomerNotesCount = 0;
-            let weeklyTasksMap = {}; 
-            let hasAnyNotes = false;
-            
-            let errorTypeCounts = {};
-            let errorNotesList = {};
-            let teamLostHP = 0; 
-
-            targetWeekData.forEach(day => {
-                if (day.volume) {
-                    totalVol += (day.volume.transfer + day.volume.pickup + day.volume.upcountry + day.volume.inmarket + day.volume.outmarket);
-                }
-                totalErr += (day.errors || []).length;
-                
-                if (BRANCH_CONFIG[currentBranch].showZone2 && day.customerNotes && day.customerNotes.trim() !== '') {
-                    let notesLines = day.customerNotes.split('\n').filter(line => line.trim() !== '');
-                    totalCustomerNotesCount += notesLines.length;
-                    allCustomerNotesHtml += `
-                        <div class="text-sm bg-blue-50/50 p-2.5 rounded-lg border border-blue-100 mb-2">
-                            <span class="text-xs text-blue-700 font-bold block mb-1 border-b border-blue-200/50 pb-1.5 flex justify-between items-center">
-                                <span><i class="fa-solid fa-calendar-day mr-1.5 opacity-70"></i> วันที่ ${formatDisplayDate(day.date)}</span>
-                                <span class="bg-white text-blue-600 px-2 py-0.5 rounded-md text-[10px] shadow-sm border border-blue-100">${notesLines.length} รายการ</span>
-                            </span>
-                            <div class="text-gray-700 whitespace-pre-wrap mt-1.5 leading-relaxed pl-1">${day.customerNotes}</div>
-                        </div>
-                    `;
-                }
-
-                (day.errors || []).forEach(e => {
-                    let empName = normalizeEmpName(e.emp); // ดักแปลงชื่อเก่าที่นี่
-
-                    if(empErrCount[empName] === undefined) {
-                        empErrCount[empName] = 0;
-                        empHP[empName] = 100;
-                        categorizedNotes[empName] = {};
-                    }
-                    
-                    empErrCount[empName]++;
-                    
-                    if(!categorizedNotes[empName][e.type]) categorizedNotes[empName][e.type] = [];
-                    
-                    if(errorTypeCounts[e.type] === undefined) {
-                        errorTypeCounts[e.type] = 0;
-                        errorNotesList[e.type] = [];
-                    }
-                    errorTypeCounts[e.type]++; 
-
-                    let penaltyToApply = 0;
-                    let cleanNote = e.note;
-                    
-                    let isReachedCustomer = false;
-                    let isFixedBefore = false;
-
-                    if (cleanNote.includes('[ถึงลูกค้าแล้ว]')) {
-                        isReachedCustomer = true;
-                        cleanNote = cleanNote.replace(/^\[ถึงลูกค้าแล้ว\]\s*/, '');
-                    } else if (cleanNote.includes('[แก้ไขได้ก่อนส่ง]')) {
-                        isFixedBefore = true;
-                        cleanNote = cleanNote.replace(/^\[แก้ไขได้ก่อนส่ง\]\s*/, '');
-                    }
-
-                    if (e.type === 'ความผิดอื่น ๆ') {
-                        let match = cleanNote.match(/^\[หัก (\d+) HP\]\s*(.*)/);
-                        if (match) {
-                            penaltyToApply = parseInt(match[1]);
-                            cleanNote = match[2];
-                        } else {
-                            penaltyToApply = 10;
-                        }
-                    } else {
-                        penaltyToApply = HP_PENALTY[e.type] !== undefined ? HP_PENALTY[e.type] : 10;
-                        
-                        if (isReachedCustomer) {
-                            penaltyToApply = 30;
-                        } else if (isFixedBefore) {
-                            penaltyToApply = 5;
-                        }
-                    }
-
-                    teamLostHP += penaltyToApply; 
-
-                    if(!errorNotesList[e.type].includes(cleanNote)) errorNotesList[e.type].push(cleanNote);
-
-                    let stageBadge = '';
-                    if (isReachedCustomer) stageBadge = `<span class="text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-red-200 shadow-sm align-middle whitespace-nowrap">🚨 ถึงลูกค้า</span>`;
-                    else if (isFixedBefore) stageBadge = `<span class="text-emerald-600 font-bold bg-emerald-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-emerald-200 shadow-sm align-middle whitespace-nowrap">🛡️ แก้ทัน</span>`;
-
-                    let displayNote = `<span class="text-red-600 font-black bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 shadow-sm border border-red-200 text-[9px] inline-block whitespace-nowrap align-middle">-${penaltyToApply} HP</span>${stageBadge}<span class="text-gray-700 leading-snug">${cleanNote}</span>`;
-
-                    categorizedNotes[empName][e.type].push({ note: displayNote, date: day.date });
-                    hasAnyNotes = true;
-
-                    if (empHP[empName] !== undefined) {
-                        empHP[empName] -= penaltyToApply;
-                    }
-                });
-
-                if(day.tasks && Array.isArray(day.tasks)) {
-                    day.tasks.forEach(t => {
-                        let assignees = (t.assignee || "").split(',').map(a => normalizeEmpName(a)).filter(a => a).join(', ');
-                        weeklyTasksMap[t.taskName] = { status: t.status, assignee: assignees };
-                    });
-                }
-            });
-
-            // --- TEAM KPI RENDER LOGIC ---
-            let branchStartHP = BRANCH_CONFIG[currentBranch].employees.length * 100;
-            let branchCurrentHP = Math.max(0, branchStartHP - teamLostHP);
-            let branchHPPercent = branchStartHP > 0 ? (branchCurrentHP / branchStartHP) * 100 : 0;
-
-            let grade = 'F';
-            let gradeText = 'ต้องปรับปรุงด่วน';
-            let tColor = { text: 'text-red-500', bar: 'bg-red-500', badge: 'text-red-700 bg-red-100 border-red-200' };
-
-            if (branchHPPercent === 100) { 
-                grade = 'S'; gradeText = 'ยอดเยี่ยมไร้ที่ติ!'; 
-                tColor = { text: 'text-green-500', bar: 'bg-green-500', badge: 'text-green-700 bg-green-100 border-green-200' };
-            } else if (branchHPPercent >= 90) { 
-                grade = 'A'; gradeText = 'ผลงานดีเยี่ยม'; 
-                tColor = { text: 'text-blue-500', bar: 'bg-blue-500', badge: 'text-blue-700 bg-blue-100 border-blue-200' };
-            } else if (branchHPPercent >= 75) { 
-                grade = 'B'; gradeText = 'ตามเกณฑ์มาตรฐาน'; 
-                tColor = { text: 'text-yellow-500', bar: 'bg-yellow-400', badge: 'text-yellow-700 bg-yellow-100 border-yellow-300' };
-            } else if (branchHPPercent >= 60) { 
-                grade = 'C'; gradeText = 'เฝ้าระวังข้อผิดพลาด'; 
-                tColor = { text: 'text-orange-500', bar: 'bg-orange-400', badge: 'text-orange-700 bg-orange-100 border-orange-200' };
-            }
-
-            let teamKpiHtml = `
-                <div class="bg-white p-3.5 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
-                    <div class="flex justify-between items-center mb-2.5 relative z-10">
-                        <div>
-                            <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-users text-gray-400 mr-1.5"></i>ภาพรวมสาขา ${currentBranch}</h3>
-                            <p class="text-[10px] text-gray-500 mt-0.5">Team Health Point สัปดาห์นี้</p>
-                        </div>
-                        <div class="flex flex-col items-end">
-                            <div class="flex items-baseline">
-                                <span class="text-3xl font-black ${tColor.text} leading-none drop-shadow-sm">${grade}</span>
-                            </div>
-                            <span class="text-[9px] font-bold ${tColor.badge} px-1.5 py-0.5 rounded mt-1 shadow-sm border">${gradeText}</span>
-                        </div>
-                    </div>
-                    <div class="mt-2 relative z-10">
-                        <div class="flex justify-between text-[10px] font-bold mb-1">
-                            <span class="text-gray-500">พลังชีวิตทีม (HP)</span>
-                            <span class="${tColor.text}">${branchCurrentHP} <span class="text-gray-400">/ ${branchStartHP}</span></span>
-                        </div>
-                        <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200 shadow-inner">
-                            <div class="${tColor.bar} h-full rounded-full transition-all duration-1000 relative" style="width: ${branchHPPercent}%">
-                                <div class="absolute inset-0 bg-white/20"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('dash-team-kpi').innerHTML = teamKpiHtml;
-
-            // Render Tasks
-            let tasksHtml = '';
-            if (Object.keys(weeklyTasksMap).length === 0) {
-                tasksHtml = '<div class="text-center text-gray-400 text-sm py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">ยังไม่มีแผนงานในสัปดาห์นี้</div>';
-            } else {
-                for (const [tName, tData] of Object.entries(weeklyTasksMap)) {
-                    let tStatus = tData.status;
-                    let tAssignee = tData.assignee;
-                    let badgeClass = tStatus === 'เสร็จแล้ว' ? 'bg-green-100 text-green-700 border-green-200' :
-                                     tStatus === 'กำลังทำ' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                                     'bg-gray-100 text-gray-600 border-gray-200';
-                    let iconClass = tStatus === 'เสร็จแล้ว' ? 'fa-check-circle' :
-                                    tStatus === 'กำลังทำ' ? 'fa-spinner fa-spin' : 'fa-circle-minus';
-                    
-                    let assigneeHtml = '';
-                    if (tAssignee) {
-                        const assignees = tAssignee.split(',').map(a => a.trim());
-                        assigneeHtml = assignees.map(a => `<span class="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-md font-bold mt-1.5 mr-1.5 inline-block border border-purple-200 shadow-sm"><i class="fa-solid fa-user mr-1 opacity-70"></i>${a}</span>`).join('');
-                    }
-
-                    tasksHtml += `
-                        <div class="flex justify-between items-center bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 shadow-sm mb-2">
-                            <div class="flex flex-col">
-                                <span class="text-gray-800 font-bold text-sm">${tName}</span>
-                                <div class="flex flex-wrap">${assigneeHtml}</div>
-                            </div>
-                            <span class="text-[10px] font-black px-2.5 py-1 rounded-lg border shadow-sm whitespace-nowrap ${badgeClass}">
-                                <i class="fa-solid ${iconClass} mr-1"></i>${tStatus}
-                            </span>
-                        </div>
-                    `;
-                }
-            }
-            document.getElementById('dash-weekly-tasks').innerHTML = tasksHtml;
-
-            // Render Notes & Errors
-            let allNotesHtml = '';
-            const colorThemes = [
-                {bg: 'red-50', border: 'red-100', text: 'red-700', icon: 'red-500'},
-                {bg: 'orange-50', border: 'orange-100', text: 'orange-700', icon: 'orange-500'},
-                {bg: 'amber-50', border: 'amber-100', text: 'amber-700', icon: 'amber-500'},
-                {bg: 'blue-50', border: 'blue-100', text: 'blue-700', icon: 'blue-500'},
-                {bg: 'purple-50', border: 'purple-100', text: 'purple-700', icon: 'purple-500'}
-            ];
-            
-            if (!hasAnyNotes) {
-                allNotesHtml = '<div class="text-center text-gray-400 text-sm py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200"><i class="fa-regular fa-face-smile-beam text-2xl mb-2 block text-green-400"></i>ไม่มีข้อผิดพลาดในสัปดาห์นี้ 🎉</div>';
-            } else {
-                for (const [emp, types] of Object.entries(categorizedNotes)) {
-                    if (Object.keys(types).length === 0) continue;
-
-                    allNotesHtml += `<div class="mb-3 border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">`;
-                    allNotesHtml += `<div class="bg-gray-50 px-2.5 py-1.5 font-black text-gray-800 border-b border-gray-200 flex items-center text-xs"><i class="fa-solid fa-user-tag text-blue-500 mr-2"></i>${emp}</div>`;
-                    allNotesHtml += `<div class="p-2 space-y-2">`;
-
-                    let cIdx = 0;
-                    for (const [errType, notes] of Object.entries(types)) {
-                        let theme = colorThemes[cIdx % colorThemes.length];
-                        allNotesHtml += `<div class="bg-${theme.bg} rounded-lg border border-${theme.border} p-2">
-                                            <div class="text-xs font-black text-${theme.text} mb-1 border-b border-${theme.border} pb-1 flex items-center"><i class="fa-solid fa-caret-right mr-1.5 text-${theme.icon}"></i>${errType}</div>`;
-                        notes.forEach(err => { 
-                            allNotesHtml += `<div class="text-[12px] flex justify-between items-start mb-1.5 last:mb-0"><div class="pr-2 flex-1">${err.note}</div><span class="text-[9px] text-gray-400 font-medium whitespace-nowrap mt-0.5 bg-white px-1.5 py-0.5 rounded border border-gray-100 shadow-sm">${formatDisplayDate(err.date)}</span></div>`; 
-                        });
-                        allNotesHtml += `</div>`;
-                        cIdx++;
-                    }
-                    allNotesHtml += `</div></div>`;
-                }
-            }
-
-            document.getElementById('dash-total-errors').innerText = totalErr;
-            document.getElementById('dash-total-volume').innerText = totalVol;
-            document.getElementById('dash-err-percent').innerText = totalVol > 0 ? ((totalErr / totalVol) * 100).toFixed(1) + '%' : '0%';
-            
-            document.getElementById('dash-error-notes').innerHTML = allNotesHtml;
-            document.getElementById('dash-customer-notes').innerHTML = allCustomerNotesHtml || '<div class="text-center text-gray-400 text-sm py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">ไม่มีบันทึกข้อมูลลูกค้า</div>';
-            document.getElementById('dash-customer-notes-count').innerText = `${totalCustomerNotesCount} รายการ`;
-
-            const lastWeekStart = new Date(startOfCurrentWeek); lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-            const lastWeekEnd = new Date(endOfWeek); lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
-
-            let lastWeekEmpErrCount = {};
-            BRANCH_CONFIG[currentBranch].employees.forEach(emp => lastWeekEmpErrCount[emp] = 0);
-            let lastWeekErrTotal = 0;
-
-            rawData.forEach(d => {
-                const itemD = new Date(d.date); itemD.setHours(0,0,0,0);
-                if(itemD >= lastWeekStart && itemD <= lastWeekEnd) {
-                    lastWeekErrTotal += (d.errors || []).length;
-                    (d.errors || []).forEach(e => { 
-                        let empName = normalizeEmpName(e.emp); 
-                        if(lastWeekEmpErrCount[empName] === undefined) lastWeekEmpErrCount[empName] = 0;
-                        lastWeekEmpErrCount[empName]++; 
-                    });
-                }
-            });
-
-            let diffTotal = totalErr - lastWeekErrTotal;
-            let diffText = diffTotal > 0 ? `+${diffTotal} ครั้ง <span class="text-red-500">(แย่ลง)</span>` : (diffTotal < 0 ? `${diffTotal} ครั้ง <span class="text-green-500">(ดีขึ้น)</span>` : 'เท่าเดิม');
-            document.getElementById('dash-err-compare').innerHTML = `เทียบกับสัปดาห์ก่อน: <b>${diffText}</b>`;
-
-            window._empBreakdownData = { count: empErrCount, lastCount: lastWeekEmpErrCount };
-            renderEmpBreakdown();
-
-            let getSuggestion = (type, index) => {
-                const suggestionDatabase = {
-                    'สินค้าขาดสต๊อก': [
-                        'ควรทำสต๊อกการ์ด (Stock Card) แบบเรียลไทม์ หรือใช้เครื่องยิงบาร์โค้ดตัดสต๊อกทันที',
-                        'กำหนดจุดสั่งซื้อ (Re-order point) ให้ชัดเจน โดยเฉพาะสินค้าขายดีช่วงเทศกาล',
-                        'ประสานงานฝ่ายจัดซื้อล่วงหน้าอย่างน้อย 3-5 วันเมื่อสินค้าใกล้ถึงจุดสั่งซื้อ',
-                        'ทำป้ายแจ้งเตือน "สินค้าใกล้หมด" แปะไว้ที่ชั้นวางหรือตะกร้าสต๊อก',
-                        'หัวหน้าแผนกควรเดินตรวจสต๊อก (Store Walk) ทุกเช้าก่อนเปิดร้าน'
-                    ],
-                    'แก้ไขได้ก่อนจัดส่ง': [
-                        'ดีเยี่ยม! ให้เพิ่มการเน้นย้ำจุดที่มักจะเกือบพลาดในที่ประชุม (Morning Talk)',
-                        'จัดทำสมุดจด "เกือบพลาด" (Near Miss Record) เพื่อใช้วิเคราะห์หาจุดบอดของกระบวนการ',
-                        'ถ้าเป็นการหยิบผิด ให้ทบทวนการจัดเรียงสินค้าบนชั้นว่าชวนสับสนหรือไม่',
-                        'ชื่นชมพนักงาน Checker ที่สามารถตรวจจับข้อผิดพลาดได้ก่อนส่ง'
-                    ],
-                    'ส่งถึงหน้าร้านแล้ว': [
-                        'คนจัดและคนขับรถต้องสื่อสารกันให้ชัดเจนขึ้น ย้ำจำนวนบิลและปลายทางก่อนออกรถ',
-                        'ใช้ระบบบาร์โค้ดสแกนรับ-ส่งสินค้าระหว่างคลังกับหน้าร้าน',
-                        'ทำพื้นที่รับของ (Receiving Area) ที่หน้าร้านให้เป็นสัดส่วน ป้องกันของปนกับของขาย',
-                        'พนักงานหน้าร้านต้องเช็คยอดกับใบส่งของทันทีที่ของลงรถ ห้ามดองไว้'
-                    ],
-                    'ส่งถึงลูกค้าแล้ว': [
-                        'เพิ่มการถ่ายรูปสินค้าคู่กับบิลจัดส่งลงไลน์กลุ่มก่อนซีลกล่อง/ขึ้นรถ ทุกครั้ง!',
-                        'สร้างแคมเปญ "ส่งถูก 100%" หากทำได้ตามเป้ามีรางวัลเล็กๆ น้อยๆ ให้ทีม',
-                        'กรณีลูกค้าเคลม ต้องสืบสวนหาคนจัดและคนเช็คทันที เพื่อหาสาเหตุที่แท้จริง ไม่ใช่แค่ลงโทษ',
-                        'บังคับใช้กระบวนการ "ชี้-เรียก-นับ" (Point and Call) ตอนส่งมอบของให้ลูกค้า',
-                        'พิจารณาใช้กล้องวงจรปิดเหนือโต๊ะแพ็ค เพื่อเป็นหลักฐานกรณีลูกค้าเคลมว่าของไม่ครบ'
-                    ],
-                    'ผิดพลาดในการรับลงสินค้า': [
-                        'ทำโซนกักกัน (Quarantine Zone) สำหรับสินค้ามาใหม่ที่ยังไม่ได้ตรวจนับ ห้ามนำไปขายเด็ดขาด',
-                        'ตรวจเช็ควันหมดอายุ (Shelf life) ทุกกล่อง/ทุกลัง ก่อนเซ็นรับของจาก Supplier',
-                        'หากสินค้ามีรอยบุบ ฉีกขาด หรือเปียกชื้น ให้ปฏิเสธการรับ หรือจดหมายเหตุไว้ทันที',
-                        'จัดตารางรับสินค้าไม่ให้ตรงกับช่วงเวลาที่หน้าร้านยุ่งที่สุด (Peak Hour)'
-                    ],
-                    'จัดบิลผิด': [
-                        'ใช้ปากกาเน้นข้อความ (Highlighter) ขีดทับรายการที่จัดเสร็จแล้ว ป้องกันการมองข้าม',
-                        'ถ้ารายการในบิลอ่านยาก/กำกวม ให้ถามแอดมินหรือเซลส์ทันที ห้ามเดาเอาเอง',
-                        'จัดระเบียบคลิปหนีบบิล แบ่งเป็น "รอจัด", "กำลังจัด", "จัดเสร็จรอเช็ค" ให้ชัดเจน',
-                        'สำหรับออเดอร์ใหญ่ ให้แบ่งจัดทีละโซน (เช่น โซนแห้ง โซนเย็น โซนแพ็คเกจจิ้ง)'
-                    ],
-                    'หยิบของผิด': [
-                        'ติดป้ายราคาและชื่อสินค้าให้ตัวใหญ่และชัดเจน โดยเฉพาะยี่ห้อที่หน้าตาคล้ายกัน',
-                        'สอนให้พนักงานดู "บาร์โค้ด 3 ตัวท้าย" เพื่อคอนเฟิร์มสินค้าที่แพ็คเกจคล้ายกัน',
-                        'แยกสินค้าชนิดเดียวกันแต่คนละยี่ห้อ/ขนาด ให้อยู่ห่างกัน (ห้ามวางติดกัน)',
-                        'มีรูปภาพสินค้าสีสันสดใสติดไว้ที่ใบจัดสินค้าสำหรับพนักงานใหม่'
-                    ],
-                    'จำนวนไม่ครบ': [
-                        'ใช้วิธีจัดของใส่ตะกร้าก่อน แล้วนับจำนวนชิ้นออกจากตะกร้าลงกล่องแพ็คอีกรอบ (Double count)',
-                        'สินค้าชิ้นเล็ก/ของจุกจิก ให้แพ็ครวมใส่ถุงใสใบใหญ่ก่อนหนึ่งชั้น ป้องกันการร่วงหล่น',
-                        'นับจำนวนชิ้นรวมในบิล และจำนวนชิ้นของจริง ก่อนปิดกล่องเสมอ',
-                        'สอนให้พนักงานจัดของเป็นกองๆ ละ 10 ชิ้น จะช่วยให้นับจำนวนหลักสิบ/ร้อย ได้เร็วและแม่นยำ'
-                    ],
-                    'ลูกค้ารอสินค้านานเกิน 15 นาที': [
-                        'ใช้ระบบบัตรคิว หรือ Pager เรียกคิวเมื่อจัดของเสร็จ เพื่อลดความแออัดหน้าเคาน์เตอร์',
-                        'กำหนดให้พนักงาน 1 คน จัดบิลลูกค้าหน้าร้าน (Walk-in) เป็นลำดับแรกสุดเสมอ',
-                        'จัดทำโซน "สินค้าขายดี/หยิบบ่อย" ไว้ใกล้โต๊ะแพ็ค/แคชเชียร์ เพื่อให้หยิบได้ทันที',
-                        'กรณีคิวเยอะ ให้มีพนักงานคอยเดินแจกน้ำ หรือแจ้งระยะเวลารอโดยประมาณให้ลูกค้าทราบ'
-                    ],
-                    'ปล่อยของผิดถึงลูกค้า (Checker)': [
-                        'Checker ต้องเป็นคนละคนกับคนจัดของ 100% ห้ามเป็นคนเดียวกันเด็ดขาด',
-                        'Checker ต้องมีอำนาจในการสั่งให้คนจัดไปเปลี่ยน/เติมของให้ถูกต้อง',
-                        'เพิ่มแสงสว่างบริเวณโต๊ะ Checker เพื่อให้เห็นรายละเอียดสินค้าชัดเจนขึ้น',
-                        'จัดอบรมทบทวนความรู้เรื่องสินค้า (Product Knowledge) ให้ Checker เป็นประจำ'
-                    ],
-                    'คิดเงินทอนเงินผิด': [
-                        'บังคับพนักงานพูดทวนยอดรับและยอดทอน "รับมา 1,000 บาท ทอน 250 บาทนะคะ" ทุกครั้ง',
-                        'ไม่วางเงินที่รับจากลูกค้าลงลิ้นชักจนกว่าจะส่งเงินทอนให้ลูกค้าเสร็จ (วางไว้บนเครื่องก่อน)',
-                        'เปลี่ยนกะแคชเชียร์ ต้องมีการส่งมอบเงินทอนและนับกระทบยอด (X-Read) ให้ชัดเจน',
-                        'ห้ามพนักงานใช้โทรศัพท์มือถือ หรือพูดคุยเรื่องส่วนตัวขณะทำรายการคิดเงิน'
-                    ],
-                    'ตอบแชทช้า': [
-                        'จัดตารางเวรแอดมินตอบแชทรายชั่วโมง พร้อมกำหนด KPI เวลาตอบกลับ (Response Time) เช่น ไม่เกิน 15 นาที',
-                        'เตรียมชุดข้อความมาตรฐาน (Quick Replies) สำหรับคำถามที่เจอบ่อย (ราคา, ค่าส่ง, สต๊อก)',
-                        'ใช้ Chatbot เบื้องต้นในการรับเรื่อง หรือคัดกรองประเภทคำถามในช่วงนอกเวลาทำการ',
-                        'แอดมินต้องมีช่องทางลัด (Fast Track) ในการถามสต๊อกกับฝ่ายคลังโดยตรง'
-                    ],
-                    'ให้ข้อมูลสินค้าผิด': [
-                        'จัดทำคู่มือเทียบสเปคสินค้า (เช่น แป้งเค้กตรา A แทนตรา B ได้ไหม) ให้แอดมิน/หน้าร้านเปิดดูได้ง่าย',
-                        'สร้างแคมเปญ "วันละตัว" ให้พนักงานเรียนรู้จุดเด่นของสินค้าวันละ 1 รายการในช่วงเช้า',
-                        'เมื่อมีสินค้าใหม่เข้า ต้องนำมาให้ทีมงานดูและจับของจริง พร้อมบรีฟสรรพคุณสั้นๆ',
-                        'ถ้าพนักงานไม่แน่ใจ ต้องฝึกให้พูดว่า "ขออนุญาตตรวจสอบข้อมูลที่ถูกต้องสักครู่นะคะ" ห้ามเดา'
-                    ],
-                    'เปิดบิลผิด': [
-                        'ย้ำให้แอดมิน/แคชเชียร์ ตรวจสอบ "หน่วยนับ" (ชิ้น/แพ็ค/ลัง) ให้ตรงกับราคาที่แสดง',
-                        'หากชื่อสินค้าในระบบ POS มีหลายตัวที่คล้ายกัน ให้ใส่ Keyword ให้ชัดเจน (เช่น แป้งเค้ก-พัดโบก-1kg)',
-                        'ทวนรายการทวนจำนวนกับลูกค้าทางโทรศัพท์/แชท ก่อนกดพิมพ์บิลทุกครั้ง',
-                        'สำหรับลูกค้าประจำ ให้เช็คประวัติการสั่งซื้อเพื่อช่วยรีเช็คว่าปกติลูกค้าใช้ยี่ห้อนี้หรือไม่'
-                    ],
-                    'คิดเงินพลาด': [
-                        'เข้มงวดการยิงบาร์โค้ด 100% ยกเว้นสินค้าที่บาร์โค้ดพังจริงๆ ถึงจะอนุญาตให้คีย์มือ',
-                        'ระวังบาร์โค้ดซ้อน! (สินค้าบางตัวมีบาร์โค้ดขายปลีก และบาร์โค้ดขายส่งยกลังบนแพ็คเกจเดียวกัน)',
-                        'สุ่มตรวจราคาป้ายหน้าเชลฟ์กับราคาในระบบ POS สัปดาห์ละ 1 หมวดหมู่สินค้า',
-                        'จัดระเบียบโต๊ะแคชเชียร์ แบ่งฝั่งของที่ "ยังไม่ยิง" กับ "ยิงแล้ว" ให้ชัดเจน'
-                    ],
-                    'ของหมดไม่แจ้ง (เห็นผ่านหน้าระบบ)': [
-                        'กำหนดรอบดึงรายงานสินค้าใกล้หมด (Low Stock Report) ทุกเช้า เพื่อไปเช็คของจริง',
-                        'มีกระดานไวท์บอร์ดหลังร้าน อัปเดตรายการ "Out of Stock" ประจำวันให้ทุกคนเห็นตรงกัน',
-                        'พนักงานหน้าร้านต้องรีบแจ้งแอดมินทันทีที่หยิบสินค้าชิ้นสุดท้ายบนเชลฟ์',
-                        'เชื่อมโยงระบบสต๊อกหน้าร้านและออนไลน์ให้ตัดพร้อมกันแบบ Real-time (ถ้าทำได้)'
-                    ],
-                    'ไม่ช่วยใส่ถุง': [
-                        'จัดเตรียมถุงและอุปกรณ์แพ็ค (สก็อตเทป, ยางวง, คัตเตอร์) ไว้ที่แคชเชียร์ให้พร้อมใช้งานเสมอ',
-                        'สอนเทคนิคการจัดของลงถุง (ของแข็ง/หนักอยู่ล่าง ของเบา/แตกง่ายอยู่บน ของมีกลิ่นใส่ถุงแยก)',
-                        'หากลูกค้าซื้อเยอะ ให้พนักงานหน้าร้าน (ว่างอยู่) เข้ามาช่วยแคชเชียร์จัดของลงถุง/ลัง ทันที',
-                        'สอบถามลูกค้าก่อนเสมอว่า "รับถุงเพิ่มไหมคะ" หรือ "ใส่กล่องลังให้ไหมคะ จะได้ยกง่าย"'
-                    ],
-                    'ไม่แนะนำสินค้า': [
-                        'ฝึกทักษะการทำ Cross-selling (เช่น ลูกค้าซื้อแป้ง ให้เสนอผงฟูหรือเนยเพิ่ม)',
-                        'สังเกตตะกร้าลูกค้า หากลูกค้าทำเบเกอรี่ชนิดไหน ให้แนะนำวัตถุดิบตัวใหม่ที่ตอบโจทย์',
-                        'เตรียมป้าย "สินค้าขายดี" หรือ "สินค้าแนะนำ" ติดที่เชลฟ์ เพื่อช่วยดึงดูดความสนใจลูกค้า',
-                        'เมื่อมีโปรโมชั่นใกล้จะหมดอายุ ให้นำมาตั้งโชว์หน้าแคชเชียร์และให้พนักงานกล่าวแนะนำทุกคน'
-                    ],
-                    'ไม่เดินดูแลลูกค้าเดินช้อป': [
-                        'แบ่งโซนรับผิดชอบ (Zone Defense) ให้พนักงานแต่ละคนยืนประจำจุด ไม่กระจุกตัวกัน',
-                        'ใช้กฎ 10 ก้าว (Ten-foot Rule): เมื่อลูกค้าเดินเข้ามาในรัศมี 10 ก้าว ต้องสบตา ยิ้ม และทักทาย',
-                        'หากเห็นลูกค้าถือของเต็มมือ ให้รีบนำตะกร้าช้อปปิ้งไปให้ทันทีโดยไม่ต้องรอให้ขอ',
-                        'กวาดสายตามองลูกค้าที่ยืนอ่านฉลากสินค้านานๆ แล้วเข้าไปถามว่า "สอบถามข้อมูลได้นะคะ"'
-                    ],
-                    'บริการไม่สุภาพ': [
-                        'ห้ามพนักงานใช้คำว่า "ไม่มี" ห้วนๆ ให้เปลี่ยนเป็น "ขออภัยค่ะ สินค้าหมดชั่วคราว รับเป็น...แทนไหมคะ"',
-                        'ควบคุมน้ำเสียงและสีหน้า (Tone & Body Language) แม้จะใส่แมสก์ ลูกค้าก็สัมผัสได้จากแววตา',
-                        'เมื่อลูกค้ามีอารมณ์โกรธ ให้รับฟังอย่างตั้งใจ กล่าวคำขอโทษ และเรียกผู้จัดการมาช่วยรับมือ',
-                        'จัดกิจกรรมชมเชยพนักงาน (Staff of the Month) ที่ได้รับคำชมเรื่องบริการจากลูกค้า'
-                    ],
-                    'ปล่อยชั้นวางว่าง (เรียงของเติม)': [
-                        'กำหนดเวลาลงของ/เติมเชลฟ์ (Fill-up Time) ให้ชัดเจน เช่น ก่อนเปิดร้าน และ หลัง 15:00 น.',
-                        'ดึงสินค้าจากด้านในออกมาโชว์ด้านหน้าเชลฟ์ (Face-up / Block) ตลอดวันเมื่อมีเวลาว่าง',
-                        'ทำความสะอาดเชลฟ์ทุกครั้งก่อนนำสินค้าล็อตใหม่ขึ้นจัดเรียง',
-                        'ใช้หลัก FIFO (First In, First Out) ดันของเก่าไว้หน้า ของใหม่ไว้หลัง เสมอ'
-                    ],
-                    'สต๊อคสินค้าไม่พอใช้': [
-                        'วิเคราะห์ข้อมูลการขายย้อนหลัง (Sale History) เพื่อคาดการณ์ยอดสั่งซื้อในเดือนถัดไป',
-                        'จับตาดูเทศกาลเบเกอรี่ (เช่น วาเลนไทน์, ปีใหม่, ไหว้พระจันทร์) และเผื่อเวลาสั่งของล่วงหน้า 1-2 เดือน',
-                        'ทำความสัมพันธ์อันดีกับ Supplier เผื่อกรณีฉุกเฉินต้องขอแทรกคิวจัดส่ง',
-                        'หาสินค้าทดแทน (Substitute Products) เตรียมไว้ ในกรณีที่ยี่ห้อหลักขาดตลาดจริงๆ'
-                    ],
-                    'ของหมดไม่แจ้ง': [
-                        'ปรับ Mindset ให้พนักงานเข้าใจว่า การแจ้งของหมด ไม่ใช่ความผิด แต่เป็นการช่วยรักษายอดขาย',
-                        'กำหนดเป็นกฎเหล็ก: ใครหยิบของชิ้นสุดท้าย/ลังสุดท้าย ต้องตะโกนบอก หรือไลน์แจ้งทีมทันที',
-                        'หัวหน้าแผนกต้องหมั่นสุ่มตรวจเชลฟ์สินค้ากลุ่มเคลื่อนไหวเร็ว (Fast Moving) เป็นประจำ'
-                    ],
-                    'ความผิดอื่น ๆ': [
-                        'นำข้อผิดพลาดนี้มาบันทึกเป็น "บทเรียน" (Lesson Learned) และแชร์ในไลน์กลุ่มสาขา',
-                        'ตั้งคำถาม "ทำไม 5 ครั้ง" (5 Whys Analysis) เพื่อเจาะลึกหาสาเหตุที่แท้จริง ไม่ใช่แค่แก้ปัญหาปลายเหตุ',
-                        'หากเป็นปัญหาที่เกิดซ้ำซาก แสดงว่าระบบการทำงาน (SOP) มีช่องโหว่ ต้องรื้อระบบและปรับปรุงใหม่',
-                        'เปิดโอกาสให้พนักงานระดับปฏิบัติการเสนอไอเดียแก้ปัญหา (Bottom-up) เพราะเขาอยู่หน้างานจริง'
-                    ]
-                };
-                if(suggestionDatabase[type] && suggestionDatabase[type].length > 0) return suggestionDatabase[type][index % suggestionDatabase[type].length];
-                return `ควรนำข้อผิดพลาดเรื่อง "<b>${type}</b>" มาพูดคุยเพื่อหาแนวทางป้องกันร่วมกันครับ`;
-            }
-
-            let smartSummaryHtml = '';
-            if (totalErr === 0) {
-                smartSummaryHtml = `<p class="text-green-600 font-bold flex items-center"><i class="fa-solid fa-face-smile-beam mr-2 text-xl"></i> ยอดเยี่ยมมาก! สัปดาห์นี้ไม่มีข้อผิดพลาดเลย</p>`;
-            } else {
-                let topErrorType = ''; let topErrorCount = -1;
-                for (const [type, count] of Object.entries(errorTypeCounts)) { if (count > topErrorCount) { topErrorCount = count; topErrorType = type; } }
-                
-                let topEmp = ''; let topEmpCount = -1;
-                for (const [emp, count] of Object.entries(empErrCount)) { if (count > topEmpCount) { topEmpCount = count; topEmp = emp; } }
-                
-                let trendHtml = diffTotal > 0 ? `<span class="text-red-600 font-black">เพิ่มขึ้น ${diffTotal} ครั้ง</span>` :
-                                (diffTotal < 0 ? `<span class="text-green-600 font-black">ลดลง ${Math.abs(diffTotal)} ครั้ง</span>` : `<span class="font-bold">เท่ากับสัปดาห์ก่อน</span>`);
-                
-                smartSummaryHtml += `<div class="mb-2 pb-2 border-b border-indigo-200/50"><i class="fa-solid fa-chart-pie text-indigo-400 mr-1.5"></i><b>ภาพรวม:</b> สัปดาห์นี้พบความผิดพลาดรวม <b>${totalErr}</b> ครั้ง ซึ่ง${trendHtml}</div>`;
-                if(topErrorCount > 0) {
-                    let sampleNotes = errorNotesList[topErrorType].slice(0, 2).join(', ');
-                    sampleNotes = sampleNotes.replace(/<span.*?>.*?<\/span>\s*/g, '');
-                    let noteContext = sampleNotes ? ` <span class="text-[11px] text-gray-500 block mt-1">(ตย. ${sampleNotes})</span>` : '';
-                    
-                    smartSummaryHtml += `<div class="mb-2 pb-2 border-b border-indigo-200/50"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1.5"></i><b>จุดที่ต้องระวัง:</b> ปัญหาที่พบมากที่สุดคือ <span class="text-orange-600 font-bold bg-orange-50 px-1 rounded">"${topErrorType}"</span> (${topErrorCount} ครั้ง)${noteContext}</div>`;
-                    
-                    let suggestionIndex = totalErr % 3; 
-                    smartSummaryHtml += `<div><i class="fa-regular fa-lightbulb text-yellow-500 mr-1.5"></i><b>ข้อเสนอแนะ:</b> ${getSuggestion(topErrorType, suggestionIndex)}</div>`;
-                }
-
-                // --- ADVANCED FEATURE: KEYWORD ANALYSIS FROM NOTES ---
-                let combinedNotesStr = Object.values(errorNotesList).flat().join(" ").toLowerCase();
-                
-                const keywordInsights = [
-                    { keys: ["ไซส์", "ขนาด", "กรัม", "กิโล", "g", "kg", "ml", "ลิตร", "ออนซ์"], msg: "พบความสับสนเรื่องขนาด/น้ำหนักสินค้า (เช่น หยิบผิดไซส์) แนะนำให้ใช้ตะกร้าสีแยกไซส์ หรือทำป้ายป๊อปอัปให้เห็นความแตกต่างชัดเจนที่หน้าเชลฟ์" },
-                    { keys: ["ยี่ห้อ", "แบรนด์", "ผิดยี่ห้อ", "ตรา"], msg: "มีการหยิบผิดยี่ห้อบ่อยครั้ง (วัตถุดิบมักมีแพ็คเกจคล้ายกัน) ควรจัดวางแยกโซนกันให้ชัดเจน และย้ำให้พนักงานอ่านชื่อเต็ม/บาร์โค้ดทุกครั้งก่อนหยิบ" },
-                    { keys: ["แตก", "หัก", "ละลาย", "เสียหาย", "รั่ว", "เละ", "ยับ", "ซึม"], msg: "สินค้าได้รับความเสียหายระหว่างจัดส่งหรือแพ็ค ควรทบทวนมาตรฐานการห่อหุ้ม (บับเบิ้ล, กระดาษลูกฟูก) และกำชับคนขับรถ/ขนส่งเรื่องการจัดเรียงซ้อนลัง" },
-                    { keys: ["หมดอายุ", "exp", "อายุ", "เสีย", "บูด", "ขึ้นรา", "เก่า"], msg: "พบสินค้าหมดอายุ/เสื่อมสภาพหลุดไปถึงลูกค้า เป็นสัญญาณเตือนว่าการจัดสต๊อกแบบ FIFO/FEFO บกพร่อง ต้องจัดเวรตรวจเช็ค Shelf life ด่วน" },
-                    { keys: ["ลืม", "ขาด", "ไม่ครบ", "ตกหล่น", "หาย", "ไม่ได้ใส่"], msg: "การจัดของไม่ครบเกิดขึ้นบ่อย บ่งบอกว่าขั้นตอนการ Check ของหละหลวม ควรเพิ่มจุด Double Check หรือให้พนักงานสองคนช่วยกันทวนรายการ" },
-                    { keys: ["ทอน", "เงิน", "บาท", "คิดผิด", "สลิป", "โอน", "เกิน", "ขาด"], msg: "ข้อผิดพลาดทางการเงิน ควรเน้นย้ำแคชเชียร์ให้ทวนยอดดังๆ ตรวจเช็คสลิปโอนให้ละเอียด (ดูชื่อ/วันที่/เวลา) และมีสติในช่วงที่คนพลุกพล่าน" },
-                    { keys: ["ช้า", "รอนาน", "คิว", "รอคิว", "เร่ง"], msg: "ลูกค้ารอนานเกินไป แสดงถึงคอขวด (Bottleneck) ในกระบวนการจัดของหรือคิดเงิน ควรพิจารณาดึงพนักงานส่วนอื่นมาเสริมทัพในช่วง Peak Hour" },
-                    { keys: ["ไม่สุภาพ", "พูด", "อารมณ์", "หน้าหงิก", "เหวี่ยง", "ตะคอก", "มารยาท", "บริการ"], msg: "พบข้อติชมเรื่อง Service Mind รุนแรง! สาขาควรเรียกประชุมทีมเพื่อปรับทัศนคติ การจัดการอารมณ์ และหาแนวทางลดความเครียดของพนักงานหน้างาน" },
-                    { keys: ["แมลง", "หนู", "มด", "มอด", "สกปรก", "ฝุ่น", "เปื้อน"], msg: "พบประเด็นเรื่องความสะอาดหรือสัตว์พาหะในสินค้า/พื้นที่ ต้องรีบทำ Big Cleaning จัดการระบบ Pest Control และห้ามนำอาหารมารับประทานใกล้พื้นที่สต๊อก" },
-                    { keys: ["ระบบ", "pos", "คอม", "เครื่อง", "ค้าง", "แฮงค์", "อินเตอร์เน็ต", "เน็ต"], msg: "ปัญหาเกิดจากอุปกรณ์หรือระบบหลังบ้านขัดข้อง ควรมีแผนสำรอง (Manual Backup Plan) เช่น การจดบิลมือชั่วคราว และแจ้งฝ่ายไอทีเพื่อตรวจสอบหาเสถียรภาพ" },
-                    { keys: ["สต๊อก", "ของหมด", "ไม่มีของ", "หมด", "ของขาด"], msg: "การตั้งค่าสต๊อกขั้นต่ำ (Min Stock) อาจไม่สอดคล้องกับการขายจริง ควรวิเคราะห์ข้อมูลใหม่และปรับจุดสั่งซื้อให้เร็วขึ้น เพื่อป้องกันการเสียโอกาสทางการขาย" }
-                ];
-
-                let foundInsights = [];
-                keywordInsights.forEach(insight => {
-                    if (insight.keys.some(k => combinedNotesStr.includes(k))) { foundInsights.push(insight.msg); }
-                });
-
-                if (foundInsights.length > 0) {
-                    let displayInsights = foundInsights.slice(0, 2).map(msg => `<li class="mb-1">${msg}</li>`).join("");
-                    smartSummaryHtml += `
-                        <div class="mt-3 pt-3 border-t border-indigo-200/50">
-                            <i class="fa-solid fa-magnifying-glass text-indigo-500 mr-1.5"></i><b>Insight จากหมายเหตุ:</b>
-                            <ul class="list-disc pl-6 mt-1.5 text-xs text-indigo-900 font-medium">${displayInsights}</ul>
-                        </div>
-                    `;
-                }
-            }
-            document.getElementById('dash-smart-summary').innerHTML = smartSummaryHtml;
-
-            // --- GAMIFICATION LOGIC ---
-            let ranking = [];
-            for (const [name, hp] of Object.entries(empHP)) {
-                ranking.push({ name: name, hp: hp < 0 ? 0 : hp });
-            }
-            ranking.sort((a, b) => b.hp - a.hp);
-
-            // ค้นหาคะแนนสูงสุด(ที่ไม่ใช่ 100) และคะแนนต่ำสุด สำหรับแจกป้ายกรณีคะแนนเท่ากัน
-            let scores = ranking.map(p => p.hp);
-            let highestNonPerfect = Math.max(...scores.filter(hp => hp < 100), -1);
-            let lowestScore = Math.min(...scores);
-
-            let gameHtml = '';
-            ranking.forEach((player, index) => {
-                let hpPercent = player.hp;
-                let hpColor = hpPercent >= 80 ? 'green' : (hpPercent >= 50 ? 'yellow' : 'red');
-                let barColor = hpPercent >= 80 ? 'bg-green-500' : (hpPercent >= 50 ? 'bg-yellow-400' : 'bg-red-500');
-                
-                let badge = '';
-                // แจกป้ายตาม "คะแนน" ไม่ใช่ "ลำดับ" (แก้ปัญหาคนคะแนนเท่ากันไม่ได้ป้าย)
-                if (player.hp === 100) {
-                    badge = '<span class="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-md font-black ml-2 border border-green-200 shadow-sm uppercase"><i class="fa-solid fa-shield-halved mr-1"></i>Perfect</span>';
-                } else if (player.hp === highestNonPerfect && player.hp > 0) {
-                    badge = '<span class="text-[9px] bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded-md font-black ml-2 border border-yellow-300 shadow-sm uppercase"><i class="fa-solid fa-crown mr-1"></i>MVP</span>';
-                } else if (player.hp === lowestScore && player.hp < 100) {
-                    badge = '<span class="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-md font-black ml-2 border border-red-200 shadow-sm uppercase"><i class="fa-solid fa-skull-crossbones mr-1"></i>Danger</span>';
-                }
-
-                let deptTag = '';
-                if (currentBranch === 'TRD') {
-                    let dept = getTRDDept(player.name);
-                    if (dept) deptTag = `<span class="text-[9px] text-gray-500 ml-1.5 font-bold border border-gray-200 px-1.5 py-0.5 rounded bg-gray-50 shadow-sm">${dept}</span>`;
-                }
-
-                gameHtml += `
-                    <div class="bg-white p-2 rounded-lg border border-${hpColor}-200 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
-                        <div class="flex justify-between items-center mb-1.5 relative z-10">
-                            <div class="font-bold text-gray-800 text-xs flex items-center">
-                                <span class="w-5 h-5 inline-flex justify-center items-center bg-gray-100 text-gray-500 text-[9px] font-black rounded-full mr-2 border border-gray-200">#${index+1}</span>
-                                ${player.name} ${deptTag} ${badge}
-                            </div>
-                            <div class="font-black text-${hpColor}-600 text-xs bg-${hpColor}-50 px-1.5 py-0.5 rounded border border-${hpColor}-100">${player.hp} <span class="text-[8px] font-bold">HP</span></div>
-                        </div>
-                        <div class="w-full bg-gray-100 rounded-full h-2 relative z-10 border border-gray-200 overflow-hidden">
-                            <div class="${barColor} h-full rounded-full transition-all duration-1000 relative" style="width: ${hpPercent}%">
-                                <div class="absolute inset-0 bg-white/20"></div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            document.getElementById('dash-gamification').innerHTML = gameHtml;
         }
     </script>
 </body>
