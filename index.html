@@ -587,6 +587,7 @@
         // ================= DYNAMIC DATA CONTAINERS =================
         let GLOBAL_CONFIG_LIST = [
             { uid: "250013", name: "เฉิน", branches: "AKRA,TRD", dept: "Admin" },
+            { uid: "172980", name: "AKRA (Admin)", branches: "AKRA,TRD", dept: "Admin" },
             { uid: "hhsawyer", name: "Herehorr", branches: "AKRA,TRD", dept: "Admin" },
             { uid: "stamp111", name: "Stamp", branches: "AKRA,TRD", dept: "Admin" },
             { uid: "250007", name: "หยอง", branches: "AKRA", dept: "" },
@@ -611,6 +612,7 @@
 
         let USER_DB = {
             "250013": ["AKRA", "TRD"], "chen": ["AKRA", "TRD"], "เฉิน": ["AKRA", "TRD"],
+            "172980": ["AKRA", "TRD"],
             "hhsawyer": ["AKRA", "TRD"], "herehorr": ["AKRA", "TRD"],
             "stamp111": ["AKRA", "TRD"], "stamp": ["AKRA", "TRD"],
             "250007": ["AKRA"], "yong": ["AKRA"],
@@ -1091,7 +1093,7 @@
             if(recordDate) recordDate.valueAsDate = new Date();
             
             IS_ADMIN = currentRoles.includes('Admin') || currentRoles.includes('admin') || 
-                       ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'guest_admin'].includes(String(currentUser).toLowerCase());
+                       ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase());
             
             if(IS_ADMIN) {
                 document.getElementById('tab-admin').classList.remove('hidden');
