@@ -440,6 +440,150 @@
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
 
+        // ================= SAFE STORAGE WRAPPERS =================
+        // ป้องกันแอปพลิเคชันค้าง/พังจาก SecurityError เมื่อเบราว์เซอร์บนคอมพิวเตอร์บล็อกคุกกี้/พื้นที่เก็บข้อมูลบุคคลที่สาม
+        const safeStorage = {
+            getItem(key) {
+                try { return localStorage.getItem(key); } catch (e) { return this._data[key] || null; }
+            },
+            setItem(key, val) {
+                try { localStorage.setItem(key, val); } catch (e) { this._data[key] = String(val); }
+            },
+            removeItem(key) {
+                try { localStorage.removeItem(key); } catch (e) { delete this._data[key]; }
+            },
+            _data: {}
+        };
+
+        const safeSessionStorage = {
+            getItem(key) {
+                try { return sessionStorage.getItem(key); } catch (e) { return this._data[key] || null; }
+            },
+            setItem(key, val) {
+                try { sessionStorage.setItem(key, val); } catch (e) { this._data[key] = String(val); }
+            },
+            removeItem(key) {
+                try { sessionStorage.removeItem(key); } catch (e) { delete this._data[key]; }
+            },
+            _data: {}
+        };
+
+        // ================= JWT DECODER =================
+        function decodeJwtPayload(token) {
+            try {
+                const parts = token.split('.');
+                if (parts.length !== 3) return null;
+                let base64Url = parts[1];
+                let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                while (base64.length % 4) {
+                    base64 += '=';
+                }
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                console.error("Local JWT decode failed", e);
+                return null;
+            }
+        }
+
+        // ================= MANUAL LOGIN MODAL (FALLBACK FOR PC) =================
+        // ช่วยให้ผู้ใช้งานบนคอมพิวเตอร์สามารถเข้าใช้งานได้ด้วยรหัสพนักงานโดยตรงเมื่อ SSO หรือ LocalStorage มีปัญหา
+        function showManualLoginModal(errorMsg = "") {
+            let errorHtml = errorMsg ? `<p class="text-red-500 text-xs font-bold mt-2.5 animate-pulse"><i class="fa-solid fa-circle-exclamation mr-1"></i>${errorMsg}</p>` : '';
+            
+            let messageHtml = `
+                <p class="text-xs text-gray-500 mb-4 font-medium">ไม่พบบัญชีผู้ใช้จากการเข้าสู่ระบบอัตโนมัติ กรุณากรอกรหัสพนักงาน (User ID) เพื่อใช้งาน</p>
+                <div class="relative mt-2">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <i class="fa-solid fa-user-lock"></i>
+                    </span>
+                    <input type="text" id="manual-login-uid" class="w-full pl-9 pr-3 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold" placeholder="ระบุรหัสพนักงาน เช่น 250013">
+                </div>
+                ${errorHtml}
+            `;
+
+            showModal(
+                "กรุณาเข้าสู่ระบบ", 
+                messageHtml, 
+                "confirm", 
+                null
+            );
+
+            // ปรับแต่งหน้าตาปุ่มใน Modal
+            const confirmBtn = document.getElementById('modal-btn-confirm');
+            const cancelBtn = document.getElementById('modal-btn-cancel');
+            const actionsEl = document.getElementById('custom-modal-actions');
+            
+            if (actionsEl) {
+                actionsEl.innerHTML = `
+                    <div class="flex flex-col gap-2 w-full mt-2">
+                        <button id="modal-btn-login" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold py-3 rounded-xl transition-all shadow-sm flex justify-center items-center"><i class="fa-solid fa-right-to-bracket mr-2"></i> เข้าสู่ระบบ</button>
+                        <div class="flex gap-2">
+                            <button id="modal-btn-guest" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl transition-all border border-gray-200 shadow-sm text-xs"><i class="fa-solid fa-user-secret mr-1"></i> ผู้เยี่ยมชม</button>
+                            <button id="modal-btn-portal" class="flex-1 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold py-2.5 rounded-xl transition-all border border-purple-100 shadow-sm text-xs"><i class="fa-solid fa-home mr-1"></i> ระบบหลัก</button>
+                        </div>
+                    </div>
+                `;
+
+                // ผูกปุ่มล็อกอิน
+                document.getElementById('modal-btn-login').onclick = () => {
+                    const inputUid = document.getElementById('manual-login-uid').value.trim();
+                    if (!inputUid) {
+                        showManualLoginModal("กรุณาระบุรหัสพนักงาน");
+                        return;
+                    }
+                    
+                    const normalizedUid = String(inputUid).toLowerCase();
+                    if (USER_DB[normalizedUid]) {
+                        const foundEmp = GLOBAL_CONFIG_LIST.find(e => String(e.uid).toLowerCase() === normalizedUid);
+                        const empName = foundEmp ? foundEmp.name : inputUid;
+                        const isSystemAdmin = foundEmp && foundEmp.dept && foundEmp.dept.toLowerCase() === 'admin';
+                        const empRoles = isSystemAdmin ? ["Admin"] : [];
+
+                        const userData = {
+                            username: normalizedUid,
+                            name: empName,
+                            roles: empRoles
+                        };
+                        
+                        safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
+                        
+                        document.getElementById('custom-modal').classList.add('hidden');
+                        showToast(`ยินดีต้อนรับคุณ ${empName}`);
+                        checkAuth();
+                    } else {
+                        showManualLoginModal("ไม่พบรหัสพนักงานนี้ในระบบฐานข้อมูล");
+                    }
+                };
+
+                // ผูกปุ่มผู้เยี่ยมชม
+                document.getElementById('modal-btn-guest').onclick = () => {
+                    const userData = {
+                        username: "guest_admin",
+                        name: "ผู้เยี่ยมชม (Guest)",
+                        roles: ["Admin"]
+                    };
+                    if (!USER_DB["guest_admin"]) USER_DB["guest_admin"] = ["AKRA", "TRD"];
+                    safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
+                    document.getElementById('custom-modal').classList.add('hidden');
+                    showToast("เข้าใช้งานในโหมดผู้เยี่ยมชม");
+                    checkAuth();
+                };
+
+                // ผูกปุ่มกลับสู่ระบบหลัก
+                document.getElementById('modal-btn-portal').onclick = () => {
+                    window.location.href = PORTAL_URL;
+                };
+            }
+
+            setTimeout(() => {
+                const inputEl = document.getElementById('manual-login-uid');
+                if (inputEl) inputEl.focus();
+            }, 100);
+        }
+
         // ================= DYNAMIC DATA CONTAINERS =================
         let GLOBAL_CONFIG_LIST = [
             { uid: "250013", name: "เฉิน", branches: "AKRA,TRD", dept: "Admin" },
@@ -518,7 +662,7 @@
         let currentUser = null;       
         let displayUserName = "";     
         let currentRoles = [];
-        let currentBranch = sessionStorage.getItem('active_branch') || "";
+        let currentBranch = safeSessionStorage.getItem('active_branch') || "";
         let viewOffsetWeek = 0; 
         let IS_ADMIN = false;
 
@@ -551,7 +695,13 @@
 
         function getStartOfWeek(d) {
             d = new Date(d);
-            var day = d.getDay(), diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            var day = d.getDay();
+            var diff;
+            if (currentBranch === 'TRD') {
+                diff = d.getDate() - ((day + 1) % 7);
+            } else {
+                diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            }
             return new Date(d.setDate(diff));
         }
 
@@ -833,33 +983,106 @@
                         deptFilter.innerHTML += `<option value="${dept}">🏷️ ${dept}</option>`;
                     });
                 }
-
-                const loader = document.getElementById('system-loading');
-                if (loader) loader.classList.add('hidden');
                 
                 populateAdminEmpFilter(); 
-                checkAuth();
+                await checkAuth();
             }
         }
 
-        function checkAuth() {
-            const savedData = localStorage.getItem('akra_sso_user_data');
-            
-            function setupGuestUser() {
-                currentUser = "guest_admin";
-                displayUserName = "ผู้เยี่ยมชม (Guest)";
-                currentRoles = ["Admin"];
-                if (!USER_DB["guest_admin"]) USER_DB["guest_admin"] = ["AKRA", "TRD"];
+        async function checkAuth() {
+            let userData = null;
+
+            // 1. ดึงจาก URL Query Parameters ก่อน (เช่น ?sso=JWT_TOKEN หรือ ?uid=250013)
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const ssoToken = urlParams.get('sso');
+                const paramUid = urlParams.get('uid') || urlParams.get('username') || urlParams.get('user');
+
+                if (ssoToken) {
+                    const portalApiUrl = "https://script.google.com/macros/s/AKfycbwv2oGqYocA-k-EN2qjs_rf64gc9kDCG2o2nIKlAW0BDCT0rXLvcgLurCRaQXjuC-OG/exec";
+                    
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 วินาที
+                        
+                        const verifyRes = await fetch(`${portalApiUrl}?action=verifyToken&token=${encodeURIComponent(ssoToken)}`, { signal: controller.signal });
+                        clearTimeout(timeoutId);
+                        
+                        if (verifyRes.ok) {
+                            const verifyData = await verifyRes.json();
+                            if (verifyData && verifyData.valid && verifyData.user) {
+                                const decodedUser = verifyData.user;
+                                const normalizedUid = String(decodedUser.id).toLowerCase();
+                                const isSystemAdmin = decodedUser.roles && (decodedUser.roles.includes('ADMIN') || decodedUser.roles.includes('Admin'));
+                                const empRoles = isSystemAdmin ? ["Admin"] : [];
+
+                                userData = {
+                                    username: normalizedUid,
+                                    name: decodedUser.name,
+                                    roles: empRoles
+                                };
+                                safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("API token verification failed, trying local decode as fallback...", e);
+                    }
+
+                    // หากยืนยันผ่าน API ไม่ได้ (เช่น ออฟไลน์/เน็ตช้า) ให้ทำ Local Decode เป็น Fallback
+                    if (!userData) {
+                        const decodedUser = decodeJwtPayload(ssoToken);
+                        if (decodedUser && decodedUser.id) {
+                            const normalizedUid = String(decodedUser.id).toLowerCase();
+                            const isSystemAdmin = decodedUser.roles && (decodedUser.roles.includes('ADMIN') || decodedUser.roles.includes('Admin'));
+                            const empRoles = isSystemAdmin ? ["Admin"] : [];
+
+                            userData = {
+                                username: normalizedUid,
+                                name: decodedUser.name || normalizedUid,
+                                roles: empRoles
+                            };
+                            safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
+                        }
+                    }
+                } else if (paramUid) {
+                    const normalizedUid = String(paramUid).toLowerCase();
+                    const foundEmp = GLOBAL_CONFIG_LIST.find(e => String(e.uid).toLowerCase() === normalizedUid);
+                    const empName = foundEmp ? foundEmp.name : paramUid;
+                    const isSystemAdmin = foundEmp && foundEmp.dept && foundEmp.dept.toLowerCase() === 'admin';
+                    const empRoles = isSystemAdmin ? ["Admin"] : [];
+
+                    userData = {
+                        username: normalizedUid,
+                        name: empName,
+                        roles: empRoles
+                    };
+                    safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
+                }
+            } catch(e) { console.error("URL Params auth check failed", e); }
+
+            // 2. ดึงจาก Storage หากไม่มีใน URL
+            if (!userData) {
+                const savedData = safeStorage.getItem('akra_sso_user_data');
+                if (savedData) {
+                    try {
+                        userData = JSON.parse(savedData);
+                    } catch(e) { console.error(e); }
+                }
             }
 
-            if (savedData) {
-                try {
-                    const userData = JSON.parse(savedData);
-                    currentUser = userData.username || userData.id || userData.name;
-                    displayUserName = userData.name || currentUser;
-                    currentRoles = userData.roles || [];
-                } catch (e) { setupGuestUser(); }
-            } else { setupGuestUser(); }
+            // ซ่อนตัวโหลดที่นี่ เมื่อระบบตรวจสิทธิ์เสร็จสิ้นแล้ว
+            const loader = document.getElementById('system-loading');
+            if (loader) loader.classList.add('hidden');
+
+            if (userData) {
+                currentUser = userData.username || userData.id || userData.name;
+                displayUserName = userData.name || currentUser;
+                currentRoles = userData.roles || [];
+            } else {
+                // หากไม่พบข้อมูลล็อกอิน ให้แสดงกล่องกรอกรหัสพนักงานเพื่อล็อกอิน
+                showManualLoginModal();
+                return;
+            }
 
             const userNameDisplay = document.getElementById('showUserName');
             if(userNameDisplay) userNameDisplay.innerText = displayUserName;
@@ -913,7 +1136,7 @@
 
         function selectBranch(branch, perms = null) {
             currentBranch = branch;
-            sessionStorage.setItem('active_branch', branch);
+            safeSessionStorage.setItem('active_branch', branch);
             document.getElementById('view-selector').classList.add('hidden');
             if(!perms) perms = USER_DB[String(currentUser).toLowerCase()] || [];
             initApp(branch, perms);
@@ -975,7 +1198,7 @@
                 const data = await response.json();
                 
                 if (Array.isArray(data)) {
-                    localStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
+                    safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
                     if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
                         loadDashboardData();
                     } else if (!document.getElementById('view-admin-dash').classList.contains('hidden')) {
@@ -1061,7 +1284,7 @@
         }
 
         function loadDashboardData() {
-            const rawData = JSON.parse(localStorage.getItem('kpiData_' + currentBranch) || '[]');
+            const rawData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
             
             const today = new Date();
             const startOfCurrentWeek = getStartOfWeek(today); 
@@ -1386,11 +1609,11 @@
             try {
                 const resAkra = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=AKRA");
                 const dataAkra = await resAkra.json();
-                localStorage.setItem('kpiData_AKRA', JSON.stringify(dataAkra));
+                safeStorage.setItem('kpiData_AKRA', JSON.stringify(dataAkra));
 
                 const resTrd = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=TRD");
                 const dataTrd = await resTrd.json();
-                localStorage.setItem('kpiData_TRD', JSON.stringify(dataTrd));
+                safeStorage.setItem('kpiData_TRD', JSON.stringify(dataTrd));
                 
                 if(!document.getElementById('view-admin-dash').classList.contains('hidden')) {
                     renderAdminDashboard();
@@ -1417,12 +1640,12 @@
             
             let allData = [];
             if (branchFilter === 'ALL' || branchFilter === 'AKRA') {
-                let d = JSON.parse(localStorage.getItem('kpiData_AKRA') || '[]');
+                let d = JSON.parse(safeStorage.getItem('kpiData_AKRA') || '[]');
                 d.forEach(x => x.sourceBranch = 'AKRA');
                 allData = allData.concat(d);
             }
             if (branchFilter === 'ALL' || branchFilter === 'TRD') {
-                let d = JSON.parse(localStorage.getItem('kpiData_TRD') || '[]');
+                let d = JSON.parse(safeStorage.getItem('kpiData_TRD') || '[]');
                 d.forEach(x => x.sourceBranch = 'TRD');
                 allData = allData.concat(d);
             }
@@ -1502,12 +1725,12 @@
             
             let allData = [];
             if (branchFilter === 'ALL' || branchFilter === 'AKRA') {
-                let d = JSON.parse(localStorage.getItem('kpiData_AKRA') || '[]');
+                let d = JSON.parse(safeStorage.getItem('kpiData_AKRA') || '[]');
                 d.forEach(x => x.sourceBranch = 'AKRA');
                 allData = allData.concat(d);
             }
             if (branchFilter === 'ALL' || branchFilter === 'TRD') {
-                let d = JSON.parse(localStorage.getItem('kpiData_TRD') || '[]');
+                let d = JSON.parse(safeStorage.getItem('kpiData_TRD') || '[]');
                 d.forEach(x => x.sourceBranch = 'TRD');
                 allData = allData.concat(d);
             }
@@ -1972,7 +2195,7 @@
             const endOfWeek = new Date(startOfWeek);
             endOfWeek.setDate(endOfWeek.getDate() + 6);
 
-            const rawData = JSON.parse(localStorage.getItem('kpiData_' + currentBranch) || '[]');
+            const rawData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
             
             let targetWeekData = rawData.filter(d => {
                 const itemDate = new Date(d.date); itemDate.setHours(0,0,0,0);
@@ -2088,10 +2311,10 @@
                         body: JSON.stringify(payload)
                     });
                     
-                    let localData = JSON.parse(localStorage.getItem('kpiData_' + currentBranch) || '[]');
+                    let localData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
                     localData = localData.filter(d => d.date !== date);
                     localData.push(payload);
-                    localStorage.setItem('kpiData_' + currentBranch, JSON.stringify(localData));
+                    safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(localData));
 
                     showToast("บันทึกข้อมูลเรียบร้อยแล้ว!");
                     sendAppLog("บันทึกข้อมูล", `บันทึกข้อมูลสาขา ${currentBranch} (วันที่ ${date})`);
