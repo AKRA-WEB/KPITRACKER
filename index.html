@@ -978,6 +978,14 @@
                      GLOBAL_CONFIG_LIST.forEach(u => USER_DB[u.uid.toLowerCase()] = u.branches.split(',').map(b=>b.trim().toUpperCase()));
                 }
 
+                // Ensure hardcoded admin fallbacks are always in USER_DB to prevent permission rejection
+                const admins = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'guest_admin', '172980'];
+                admins.forEach(adminId => {
+                    if (!USER_DB[adminId]) {
+                        USER_DB[adminId] = ["AKRA", "TRD"];
+                    }
+                });
+
                 const deptFilter = document.getElementById('dash-dept-filter');
                 if (deptFilter) {
                     deptFilter.innerHTML = '<option value="ALL">ดูรวมทุกแผนก</option>';
