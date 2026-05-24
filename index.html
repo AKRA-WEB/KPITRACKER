@@ -1,3 +1,4 @@
+<!-- GitHub Repo: https://github.com/AKRA-WEB/KPITRACKER -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -468,6 +469,8 @@
             _data: {}
         };
 
+        const KPI_CACHE_TTL = 15 * 60 * 1000;
+        function isKpiCacheStale(branch) { const ts = parseInt(safeStorage.getItem('kpiData_' + branch + '_ts') || '0'); return Date.now() - ts > KPI_CACHE_TTL; }
         // ================= JWT DECODER =================
         function decodeJwtPayload(token) {
             try {
@@ -1201,7 +1204,7 @@
 
             addErrorEntryRow();
             loadTasksForSelectedDate();
-            syncDataFromSheet();
+            if (isKpiCacheStale(currentBranch)) syncDataFromSheet(); else loadDashboardData();
         }
 
         // ================= API / SYNC =================
@@ -1227,6 +1230,7 @@
                 
                 if (Array.isArray(data)) {
                     safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
+                    safeStorage.setItem('kpiData_' + currentBranch + '_ts', String(Date.now()));
                     if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
                         loadDashboardData();
                     } else if (!document.getElementById('view-admin-dash').classList.contains('hidden')) {
@@ -1638,10 +1642,12 @@
                 const resAkra = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=AKRA");
                 const dataAkra = await resAkra.json();
                 safeStorage.setItem('kpiData_AKRA', JSON.stringify(dataAkra));
+                safeStorage.setItem('kpiData_AKRA_ts', String(Date.now()));
 
                 const resTrd = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=TRD");
                 const dataTrd = await resTrd.json();
                 safeStorage.setItem('kpiData_TRD', JSON.stringify(dataTrd));
+                safeStorage.setItem('kpiData_TRD_ts', String(Date.now()));
                 
                 if(!document.getElementById('view-admin-dash').classList.contains('hidden')) {
                     renderAdminDashboard();
