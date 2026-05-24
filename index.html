@@ -1,3 +1,4 @@
+<!-- GitHub Repo: https://github.com/AKRA-WEB/KPITRACKER -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -468,6 +469,8 @@
             _data: {}
         };
 
+        const KPI_CACHE_TTL = 15 * 60 * 1000;
+        function isKpiCacheStale(branch) { const ts = parseInt(safeStorage.getItem('kpiData_' + branch + '_ts') || '0'); return Date.now() - ts > KPI_CACHE_TTL; }
         // ================= JWT DECODER =================
         function decodeJwtPayload(token) {
             try {
@@ -590,6 +593,7 @@
             { uid: "172980", name: "AKRA (Admin)", branches: "AKRA,TRD", dept: "Admin" },
             { uid: "hhsawyer", name: "Herehorr", branches: "AKRA,TRD", dept: "Admin" },
             { uid: "stamp111", name: "Stamp", branches: "AKRA,TRD", dept: "Admin" },
+            { uid: "stamp1112", name: "Stamp (New)", branches: "AKRA,TRD", dept: "Admin" },
             { uid: "250007", name: "หยอง", branches: "AKRA", dept: "" },
             { uid: "250022", name: "บรรเลง", branches: "AKRA", dept: "" },
             { uid: "250025", name: "พุช", branches: "AKRA", dept: "" },
@@ -931,6 +935,39 @@
         }
 
         // ================= STARTUP LOGIC =================
+        function processConfigList(configList) {
+            if (!Array.isArray(configList) || configList.length === 0) return;
+            
+            GLOBAL_CONFIG_LIST = configList;
+            USER_DB = {};
+            TRD_DEPARTMENTS = {};
+            BRANCH_CONFIG["AKRA"].employees = [];
+            BRANCH_CONFIG["TRD"].employees = [];
+
+            configList.forEach(user => {
+                if (!user.uid) return;
+                const uidStr = String(user.uid).toLowerCase();
+                const branches = user.branches.split(',').map(b => b.trim().toUpperCase()).filter(b => b);
+                
+                USER_DB[uidStr] = branches;
+                const isSystemAdmin = user.dept && user.dept.toLowerCase() === 'admin';
+
+                // กรองเฉพาะพนักงานที่ไม่ใช่ Admin เพื่อแสดงในหน้าบันทึก KPI และ Dashboard
+                if (user.name && !isSystemAdmin) {
+                    if (branches.includes('AKRA')) {
+                        if (!BRANCH_CONFIG["AKRA"].employees.includes(user.name)) BRANCH_CONFIG["AKRA"].employees.push(user.name);
+                    }
+                    if (branches.includes('TRD')) {
+                        if (!BRANCH_CONFIG["TRD"].employees.includes(user.name)) BRANCH_CONFIG["TRD"].employees.push(user.name);
+                        if (user.dept) {
+                            if (!TRD_DEPARTMENTS[user.dept]) TRD_DEPARTMENTS[user.dept] = [];
+                            if (!TRD_DEPARTMENTS[user.dept].includes(user.name)) TRD_DEPARTMENTS[user.dept].push(user.name);
+                        }
+                    }
+                }
+            });
+        }
+
         async function initSystem() {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000); 
@@ -941,45 +978,13 @@
 
                 if (!response.ok) throw new Error("Network response was not ok");
                 const configList = await response.json();
-                
-                if (Array.isArray(configList) && configList.length > 0) {
-                    GLOBAL_CONFIG_LIST = configList; 
-                    USER_DB = {};
-                    TRD_DEPARTMENTS = {};
-                    BRANCH_CONFIG["AKRA"].employees = [];
-                    BRANCH_CONFIG["TRD"].employees = [];
-
-                    configList.forEach(user => {
-                        if (!user.uid) return;
-                        const uidStr = String(user.uid).toLowerCase();
-                        const branches = user.branches.split(',').map(b => b.trim().toUpperCase()).filter(b => b);
-                        
-                        USER_DB[uidStr] = branches;
-                        const isSystemAdmin = user.dept && user.dept.toLowerCase() === 'admin';
-
-                        if (user.name && !isSystemAdmin) {
-                            if (branches.includes('AKRA')) {
-                                if (!BRANCH_CONFIG["AKRA"].employees.includes(user.name)) BRANCH_CONFIG["AKRA"].employees.push(user.name);
-                            }
-                            if (branches.includes('TRD')) {
-                                if (!BRANCH_CONFIG["TRD"].employees.includes(user.name)) BRANCH_CONFIG["TRD"].employees.push(user.name);
-                                if (user.dept) {
-                                    if (!TRD_DEPARTMENTS[user.dept]) TRD_DEPARTMENTS[user.dept] = [];
-                                    if (!TRD_DEPARTMENTS[user.dept].includes(user.name)) TRD_DEPARTMENTS[user.dept].push(user.name);
-                                }
-                            }
-                        }
-                    });
-                }
+                processConfigList(configList);
             } catch(e) {
-                console.warn("ใช้รายชื่อพนักงานตั้งต้น (Fallback)");
+                console.warn("ใช้รายชื่อพนักงานตั้งต้น (Fallback)", e);
+                processConfigList(GLOBAL_CONFIG_LIST);
             } finally {
-                if (Object.keys(USER_DB).length === 0) {
-                     GLOBAL_CONFIG_LIST.forEach(u => USER_DB[u.uid.toLowerCase()] = u.branches.split(',').map(b=>b.trim().toUpperCase()));
-                }
-
                 // Ensure hardcoded admin fallbacks are always in USER_DB to prevent permission rejection
-                const admins = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'guest_admin', '172980'];
+                const admins = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'];
                 admins.forEach(adminId => {
                     if (!USER_DB[adminId]) {
                         USER_DB[adminId] = ["AKRA", "TRD"];
@@ -1018,42 +1023,50 @@
                         const verifyRes = await fetch(`${portalApiUrl}?action=verifyToken&token=${encodeURIComponent(ssoToken)}`, { signal: controller.signal });
                         clearTimeout(timeoutId);
                         
-                        if (verifyRes.ok) {
-                            const verifyData = await verifyRes.json();
-                            if (verifyData && verifyData.valid && verifyData.user) {
-                                const decodedUser = verifyData.user;
+                            if (verifyRes.ok) {
+                                const verifyData = await verifyRes.json();
+                                if (verifyData && verifyData.valid && verifyData.user) {
+                                    const decodedUser = verifyData.user;
+                                    const normalizedUid = String(decodedUser.id).toLowerCase();
+                                    
+                                    // ดึง Roles ทั้งหมดจาก SSO และทำการแมพ Admin ให้ตรงกับที่ระบบภายในใช้
+                                    const ssoRoles = decodedUser.roles || [];
+                                    if ((ssoRoles.includes('ADMIN') || ssoRoles.includes('admin')) && !ssoRoles.includes('Admin')) {
+                                        ssoRoles.push('Admin');
+                                    }
+
+                                    userData = {
+                                        username: normalizedUid,
+                                        name: decodedUser.name,
+                                        roles: ssoRoles
+                                    };
+                                    safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
+                                }
+                            }
+                        } catch (e) {
+                            console.warn("API token verification failed, trying local decode as fallback...", e);
+                        }
+
+                        // หากยืนยันผ่าน API ไม่ได้ (เช่น ออฟไลน์/เน็ตช้า) ให้ทำ Local Decode เป็น Fallback
+                        if (!userData) {
+                            const decodedUser = decodeJwtPayload(ssoToken);
+                            if (decodedUser && decodedUser.id) {
                                 const normalizedUid = String(decodedUser.id).toLowerCase();
-                                const isSystemAdmin = decodedUser.roles && (decodedUser.roles.includes('ADMIN') || decodedUser.roles.includes('Admin'));
-                                const empRoles = isSystemAdmin ? ["Admin"] : [];
+                                
+                                // ดึง Roles ทั้งหมดจาก JWT Payload
+                                const ssoRoles = decodedUser.roles || [];
+                                if ((ssoRoles.includes('ADMIN') || ssoRoles.includes('admin')) && !ssoRoles.includes('Admin')) {
+                                    ssoRoles.push('Admin');
+                                }
 
                                 userData = {
                                     username: normalizedUid,
-                                    name: decodedUser.name,
-                                    roles: empRoles
+                                    name: decodedUser.name || normalizedUid,
+                                    roles: ssoRoles
                                 };
                                 safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
                             }
                         }
-                    } catch (e) {
-                        console.warn("API token verification failed, trying local decode as fallback...", e);
-                    }
-
-                    // หากยืนยันผ่าน API ไม่ได้ (เช่น ออฟไลน์/เน็ตช้า) ให้ทำ Local Decode เป็น Fallback
-                    if (!userData) {
-                        const decodedUser = decodeJwtPayload(ssoToken);
-                        if (decodedUser && decodedUser.id) {
-                            const normalizedUid = String(decodedUser.id).toLowerCase();
-                            const isSystemAdmin = decodedUser.roles && (decodedUser.roles.includes('ADMIN') || decodedUser.roles.includes('Admin'));
-                            const empRoles = isSystemAdmin ? ["Admin"] : [];
-
-                            userData = {
-                                username: normalizedUid,
-                                name: decodedUser.name || normalizedUid,
-                                roles: empRoles
-                            };
-                            safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
-                        }
-                    }
                 } else if (paramUid) {
                     const normalizedUid = String(paramUid).toLowerCase();
                     const foundEmp = GLOBAL_CONFIG_LIST.find(e => String(e.uid).toLowerCase() === normalizedUid);
@@ -1101,7 +1114,7 @@
             if(recordDate) recordDate.valueAsDate = new Date();
             
             IS_ADMIN = currentRoles.includes('Admin') || currentRoles.includes('admin') || 
-                       ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase());
+                       ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase());
             
             if(IS_ADMIN) {
                 document.getElementById('tab-admin').classList.remove('hidden');
@@ -1118,8 +1131,16 @@
         }
 
         function applyRolePermissions() {
-            const permissions = USER_DB[String(currentUser).toLowerCase()] || [];
+            // ดึงสิทธิ์จากฐานข้อมูลพนักงานภายในก่อน
+            let permissions = USER_DB[String(currentUser).toLowerCase()] || [];
             
+            // เพิ่มสิทธิ์จาก SSO Roles (ถ้ามี AKRA หรือ TRD) เพื่อให้รองรับพนักงานใหม่ที่ยังไม่ได้เพิ่มในแอป KPI
+            const ssoBranches = currentRoles.filter(role => ['AKRA', 'TRD'].includes(String(role).toUpperCase()));
+            ssoBranches.forEach(b => {
+                const upperB = b.toUpperCase();
+                if (!permissions.includes(upperB)) permissions.push(upperB);
+            });
+
             if (permissions.length === 0) {
                 showModal("ไม่มีสิทธิ์เข้าใช้งาน", `คุณไม่มีสิทธิ์เข้าใช้งานระบบ KPI Tracker หรือรหัสไม่ถูกต้อง (User ID: ${currentUser})`, "error", () => {
                     window.location.href = PORTAL_URL;
@@ -1183,7 +1204,7 @@
 
             addErrorEntryRow();
             loadTasksForSelectedDate();
-            syncDataFromSheet();
+            if (isKpiCacheStale(currentBranch)) syncDataFromSheet(); else loadDashboardData();
         }
 
         // ================= API / SYNC =================
@@ -1209,6 +1230,7 @@
                 
                 if (Array.isArray(data)) {
                     safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
+                    safeStorage.setItem('kpiData_' + currentBranch + '_ts', String(Date.now()));
                     if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
                         loadDashboardData();
                     } else if (!document.getElementById('view-admin-dash').classList.contains('hidden')) {
@@ -1620,10 +1642,12 @@
                 const resAkra = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=AKRA");
                 const dataAkra = await resAkra.json();
                 safeStorage.setItem('kpiData_AKRA', JSON.stringify(dataAkra));
+                safeStorage.setItem('kpiData_AKRA_ts', String(Date.now()));
 
                 const resTrd = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=TRD");
                 const dataTrd = await resTrd.json();
                 safeStorage.setItem('kpiData_TRD', JSON.stringify(dataTrd));
+                safeStorage.setItem('kpiData_TRD_ts', String(Date.now()));
                 
                 if(!document.getElementById('view-admin-dash').classList.contains('hidden')) {
                     renderAdminDashboard();
@@ -1802,10 +1826,14 @@
 
         function renderAdminPanel() {
             const container = document.getElementById('admin-employee-list');
-            document.getElementById('admin-emp-count').innerText = `${GLOBAL_CONFIG_LIST.length} คน`;
             let html = '';
+            let displayedCount = 0;
             
             GLOBAL_CONFIG_LIST.forEach((emp, index) => {
+                const isSystemAdmin = emp.dept && emp.dept.toLowerCase() === 'admin';
+                if (isSystemAdmin) return; // ไม่แสดงรายชื่อ Admin ในหน้าจัดการพนักงาน
+
+                displayedCount++;
                 let branchesBadge = emp.branches.split(',').map(b => `<span class="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 mr-1">${b}</span>`).join('');
                 let deptBadge = emp.dept ? `<span class="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded border border-purple-100">${emp.dept}</span>` : '';
                 
@@ -1830,6 +1858,8 @@
                     </div>
                 `;
             });
+            
+            document.getElementById('admin-emp-count').innerText = `${displayedCount} คน`;
             container.innerHTML = html || '<div class="text-center text-gray-400 text-sm py-4">ไม่พบรายชื่อพนักงาน</div>';
         }
 
