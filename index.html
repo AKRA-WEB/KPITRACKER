@@ -2281,11 +2281,12 @@
             entries.forEach(entry => {
                 const checkedCbs = entry.querySelectorAll('.err-emp-cb:checked');
                 const type = entry.querySelector('.err-type').value;
-                let note = entry.querySelector('.err-note').value;
-                
+                const rawNote = entry.querySelector('.err-note').value;
+                let note = rawNote;
+
                 let stageSelect = entry.querySelector('.err-stage');
                 let stage = stageSelect ? stageSelect.value : '';
-                
+
                 if (type === 'ความผิดอื่น ๆ') {
                     const penalty = entry.querySelector('.err-penalty').value;
                     note = `[หัก ${penalty} HP] ${note}`;
@@ -2295,9 +2296,9 @@
                     note = `[${stage}] ${note}`;
                 }
 
-                if (checkedCbs.length > 0 && note.trim() !== "") {
+                if (checkedCbs.length > 0 && rawNote.trim() !== "") {
                     checkedCbs.forEach(cb => { currentErrors.push({ id: Date.now() + Math.random(), emp: cb.value, type, note }); });
-                } else if (checkedCbs.length > 0 || note.trim() !== "") {
+                } else if (checkedCbs.length > 0 || rawNote.trim() !== "") {
                     hasIncompleteError = true;
                 }
             });
