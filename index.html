@@ -671,6 +671,11 @@
         let currentBranch = safeSessionStorage.getItem('active_branch') || "";
         let viewOffsetWeek = 0; 
         let IS_ADMIN = false;
+        let _kpiPerms = [];
+        function can(perm) {
+            if (_kpiPerms.length > 0) return _kpiPerms.includes(perm);
+            return IS_ADMIN;
+        }
 
         // ================= HELPER FUNCTIONS =================
         function getTRDDept(empName) {
@@ -1113,10 +1118,13 @@
             const recordDate = document.getElementById('record-date');
             if(recordDate) recordDate.valueAsDate = new Date();
             
-            IS_ADMIN = currentRoles.includes('Admin') || currentRoles.includes('admin') || 
+            IS_ADMIN = currentRoles.includes('Admin') || currentRoles.includes('admin') ||
                        ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase());
-            
-            if(IS_ADMIN) {
+            const _ssoData = JSON.parse(safeStorage.getItem('akra_sso_user_data') || '{}');
+            _kpiPerms = (_ssoData.perms && _ssoData.perms["app-kpi"]) || [];
+            if (_kpiPerms.length === 0 && IS_ADMIN) _kpiPerms = ["adminDashboard"];
+
+            if(can("adminDashboard")) {
                 document.getElementById('tab-admin').classList.remove('hidden');
                 document.getElementById('tab-admin').classList.add('flex');
                 
@@ -1637,7 +1645,7 @@
         }
 
         async function syncAllBranchesForAdmin() {
-            if (!IS_ADMIN) return;
+            if (!can("adminDashboard")) return;
             try {
                 const resAkra = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=AKRA");
                 const dataAkra = await resAkra.json();
@@ -1658,7 +1666,7 @@
         }
 
         function renderAdminDashboard() {
-            if (!IS_ADMIN) return;
+            if (!can("adminDashboard")) return;
             
             let monthInput = document.getElementById('admin-dash-month').value;
             if (!monthInput) {
