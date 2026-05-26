@@ -59,7 +59,7 @@
         </div>
         <div class="flex justify-between items-center text-xs text-blue-200">
             <div><i class="fa-solid fa-user mr-1"></i> ผู้ใช้งาน: <span id="showUserName" class="font-semibold text-white">กำลังตรวจสอบ...</span></div>
-            <button id="btn-switch-branch" onclick="location.reload()" class="hidden bg-blue-800 px-2 py-0.5 rounded text-white active:bg-blue-900"><i class="fa-solid fa-right-left mr-1"></i> สลับสาขา</button>
+            <button id="btn-switch-branch" onclick="safeSessionStorage.removeItem('active_branch'); location.reload();" class="hidden bg-blue-800 px-2 py-0.5 rounded text-white active:bg-blue-900"><i class="fa-solid fa-right-left mr-1"></i> สลับสาขา</button>
         </div>
     </header>
 
@@ -2054,6 +2054,7 @@
 
         // ================= RECORD LOGIC =================
         function addErrorEntryRow() {
+            if (!currentBranch || !BRANCH_CONFIG[currentBranch]) return;
             const container = document.getElementById('error-entries-container');
             const rowId = Date.now() + Math.floor(Math.random() * 1000);
             const typeOptionsHtml = getErrorTypeOptionsHtml(currentBranch);
@@ -2149,6 +2150,7 @@
         }
 
         function addTaskEntryRow(name = "", status = "ยังไม่เริ่ม", assignee = "") {
+            if (!currentBranch || !BRANCH_CONFIG[currentBranch]) return;
             const container = document.getElementById('task-entries-container');
             const safeName = name.replace(/"/g, '&quot;');
             const rowId = 'task-' + Date.now() + Math.floor(Math.random() * 1000);
@@ -2237,9 +2239,10 @@
 
             const rawData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
             
+            startOfWeek.setHours(0,0,0,0);
+            endOfWeek.setHours(23,59,59,999);
             let targetWeekData = rawData.filter(d => {
                 const itemDate = new Date(d.date); itemDate.setHours(0,0,0,0);
-                startOfWeek.setHours(0,0,0,0); endOfWeek.setHours(23,59,59,999);
                 return itemDate >= startOfWeek && itemDate <= endOfWeek;
             });
             targetWeekData.sort((a,b) => new Date(a.date) - new Date(b.date));
