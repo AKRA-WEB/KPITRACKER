@@ -973,7 +973,47 @@
             });
         }
 
+        function handleLineBrowserRedirect() {
+            const isLine = /Line/i.test(navigator.userAgent);
+            if (isLine) {
+                const url = new URL(window.location.href);
+                if (!url.searchParams.has('openExternalBrowser')) {
+                    url.searchParams.set('openExternalBrowser', '1');
+                    
+                    // Show a premium custom modal with warning and direct external link
+                    showModal(
+                        "แนะนำให้เปิดผ่าน Chrome / Safari",
+                        `<div class="text-left space-y-3">
+                            <p class="text-xs text-gray-500 font-medium leading-relaxed">เบราว์เซอร์ภายในของ LINE มีข้อจำกัดที่อาจทำให้คุณ<b>ไม่สามารถกดเลือกหัวข้อ "2. ระบุรายละเอียด"</b> ได้สำเร็จ</p>
+                            <p class="text-xs text-blue-600 font-bold bg-blue-50 p-2.5 rounded-xl border border-blue-100 flex items-center shadow-sm">
+                                <i class="fa-solid fa-spinner fa-spin mr-2"></i> ระบบกำลังย้ายไปเปิดบนเบราว์เซอร์หลัก...
+                            </p>
+                            <div class="mt-4">
+                                <a href="${url.toString()}" target="_blank" class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-md active:scale-95 transition-transform w-full">
+                                    <i class="fa-solid fa-compass mr-2 text-sm"></i> เปิดในเบราว์เซอร์ภายนอกทันที
+                                </a>
+                            </div>
+                         </div>`,
+                        "alert",
+                        () => {
+                            window.location.href = url.toString();
+                        }
+                    );
+                    
+                    // Auto-redirect after 1.5 seconds
+                    setTimeout(() => {
+                        window.location.href = url.toString();
+                    }, 1500);
+                    return true; // Stop normal initSystem execution
+                }
+            }
+            return false;
+        }
+
         async function initSystem() {
+            // ตรวจสอบและย้ายไปเปิดเบราว์เซอร์ภายนอกเมื่อเปิดจาก LINE (ป้องกันบั๊กการกดปุ่มบน WebView ของ LINE)
+            if (handleLineBrowserRedirect()) return;
+
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000); 
 
@@ -2125,10 +2165,13 @@
                             <span class="bg-gray-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] mr-1.5">2</span> ระบุรายละเอียด
                         </label>
                         <div class="grid grid-cols-1 gap-3 pl-1">
-                            <div>
-                                <select class="err-type w-full p-2.5 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-50 appearance-none cursor-pointer" onchange="togglePenalty(this)">
+                            <div class="relative">
+                                <select class="err-type w-full p-2.5 pr-10 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-50 appearance-none cursor-pointer" onchange="togglePenalty(this)">
                                     ${typeOptionsHtml}
                                 </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                                </div>
                             </div>
                             ${currentBranch === 'TRD' ? `
                             <div>
