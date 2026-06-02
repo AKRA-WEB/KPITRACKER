@@ -440,6 +440,24 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
+        const CURRENT_VERSION = "20260602.01";
+        async function checkAppVersion() {
+            try {
+                const res = await fetch('version.json?t=' + Date.now());
+                if (!res.ok) return true;
+                const config = await res.json();
+                if (config && config.version && config.version !== CURRENT_VERSION) {
+                    alert('พบเวอร์ชันใหม่ กำลังอัปเดตระบบ...');
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('update', Date.now());
+                    window.location.replace(url.toString());
+                    return false;
+                }
+            } catch (e) {
+                console.warn('Version check skipped:', e);
+            }
+            return true;
+        }
 
         // ================= SAFE STORAGE WRAPPERS =================
         // ป้องกันแอปพลิเคชันค้าง/พังจาก SecurityError เมื่อเบราว์เซอร์บนคอมพิวเตอร์บล็อกคุกกี้/พื้นที่เก็บข้อมูลบุคคลที่สาม
@@ -1011,6 +1029,9 @@
         }
 
         async function initSystem() {
+            const isVersionOk = await checkAppVersion();
+            if (!isVersionOk) return;
+
             // ตรวจสอบและย้ายไปเปิดเบราว์เซอร์ภายนอกเมื่อเปิดจาก LINE (ป้องกันบั๊กการกดปุ่มบน WebView ของ LINE)
             if (handleLineBrowserRedirect()) return;
 
