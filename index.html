@@ -440,7 +440,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260604.01";
+        const CURRENT_VERSION = "20260609.01";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1104,7 +1104,8 @@
                                     userData = {
                                         username: normalizedUid,
                                         name: decodedUser.name,
-                                        roles: ssoRoles
+                                        roles: ssoRoles,
+                                        perms: decodedUser.perms || {}
                                     };
                                     safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
                                 }
@@ -1128,7 +1129,8 @@
                                 userData = {
                                     username: normalizedUid,
                                     name: decodedUser.name || normalizedUid,
-                                    roles: ssoRoles
+                                    roles: ssoRoles,
+                                    perms: decodedUser.perms || {}
                                 };
                                 safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
                             }
