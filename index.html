@@ -3,24 +3,37 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KPI Tracker - Multi Branch</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .tab-active { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
         .tab-inactive { color: #9ca3af; }
         .toast { transition: opacity 0.3s, transform 0.3s; transform: translateY(100%); opacity: 0; }
         .toast.show { transform: translateY(0); opacity: 1; }
+        .sticky-save-button { position: sticky; bottom: calc(4.75rem + env(safe-area-inset-bottom)); z-index: 30; }
+        :where(button, input, select, textarea, a):focus-visible {
+            outline: 3px solid #f97316 !important;
+            outline-offset: 2px;
+        }
         ::-webkit-scrollbar { width: 0px; background: transparent; }
         optgroup { font-weight: bold; color: #4f46e5; background-color: #f8fafc; }
         option { font-weight: normal; color: #1f2937; background-color: #ffffff; }
-        
+
         /* Custom Checkbox Animation */
-        .emp-label { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .emp-label { transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         .emp-label:active { transform: scale(0.95); }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body class="text-gray-800 pb-20">
@@ -53,13 +66,13 @@
     <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex flex-col space-y-2">
         <div class="flex justify-between items-center">
             <h1 class="text-xl font-bold"><i class="fa-solid fa-clipboard-check mr-2"></i> KPI <span id="header-branch-name" class="text-yellow-300">AKRA</span></h1>
-            <button onclick="syncDataFromSheet()" id="btn-sync" class="text-white bg-blue-700 px-3 py-1 rounded-full text-xs font-semibold shadow active:bg-blue-800 transition-colors">
+            <button onclick="syncDataFromSheet()" id="btn-sync" aria-label="ซิงค์ข้อมูลล่าสุด" class="text-white bg-blue-700 px-3 py-1 rounded-full text-xs font-semibold shadow active:bg-blue-800 transition-colors">
                 <i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล
             </button>
         </div>
         <div class="flex justify-between items-center text-xs text-blue-200">
             <div><i class="fa-solid fa-user mr-1"></i> ผู้ใช้งาน: <span id="showUserName" class="font-semibold text-white">กำลังตรวจสอบ...</span></div>
-            <button id="btn-switch-branch" onclick="safeSessionStorage.removeItem('active_branch'); location.reload();" class="hidden bg-blue-800 px-2 py-0.5 rounded text-white active:bg-blue-900"><i class="fa-solid fa-right-left mr-1"></i> สลับสาขา</button>
+            <button id="btn-switch-branch" onclick="safeSessionStorage.removeItem('active_branch'); location.reload();" aria-label="สลับสาขา" class="hidden bg-blue-800 px-2 py-0.5 rounded text-white active:bg-blue-900"><i class="fa-solid fa-right-left mr-1"></i> สลับสาขา</button>
         </div>
     </header>
 
@@ -96,9 +109,9 @@
                     <div class="flex justify-between items-center border-b border-gray-100 pb-3">
                         <span class="text-sm font-medium text-gray-700">บิลย้ายคลัง <span class="text-[10px] text-gray-400 block">(หน้าร้านเบิก)</span></span>
                         <div class="flex items-center space-x-2">
-                            <button onclick="adjVol('vol-transfer', -1)" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
+                            <button onclick="adjVol('vol-transfer', -1)" aria-label="ลดจำนวนบิลย้ายคลัง" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
                             <input type="number" id="vol-transfer" value="0" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                            <button onclick="adjVol('vol-transfer', 1)" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
+                            <button onclick="adjVol('vol-transfer', 1)" aria-label="เพิ่มจำนวนบิลย้ายคลัง" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                         </div>
                     </div>
                     
@@ -106,9 +119,9 @@
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">ลูกค้ามารับที่ร้าน</span>
                             <div class="flex items-center space-x-2">
-                                <button onclick="adjVol('vol-pickup', -1)" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
+                                <button onclick="adjVol('vol-pickup', -1)" aria-label="ลดจำนวนลูกค้ามารับที่ร้าน" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
                                 <input type="number" id="vol-pickup" value="0" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                                <button onclick="adjVol('vol-pickup', 1)" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
+                                <button onclick="adjVol('vol-pickup', 1)" aria-label="เพิ่มจำนวนลูกค้ามารับที่ร้าน" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
                         <input type="text" id="note-pickup" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="ระบุชื่อลูกค้า หรือ หมายเหตุเพิ่มเติม...">
@@ -118,9 +131,9 @@
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">ส่งต่างจังหวัด (ตจว.)</span>
                             <div class="flex items-center space-x-2">
-                                <button onclick="adjVol('vol-upcountry', -1)" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
+                                <button onclick="adjVol('vol-upcountry', -1)" aria-label="ลดจำนวนส่งต่างจังหวัด" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
                                 <input type="number" id="vol-upcountry" value="0" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                                <button onclick="adjVol('vol-upcountry', 1)" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
+                                <button onclick="adjVol('vol-upcountry', 1)" aria-label="เพิ่มจำนวนส่งต่างจังหวัด" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
                         <input type="text" id="note-upcountry" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="ระบุชื่อลูกค้า หรือ สถานที่ส่ง (ตจว.)...">
@@ -130,9 +143,9 @@
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">ส่งในตลาด</span>
                             <div class="flex items-center space-x-2">
-                                <button onclick="adjVol('vol-inmarket', -1)" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
+                                <button onclick="adjVol('vol-inmarket', -1)" aria-label="ลดจำนวนส่งในตลาด" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
                                 <input type="number" id="vol-inmarket" value="0" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                                <button onclick="adjVol('vol-inmarket', 1)" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
+                                <button onclick="adjVol('vol-inmarket', 1)" aria-label="เพิ่มจำนวนส่งในตลาด" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
                         <input type="text" id="note-inmarket" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="ระบุชื่อลูกค้า หรือ สถานที่ส่ง (ในตลาด)...">
@@ -142,9 +155,9 @@
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">ส่งนอกตลาด</span>
                             <div class="flex items-center space-x-2">
-                                <button onclick="adjVol('vol-outmarket', -1)" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
+                                <button onclick="adjVol('vol-outmarket', -1)" aria-label="ลดจำนวนส่งนอกตลาด" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
                                 <input type="number" id="vol-outmarket" value="0" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                                <button onclick="adjVol('vol-outmarket', 1)" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
+                                <button onclick="adjVol('vol-outmarket', 1)" aria-label="เพิ่มจำนวนส่งนอกตลาด" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
                         <input type="text" id="note-outmarket" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="ระบุชื่อลูกค้า หรือ สถานที่ส่ง (นอกตลาด)...">
@@ -166,7 +179,7 @@
                 </button>
             </div>
 
-            <button onclick="saveDailyRecord()" id="btn-save" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-lg py-4 rounded-xl shadow-lg active:scale-[0.98] transition-transform flex justify-center items-center border border-blue-800">
+            <button onclick="saveDailyRecord()" id="btn-save" class="sticky-save-button w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-lg py-4 rounded-xl shadow-lg active:scale-[0.98] transition-transform flex justify-center items-center border border-blue-800">
                 <i class="fa-solid fa-cloud-arrow-up mr-2 text-xl"></i> บันทึกข้อมูลส่งเข้าระบบ
             </button>
             <div class="h-6"></div> <!-- Extra spacing at bottom -->
@@ -176,12 +189,12 @@
         <div id="view-dashboard" class="hidden space-y-3 pb-6">
             
             <div class="flex justify-between items-center bg-white p-2 rounded-xl shadow-sm border border-gray-100">
-                <button onclick="changeWeek(-1)" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors"><i class="fa-solid fa-chevron-left"></i></button>
+                <button onclick="changeWeek(-1)" aria-label="ดูสัปดาห์ก่อนหน้า" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors"><i class="fa-solid fa-chevron-left"></i></button>
                 <div class="text-center">
                     <h3 class="font-bold text-gray-800 text-sm" id="dash-week-label">สัปดาห์นี้</h3>
                     <p class="text-[11px] text-gray-500 font-medium mt-0.5" id="dash-date-range">... - ...</p>
                 </div>
-                <button onclick="changeWeek(1)" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400" id="btn-next-week" disabled><i class="fa-solid fa-chevron-right"></i></button>
+                <button onclick="changeWeek(1)" aria-label="ดูสัปดาห์ถัดไป" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400" id="btn-next-week" disabled><i class="fa-solid fa-chevron-right"></i></button>
             </div>
 
             <!-- Team KPI Card -->
@@ -412,7 +425,7 @@
     </nav>
 
     <!-- Toast Notification -->
-    <div id="toast" class="toast fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-900/95 backdrop-blur-sm text-white px-5 py-3 rounded-2xl shadow-xl z-50 flex items-center space-x-3 w-max max-w-[90%] border border-gray-700">
+    <div id="toast" aria-live="polite" aria-atomic="true" class="toast fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-900/95 backdrop-blur-sm text-white px-5 py-3 rounded-2xl shadow-xl z-50 flex items-center space-x-3 w-max max-w-[90%] border border-gray-700">
         <i class="fa-solid fa-circle-check text-green-400 text-lg shadow-sm"></i>
         <span id="toast-msg" class="text-sm font-medium tracking-wide">บันทึกสำเร็จ</span>
     </div>
@@ -440,7 +453,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260609.01";
+        const CURRENT_VERSION = "20260609.02";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -2174,7 +2187,7 @@
 
             const html = `
                 <div class="error-entry bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative transition-all">
-                    <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                    <button onclick="this.parentElement.remove()" aria-label="ลบรายการความผิดพลาดนี้" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"><i class="fa-solid fa-trash-can text-sm"></i></button>
                     
                     <div class="mb-4 pr-8">
                         <label class="flex items-center text-xs font-bold text-gray-700 mb-1.5 bg-gray-100 w-max px-2 py-1 rounded">
@@ -2273,7 +2286,7 @@
 
             const html = `
                 <div class="task-entry bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative transition-all">
-                    <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                    <button onclick="this.parentElement.remove()" aria-label="ลบแผนงานนี้" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"><i class="fa-solid fa-trash-can text-sm"></i></button>
                     
                     <div class="mb-3 pr-8">
                         <input type="text" class="task-name w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50 font-medium placeholder-gray-400" placeholder="ตั้งชื่องาน / แผนงาน..." value="${safeName}">
