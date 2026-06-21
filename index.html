@@ -453,7 +453,14 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260611.01";
+        const CURRENT_VERSION = "20260621.01";
+
+        function esc(v) {
+            if (v === null || v === undefined) return '';
+            return String(v).replace(/[&<>"']/g, function(c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1496,7 +1503,7 @@
                     empHtml += `
                         <div class="mb-2">
                             <div class="flex justify-between items-end text-xs mb-1.5">
-                                <div class="flex items-center"><span class="font-semibold text-gray-700">${name}</span>${trendHtml}</div>
+                                <div class="flex items-center"><span class="font-semibold text-gray-700">${esc(name)}</span>${trendHtml}</div>
                                 <span class="font-black ${count > 0 ? 'text-red-500' : 'text-green-500'}">${count} <span class="text-[10px] font-medium text-gray-400">ครั้ง</span></span>
                             </div>
                             <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden border border-gray-200">
@@ -1564,7 +1571,7 @@
                                 <span><i class="fa-solid fa-calendar-day mr-1.5 opacity-70"></i> วันที่ ${formatDisplayDate(day.date)}</span>
                                 <span class="bg-white text-blue-600 px-2 py-0.5 rounded-md text-[10px] shadow-sm border border-blue-100">${notesLines.length} รายการ</span>
                             </span>
-                            <div class="text-gray-700 whitespace-pre-wrap mt-1.5 leading-relaxed pl-1">${day.customerNotes}</div>
+                            <div class="text-gray-700 whitespace-pre-wrap mt-1.5 leading-relaxed pl-1">${esc(day.customerNotes)}</div>
                         </div>
                     `;
                 }
@@ -1620,7 +1627,7 @@
                     if (isReachedCustomer) stageBadge = `<span class="text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-red-200 shadow-sm align-middle whitespace-nowrap">🚨 ถึงลูกค้า</span>`;
                     else if (isFixedBefore) stageBadge = `<span class="text-emerald-600 font-bold bg-emerald-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-emerald-200 shadow-sm align-middle whitespace-nowrap">🛡️ แก้ทัน</span>`;
 
-                    let displayNote = `<span class="text-red-600 font-black bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 shadow-sm border border-red-200 text-[9px] inline-block whitespace-nowrap align-middle">-${penaltyToApply} HP</span>${stageBadge}<span class="text-gray-700 leading-snug">${cleanNote}</span>`;
+                    let displayNote = `<span class="text-red-600 font-black bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 shadow-sm border border-red-200 text-[9px] inline-block whitespace-nowrap align-middle">-${penaltyToApply} HP</span>${stageBadge}<span class="text-gray-700 leading-snug">${esc(cleanNote)}</span>`;
 
                     categorizedNotes[empName][e.type].push({ note: displayNote, date: day.date });
                     hasAnyNotes = true;
@@ -1678,12 +1685,12 @@
                 for (const [tName, tData] of Object.entries(weeklyTasksMap)) {
                     let badgeClass = tData.status === 'เสร็จแล้ว' ? 'bg-green-100 text-green-700 border-green-200' : (tData.status === 'กำลังทำ' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-600 border-gray-200');
                     let iconClass = tData.status === 'เสร็จแล้ว' ? 'fa-check-circle' : (tData.status === 'กำลังทำ' ? 'fa-spinner fa-spin' : 'fa-circle-minus');
-                    let assigneeHtml = (tData.assignee || "").split(',').filter(a=>a).map(a => `<span class="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-md font-bold mt-1.5 mr-1.5 inline-block border border-purple-200 shadow-sm"><i class="fa-solid fa-user mr-1 opacity-70"></i>${a.trim()}</span>`).join('');
+                    let assigneeHtml = (tData.assignee || "").split(',').filter(a=>a).map(a => `<span class="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-md font-bold mt-1.5 mr-1.5 inline-block border border-purple-200 shadow-sm"><i class="fa-solid fa-user mr-1 opacity-70"></i>${esc(a.trim())}</span>`).join('');
                     
                     tasksHtml += `
                         <div class="flex justify-between items-center bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 shadow-sm mb-2">
-                            <div class="flex flex-col"><span class="text-gray-800 font-bold text-sm">${tName}</span><div class="flex flex-wrap">${assigneeHtml}</div></div>
-                            <span class="text-[10px] font-black px-2.5 py-1 rounded-lg border shadow-sm whitespace-nowrap ${badgeClass}"><i class="fa-solid ${iconClass} mr-1"></i>${tData.status}</span>
+                            <div class="flex flex-col"><span class="text-gray-800 font-bold text-sm">${esc(tName)}</span><div class="flex flex-wrap">${assigneeHtml}</div></div>
+                            <span class="text-[10px] font-black px-2.5 py-1 rounded-lg border shadow-sm whitespace-nowrap ${badgeClass}"><i class="fa-solid ${iconClass} mr-1"></i>${esc(tData.status)}</span>
                         </div>
                     `;
                 }
@@ -1756,8 +1763,8 @@
                 
                 if(topErrorCount > 0) {
                     let sampleNotes = errorNotesList[topErrorType].slice(0, 2).join(', ').replace(/<span.*?>.*?<\/span>\s*/g, '');
-                    let noteContext = sampleNotes ? ` <span class="text-[11px] text-gray-500 block mt-1">(ตย. ${sampleNotes})</span>` : '';
-                    smartSummaryHtml += `<div class="mb-2 pb-2 border-b border-indigo-200/50"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1.5"></i><b>จุดที่ต้องระวัง:</b> ปัญหาที่พบมากที่สุดคือ <span class="text-orange-600 font-bold bg-orange-50 px-1 rounded">"${topErrorType}"</span> (${topErrorCount} ครั้ง)${noteContext}</div>`;
+                    let noteContext = sampleNotes ? ` <span class="text-[11px] text-gray-500 block mt-1">(ตย. ${esc(sampleNotes)})</span>` : '';
+                    smartSummaryHtml += `<div class="mb-2 pb-2 border-b border-indigo-200/50"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1.5"></i><b>จุดที่ต้องระวัง:</b> ปัญหาที่พบมากที่สุดคือ <span class="text-orange-600 font-bold bg-orange-50 px-1 rounded">"${esc(topErrorType)}"</span> (${topErrorCount} ครั้ง)${noteContext}</div>`;
                     smartSummaryHtml += `<div><i class="fa-regular fa-lightbulb text-yellow-500 mr-1.5"></i><b>ข้อเสนอแนะ:</b> ${getSmartSuggestion(topErrorType, totalErr)}</div>`;
                 }
 
@@ -1907,10 +1914,10 @@
                                 <span class="font-bold text-[10px] px-1.5 py-0.5 rounded border shadow-sm ${branchBadge}">${day.sourceBranch}</span>
                             </div>
                             <div class="flex items-start mt-0.5">
-                                <div class="font-black text-red-600 w-[28%] break-words leading-tight"><i class="fa-solid fa-user text-gray-400 mr-1.5"></i>${empName}</div>
+                                <div class="font-black text-red-600 w-[28%] break-words leading-tight"><i class="fa-solid fa-user text-gray-400 mr-1.5"></i>${esc(empName)}</div>
                                 <div class="w-[72%] pl-2 border-l border-gray-200">
-                                    <div class="font-bold text-gray-800 mb-0.5 text-[11px] leading-tight">${err.type}</div>
-                                    <div class="text-gray-500 text-[10px] leading-relaxed break-words">${err.note}</div>
+                                    <div class="font-bold text-gray-800 mb-0.5 text-[11px] leading-tight">${esc(err.type)}</div>
+                                    <div class="text-gray-500 text-[10px] leading-relaxed break-words">${esc(err.note)}</div>
                                 </div>
                             </div>
                         </div>
@@ -1936,7 +1943,7 @@
                     let rankIcon = i === 0 ? '<i class="fa-solid fa-crown text-yellow-500 mr-1"></i>' : (i === 1 ? '<i class="fa-solid fa-medal text-gray-400 mr-1"></i>' : (i === 2 ? '<i class="fa-solid fa-medal text-orange-400 mr-1"></i>' : `<span class="text-gray-400 mr-2 font-black">#${i+1}</span>`));
                     topHtml += `
                         <div class="flex justify-between items-center bg-gray-50 border border-gray-100 p-2.5 rounded-lg shadow-sm">
-                            <span class="text-xs font-bold text-gray-800 flex items-center">${rankIcon} ${p.name}</span>
+                            <span class="text-xs font-bold text-gray-800 flex items-center">${rankIcon} ${esc(p.name)}</span>
                             <span class="text-xs font-black text-red-600 bg-red-100 px-2 py-0.5 rounded-md border border-red-200">${p.count} <span class="text-[9px] text-red-500 font-bold ml-0.5">ครั้ง</span></span>
                         </div>
                     `;
