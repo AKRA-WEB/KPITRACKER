@@ -88,10 +88,12 @@
 
         /* Asset-based live pixel scene */
         .team-live-scene { overflow: hidden; border: 1px solid #e5e7eb; border-radius: 0.875rem; background: #ffffff; container-type: inline-size; }
-        .team-live-stage { position: relative; min-height: 22rem; aspect-ratio: 16 / 9; overflow: hidden; background-image: var(--scene-bg); background-size: cover; background-position: center; border-bottom: 1px solid #e5e7eb; }
-        .team-live-stage::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(255,255,255,0.04), rgba(15,23,42,0.12)); }
-        .team-live-sign { position: absolute; top: 0.75rem; left: 0.75rem; z-index: 12; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.55rem; border: 2px solid #111827; border-radius: 0.4rem; background: rgba(255,255,255,0.94); color: #111827; box-shadow: 3px 3px 0 #111827; font-size: 0.64rem; font-weight: 1000; }
-        .team-live-status { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 12; display: flex; gap: 0.35rem; align-items: center; padding: 0.35rem 0.55rem; border: 1px solid #bbf7d0; border-radius: 999px; background: rgba(236,253,243,0.95); color: #067647; box-shadow: 0 2px 8px rgba(15,23,42,0.1); font-size: 0.62rem; font-weight: 1000; white-space: nowrap; }
+        .team-live-viewport { overflow-x: auto; -webkit-overflow-scrolling: touch; border-bottom: 1px solid #e5e7eb; }
+        .team-live-scroll-hint { display: none; }
+        .team-live-stage { position: relative; width: 100%; min-width: 38rem; aspect-ratio: 16 / 9; overflow: hidden; container-type: inline-size; background-image: var(--scene-bg); background-size: cover; background-position: center; }
+        .team-live-stage::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(255,255,255,0.03), rgba(15,23,42,0.14)); }
+        .team-live-sign { position: absolute; top: 0.7rem; left: 0.7rem; z-index: 120; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.32rem 0.55rem; border: 1px solid rgba(148,163,184,0.55); background: rgba(15,23,42,0.85); color: #f8fafc; box-shadow: 0 2px 0 rgba(15,23,42,0.45); font-size: 0.64rem; font-weight: 1000; letter-spacing: 0.05em; }
+        .team-live-status { position: absolute; top: 0.7rem; right: 0.7rem; z-index: 120; display: flex; gap: 0.35rem; align-items: center; padding: 0.32rem 0.55rem; border: 1px solid rgba(148,163,184,0.55); background: rgba(15,23,42,0.85); color: #4ade80; box-shadow: 0 2px 0 rgba(15,23,42,0.45); font-size: 0.62rem; font-weight: 1000; white-space: nowrap; }
         .team-live-pulse { width: 0.45rem; height: 0.45rem; border-radius: 999px; background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.65); animation: livePulse 1.5s ease-out infinite; }
         .team-live-worker { position: absolute; left: var(--x); top: var(--y); z-index: var(--z, 8); width: clamp(3.9rem, 8.2cqw, 5.5rem); transform: translate(-50%, -100%); transform-origin: 50% 100%; animation: liveWorkerBob 1.7s steps(2, end) infinite; animation-delay: var(--delay, 0s); }
         .team-live-worker::after { content: ""; position: absolute; left: 50%; bottom: -0.12rem; width: 64%; height: 0.34rem; border-radius: 999px; background: rgba(17,24,39,0.22); transform: translateX(-50%); filter: blur(0.04rem); }
@@ -114,6 +116,9 @@
         .team-live-worker.hp-risk .team-live-avatar { filter: drop-shadow(0 0.18rem 0 rgba(17,24,39,0.4)) saturate(0.82) contrast(0.96); }
         .team-live-worker.cashier { --z: 9; }
         .team-live-worker.stock, .team-live-worker.warehouse { --z: 7; }
+        .team-live-worker.behind-counter { --z: 5; }
+        .team-live-worker.behind-counter .team-live-avatar { clip-path: inset(0 0 26% 0); }
+        .team-live-worker.behind-counter::after { display: none; }
         .team-live-summary { display: grid; gap: 0.6rem; padding: 0.65rem; background: #f8fafc; }
         .team-live-rolebar { display: flex; flex-wrap: wrap; gap: 0.4rem; }
         .team-live-rolechip { display: inline-flex; align-items: center; gap: 0.3rem; border: 1px solid #e5e7eb; border-radius: 999px; background: #ffffff; padding: 0.25rem 0.5rem; color: #475569; font-size: 0.62rem; font-weight: 900; }
@@ -126,12 +131,8 @@
         @keyframes liveWorkerBob { 0%, 100% { transform: translate(-50%, -100%); } 50% { transform: translate(-50%, calc(-100% - 3px)); } }
         @keyframes liveWorkerTired { 0%, 100% { transform: translate(-50%, -100%) rotate(-1deg); } 50% { transform: translate(-50%, calc(-100% + 2px)) rotate(1deg); } }
         @media (max-width: 640px) {
-            .team-live-stage { min-height: 34rem; aspect-ratio: 4 / 5; background-size: auto 100%; }
-            .team-live-status { top: 3rem; right: auto; left: 0.75rem; }
-            .team-live-worker { left: var(--mx, var(--x)); top: var(--my, var(--y)); width: 3.75rem; }
-            .team-live-avatar { height: 4.8rem; }
-            .team-live-nameplate { max-width: 4.55rem; padding: 0.17rem 0.28rem; }
-            .team-live-name { font-size: 0.52rem; }
+            .team-live-status { top: 3rem; right: auto; left: 0.7rem; }
+            .team-live-scroll-hint { display: block; padding: 0.35rem 0.65rem; border-bottom: 1px solid #e5e7eb; background: #f8fafc; color: #64748b; font-size: 0.58rem; font-weight: 800; text-align: center; }
             .team-live-ranklist { grid-template-columns: 1fr; }
         }
 
@@ -588,7 +589,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260702.06";
+        const CURRENT_VERSION = "20260702.07";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -1087,30 +1088,30 @@
         const TEAM_SCENE_SPOTS = {
             TRD: {
                 cashier: [
-                    { x: 46, y: 77, mx: 43, my: 73, delay: '-0.2s' },
-                    { x: 61, y: 77, mx: 62, my: 73, delay: '-0.7s' },
-                    { x: 53, y: 84, mx: 52, my: 82, delay: '-1.1s' }
+                    { x: 45, y: 61, behind: true, delay: '-0.2s' },
+                    { x: 66, y: 61, behind: true, delay: '-0.7s' },
+                    { x: 53, y: 84, delay: '-1.1s' }
                 ],
                 store: [
-                    { x: 32, y: 80, mx: 28, my: 66, delay: '-0.3s' },
-                    { x: 75, y: 80, mx: 77, my: 66, delay: '-0.9s' },
-                    { x: 84, y: 87, mx: 83, my: 78, delay: '-1.4s' },
-                    { x: 24, y: 88, mx: 23, my: 82, delay: '-1.8s' }
+                    { x: 32, y: 80, delay: '-0.3s' },
+                    { x: 75, y: 80, delay: '-0.9s' },
+                    { x: 84, y: 87, delay: '-1.4s' },
+                    { x: 24, y: 88, delay: '-1.8s' }
                 ],
                 stock: [
-                    { x: 17, y: 88, mx: 18, my: 80, delay: '-0.5s' },
-                    { x: 90, y: 88, mx: 72, my: 83, delay: '-1.2s' },
-                    { x: 13, y: 78, mx: 17, my: 70, delay: '-1.7s' }
+                    { x: 17, y: 88, delay: '-0.5s' },
+                    { x: 90, y: 88, delay: '-1.2s' },
+                    { x: 13, y: 78, delay: '-1.7s' }
                 ]
             },
             AKRA: {
                 warehouse: [
-                    { x: 19, y: 84, mx: 18, my: 78, delay: '-0.2s' },
-                    { x: 36, y: 81, mx: 38, my: 73, delay: '-0.7s' },
-                    { x: 55, y: 78, mx: 57, my: 68, delay: '-1.1s' },
-                    { x: 73, y: 82, mx: 75, my: 75, delay: '-1.5s' },
-                    { x: 82, y: 76, mx: 78, my: 66, delay: '-1.9s' },
-                    { x: 28, y: 68, mx: 29, my: 61, delay: '-2.2s' }
+                    { x: 12, y: 96, delay: '-0.2s' },
+                    { x: 37, y: 76, behind: true, delay: '-0.7s' },
+                    { x: 55, y: 66, delay: '-1.1s' },
+                    { x: 58, y: 92, delay: '-1.5s' },
+                    { x: 84, y: 66, delay: '-1.9s' },
+                    { x: 28, y: 66, delay: '-2.2s' }
                 ]
             }
         };
@@ -1163,7 +1164,7 @@
             const aria = `อันดับ ${player.rank} ${player.name} ${shortDept} ${hp} HP ${tone.label}`;
             const spriteGender = teamSceneSpriteGender(player, role);
             return `
-                <div class="team-live-worker hp-${tone.key} ${role} sprite-${spriteGender}" role="group" aria-label="${esc(aria)}" style="--x:${spot.x}%;--y:${spot.y}%;--mx:${spot.mx || spot.x}%;--my:${spot.my || spot.y}%;--hp:${hp}%;--delay:${spot.delay || '0s'}">
+                <div class="team-live-worker hp-${tone.key} ${role} sprite-${spriteGender}${spot.behind ? ' behind-counter' : ''}" role="group" aria-label="${esc(aria)}" style="--x:${spot.x}%;--y:${spot.y}%;--hp:${hp}%;--delay:${spot.delay || '0s'}">
                     <div class="team-live-nameplate">
                         <span class="team-live-name">#${player.rank} ${esc(player.name)}</span>
                         <span class="team-live-role">${esc(shortDept)} · ${hp} HP</span>
@@ -1211,11 +1212,14 @@
 
             return `
                 <div class="team-live-scene team-live-${currentBranch.toLowerCase()}">
-                    <div class="team-live-stage" style="--scene-bg:url('${TEAM_SCENE_ASSETS[currentBranch] || TEAM_SCENE_ASSETS.AKRA}')" role="img" aria-label="${esc(liveLabel)}">
-                        <div class="team-live-sign"><i class="fa-solid ${currentBranch === 'TRD' ? 'fa-bread-slice' : 'fa-warehouse'}"></i>${sceneTitle}</div>
-                        <div class="team-live-status"><span class="team-live-pulse"></span>Live Team HP</div>
-                        ${workersHtml}
+                    <div class="team-live-viewport">
+                        <div class="team-live-stage" style="--scene-bg:url('${TEAM_SCENE_ASSETS[currentBranch] || TEAM_SCENE_ASSETS.AKRA}')" role="img" aria-label="${esc(liveLabel)}">
+                            <div class="team-live-sign"><i class="fa-solid ${currentBranch === 'TRD' ? 'fa-bread-slice' : 'fa-warehouse'}"></i>${sceneTitle}</div>
+                            <div class="team-live-status"><span class="team-live-pulse"></span>Live Team HP</div>
+                            ${workersHtml}
+                        </div>
                     </div>
+                    <div class="team-live-scroll-hint" aria-hidden="true"><i class="fa-solid fa-arrows-left-right"></i> เลื่อนซ้าย-ขวาเพื่อดูทั้งฉาก</div>
                     <div class="team-live-summary">
                         <div class="team-live-rolebar">${roleBar}</div>
                         <ol class="team-live-ranklist">${rankedPlayers.map(teamLiveRankItem).join('')}</ol>
