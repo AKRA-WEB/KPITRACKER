@@ -86,6 +86,56 @@
             .team-members { grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); }
         }
 
+        /* Asset-based live pixel scene */
+        .team-live-scene { overflow: hidden; border: 1px solid #e5e7eb; border-radius: 0.875rem; background: #ffffff; container-type: inline-size; }
+        .team-live-stage { position: relative; min-height: 22rem; aspect-ratio: 16 / 9; overflow: hidden; background-image: var(--scene-bg); background-size: cover; background-position: center; border-bottom: 1px solid #e5e7eb; }
+        .team-live-stage::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(255,255,255,0.04), rgba(15,23,42,0.12)); }
+        .team-live-sign { position: absolute; top: 0.75rem; left: 0.75rem; z-index: 12; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.55rem; border: 2px solid #111827; border-radius: 0.4rem; background: rgba(255,255,255,0.94); color: #111827; box-shadow: 3px 3px 0 #111827; font-size: 0.64rem; font-weight: 1000; }
+        .team-live-status { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 12; display: flex; gap: 0.35rem; align-items: center; padding: 0.35rem 0.55rem; border: 1px solid #bbf7d0; border-radius: 999px; background: rgba(236,253,243,0.95); color: #067647; box-shadow: 0 2px 8px rgba(15,23,42,0.1); font-size: 0.62rem; font-weight: 1000; white-space: nowrap; }
+        .team-live-pulse { width: 0.45rem; height: 0.45rem; border-radius: 999px; background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.65); animation: livePulse 1.5s ease-out infinite; }
+        .team-live-worker { position: absolute; left: var(--x); top: var(--y); z-index: var(--z, 8); width: clamp(4.8rem, 10cqw, 6.6rem); transform: translate(-50%, -50%); animation: liveWorkerBob 1.6s steps(2, end) infinite; animation-delay: var(--delay, 0s); }
+        .team-live-worker .pixel-avatar { width: clamp(2.4rem, 5.2cqw, 3.25rem); height: auto; margin: 0 auto; filter: drop-shadow(0 3px 0 rgba(17,24,39,0.45)); }
+        .team-live-nameplate { position: relative; margin-bottom: 0.2rem; padding: 0.26rem 0.34rem; border: 2px solid #111827; border-radius: 0.45rem; background: rgba(255,255,255,0.94); box-shadow: 3px 3px 0 #111827; text-align: center; line-height: 1.1; }
+        .team-live-name { display: block; overflow: hidden; color: #111827; font-size: 0.62rem; font-weight: 1000; text-overflow: ellipsis; white-space: nowrap; }
+        .team-live-role { display: block; margin-top: 0.1rem; color: #64748b; font-size: 0.5rem; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+        .team-live-nameplate .team-mini-badge { margin-top: 0.12rem; padding: 0.05rem 0.2rem; font-size: 0.44rem; }
+        .team-live-hpbar { position: relative; height: 0.42rem; margin-top: 0.22rem; overflow: hidden; border: 1px solid #111827; border-radius: 999px; background: #f8fafc; }
+        .team-live-hpfill { display: block; width: var(--hp); height: 100%; background: var(--hp-color); }
+        .team-live-hptext { display: inline-flex; align-items: center; justify-content: center; min-width: 2.35rem; margin-top: 0.15rem; padding: 0.06rem 0.2rem; border-radius: 0.25rem; background: rgba(255,255,255,0.9); color: var(--hp-color); font-size: 0.5rem; font-weight: 1000; }
+        .team-live-worker.hp-good { --hp-color: #16a34a; }
+        .team-live-worker.hp-watch { --hp-color: #d97706; }
+        .team-live-worker.hp-risk { --hp-color: #dc2626; animation-name: liveWorkerTired; }
+        .team-live-worker.cashier { --z: 9; }
+        .team-live-worker.stock, .team-live-worker.warehouse { --z: 7; }
+        .team-live-float { position: absolute; z-index: 6; display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.28rem 0.45rem; border: 2px solid #111827; border-radius: 0.45rem; background: rgba(255,255,255,0.9); box-shadow: 3px 3px 0 #111827; color: #334155; font-size: 0.55rem; font-weight: 1000; animation: liveFloat 3.2s steps(2, end) infinite; }
+        .team-live-trd .team-live-float.one { left: 70%; top: 62%; }
+        .team-live-trd .team-live-float.two { left: 34%; top: 42%; animation-delay: -1.2s; }
+        .team-live-akra .team-live-float.one { left: 45%; top: 70%; }
+        .team-live-akra .team-live-float.two { left: 75%; top: 56%; animation-delay: -1.2s; }
+        .team-live-summary { display: grid; gap: 0.6rem; padding: 0.65rem; background: #f8fafc; }
+        .team-live-rolebar { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .team-live-rolechip { display: inline-flex; align-items: center; gap: 0.3rem; border: 1px solid #e5e7eb; border-radius: 999px; background: #ffffff; padding: 0.25rem 0.5rem; color: #475569; font-size: 0.62rem; font-weight: 900; }
+        .team-live-ranklist { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
+        .team-live-rankitem { display: flex; align-items: center; gap: 0.45rem; min-width: 0; border: 1px solid #e5e7eb; border-radius: 0.6rem; background: #ffffff; padding: 0.4rem; }
+        .team-live-rankno { display: inline-flex; align-items: center; justify-content: center; width: 1.55rem; height: 1.55rem; flex: 0 0 auto; border-radius: 0.5rem; background: #eef2ff; color: #3730a3; font-size: 0.58rem; font-weight: 1000; }
+        .team-live-rankname { min-width: 0; flex: 1 1 auto; overflow: hidden; color: #111827; font-size: 0.68rem; font-weight: 1000; text-overflow: ellipsis; white-space: nowrap; }
+        .team-live-rankhp { flex: 0 0 auto; color: var(--hp-color); font-size: 0.62rem; font-weight: 1000; white-space: nowrap; }
+        @keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.65); } 100% { box-shadow: 0 0 0 0.45rem rgba(34,197,94,0); } }
+        @keyframes liveWorkerBob { 0%, 100% { transform: translate(-50%, -50%); } 50% { transform: translate(-50%, calc(-50% - 3px)); } }
+        @keyframes liveWorkerTired { 0%, 100% { transform: translate(-50%, -50%) rotate(-1deg); } 50% { transform: translate(-50%, calc(-50% + 2px)) rotate(1deg); } }
+        @keyframes liveFloat { 0%, 100% { opacity: 0.78; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-4px); } }
+        @media (max-width: 640px) {
+            .team-live-stage { min-height: 34rem; aspect-ratio: 4 / 5; background-size: auto 100%; }
+            .team-live-status { top: 3rem; right: auto; left: 0.75rem; }
+            .team-live-worker { left: var(--mx, var(--x)); top: var(--my, var(--y)); width: 4.35rem; }
+            .team-live-worker .pixel-avatar { width: 2.25rem; }
+            .team-live-nameplate { padding: 0.22rem 0.3rem; }
+            .team-live-name { font-size: 0.56rem; }
+            .team-live-role { font-size: 0.45rem; }
+            .team-live-hptext { min-width: 2.15rem; font-size: 0.46rem; }
+            .team-live-ranklist { grid-template-columns: 1fr; }
+        }
+
         /* Desktop 2-column layout for tab views (kept off .hidden so tab switching still works) */
         @media (min-width: 768px) {
             .md-grid-2:not(.hidden) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
@@ -539,7 +589,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260702.03";
+        const CURRENT_VERSION = "20260702.04";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -1018,9 +1068,9 @@
 
         function hpTone(hp) {
             const n = Math.max(0, Math.min(100, Number(hp) || 0));
-            if (n >= 80) return { key: 'good', label: 'พร้อมงาน' };
-            if (n >= 50) return { key: 'watch', label: 'เฝ้าระวัง' };
-            return { key: 'risk', label: 'ต้องช่วยด่วน' };
+            if (n >= 80) return { key: 'good', label: 'พร้อมงาน', color: '#16a34a' };
+            if (n >= 50) return { key: 'watch', label: 'เฝ้าระวัง', color: '#d97706' };
+            return { key: 'risk', label: 'ต้องช่วยด่วน', color: '#dc2626' };
         }
 
         function teamBadgeHtml(player, highestNonPerfect, lowestScore) {
@@ -1030,101 +1080,139 @@
             return '';
         }
 
-        function teamWorkerCard(player, highestNonPerfect, lowestScore, fallbackDept) {
+        const TEAM_SCENE_ASSETS = {
+            TRD: 'assets/pixel/trd-shop-bg.png',
+            AKRA: 'assets/pixel/akra-warehouse-bg.png'
+        };
+
+        const TEAM_SCENE_SPOTS = {
+            TRD: {
+                cashier: [
+                    { x: 39, y: 64, mx: 38, my: 67, delay: '-0.2s' },
+                    { x: 57, y: 64, mx: 62, my: 67, delay: '-0.7s' },
+                    { x: 48, y: 70, mx: 50, my: 75, delay: '-1.1s' }
+                ],
+                store: [
+                    { x: 27, y: 53, mx: 24, my: 47, delay: '-0.3s' },
+                    { x: 74, y: 52, mx: 77, my: 47, delay: '-0.9s' },
+                    { x: 82, y: 67, mx: 82, my: 60, delay: '-1.4s' },
+                    { x: 19, y: 76, mx: 23, my: 77, delay: '-1.8s' }
+                ],
+                stock: [
+                    { x: 11, y: 66, mx: 17, my: 67, delay: '-0.5s' },
+                    { x: 18, y: 78, mx: 22, my: 82, delay: '-1.2s' },
+                    { x: 7, y: 79, mx: 16, my: 88, delay: '-1.7s' }
+                ]
+            },
+            AKRA: {
+                warehouse: [
+                    { x: 20, y: 72, mx: 18, my: 73, delay: '-0.2s' },
+                    { x: 42, y: 70, mx: 40, my: 71, delay: '-0.7s' },
+                    { x: 58, y: 63, mx: 58, my: 62, delay: '-1.1s' },
+                    { x: 75, y: 69, mx: 74, my: 70, delay: '-1.5s' },
+                    { x: 88, y: 57, mx: 84, my: 57, delay: '-1.9s' },
+                    { x: 33, y: 53, mx: 31, my: 52, delay: '-2.2s' }
+                ]
+            }
+        };
+
+        function teamSceneRole(player) {
+            if (currentBranch !== 'TRD') return 'warehouse';
+            const dept = getTRDDept(player.name);
+            if (dept.includes('แคชเชียร์')) return 'cashier';
+            if (dept.includes('คลัง')) return 'stock';
+            return 'store';
+        }
+
+        function teamRoleTitle(role) {
+            if (role === 'cashier') return 'แคชเชียร์';
+            if (role === 'stock') return 'คลังหน้าร้าน';
+            if (role === 'warehouse') return 'ทีมคลังสินค้า';
+            return 'หน้าร้าน / ในร้าน';
+        }
+
+        function teamSceneSpot(role, index) {
+            const branchSpots = TEAM_SCENE_SPOTS[currentBranch] || TEAM_SCENE_SPOTS.AKRA;
+            const spots = branchSpots[role] || branchSpots.warehouse || branchSpots.store;
+            return spots[index % spots.length];
+        }
+
+        function teamSceneRoleCounts(players) {
+            const counts = {};
+            players.forEach(player => {
+                const role = teamSceneRole(player);
+                counts[role] = (counts[role] || 0) + 1;
+            });
+            return counts;
+        }
+
+        function teamWorkerCard(player, highestNonPerfect, lowestScore, spot, role) {
             const hp = Math.max(0, Math.min(100, Number(player.hp) || 0));
             const tone = hpTone(hp);
-            const dept = currentBranch === 'TRD' ? getTRDDept(player.name) : (fallbackDept || 'คลังสินค้า');
+            const dept = currentBranch === 'TRD' ? getTRDDept(player.name) : 'คลังสินค้า';
             const badge = teamBadgeHtml(player, highestNonPerfect, lowestScore);
-            const aria = `อันดับ ${player.rank} ${player.name} ${hp} HP ${tone.label}`;
+            const shortDept = dept || teamRoleTitle(role);
+            const aria = `อันดับ ${player.rank} ${player.name} ${shortDept} ${hp} HP ${tone.label}`;
             return `
-                <div class="team-worker hp-${tone.key}" role="group" aria-label="${esc(aria)}">
-                    <div class="team-worker-avatar">${pixelAvatarSvg(getEmpGender(player.name), hp)}</div>
-                    <div class="team-worker-info">
-                        <div class="team-worker-top">
-                            <span class="team-worker-rank">#${player.rank}</span>
-                            <span class="team-worker-name">${esc(player.name)}</span>
-                        </div>
-                        <div class="team-worker-meta">
-                            ${dept ? `<span>${esc(dept)}</span>` : ''}
-                            ${badge}
-                        </div>
-                        <div class="team-worker-hp">
-                            <div class="team-worker-hpbar"><div class="team-worker-hpfill" style="width: ${hp}%"></div></div>
-                            <span class="team-worker-hptext">${hp} HP</span>
-                        </div>
+                <div class="team-live-worker hp-${tone.key} ${role}" role="group" aria-label="${esc(aria)}" style="--x:${spot.x}%;--y:${spot.y}%;--mx:${spot.mx || spot.x}%;--my:${spot.my || spot.y}%;--hp:${hp}%;--delay:${spot.delay || '0s'}">
+                    <div class="team-live-nameplate">
+                        <span class="team-live-name">#${player.rank} ${esc(player.name)}</span>
+                        <span class="team-live-role">${esc(shortDept)} · ${hp} HP</span>
+                        ${badge}
+                        <span class="team-live-hpbar" aria-hidden="true"><span class="team-live-hpfill"></span></span>
                     </div>
+                    ${pixelAvatarSvg(getEmpGender(player.name), hp)}
+                    <span class="team-live-hptext">${tone.label}</span>
                 </div>
             `;
         }
 
-        function makeTeamSceneGroups(rankedPlayers) {
-            if (currentBranch === 'TRD') {
-                const groups = [
-                    { key: 'cashier', title: 'แคชเชียร์', icon: 'fa-cash-register', players: [] },
-                    { key: 'store', title: 'หน้าร้าน / ในร้าน', icon: 'fa-store', players: [] },
-                    { key: 'stock', title: 'คลังหน้าร้าน', icon: 'fa-boxes-stacked', players: [] }
-                ];
-                rankedPlayers.forEach(player => {
-                    const dept = getTRDDept(player.name);
-                    if (dept.includes('แคชเชียร์')) groups[0].players.push(player);
-                    else if (dept.includes('คลัง')) groups[2].players.push(player);
-                    else groups[1].players.push(player);
-                });
-                return groups;
-            }
-            return [
-                { key: 'warehouse', title: 'ทีมคลังสินค้า AKRA', icon: 'fa-warehouse', players: rankedPlayers }
-            ];
-        }
-
-        function teamSceneBackdropHtml() {
-            if (currentBranch === 'TRD') {
-                return `
-                    <div class="team-scene-backdrop" aria-hidden="true">
-                        <div class="team-scene-sign"><i class="fa-solid fa-bread-slice"></i> BAKERY MART</div>
-                        <div class="team-scene-subtitle">เคาน์เตอร์แคชเชียร์และทีมหน้าร้านประจำสัปดาห์</div>
-                        <div class="scene-prop scene-counter"></div>
-                        <div class="scene-prop scene-awning"></div>
-                        <div class="scene-prop scene-shelf"></div>
-                    </div>
-                `;
-            }
+        function teamLiveRankItem(player) {
+            const hp = Math.max(0, Math.min(100, Number(player.hp) || 0));
+            const tone = hpTone(hp);
             return `
-                <div class="team-scene-backdrop" aria-hidden="true">
-                    <div class="team-scene-sign"><i class="fa-solid fa-warehouse"></i> AKRA WAREHOUSE</div>
-                    <div class="team-scene-subtitle">ทีมคลังประจำสัปดาห์ วางกำลังรวมกันตาม HP</div>
-                    <div class="scene-prop scene-rack"></div>
-                    <div class="scene-prop scene-pallet"></div>
-                    <div class="scene-prop scene-crates"><span></span><span></span><span></span></div>
-                </div>
+                <li class="team-live-rankitem" style="--hp-color:${tone.color}">
+                    <span class="team-live-rankno">#${player.rank}</span>
+                    <span class="team-live-rankname">${esc(player.name)}</span>
+                    <span class="team-live-rankhp">${hp} HP</span>
+                </li>
             `;
         }
 
         function renderTeamScene(ranking, highestNonPerfect, lowestScore) {
             const rankedPlayers = ranking.map((player, index) => ({ ...player, rank: index + 1 }));
-            const groups = makeTeamSceneGroups(rankedPlayers);
-            const gridClass = currentBranch === 'TRD' ? 'trd' : 'warehouse';
-            const sceneClass = currentBranch === 'TRD' ? 'team-scene-shop' : 'team-scene-warehouse';
-            const groupHtml = groups.map(group => {
-                const members = group.players.length
-                    ? group.players.map(player => teamWorkerCard(player, highestNonPerfect, lowestScore, group.title)).join('')
-                    : '<div class="team-empty-zone">ยังไม่มีพนักงานในกลุ่มนี้</div>';
-                return `
-                    <div class="team-zone">
-                        <div class="team-zone-header">
-                            <span><i class="fa-solid ${group.icon} mr-1.5"></i>${esc(group.title)}</span>
-                            <span class="team-zone-count">${group.players.length} คน</span>
-                        </div>
-                        <div class="team-members">${members}</div>
-                    </div>
-                `;
+            const counters = {};
+            const roleCounts = teamSceneRoleCounts(rankedPlayers);
+            const workersHtml = rankedPlayers.map(player => {
+                const role = teamSceneRole(player);
+                const i = counters[role] || 0;
+                counters[role] = i + 1;
+                return teamWorkerCard(player, highestNonPerfect, lowestScore, teamSceneSpot(role, i), role);
             }).join('');
+            const roleOrder = currentBranch === 'TRD' ? ['cashier', 'store', 'stock'] : ['warehouse'];
+            const roleBar = roleOrder.map(role => `
+                <span class="team-live-rolechip">
+                    <i class="fa-solid ${role === 'cashier' ? 'fa-cash-register' : (role === 'stock' || role === 'warehouse' ? 'fa-boxes-stacked' : 'fa-store')}"></i>
+                    ${esc(teamRoleTitle(role))} ${roleCounts[role] || 0} คน
+                </span>
+            `).join('');
+            const sceneTitle = currentBranch === 'TRD' ? 'BAKERY MART · TRD' : 'AKRA WAREHOUSE';
+            const liveLabel = currentBranch === 'TRD'
+                ? 'ฉากร้าน Bakery Mart แสดงตำแหน่งแคชเชียร์ หน้าร้าน และคลังหน้าร้านตามอันดับ HP'
+                : 'ฉากโกดัง AKRA แสดงตำแหน่งทีมคลังตามอันดับ HP';
 
             return `
-                <div class="team-scene ${sceneClass}">
-                    ${teamSceneBackdropHtml()}
-                    <div class="team-zone-grid ${gridClass}">
-                        ${groupHtml}
+                <div class="team-live-scene team-live-${currentBranch.toLowerCase()}">
+                    <div class="team-live-stage" style="--scene-bg:url('${TEAM_SCENE_ASSETS[currentBranch] || TEAM_SCENE_ASSETS.AKRA}')" role="img" aria-label="${esc(liveLabel)}">
+                        <div class="team-live-sign"><i class="fa-solid ${currentBranch === 'TRD' ? 'fa-bread-slice' : 'fa-warehouse'}"></i>${sceneTitle}</div>
+                        <div class="team-live-status"><span class="team-live-pulse"></span>Live Team HP</div>
+                        <div class="team-live-float one" aria-hidden="true">${currentBranch === 'TRD' ? 'รอชำระเงิน' : 'กำลังแพ็ก'}</div>
+                        <div class="team-live-float two" aria-hidden="true">${currentBranch === 'TRD' ? 'เติมชั้น' : 'สแกนสินค้า'}</div>
+                        ${workersHtml}
+                    </div>
+                    <div class="team-live-summary">
+                        <div class="team-live-rolebar">${roleBar}</div>
+                        <ol class="team-live-ranklist">${rankedPlayers.map(teamLiveRankItem).join('')}</ol>
                     </div>
                 </div>
             `;
