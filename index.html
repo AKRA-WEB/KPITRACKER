@@ -423,7 +423,8 @@
                     <!-- Employee cards will be injected here -->
                 </div>
                 
-                <button onclick="saveAdminConfig()" id="btn-save-admin" class="mt-4 w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-transform flex justify-center items-center">
+                <p class="text-[10px] text-gray-400 mt-3 text-center"><i class="fa-solid fa-circle-check text-green-400 mr-1"></i>เพิ่ม/แก้ไข/ลบ แล้วระบบบันทึกเข้าฐานข้อมูลให้อัตโนมัติ — ปุ่มด้านล่างใช้บันทึกซ้ำกรณีเน็ตมีปัญหา</p>
+                <button onclick="saveAdminConfig()" id="btn-save-admin" class="mt-2 w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-transform flex justify-center items-center">
                     <i class="fa-solid fa-cloud-arrow-up mr-2"></i> อัปเดตเข้าระบบฐานข้อมูล
                 </button>
             </div>
@@ -484,7 +485,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260702.01";
+        const CURRENT_VERSION = "20260702.02";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -936,9 +937,9 @@
                 face(mouth),
                 female ? '.HSSSSSSSSH.' : '..SSSSSSSS..',
                 female ? '.HRTTTTTTRH.' : '..RTTTTTTR..',
-                '.STTTTTTTTS.',
-                '.STTTTTTTTS.',
-                '..TTTTTTTT..',
+                female ? '.HTTTTTTTTH.' : '.STTTTTTTTS.',
+                female ? '.HTTTTTTTTH.' : '.STTTTTTTTS.',
+                female ? '.HTTTTTTTTH.' : '..TTTTTTTT..',
                 '..PPPPPPPP..',
                 '..PPP..PPP..',
                 '..PPP..PPP..',
@@ -2308,6 +2309,40 @@
             proceedSaveAdminEmp(uid, name, isAkra, isTrd, dept, gender);
         }
 
+        // ส่งรายชื่อทั้งหมดขึ้น backend ทันที (auto-sync) แล้ว refresh ข้อมูลในหน่วยความจำ
+        async function syncAdminConfigToServer() {
+            if (await AppVersionGuard.blockIfStale()) return false;
+            try {
+                await fetch(LOG_APP_SCRIPT_URL, {
+                    method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: "saveConfig", configData: GLOBAL_CONFIG_LIST })
+                });
+                processConfigList(GLOBAL_CONFIG_LIST);
+                refreshConfigDependentUI();
+                return true;
+            } catch (error) {
+                console.error(error);
+                showToast("บันทึกไม่สำเร็จ เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กดปุ่มอัปเดตเข้าระบบซ้ำอีกครั้ง", true);
+                return false;
+            }
+        }
+
+        function refreshConfigDependentUI() {
+            const admins = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'];
+            admins.forEach(adminId => { if (!USER_DB[adminId]) USER_DB[adminId] = ["AKRA", "TRD"]; });
+
+            const deptFilter = document.getElementById('dash-dept-filter');
+            if (deptFilter) {
+                const cur = deptFilter.value;
+                deptFilter.innerHTML = '<option value="ALL">ดูรวมทุกแผนก</option>';
+                Object.keys(TRD_DEPARTMENTS).forEach(dept => {
+                    deptFilter.innerHTML += `<option value="${dept}">🏷️ ${dept}</option>`;
+                });
+                if ([...deptFilter.options].some(o => o.value === cur)) deptFilter.value = cur;
+            }
+            populateAdminEmpFilter();
+        }
+
         function proceedSaveAdminEmp(uid, name, isAkra, isTrd, dept, gender) {
             let branches = [];
             if (isAkra) branches.push("AKRA");
@@ -2321,21 +2356,23 @@
                 gender: gender || ""
             };
 
-            if (editingEmpIndex >= 0) {
+            const isEdit = editingEmpIndex >= 0;
+            if (isEdit) {
                 GLOBAL_CONFIG_LIST[editingEmpIndex] = empData;
-                showToast(`แก้ไขข้อมูล ${name} สำเร็จ (อย่าลืมกดอัปเดต)`);
             } else {
                 GLOBAL_CONFIG_LIST.push(empData);
-                showToast(`เพิ่ม ${name} สำเร็จ (อย่าลืมกดอัปเดต)`);
             }
 
-            cancelEditAdminEmp(); 
-            renderAdminPanel(); 
+            cancelEditAdminEmp();
+            renderAdminPanel();
+            syncAdminConfigToServer().then(ok => {
+                if (ok) showToast(isEdit ? `บันทึกการแก้ไข ${name} เข้าระบบแล้ว` : `เพิ่ม ${name} เข้าระบบแล้ว`);
+            });
         }
 
         function removeEmployeeFromAdmin(index) {
             const empName = GLOBAL_CONFIG_LIST[index].name;
-            showModal("ยืนยันการลบ", `คุณต้องการลบรายชื่อ "<b>${empName}</b>" ออกจากระบบใช่หรือไม่?`, "confirm", () => {
+            showModal("ยืนยันการลบ", `คุณต้องการลบรายชื่อ "<b>${esc(empName)}</b>" ออกจากระบบใช่หรือไม่?`, "confirm", () => {
                 GLOBAL_CONFIG_LIST.splice(index, 1);
                 if (editingEmpIndex === index) {
                     cancelEditAdminEmp();
@@ -2343,31 +2380,22 @@
                     editingEmpIndex--;
                 }
                 renderAdminPanel();
+                syncAdminConfigToServer().then(ok => {
+                    if (ok) showToast(`ลบ ${empName} ออกจากระบบแล้ว`);
+                });
             });
         }
 
         async function saveAdminConfig() {
-            if (await AppVersionGuard.blockIfStale()) return;
             const btn = document.getElementById('btn-save-admin');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังอัปเดตระบบ...';
             btn.disabled = true;
 
-            const payload = { action: "saveConfig", configData: GLOBAL_CONFIG_LIST };
+            const ok = await syncAdminConfigToServer();
+            if (ok) showToast("อัปเดตการตั้งค่าเข้าระบบกลางเรียบร้อย");
 
-            try {
-                const response = await fetch(LOG_APP_SCRIPT_URL, {
-                    method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                showToast("อัปเดตการตั้งค่าเข้าระบบกลางเรียบร้อย");
-                setTimeout(() => location.reload(), 1500); 
-            } catch (error) {
-                console.error(error); 
-                showToast("เกิดข้อผิดพลาด ไม่สามารถส่งข้อมูลได้", true);
-            } finally {
-                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> อัปเดตเข้าระบบฐานข้อมูล';
-                btn.disabled = false;
-            }
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> อัปเดตเข้าระบบฐานข้อมูล';
+            btn.disabled = false;
         }
 
         // ================= UI FUNCTIONS =================
