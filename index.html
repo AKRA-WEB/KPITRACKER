@@ -26,6 +26,18 @@
         /* Custom Checkbox Animation */
         .emp-label { transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         .emp-label:active { transform: scale(0.95); }
+
+        /* Pixel-art HP avatars */
+        .pixel-avatar { image-rendering: pixelated; display: block; }
+        .pixel-bob { animation: pixelBob 1.2s steps(2, end) infinite; }
+        @keyframes pixelBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+
+        /* Desktop 2-column layout for tab views (kept off .hidden so tab switching still works) */
+        @media (min-width: 768px) {
+            .md-grid-2:not(.hidden) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
+            .md-grid-2:not(.hidden) > * + * { margin-top: 0 !important; }
+            .md-grid-2:not(.hidden) > .md-colspan-2 { grid-column: span 2 / span 2; }
+        }
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
@@ -77,13 +89,13 @@
     </header>
 
     <!-- Main Content Area -->
-    <main id="app-content" class="p-4 max-w-md mx-auto hidden">
+    <main id="app-content" class="p-4 max-w-md mx-auto hidden md:max-w-3xl lg:max-w-5xl md:p-6">
         
         <!-- ================= VIEW: RECORD ================= -->
-        <div id="view-record" class="space-y-6">
-            
+        <div id="view-record" class="space-y-6 md-grid-2">
+
             <!-- Date Selection -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md-colspan-2">
                 <label class="block text-sm font-bold text-gray-700 mb-2"><i class="fa-regular fa-calendar text-blue-500 mr-1.5"></i>วันที่บันทึก</label>
                 <input type="date" id="record-date" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 font-medium">
             </div>
@@ -109,9 +121,9 @@
                     <div class="flex justify-between items-center border-b border-gray-100 pb-3">
                         <span class="text-sm font-medium text-gray-700">บิลย้ายคลัง <span class="text-[10px] text-gray-400 block">(หน้าร้านเบิก)</span></span>
                         <div class="flex items-center space-x-2">
-                            <button onclick="adjVol('vol-transfer', -1)" aria-label="ลดจำนวนบิลย้ายคลัง" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
-                            <input type="number" id="vol-transfer" value="0" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                            <button onclick="adjVol('vol-transfer', 1)" aria-label="เพิ่มจำนวนบิลย้ายคลัง" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
+                            <button onclick="adjVol('vol-transfer', -1)" data-vol="vol-transfer" data-step="-1" aria-label="ลดจำนวนบิลย้ายคลัง" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
+                            <input type="number" id="vol-transfer" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                            <button onclick="adjVol('vol-transfer', 1)" data-vol="vol-transfer" data-step="1" aria-label="เพิ่มจำนวนบิลย้ายคลัง" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                         </div>
                     </div>
                     
@@ -119,9 +131,9 @@
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">ลูกค้ามารับที่ร้าน</span>
                             <div class="flex items-center space-x-2">
-                                <button onclick="adjVol('vol-pickup', -1)" aria-label="ลดจำนวนลูกค้ามารับที่ร้าน" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
-                                <input type="number" id="vol-pickup" value="0" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                                <button onclick="adjVol('vol-pickup', 1)" aria-label="เพิ่มจำนวนลูกค้ามารับที่ร้าน" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
+                                <button onclick="adjVol('vol-pickup', -1)" data-vol="vol-pickup" data-step="-1" aria-label="ลดจำนวนลูกค้ามารับที่ร้าน" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
+                                <input type="number" id="vol-pickup" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                                <button onclick="adjVol('vol-pickup', 1)" data-vol="vol-pickup" data-step="1" aria-label="เพิ่มจำนวนลูกค้ามารับที่ร้าน" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
                         <input type="text" id="note-pickup" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="ระบุชื่อลูกค้า หรือ หมายเหตุเพิ่มเติม...">
@@ -131,9 +143,9 @@
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">ส่งต่างจังหวัด (ตจว.)</span>
                             <div class="flex items-center space-x-2">
-                                <button onclick="adjVol('vol-upcountry', -1)" aria-label="ลดจำนวนส่งต่างจังหวัด" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
-                                <input type="number" id="vol-upcountry" value="0" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                                <button onclick="adjVol('vol-upcountry', 1)" aria-label="เพิ่มจำนวนส่งต่างจังหวัด" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
+                                <button onclick="adjVol('vol-upcountry', -1)" data-vol="vol-upcountry" data-step="-1" aria-label="ลดจำนวนส่งต่างจังหวัด" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
+                                <input type="number" id="vol-upcountry" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                                <button onclick="adjVol('vol-upcountry', 1)" data-vol="vol-upcountry" data-step="1" aria-label="เพิ่มจำนวนส่งต่างจังหวัด" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
                         <input type="text" id="note-upcountry" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="ระบุชื่อลูกค้า หรือ สถานที่ส่ง (ตจว.)...">
@@ -143,9 +155,9 @@
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">ส่งในตลาด</span>
                             <div class="flex items-center space-x-2">
-                                <button onclick="adjVol('vol-inmarket', -1)" aria-label="ลดจำนวนส่งในตลาด" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
-                                <input type="number" id="vol-inmarket" value="0" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                                <button onclick="adjVol('vol-inmarket', 1)" aria-label="เพิ่มจำนวนส่งในตลาด" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
+                                <button onclick="adjVol('vol-inmarket', -1)" data-vol="vol-inmarket" data-step="-1" aria-label="ลดจำนวนส่งในตลาด" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
+                                <input type="number" id="vol-inmarket" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                                <button onclick="adjVol('vol-inmarket', 1)" data-vol="vol-inmarket" data-step="1" aria-label="เพิ่มจำนวนส่งในตลาด" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
                         <input type="text" id="note-inmarket" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="ระบุชื่อลูกค้า หรือ สถานที่ส่ง (ในตลาด)...">
@@ -155,9 +167,9 @@
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">ส่งนอกตลาด</span>
                             <div class="flex items-center space-x-2">
-                                <button onclick="adjVol('vol-outmarket', -1)" aria-label="ลดจำนวนส่งนอกตลาด" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
-                                <input type="number" id="vol-outmarket" value="0" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
-                                <button onclick="adjVol('vol-outmarket', 1)" aria-label="เพิ่มจำนวนส่งนอกตลาด" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
+                                <button onclick="adjVol('vol-outmarket', -1)" data-vol="vol-outmarket" data-step="-1" aria-label="ลดจำนวนส่งนอกตลาด" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
+                                <input type="number" id="vol-outmarket" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                                <button onclick="adjVol('vol-outmarket', 1)" data-vol="vol-outmarket" data-step="1" aria-label="เพิ่มจำนวนส่งนอกตลาด" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
                         <input type="text" id="note-outmarket" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="ระบุชื่อลูกค้า หรือ สถานที่ส่ง (นอกตลาด)...">
@@ -179,16 +191,16 @@
                 </button>
             </div>
 
-            <button onclick="saveDailyRecord()" id="btn-save" class="sticky-save-button w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-lg py-4 rounded-xl shadow-lg active:scale-[0.98] transition-transform flex justify-center items-center border border-blue-800">
+            <button onclick="saveDailyRecord()" id="btn-save" class="sticky-save-button md-colspan-2 w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-lg py-4 rounded-xl shadow-lg active:scale-[0.98] transition-transform flex justify-center items-center border border-blue-800">
                 <i class="fa-solid fa-cloud-arrow-up mr-2 text-xl"></i> บันทึกข้อมูลส่งเข้าระบบ
             </button>
-            <div class="h-6"></div> <!-- Extra spacing at bottom -->
+            <div class="h-6 md-colspan-2"></div> <!-- Extra spacing at bottom -->
         </div>
 
         <!-- ================= VIEW: DASHBOARD ================= -->
-        <div id="view-dashboard" class="hidden space-y-3 pb-6">
-            
-            <div class="flex justify-between items-center bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+        <div id="view-dashboard" class="hidden space-y-3 pb-6 md-grid-2">
+
+            <div class="flex justify-between items-center bg-white p-2 rounded-xl shadow-sm border border-gray-100 md-colspan-2">
                 <button onclick="changeWeek(-1)" aria-label="ดูสัปดาห์ก่อนหน้า" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors"><i class="fa-solid fa-chevron-left"></i></button>
                 <div class="text-center">
                     <h3 class="font-bold text-gray-800 text-sm" id="dash-week-label">สัปดาห์นี้</h3>
@@ -231,12 +243,12 @@
             </div>
 
             <!-- Gamification / Employee Evaluation -->
-            <div class="bg-gradient-to-br from-[#fffbeb] to-[#fff7ed] p-3 rounded-xl shadow-sm border border-yellow-200">
+            <div class="bg-gradient-to-br from-[#fffbeb] to-[#fff7ed] p-3 rounded-xl shadow-sm border border-yellow-200 md-colspan-2">
                 <h3 class="font-bold text-yellow-800 mb-2 text-sm flex items-center justify-between">
                     <span class="flex items-center"><i class="fa-solid fa-trophy mr-2 text-yellow-500"></i>จัดอันดับทีม (HP)</span>
                     <span class="text-[9px] font-bold text-yellow-700 bg-yellow-200 px-1.5 py-0.5 rounded-md border border-yellow-300 shadow-sm">เริ่ม 100 HP</span>
                 </h3>
-                <div id="dash-gamification" class="space-y-1.5"></div>
+                <div id="dash-gamification" class="space-y-1.5 md:grid md:grid-cols-2 md:gap-2 md:space-y-0"></div>
             </div>
 
             <!-- Weekly Tasks -->
@@ -275,8 +287,8 @@
         </div>
 
         <!-- ================= VIEW: ADMIN DASHBOARD (ภาพรวมผู้บริหาร) ================= -->
-        <div id="view-admin-dash" class="hidden space-y-4 pb-6">
-            <div class="bg-gradient-to-br from-indigo-600 to-blue-700 p-4 rounded-xl shadow-md text-white">
+        <div id="view-admin-dash" class="hidden space-y-4 pb-6 md-grid-2">
+            <div class="bg-gradient-to-br from-indigo-600 to-blue-700 p-4 rounded-xl shadow-md text-white md-colspan-2">
                 <div class="flex justify-between items-start mb-4">
                     <div>
                         <h2 class="text-lg font-bold mb-1"><i class="fa-solid fa-chart-line text-blue-200 mr-2"></i>ภาพรวมผู้บริหาร</h2>
@@ -325,7 +337,7 @@
             </div>
 
             <!-- Data Log (Everything) -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md-colspan-2">
                 <div class="flex justify-between items-center border-b border-gray-100 pb-2 mb-3">
                     <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-database text-purple-500 mr-2"></i>บันทึกความผิดพลาดทั้งหมด</h3>
                     <span id="admin-log-count" class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] font-bold">0 รายการ</span>
@@ -336,7 +348,7 @@
         </div>
 
         <!-- ================= VIEW: ADMIN PANEL (ตั้งค่า) ================= -->
-        <div id="view-admin" class="hidden space-y-4 pb-6">
+        <div id="view-admin" class="hidden space-y-4 pb-6 md-grid-2">
             
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <h2 class="text-lg font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2"><i class="fa-solid fa-user-plus text-blue-500 mr-2"></i>เพิ่ม/แก้ไขพนักงาน</h2>
@@ -372,6 +384,23 @@
                             <option value="คลัง">คลัง</option>
                         </select>
                     </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 mb-1.5">เพศ (สำหรับตัวละครในแดชบอร์ด)</label>
+                        <div class="flex space-x-2">
+                            <label class="flex items-center justify-center space-x-1.5 cursor-pointer bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg flex-1">
+                                <input type="radio" name="admin-input-gender" value="" checked class="w-4 h-4 border-gray-300 focus:ring-gray-400">
+                                <span class="text-xs font-semibold text-gray-600">ไม่ระบุ</span>
+                            </label>
+                            <label class="flex items-center justify-center space-x-1.5 cursor-pointer bg-orange-50 border border-orange-200 px-3 py-2 rounded-lg flex-1">
+                                <input type="radio" name="admin-input-gender" value="M" class="w-4 h-4 border-gray-300 focus:ring-orange-400">
+                                <span class="text-xs font-semibold text-orange-700">ชาย (เสื้อส้ม)</span>
+                            </label>
+                            <label class="flex items-center justify-center space-x-1.5 cursor-pointer bg-gray-50 border border-gray-300 px-3 py-2 rounded-lg flex-1">
+                                <input type="radio" name="admin-input-gender" value="F" class="w-4 h-4 border-gray-300 focus:ring-gray-400">
+                                <span class="text-xs font-semibold text-gray-700">หญิง (เสื้อขาว)</span>
+                            </label>
+                        </div>
+                    </div>
                     
                     <div class="flex space-x-2 mt-2" id="admin-form-actions">
                         <button onclick="saveEmployeeFromAdmin()" id="btn-submit-emp" class="w-full bg-blue-100 text-blue-700 border border-blue-200 font-bold py-3 rounded-xl text-sm active:bg-blue-200 shadow-sm transition-all hover:bg-blue-200 flex justify-center items-center">
@@ -404,7 +433,8 @@
     </main>
 
     <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around p-1.5 pb-safe z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 p-1.5 pb-safe z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+        <div class="flex justify-around w-full max-w-md mx-auto">
         <button onclick="switchTab('record')" id="tab-record" class="flex flex-col items-center p-2 flex-1 tab-active transition-colors rounded-xl mx-0.5 hover:bg-blue-50">
             <i class="fa-solid fa-pen-to-square text-xl mb-1 mt-0.5"></i>
             <span class="text-[10px] font-bold tracking-wide">บันทึก</span>
@@ -422,6 +452,7 @@
             <i class="fa-solid fa-users-gear text-xl mb-1 mt-0.5"></i>
             <span class="text-[10px] font-bold tracking-wide">ตั้งค่า</span>
         </button>
+        </div>
     </nav>
 
     <!-- Toast Notification -->
@@ -453,7 +484,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260621.01";
+        const CURRENT_VERSION = "20260702.01";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -863,6 +894,73 @@
             return new Date(d.setDate(diff));
         }
 
+        // ================= PIXEL-ART HP AVATARS =================
+        // ตัวละคร 2D แบบ pixel วาดด้วย SVG rect ล้วน (single-file, ไม่มีไฟล์รูป)
+        // เพศกำหนดสีเสื้อ: M = ส้ม, F = ขาว, ไม่ระบุ = เทา; ท่าทาง/หน้าตาเปลี่ยนตาม HP
+        const PIXEL_FIXED_COLORS = {
+            S: '#fcd9b8', E: '#1f2937', X: '#dc2626', M: '#9a3412', O: '#7f1d1d',
+            P: '#374151', B: '#1f2937', W: '#38bdf8'
+        };
+        const PIXEL_GENDER_STYLES = {
+            M: { shirt: '#f97316', trim: '#c2410c', hair: '#3f2c1e' },
+            F: { shirt: '#ffffff', trim: '#d1d5db', hair: '#5b3a29' },
+            U: { shirt: '#9ca3af', trim: '#6b7280', hair: '#4b5563' }
+        };
+
+        function getEmpGender(name) {
+            const emp = GLOBAL_CONFIG_LIST.find(e => e.name === name);
+            const gv = emp && emp.gender ? String(emp.gender).trim().toUpperCase() : '';
+            return (gv === 'M' || gv === 'F') ? gv : 'U';
+        }
+
+        function pixelHpState(hp) {
+            return hp >= 80 ? 'healthy' : (hp >= 50 ? 'hurt' : 'critical');
+        }
+
+        function pixelAvatarSvg(gender, hp) {
+            const state = pixelHpState(hp);
+            const g = PIXEL_GENDER_STYLES[gender] || PIXEL_GENDER_STYLES.U;
+            const female = gender === 'F';
+            const sweat = state === 'healthy' ? '.' : 'W';
+            const eyes = state === 'critical' ? 'SSXSSXSS' : 'SSESSESS';
+            const mouth = state === 'critical' ? 'SSSOOSSS' : (state === 'hurt' ? 'SSMMMMSS' : 'SSSMMSSS');
+            // แถวใบหน้ากว้าง 8px; ผู้หญิงมีผมยาวขนาบข้าง (คอลัมน์ 1 และ 10)
+            const face = (inner, right) => female ? '.H' + inner + 'H' + (right || '.') : '..' + inner + '.' + (right || '.');
+            const rows = [
+                '...HHHHHH...',
+                '..HHHHHHHH..',
+                female ? '.HHSSSSSSHH.' : '..HSSSSSSH..',
+                face('SSSSSSSS', sweat),
+                face(eyes),
+                face('SSSSSSSS'),
+                face(mouth),
+                female ? '.HSSSSSSSSH.' : '..SSSSSSSS..',
+                female ? '.HRTTTTTTRH.' : '..RTTTTTTR..',
+                '.STTTTTTTTS.',
+                '.STTTTTTTTS.',
+                '..TTTTTTTT..',
+                '..PPPPPPPP..',
+                '..PPP..PPP..',
+                '..PPP..PPP..',
+                '.BBBB..BBBB.'
+            ];
+            let rects = '';
+            rows.forEach((row, y) => {
+                for (let x = 0; x < row.length; x++) {
+                    const c = row[x];
+                    if (c === '.') continue;
+                    let fill;
+                    if (c === 'H') fill = g.hair;
+                    else if (c === 'T') fill = g.shirt;
+                    else if (c === 'R') fill = g.trim;
+                    else fill = PIXEL_FIXED_COLORS[c];
+                    rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${fill}"/>`;
+                }
+            });
+            const bob = state === 'critical' ? '' : ' pixel-bob';
+            return `<svg class="pixel-avatar${bob}" viewBox="0 0 12 16" width="36" height="48" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
+        }
+
         // ================= AI SUGGESTION & INSIGHTS (DRY) =================
         function getSmartSuggestion(type, index) {
             const suggestionDatabase = {
@@ -1157,16 +1255,9 @@
             return false;
         }
 
-        async function initSystem() {
-            const isVersionOk = await checkAppVersion();
-            if (!isVersionOk) return;
-            AppVersionGuard.start({ current: CURRENT_VERSION, readActions: [] });
-
-            // ตรวจสอบและย้ายไปเปิดเบราว์เซอร์ภายนอกเมื่อเปิดจาก LINE (ป้องกันบั๊กการกดปุ่มบน WebView ของ LINE)
-            if (handleLineBrowserRedirect()) return;
-
+        async function loadConfig() {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); 
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
 
             try {
                 const response = await fetch(LOG_APP_SCRIPT_URL + "?action=getConfig", { signal: controller.signal });
@@ -1194,92 +1285,120 @@
                         deptFilter.innerHTML += `<option value="${dept}">🏷️ ${dept}</option>`;
                     });
                 }
-                
-                populateAdminEmpFilter(); 
-                await checkAuth();
+
+                populateAdminEmpFilter();
             }
         }
 
-        async function checkAuth() {
-            let userData = null;
+        async function initSystem() {
+            const isVersionOk = await checkAppVersion();
+            if (!isVersionOk) return;
+            AppVersionGuard.start({ current: CURRENT_VERSION, readActions: [] });
 
-            // 1. ดึงจาก URL Query Parameters ก่อน (เช่น ?sso=JWT_TOKEN หรือ ?uid=250013)
+            // ตรวจสอบและย้ายไปเปิดเบราว์เซอร์ภายนอกเมื่อเปิดจาก LINE (ป้องกันบั๊กการกดปุ่มบน WebView ของ LINE)
+            if (handleLineBrowserRedirect()) return;
+
+            // โหลด config พนักงาน และตรวจ SSO token พร้อมกัน (เดิมทำต่อคิวกัน ช้ากว่า)
+            const [, ssoResult] = await Promise.all([loadConfig(), resolveSsoAuth()]);
+            await checkAuth(ssoResult);
+        }
+
+        // ตรวจ SSO token จาก URL (?sso=) — แยกออกมาเพื่อให้รันขนานกับ loadConfig ได้
+        async function resolveSsoAuth() {
+            const result = { attempted: false, userData: null };
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const ssoToken = urlParams.get('sso');
-                const paramUid = urlParams.get('uid') || urlParams.get('username') || urlParams.get('user');
+                if (!ssoToken) return result;
+                result.attempted = true;
 
-                if (ssoToken) {
-                    const portalApiUrl = "https://script.google.com/macros/s/AKfycbyQJLwb5HTexG6gxqTehGWlAxfSXVT--CpWnnp2JTcP4xCcMA1vUjSY_eWqPjUKwzq7/exec";
-                    
-                    try {
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 วินาที
-                        
-                        const verifyRes = await fetch(`${portalApiUrl}?action=verifyToken&token=${encodeURIComponent(ssoToken)}`, { signal: controller.signal });
-                        clearTimeout(timeoutId);
-                        
-                            if (verifyRes.ok) {
-                                const verifyData = await verifyRes.json();
-                                if (verifyData && verifyData.valid && verifyData.user) {
-                                    const decodedUser = verifyData.user;
-                                    const normalizedUid = String(decodedUser.id).toLowerCase();
-                                    
-                                    // ดึง Roles ทั้งหมดจาก SSO และทำการแมพ Admin ให้ตรงกับที่ระบบภายในใช้
-                                    const ssoRoles = decodedUser.roles || [];
-                                    if ((ssoRoles.includes('ADMIN') || ssoRoles.includes('admin')) && !ssoRoles.includes('Admin')) {
-                                        ssoRoles.push('Admin');
-                                    }
+                const portalApiUrl = "https://script.google.com/macros/s/AKfycbyQJLwb5HTexG6gxqTehGWlAxfSXVT--CpWnnp2JTcP4xCcMA1vUjSY_eWqPjUKwzq7/exec";
 
-                                    userData = {
-                                        username: normalizedUid,
-                                        name: decodedUser.name,
-                                        roles: ssoRoles,
-                                        perms: decodedUser.perms || {}
-                                    };
-                                    safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
-                                }
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 วินาที
+
+                    const verifyRes = await fetch(`${portalApiUrl}?action=verifyToken&token=${encodeURIComponent(ssoToken)}`, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+
+                    if (verifyRes.ok) {
+                        const verifyData = await verifyRes.json();
+                        if (verifyData && verifyData.valid && verifyData.user) {
+                            const decodedUser = verifyData.user;
+                            const normalizedUid = String(decodedUser.id).toLowerCase();
+
+                            // ดึง Roles ทั้งหมดจาก SSO และทำการแมพ Admin ให้ตรงกับที่ระบบภายในใช้
+                            const ssoRoles = decodedUser.roles || [];
+                            if ((ssoRoles.includes('ADMIN') || ssoRoles.includes('admin')) && !ssoRoles.includes('Admin')) {
+                                ssoRoles.push('Admin');
                             }
-                        } catch (e) {
-                            console.warn("API token verification failed, trying local decode as fallback...", e);
+
+                            result.userData = {
+                                username: normalizedUid,
+                                name: decodedUser.name,
+                                roles: ssoRoles,
+                                perms: decodedUser.perms || {}
+                            };
+                            safeStorage.setItem('akra_sso_user_data', JSON.stringify(result.userData));
                         }
-
-                        // หากยืนยันผ่าน API ไม่ได้ (เช่น ออฟไลน์/เน็ตช้า) ให้ทำ Local Decode เป็น Fallback
-                        if (!userData) {
-                            const decodedUser = decodeJwtPayload(ssoToken);
-                            if (decodedUser && decodedUser.id) {
-                                const normalizedUid = String(decodedUser.id).toLowerCase();
-                                
-                                // ดึง Roles ทั้งหมดจาก JWT Payload
-                                const ssoRoles = decodedUser.roles || [];
-                                if ((ssoRoles.includes('ADMIN') || ssoRoles.includes('admin')) && !ssoRoles.includes('Admin')) {
-                                    ssoRoles.push('Admin');
-                                }
-
-                                userData = {
-                                    username: normalizedUid,
-                                    name: decodedUser.name || normalizedUid,
-                                    roles: ssoRoles,
-                                    perms: decodedUser.perms || {}
-                                };
-                                safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
-                            }
-                        }
-                } else if (paramUid) {
-                    const normalizedUid = String(paramUid).toLowerCase();
-                    const foundEmp = GLOBAL_CONFIG_LIST.find(e => String(e.uid).toLowerCase() === normalizedUid);
-                    const empName = foundEmp ? foundEmp.name : paramUid;
-                    const isSystemAdmin = foundEmp && foundEmp.dept && foundEmp.dept.toLowerCase() === 'admin';
-                    const empRoles = isSystemAdmin ? ["Admin"] : [];
-
-                    userData = {
-                        username: normalizedUid,
-                        name: empName,
-                        roles: empRoles
-                    };
-                    safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
+                    }
+                } catch (e) {
+                    console.warn("API token verification failed, trying local decode as fallback...", e);
                 }
-            } catch(e) { console.error("URL Params auth check failed", e); }
+
+                // หากยืนยันผ่าน API ไม่ได้ (เช่น ออฟไลน์/เน็ตช้า) ให้ทำ Local Decode เป็น Fallback
+                if (!result.userData) {
+                    const decodedUser = decodeJwtPayload(ssoToken);
+                    if (decodedUser && decodedUser.id) {
+                        const normalizedUid = String(decodedUser.id).toLowerCase();
+
+                        // ดึง Roles ทั้งหมดจาก JWT Payload
+                        const ssoRoles = decodedUser.roles || [];
+                        if ((ssoRoles.includes('ADMIN') || ssoRoles.includes('admin')) && !ssoRoles.includes('Admin')) {
+                            ssoRoles.push('Admin');
+                        }
+
+                        result.userData = {
+                            username: normalizedUid,
+                            name: decodedUser.name || normalizedUid,
+                            roles: ssoRoles,
+                            perms: decodedUser.perms || {}
+                        };
+                        safeStorage.setItem('akra_sso_user_data', JSON.stringify(result.userData));
+                    }
+                }
+            } catch(e) { console.error("SSO auth check failed", e); }
+            return result;
+        }
+
+        async function checkAuth(preSso = null) {
+            let userData = null;
+
+            // 1. ดึงจาก URL Query Parameters ก่อน (เช่น ?sso=JWT_TOKEN หรือ ?uid=250013)
+            const sso = preSso || await resolveSsoAuth();
+            userData = sso.userData;
+
+            if (!userData && !sso.attempted) {
+                try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const paramUid = urlParams.get('uid') || urlParams.get('username') || urlParams.get('user');
+
+                    if (paramUid) {
+                        const normalizedUid = String(paramUid).toLowerCase();
+                        const foundEmp = GLOBAL_CONFIG_LIST.find(e => String(e.uid).toLowerCase() === normalizedUid);
+                        const empName = foundEmp ? foundEmp.name : paramUid;
+                        const isSystemAdmin = foundEmp && foundEmp.dept && foundEmp.dept.toLowerCase() === 'admin';
+                        const empRoles = isSystemAdmin ? ["Admin"] : [];
+
+                        userData = {
+                            username: normalizedUid,
+                            name: empName,
+                            roles: empRoles
+                        };
+                        safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
+                    }
+                } catch(e) { console.error("URL Params auth check failed", e); }
+            }
 
             // 2. ดึงจาก Storage หากไม่มีใน URL
             if (!userData) {
@@ -1405,7 +1524,9 @@
 
             addErrorEntryRow();
             loadTasksForSelectedDate();
-            if (isKpiCacheStale(currentBranch)) syncDataFromSheet(); else loadDashboardData();
+            restoreRecordDraft();
+            // Cached-first: แสดงข้อมูลจาก cache ทันที แล้วค่อย sync เบื้องหลังเมื่อ cache เก่า
+            if (isKpiCacheStale(currentBranch)) syncDataFromSheet();
         }
 
         // ================= API / SYNC =================
@@ -1424,7 +1545,8 @@
             const timeoutId = setTimeout(() => controller.abort(), 12000); 
 
             try {
-                const fetchUrl = LOG_APP_SCRIPT_URL + "?action=getData&branch=" + currentBranch;
+                // ดึงเฉพาะ 3 เดือนล่าสุด (backend เก่าไม่รู้จัก months จะส่งทั้งหมดตามเดิม ไม่พัง)
+                const fetchUrl = LOG_APP_SCRIPT_URL + "?action=getData&branch=" + currentBranch + "&months=3";
                 const response = await fetch(fetchUrl, { signal: controller.signal });
                 clearTimeout(timeoutId);
                 const data = await response.json();
@@ -1432,6 +1554,7 @@
                 if (Array.isArray(data)) {
                     safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
                     safeStorage.setItem('kpiData_' + currentBranch + '_ts', String(Date.now()));
+                    _adminFullLoaded = false; // cache สาขานี้เหลือ 3 เดือน — เดือนเก่าต้องดึงเต็มใหม่
                     if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
                         loadDashboardData();
                     } else if (!document.getElementById('view-admin-dash').classList.contains('hidden')) {
@@ -1800,16 +1923,19 @@
                 let deptTag = '';
                 if (currentBranch === 'TRD') {
                     let dept = getTRDDept(player.name);
-                    if (dept) deptTag = `<span class="text-[9px] text-gray-500 ml-1.5 font-bold border border-gray-200 px-1.5 py-0.5 rounded bg-gray-50 shadow-sm">${dept}</span>`;
+                    if (dept) deptTag = `<span class="text-[9px] text-gray-500 ml-1.5 font-bold border border-gray-200 px-1.5 py-0.5 rounded bg-gray-50 shadow-sm">${esc(dept)}</span>`;
                 }
 
                 gameHtml += `
-                    <div class="bg-white p-2 rounded-lg border border-${hpColor}-200 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
-                        <div class="flex justify-between items-center mb-1.5 relative z-10">
-                            <div class="font-bold text-gray-800 text-xs flex items-center"><span class="w-5 h-5 inline-flex justify-center items-center bg-gray-100 text-gray-500 text-[9px] font-black rounded-full mr-2 border border-gray-200">#${index+1}</span>${player.name} ${deptTag} ${badge}</div>
-                            <div class="font-black text-${hpColor}-600 text-xs bg-${hpColor}-50 px-1.5 py-0.5 rounded border border-${hpColor}-100">${player.hp} <span class="text-[8px] font-bold">HP</span></div>
+                    <div class="bg-white p-2 rounded-lg border border-${hpColor}-200 shadow-sm relative overflow-hidden transition-all hover:shadow-md flex items-center gap-2.5">
+                        <div class="shrink-0 bg-${hpColor}-50 border border-${hpColor}-100 rounded-lg px-1.5 pt-1 flex items-end justify-center self-stretch">${pixelAvatarSvg(getEmpGender(player.name), player.hp)}</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <div class="font-bold text-gray-800 text-xs flex items-center flex-wrap min-w-0"><span class="w-5 h-5 inline-flex justify-center items-center bg-gray-100 text-gray-500 text-[9px] font-black rounded-full mr-2 border border-gray-200">#${index+1}</span>${esc(player.name)} ${deptTag} ${badge}</div>
+                                <div class="font-black text-${hpColor}-600 text-xs bg-${hpColor}-50 px-1.5 py-0.5 rounded border border-${hpColor}-100 whitespace-nowrap ml-1">${player.hp} <span class="text-[8px] font-bold">HP</span></div>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2 border border-gray-200 overflow-hidden"><div class="${barColor} h-full rounded-full transition-all duration-1000 relative" style="width: ${hpPercent}%"><div class="absolute inset-0 bg-white/20"></div></div></div>
                         </div>
-                        <div class="w-full bg-gray-100 rounded-full h-2 relative z-10 border border-gray-200 overflow-hidden"><div class="${barColor} h-full rounded-full transition-all duration-1000 relative" style="width: ${hpPercent}%"><div class="absolute inset-0 bg-white/20"></div></div></div>
                     </div>
                 `;
             });
@@ -1837,24 +1963,50 @@
             if (emps.includes(currentVal)) select.value = currentVal; else select.value = 'ALL';
         }
 
+        async function fetchBranchData(branch, monthsQuery) {
+            const res = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=" + branch + (monthsQuery || ""));
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                safeStorage.setItem('kpiData_' + branch, JSON.stringify(data));
+                safeStorage.setItem('kpiData_' + branch + '_ts', String(Date.now()));
+            }
+        }
+
         async function syncAllBranchesForAdmin() {
             if (!can("adminDashboard")) return;
             try {
-                const resAkra = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=AKRA");
-                const dataAkra = await resAkra.json();
-                safeStorage.setItem('kpiData_AKRA', JSON.stringify(dataAkra));
-                safeStorage.setItem('kpiData_AKRA_ts', String(Date.now()));
+                // ดึงสองสาขาพร้อมกัน (เดิมต่อคิวกัน ช้ากว่าเท่าตัว)
+                await Promise.all([fetchBranchData('AKRA', '&months=3'), fetchBranchData('TRD', '&months=3')]);
+                _adminFullLoaded = false;
 
-                const resTrd = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=TRD");
-                const dataTrd = await resTrd.json();
-                safeStorage.setItem('kpiData_TRD', JSON.stringify(dataTrd));
-                safeStorage.setItem('kpiData_TRD_ts', String(Date.now()));
-                
                 if(!document.getElementById('view-admin-dash').classList.contains('hidden')) {
                     renderAdminDashboard();
                 }
             } catch(e) {
                 console.error("Admin background sync failed", e);
+            }
+        }
+
+        // เมื่อเลือกดูเดือนเก่ากว่าช่วงที่ cache 3 เดือนครอบคลุม ให้ดึงประวัติเต็มหนึ่งครั้ง
+        let _adminFullLoaded = false;
+        async function ensureAdminFullData(monthStr) {
+            if (_adminFullLoaded || !monthStr) return;
+            const coverage = new Date();
+            coverage.setDate(1);
+            coverage.setMonth(coverage.getMonth() - 2);
+            coverage.setHours(0, 0, 0, 0);
+            const selected = new Date(monthStr + "-01");
+            if (isNaN(selected.getTime()) || selected >= coverage) return;
+
+            _adminFullLoaded = true;
+            try {
+                await Promise.all([fetchBranchData('AKRA'), fetchBranchData('TRD')]);
+                if (!document.getElementById('view-admin-dash').classList.contains('hidden')) {
+                    renderAdminDashboard();
+                }
+            } catch (e) {
+                _adminFullLoaded = false;
+                console.error("Full history fetch failed", e);
             }
         }
 
@@ -1869,7 +2021,9 @@
                 monthInput = `${yyyy}-${mm}`;
                 document.getElementById('admin-dash-month').value = monthInput;
             }
-            
+
+            ensureAdminFullData(monthInput); // เดือนเก่ากว่า cache 3 เดือน → ดึงประวัติเต็มเบื้องหลังแล้ว re-render
+
             const branchFilter = document.getElementById('admin-dash-branch').value;
             const empFilter = document.getElementById('admin-dash-emp').value;
             
@@ -2013,6 +2167,17 @@
         // ================= ADMIN FUNCTIONS =================
         let editingEmpIndex = -1; 
 
+        function getAdminGenderValue() {
+            const el = document.querySelector('input[name="admin-input-gender"]:checked');
+            return el ? el.value : '';
+        }
+
+        function setAdminGenderValue(v) {
+            const val = (v === 'M' || v === 'F') ? v : '';
+            const el = document.querySelector(`input[name="admin-input-gender"][value="${val}"]`);
+            if (el) el.checked = true;
+        }
+
         function toggleAdminDept() {
             const trdChecked = document.getElementById('admin-input-branch-trd').checked;
             const deptContainer = document.getElementById('admin-dept-container');
@@ -2035,17 +2200,23 @@
                 if (isSystemAdmin) return; // ไม่แสดงรายชื่อ Admin ในหน้าจัดการพนักงาน
 
                 displayedCount++;
-                let branchesBadge = emp.branches.split(',').map(b => `<span class="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 mr-1">${b}</span>`).join('');
-                let deptBadge = emp.dept ? `<span class="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded border border-purple-100">${emp.dept}</span>` : '';
-                
+                let branchesBadge = emp.branches.split(',').map(b => `<span class="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 mr-1">${esc(b)}</span>`).join('');
+                let deptBadge = emp.dept ? `<span class="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded border border-purple-100">${esc(emp.dept)}</span>` : '';
+                const genderVal = emp.gender ? String(emp.gender).trim().toUpperCase() : '';
+                let genderBadge = genderVal === 'M'
+                    ? `<span class="bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded border border-orange-200">ชาย</span>`
+                    : (genderVal === 'F'
+                        ? `<span class="bg-gray-50 text-gray-700 px-1.5 py-0.5 rounded border border-gray-300">หญิง</span>`
+                        : `<span class="bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded border border-gray-200">ไม่ระบุเพศ</span>`);
+
                 html += `
                     <div class="bg-gray-50/50 p-3 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center mb-2 transition-all hover:bg-white">
                         <div>
                             <div class="font-bold text-gray-800 text-sm flex items-center">
-                                ${emp.name} <span class="text-[10px] text-gray-400 font-medium ml-1.5 bg-white px-1 border border-gray-100 rounded">ID: ${emp.uid}</span>
+                                ${esc(emp.name)} <span class="text-[10px] text-gray-400 font-medium ml-1.5 bg-white px-1 border border-gray-100 rounded">ID: ${esc(emp.uid)}</span>
                             </div>
                             <div class="text-[10px] text-gray-600 mt-1.5 flex flex-wrap gap-1">
-                                ${branchesBadge} ${deptBadge}
+                                ${branchesBadge} ${deptBadge} ${genderBadge}
                             </div>
                         </div>
                         <div class="flex space-x-1.5">
@@ -2076,6 +2247,7 @@
             document.getElementById('admin-input-branch-trd').checked = branches.includes('TRD');
             
             document.getElementById('admin-input-dept').value = emp.dept || '';
+            setAdminGenderValue(emp.gender ? String(emp.gender).trim().toUpperCase() : '');
             toggleAdminDept();
 
             const btnSubmit = document.getElementById('btn-submit-emp');
@@ -2095,6 +2267,7 @@
             document.getElementById('admin-input-branch-akra').checked = false;
             document.getElementById('admin-input-branch-trd').checked = false;
             document.getElementById('admin-input-dept').value = '';
+            setAdminGenderValue('');
             toggleAdminDept();
 
             const btnSubmit = document.getElementById('btn-submit-emp');
@@ -2111,6 +2284,7 @@
             const isAkra = document.getElementById('admin-input-branch-akra').checked;
             const isTrd = document.getElementById('admin-input-branch-trd').checked;
             const dept = document.getElementById('admin-input-dept').value;
+            const gender = getAdminGenderValue();
 
             if (!uid || !name) return showToast("กรุณาระบุรหัสพนักงานและชื่อให้ครบถ้วน", true);
             if (!isAkra && !isTrd) return showToast("กรุณาเลือกสาขาอย่างน้อย 1 สาขา", true);
@@ -2127,14 +2301,14 @@
                     } else if (editingEmpIndex === -1) {
                          GLOBAL_CONFIG_LIST.splice(existsIndex, 1);
                     }
-                    proceedSaveAdminEmp(uid, name, isAkra, isTrd, dept);
+                    proceedSaveAdminEmp(uid, name, isAkra, isTrd, dept, gender);
                 });
                 return;
             }
-            proceedSaveAdminEmp(uid, name, isAkra, isTrd, dept);
+            proceedSaveAdminEmp(uid, name, isAkra, isTrd, dept, gender);
         }
 
-        function proceedSaveAdminEmp(uid, name, isAkra, isTrd, dept) {
+        function proceedSaveAdminEmp(uid, name, isAkra, isTrd, dept, gender) {
             let branches = [];
             if (isAkra) branches.push("AKRA");
             if (isTrd) branches.push("TRD");
@@ -2143,7 +2317,8 @@
                 uid: uid,
                 name: name,
                 branches: branches.join(","),
-                dept: isTrd ? dept : ""
+                dept: isTrd ? dept : "",
+                gender: gender || ""
             };
 
             if (editingEmpIndex >= 0) {
@@ -2254,12 +2429,47 @@
             }
         }
 
+        // ================= QUICK ERROR-TYPE CHIPS (C1) =================
+        function getTopErrorTypes(limit = 5) {
+            if (!currentBranch || !BRANCH_CONFIG[currentBranch]) return [];
+            const valid = new Set();
+            (BRANCH_CONFIG[currentBranch].errorTypes || []).forEach(g => (g.options || []).forEach(o => valid.add(o)));
+            const counts = {};
+            let rawData = [];
+            try { rawData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]'); } catch (e) {}
+            rawData.forEach(d => (d.errors || []).forEach(e => {
+                if (e.type && valid.has(e.type)) counts[e.type] = (counts[e.type] || 0) + 1;
+            }));
+            return Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, limit);
+        }
+
+        function applyQuickErrType(btn) {
+            const entry = btn.closest('.error-entry');
+            const sel = entry.querySelector('.err-type');
+            sel.value = btn.dataset.type;
+            togglePenalty(sel);
+            entry.querySelectorAll('.quick-type-chip').forEach(c => {
+                c.classList.remove('bg-red-500', 'text-white', 'border-red-500');
+                c.classList.add('bg-white', 'text-red-600', 'border-red-200');
+            });
+            btn.classList.remove('bg-white', 'text-red-600', 'border-red-200');
+            btn.classList.add('bg-red-500', 'text-white', 'border-red-500');
+            saveRecordDraftDebounced();
+        }
+
         // ================= RECORD LOGIC =================
         function addErrorEntryRow() {
             if (!currentBranch || !BRANCH_CONFIG[currentBranch]) return;
             const container = document.getElementById('error-entries-container');
             const rowId = Date.now() + Math.floor(Math.random() * 1000);
             const typeOptionsHtml = getErrorTypeOptionsHtml(currentBranch);
+
+            const quickTypes = getTopErrorTypes();
+            const chipsHtml = quickTypes.length === 0 ? '' : `
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="text-[10px] text-gray-400 font-bold self-center"><i class="fa-solid fa-bolt text-yellow-500 mr-0.5"></i> ที่พบบ่อย:</span>
+                                ${quickTypes.map(t => `<button type="button" onclick="applyQuickErrType(this)" data-type="${esc(t)}" class="quick-type-chip bg-white border border-red-200 text-red-600 text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm active:scale-95 hover:bg-red-50 transition-all">${esc(t)}</button>`).join('')}
+                            </div>`;
 
             let empsHtml = '';
             
@@ -2319,6 +2529,7 @@
                             <span class="bg-gray-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] mr-1.5">2</span> ระบุรายละเอียด
                         </label>
                         <div class="grid grid-cols-1 gap-3 pl-1">
+                            ${chipsHtml}
                             <div class="relative">
                                 <select class="err-type w-full p-2.5 pr-10 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-50 appearance-none cursor-pointer" onchange="togglePenalty(this)">
                                     ${typeOptionsHtml}
@@ -2471,9 +2682,156 @@
                 hasTasks = true;
             }
             if(!hasTasks) addTaskEntryRow();
+
+            // ถ้ามีแบบร่างของวันเดียวกัน ให้ใช้แผนงานจากแบบร่างแทน (กัน sync เบื้องหลังเขียนทับงานที่กรอกค้าง)
+            const draft = readRecordDraft();
+            if (draft && draft.date === selectedDateStr) applyDraftTasks(draft);
         }
 
         document.getElementById('record-date').addEventListener('change', loadTasksForSelectedDate);
+
+        // ================= RECORD DRAFT AUTOSAVE (C2) =================
+        // เก็บฟอร์มบันทึกที่กรอกค้างไว้ลง localStorage กันข้อมูลหายเมื่อรีโหลด/หลุดหน้า
+        let _draftTimer = null;
+        let _restoringDraft = false;
+        function draftKey() { return 'kpiDraft_' + currentBranch; }
+
+        function readRecordDraft() {
+            try { return JSON.parse(safeStorage.getItem(draftKey()) || 'null'); } catch (e) { return null; }
+        }
+
+        function collectRecordDraft() {
+            const draft = { date: document.getElementById('record-date').value, errors: [], tasks: [], volume: {}, notes: {} };
+            document.querySelectorAll('.error-entry').forEach(entry => {
+                const stageSel = entry.querySelector('.err-stage');
+                draft.errors.push({
+                    emps: Array.from(entry.querySelectorAll('.err-emp-cb:checked')).map(cb => cb.value),
+                    type: entry.querySelector('.err-type').value,
+                    stage: stageSel ? stageSel.value : '',
+                    penalty: entry.querySelector('.err-penalty').value,
+                    note: entry.querySelector('.err-note').value
+                });
+            });
+            document.querySelectorAll('.task-entry').forEach(entry => {
+                draft.tasks.push({
+                    name: entry.querySelector('.task-name').value,
+                    status: entry.querySelector('.task-status').value,
+                    assignees: Array.from(entry.querySelectorAll('.task-emp-cb:checked')).map(cb => cb.value)
+                });
+            });
+            if (BRANCH_CONFIG[currentBranch] && BRANCH_CONFIG[currentBranch].showZone2) {
+                ['vol-transfer','vol-pickup','vol-upcountry','vol-inmarket','vol-outmarket'].forEach(id => { draft.volume[id] = document.getElementById(id).value; });
+                ['note-pickup','note-upcountry','note-inmarket','note-outmarket'].forEach(id => { draft.notes[id] = document.getElementById(id).value; });
+            }
+            return draft;
+        }
+
+        // นับเฉพาะสิ่งที่ผู้ใช้กรอกเองแล้วเสียเวลา: ความผิดพลาด/ปริมาณงาน/หมายเหตุ
+        // (แผนงานถูก prefill จากชีตอยู่แล้ว จึงไม่ใช้ตัดสินว่ามีแบบร่าง แต่จะติดไปกับแบบร่างด้วย)
+        function draftHasContent(draft) {
+            if (!draft) return false;
+            if ((draft.errors || []).some(e => (e.emps || []).length > 0 || (e.note || '').trim() !== '')) return true;
+            if (Object.values(draft.volume || {}).some(v => (parseInt(v) || 0) > 0)) return true;
+            if (Object.values(draft.notes || {}).some(v => (v || '').trim() !== '')) return true;
+            return false;
+        }
+
+        function saveRecordDraft() {
+            if (_restoringDraft || !currentBranch) return;
+            const draft = collectRecordDraft();
+            if (draftHasContent(draft)) safeStorage.setItem(draftKey(), JSON.stringify(draft));
+            else safeStorage.removeItem(draftKey());
+        }
+
+        function saveRecordDraftDebounced() {
+            if (_restoringDraft || !currentBranch) return;
+            clearTimeout(_draftTimer);
+            _draftTimer = setTimeout(saveRecordDraft, 400);
+        }
+
+        function clearRecordDraft() {
+            clearTimeout(_draftTimer);
+            safeStorage.removeItem(draftKey());
+        }
+
+        function applyDraftTasks(draft) {
+            if (!draft || !Array.isArray(draft.tasks) || draft.tasks.length === 0) return;
+            const container = document.getElementById('task-entries-container');
+            container.innerHTML = '';
+            draft.tasks.forEach(t => addTaskEntryRow(t.name || '', t.status || 'ยังไม่เริ่ม', (t.assignees || []).join(', ')));
+        }
+
+        function restoreRecordDraft() {
+            const draft = readRecordDraft();
+            if (!draftHasContent(draft)) return;
+            _restoringDraft = true;
+            try {
+                if (draft.date) {
+                    document.getElementById('record-date').value = draft.date;
+                    loadTasksForSelectedDate();
+                }
+                const container = document.getElementById('error-entries-container');
+                container.innerHTML = '';
+                (draft.errors && draft.errors.length ? draft.errors : [null]).forEach(errDraft => {
+                    addErrorEntryRow();
+                    if (!errDraft) return;
+                    const entry = container.lastElementChild;
+                    entry.querySelectorAll('.err-emp-cb').forEach(cb => { cb.checked = (errDraft.emps || []).includes(cb.value); });
+                    const typeSel = entry.querySelector('.err-type');
+                    if (errDraft.type) { typeSel.value = errDraft.type; togglePenalty(typeSel); }
+                    const stageSel = entry.querySelector('.err-stage');
+                    if (stageSel && errDraft.stage) stageSel.value = errDraft.stage;
+                    if (errDraft.penalty) entry.querySelector('.err-penalty').value = errDraft.penalty;
+                    entry.querySelector('.err-note').value = errDraft.note || '';
+                });
+                if (BRANCH_CONFIG[currentBranch].showZone2) {
+                    Object.entries(draft.volume || {}).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
+                    Object.entries(draft.notes || {}).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
+                }
+                applyDraftTasks(draft);
+                showToast('กู้คืนข้อมูลที่กรอกค้างไว้ (ยังไม่ได้บันทึก)');
+            } finally {
+                _restoringDraft = false;
+            }
+        }
+
+        // จับทุกการแก้ไขในหน้าบันทึก (input/change/click ครอบปุ่ม +/- และปุ่มลบแถวด้วย)
+        (function wireDraftAutosave() {
+            const recView = document.getElementById('view-record');
+            recView.addEventListener('input', saveRecordDraftDebounced);
+            recView.addEventListener('change', saveRecordDraftDebounced);
+            recView.addEventListener('click', saveRecordDraftDebounced);
+        })();
+
+        // ================= VOLUME STEPPER LONG-PRESS (C3) =================
+        let _holdTimeout = null, _holdInterval = null, _holdFired = false;
+        function stopVolHold() {
+            clearTimeout(_holdTimeout);
+            clearInterval(_holdInterval);
+            _holdTimeout = _holdInterval = null;
+        }
+        document.addEventListener('pointerdown', (e) => {
+            const btn = e.target.closest('[data-vol]');
+            if (!btn) return;
+            _holdFired = false;
+            _holdTimeout = setTimeout(() => {
+                _holdInterval = setInterval(() => {
+                    _holdFired = true;
+                    adjVol(btn.dataset.vol, parseInt(btn.dataset.step));
+                    saveRecordDraftDebounced();
+                }, 110);
+            }, 450);
+        });
+        ['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, stopVolHold));
+        // กัน click ท้าย long-press ไม่ให้บวก/ลบเกินอีก 1
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-vol]');
+            if (btn && _holdFired) {
+                _holdFired = false;
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        }, true);
 
         async function saveDailyRecord() {
             if (await AppVersionGuard.blockIfStale()) return;
@@ -2568,7 +2926,8 @@
 
                     showToast("บันทึกข้อมูลเรียบร้อยแล้ว!");
                     sendAppLog("บันทึกข้อมูล", `บันทึกข้อมูลสาขา ${currentBranch} (วันที่ ${date})`);
-                    
+
+                    clearRecordDraft();
                     document.getElementById('error-entries-container').innerHTML = ''; addErrorEntryRow();
                     loadTasksForSelectedDate(); 
                     if (BRANCH_CONFIG[currentBranch].showZone2) {
