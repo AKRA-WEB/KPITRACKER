@@ -32,6 +32,60 @@
         .pixel-bob { animation: pixelBob 1.2s steps(2, end) infinite; }
         @keyframes pixelBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
 
+        /* Pixel-art team scene for HP dashboard */
+        .team-scene { container-type: inline-size; overflow: hidden; border: 1px solid #e5e7eb; border-radius: 0.875rem; background: #ffffff; }
+        .team-scene-backdrop { position: relative; min-height: 8.5rem; padding: 0.75rem; overflow: hidden; border-bottom: 1px solid #e5e7eb; }
+        .team-scene-shop .team-scene-backdrop { background: linear-gradient(to bottom, #dbeafe 0 46%, #fef3c7 46% 50%, #e5e7eb 50% 100%); }
+        .team-scene-warehouse .team-scene-backdrop { background: linear-gradient(to bottom, #e0f2fe 0 44%, #d1d5db 44% 48%, #f3f4f6 48% 100%); }
+        .team-scene-sign { position: relative; z-index: 2; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.55rem; border: 2px solid #111827; border-radius: 0.35rem; background: #ffffff; color: #111827; font-size: 0.64rem; font-weight: 900; box-shadow: 3px 3px 0 #111827; letter-spacing: 0; }
+        .team-scene-subtitle { position: relative; z-index: 2; margin-top: 0.5rem; max-width: 12rem; color: #475569; font-size: 0.62rem; font-weight: 700; line-height: 1.35; }
+        .scene-prop { position: absolute; z-index: 1; pointer-events: none; }
+        .scene-counter { left: 0.75rem; bottom: 0.75rem; width: 7rem; height: 2.35rem; border: 2px solid #7c2d12; background: repeating-linear-gradient(90deg, #f97316 0 12px, #fb923c 12px 24px); box-shadow: inset 0 0 0 2px #fed7aa; }
+        .scene-awning { right: 0.75rem; top: 0.8rem; width: 7.8rem; height: 1.5rem; border: 2px solid #991b1b; background: repeating-linear-gradient(90deg, #ef4444 0 14px, #ffffff 14px 28px); }
+        .scene-shelf { right: 0.9rem; bottom: 0.85rem; width: 7.3rem; height: 4.2rem; border: 2px solid #374151; background: repeating-linear-gradient(to bottom, #9ca3af 0 4px, transparent 4px 20px), linear-gradient(90deg, #fef3c7 0 33%, #bfdbfe 33% 66%, #dcfce7 66%); opacity: 0.9; }
+        .scene-crates { right: 0.75rem; bottom: 0.75rem; display: grid; grid-template-columns: repeat(3, 1.4rem); gap: 0.25rem; }
+        .scene-crates span { width: 1.4rem; height: 1.15rem; border: 2px solid #92400e; background: #fbbf24; box-shadow: inset 0 -3px 0 #d97706; }
+        .scene-rack { left: 0.85rem; bottom: 0.8rem; width: 8rem; height: 4.5rem; border: 2px solid #1f2937; background: repeating-linear-gradient(to bottom, #64748b 0 4px, transparent 4px 22px), linear-gradient(90deg, #fecaca 0 25%, #fed7aa 25% 50%, #bbf7d0 50% 75%, #bfdbfe 75%); opacity: 0.92; }
+        .scene-pallet { right: 0.75rem; bottom: 0.85rem; width: 7.4rem; height: 3rem; border-bottom: 0.45rem solid #92400e; background: repeating-linear-gradient(90deg, #f59e0b 0 16px, #fbbf24 16px 32px); box-shadow: 0 -1.6rem 0 -0.45rem #fde68a, 0 -3rem 0 -0.9rem #bfdbfe; }
+        .team-zone-grid { display: grid; gap: 0.6rem; padding: 0.65rem; background: #f8fafc; }
+        .team-zone { min-width: 0; border: 1px solid #e5e7eb; border-radius: 0.75rem; background: rgba(255,255,255,0.92); padding: 0.55rem; }
+        .team-zone-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem; color: #374151; font-size: 0.68rem; font-weight: 900; }
+        .team-zone-count { white-space: nowrap; border: 1px solid #e5e7eb; border-radius: 999px; background: #f9fafb; padding: 0.1rem 0.4rem; color: #6b7280; font-size: 0.58rem; font-weight: 800; }
+        .team-members { display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); gap: 0.45rem; }
+        .team-worker { display: grid; grid-template-columns: 2.7rem minmax(0, 1fr); align-items: end; gap: 0.4rem; min-height: 4.65rem; padding: 0.45rem; border: 1px solid #e5e7eb; border-left-width: 3px; border-radius: 0.65rem; background: #ffffff; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
+        .team-worker-avatar { display: flex; align-items: flex-end; justify-content: center; min-height: 3.55rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; background: #f8fafc; }
+        .team-worker-info { min-width: 0; }
+        .team-worker-top { display: flex; align-items: center; gap: 0.3rem; min-width: 0; }
+        .team-worker-rank { display: inline-flex; align-items: center; justify-content: center; width: 1.35rem; height: 1.35rem; flex: 0 0 auto; border: 1px solid #d1d5db; border-radius: 999px; background: #f9fafb; color: #4b5563; font-size: 0.56rem; font-weight: 900; }
+        .team-worker-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #111827; font-size: 0.72rem; font-weight: 900; }
+        .team-worker-meta { margin-top: 0.15rem; display: flex; flex-wrap: wrap; gap: 0.25rem; align-items: center; color: #6b7280; font-size: 0.58rem; font-weight: 800; }
+        .team-worker-hp { margin-top: 0.35rem; display: flex; align-items: center; gap: 0.35rem; }
+        .team-worker-hptext { width: 2.45rem; flex: 0 0 auto; font-size: 0.62rem; font-weight: 900; text-align: right; }
+        .team-worker-hpbar { height: 0.45rem; flex: 1 1 auto; overflow: hidden; border: 1px solid #d1d5db; border-radius: 999px; background: #f3f4f6; }
+        .team-worker-hpfill { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
+        .team-worker.hp-good { border-left-color: #22c55e; }
+        .team-worker.hp-good .team-worker-hptext { color: #16a34a; }
+        .team-worker.hp-good .team-worker-hpfill { background: #22c55e; }
+        .team-worker.hp-watch { border-left-color: #f59e0b; }
+        .team-worker.hp-watch .team-worker-hptext { color: #b45309; }
+        .team-worker.hp-watch .team-worker-hpfill { background: #f59e0b; }
+        .team-worker.hp-risk { border-left-color: #ef4444; }
+        .team-worker.hp-risk .team-worker-hptext { color: #dc2626; }
+        .team-worker.hp-risk .team-worker-hpfill { background: #ef4444; }
+        .team-mini-badge { display: inline-flex; align-items: center; gap: 0.2rem; border-radius: 0.35rem; border: 1px solid #e5e7eb; padding: 0.1rem 0.3rem; background: #f9fafb; font-size: 0.52rem; font-weight: 900; line-height: 1.2; }
+        .team-mini-badge.good { border-color: #bbf7d0; background: #dcfce7; color: #15803d; }
+        .team-mini-badge.mvp { border-color: #fde68a; background: #fef3c7; color: #a16207; }
+        .team-mini-badge.danger { border-color: #fecaca; background: #fee2e2; color: #b91c1c; }
+        .team-empty-zone { border: 1px dashed #d1d5db; border-radius: 0.6rem; padding: 0.8rem; color: #9ca3af; font-size: 0.68rem; font-weight: 700; text-align: center; }
+        @media (min-width: 768px) {
+            .team-zone-grid.trd { grid-template-columns: 0.9fr 1.3fr 0.9fr; }
+            .team-zone-grid.warehouse { grid-template-columns: 1fr; }
+            .team-scene-backdrop { min-height: 9.5rem; }
+        }
+        @container (min-width: 700px) {
+            .team-members { grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); }
+        }
+
         /* Desktop 2-column layout for tab views (kept off .hidden so tab switching still works) */
         @media (min-width: 768px) {
             .md-grid-2:not(.hidden) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
@@ -248,7 +302,7 @@
                     <span class="flex items-center"><i class="fa-solid fa-trophy mr-2 text-yellow-500"></i>จัดอันดับทีม (HP)</span>
                     <span class="text-[9px] font-bold text-yellow-700 bg-yellow-200 px-1.5 py-0.5 rounded-md border border-yellow-300 shadow-sm">เริ่ม 100 HP</span>
                 </h3>
-                <div id="dash-gamification" class="space-y-1.5 md:grid md:grid-cols-2 md:gap-2 md:space-y-0"></div>
+                <div id="dash-gamification" class="space-y-2"></div>
             </div>
 
             <!-- Weekly Tasks -->
@@ -485,7 +539,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260702.02";
+        const CURRENT_VERSION = "20260702.03";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -960,6 +1014,120 @@
             });
             const bob = state === 'critical' ? '' : ' pixel-bob';
             return `<svg class="pixel-avatar${bob}" viewBox="0 0 12 16" width="36" height="48" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
+        }
+
+        function hpTone(hp) {
+            const n = Math.max(0, Math.min(100, Number(hp) || 0));
+            if (n >= 80) return { key: 'good', label: 'พร้อมงาน' };
+            if (n >= 50) return { key: 'watch', label: 'เฝ้าระวัง' };
+            return { key: 'risk', label: 'ต้องช่วยด่วน' };
+        }
+
+        function teamBadgeHtml(player, highestNonPerfect, lowestScore) {
+            if (player.hp === 100) return '<span class="team-mini-badge good"><i class="fa-solid fa-shield-halved"></i>Perfect</span>';
+            if (player.hp === highestNonPerfect && player.hp > 0) return '<span class="team-mini-badge mvp"><i class="fa-solid fa-crown"></i>MVP</span>';
+            if (player.hp === lowestScore && player.hp < 100) return '<span class="team-mini-badge danger"><i class="fa-solid fa-triangle-exclamation"></i>Danger</span>';
+            return '';
+        }
+
+        function teamWorkerCard(player, highestNonPerfect, lowestScore, fallbackDept) {
+            const hp = Math.max(0, Math.min(100, Number(player.hp) || 0));
+            const tone = hpTone(hp);
+            const dept = currentBranch === 'TRD' ? getTRDDept(player.name) : (fallbackDept || 'คลังสินค้า');
+            const badge = teamBadgeHtml(player, highestNonPerfect, lowestScore);
+            const aria = `อันดับ ${player.rank} ${player.name} ${hp} HP ${tone.label}`;
+            return `
+                <div class="team-worker hp-${tone.key}" role="group" aria-label="${esc(aria)}">
+                    <div class="team-worker-avatar">${pixelAvatarSvg(getEmpGender(player.name), hp)}</div>
+                    <div class="team-worker-info">
+                        <div class="team-worker-top">
+                            <span class="team-worker-rank">#${player.rank}</span>
+                            <span class="team-worker-name">${esc(player.name)}</span>
+                        </div>
+                        <div class="team-worker-meta">
+                            ${dept ? `<span>${esc(dept)}</span>` : ''}
+                            ${badge}
+                        </div>
+                        <div class="team-worker-hp">
+                            <div class="team-worker-hpbar"><div class="team-worker-hpfill" style="width: ${hp}%"></div></div>
+                            <span class="team-worker-hptext">${hp} HP</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function makeTeamSceneGroups(rankedPlayers) {
+            if (currentBranch === 'TRD') {
+                const groups = [
+                    { key: 'cashier', title: 'แคชเชียร์', icon: 'fa-cash-register', players: [] },
+                    { key: 'store', title: 'หน้าร้าน / ในร้าน', icon: 'fa-store', players: [] },
+                    { key: 'stock', title: 'คลังหน้าร้าน', icon: 'fa-boxes-stacked', players: [] }
+                ];
+                rankedPlayers.forEach(player => {
+                    const dept = getTRDDept(player.name);
+                    if (dept.includes('แคชเชียร์')) groups[0].players.push(player);
+                    else if (dept.includes('คลัง')) groups[2].players.push(player);
+                    else groups[1].players.push(player);
+                });
+                return groups;
+            }
+            return [
+                { key: 'warehouse', title: 'ทีมคลังสินค้า AKRA', icon: 'fa-warehouse', players: rankedPlayers }
+            ];
+        }
+
+        function teamSceneBackdropHtml() {
+            if (currentBranch === 'TRD') {
+                return `
+                    <div class="team-scene-backdrop" aria-hidden="true">
+                        <div class="team-scene-sign"><i class="fa-solid fa-bread-slice"></i> BAKERY MART</div>
+                        <div class="team-scene-subtitle">เคาน์เตอร์แคชเชียร์และทีมหน้าร้านประจำสัปดาห์</div>
+                        <div class="scene-prop scene-counter"></div>
+                        <div class="scene-prop scene-awning"></div>
+                        <div class="scene-prop scene-shelf"></div>
+                    </div>
+                `;
+            }
+            return `
+                <div class="team-scene-backdrop" aria-hidden="true">
+                    <div class="team-scene-sign"><i class="fa-solid fa-warehouse"></i> AKRA WAREHOUSE</div>
+                    <div class="team-scene-subtitle">ทีมคลังประจำสัปดาห์ วางกำลังรวมกันตาม HP</div>
+                    <div class="scene-prop scene-rack"></div>
+                    <div class="scene-prop scene-pallet"></div>
+                    <div class="scene-prop scene-crates"><span></span><span></span><span></span></div>
+                </div>
+            `;
+        }
+
+        function renderTeamScene(ranking, highestNonPerfect, lowestScore) {
+            const rankedPlayers = ranking.map((player, index) => ({ ...player, rank: index + 1 }));
+            const groups = makeTeamSceneGroups(rankedPlayers);
+            const gridClass = currentBranch === 'TRD' ? 'trd' : 'warehouse';
+            const sceneClass = currentBranch === 'TRD' ? 'team-scene-shop' : 'team-scene-warehouse';
+            const groupHtml = groups.map(group => {
+                const members = group.players.length
+                    ? group.players.map(player => teamWorkerCard(player, highestNonPerfect, lowestScore, group.title)).join('')
+                    : '<div class="team-empty-zone">ยังไม่มีพนักงานในกลุ่มนี้</div>';
+                return `
+                    <div class="team-zone">
+                        <div class="team-zone-header">
+                            <span><i class="fa-solid ${group.icon} mr-1.5"></i>${esc(group.title)}</span>
+                            <span class="team-zone-count">${group.players.length} คน</span>
+                        </div>
+                        <div class="team-members">${members}</div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="team-scene ${sceneClass}">
+                    ${teamSceneBackdropHtml()}
+                    <div class="team-zone-grid ${gridClass}">
+                        ${groupHtml}
+                    </div>
+                </div>
+            `;
         }
 
         // ================= AI SUGGESTION & INSIGHTS (DRY) =================
@@ -1910,37 +2078,7 @@
             let highestNonPerfect = Math.max(...scores.filter(hp => hp < 100), -1);
             let lowestScore = Math.min(...scores);
 
-            let gameHtml = '';
-            ranking.forEach((player, index) => {
-                let hpPercent = player.hp;
-                let hpColor = hpPercent >= 80 ? 'green' : (hpPercent >= 50 ? 'yellow' : 'red');
-                let barColor = hpPercent >= 80 ? 'bg-green-500' : (hpPercent >= 50 ? 'bg-yellow-400' : 'bg-red-500');
-                
-                let badge = '';
-                if (player.hp === 100) badge = '<span class="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-md font-black ml-2 border border-green-200 shadow-sm uppercase"><i class="fa-solid fa-shield-halved mr-1"></i>Perfect</span>';
-                else if (player.hp === highestNonPerfect && player.hp > 0) badge = '<span class="text-[9px] bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded-md font-black ml-2 border border-yellow-300 shadow-sm uppercase"><i class="fa-solid fa-crown mr-1"></i>MVP</span>';
-                else if (player.hp === lowestScore && player.hp < 100) badge = '<span class="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-md font-black ml-2 border border-red-200 shadow-sm uppercase"><i class="fa-solid fa-skull-crossbones mr-1"></i>Danger</span>';
-
-                let deptTag = '';
-                if (currentBranch === 'TRD') {
-                    let dept = getTRDDept(player.name);
-                    if (dept) deptTag = `<span class="text-[9px] text-gray-500 ml-1.5 font-bold border border-gray-200 px-1.5 py-0.5 rounded bg-gray-50 shadow-sm">${esc(dept)}</span>`;
-                }
-
-                gameHtml += `
-                    <div class="bg-white p-2 rounded-lg border border-${hpColor}-200 shadow-sm relative overflow-hidden transition-all hover:shadow-md flex items-center gap-2.5">
-                        <div class="shrink-0 bg-${hpColor}-50 border border-${hpColor}-100 rounded-lg px-1.5 pt-1 flex items-end justify-center self-stretch">${pixelAvatarSvg(getEmpGender(player.name), player.hp)}</div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-center mb-1.5">
-                                <div class="font-bold text-gray-800 text-xs flex items-center flex-wrap min-w-0"><span class="w-5 h-5 inline-flex justify-center items-center bg-gray-100 text-gray-500 text-[9px] font-black rounded-full mr-2 border border-gray-200">#${index+1}</span>${esc(player.name)} ${deptTag} ${badge}</div>
-                                <div class="font-black text-${hpColor}-600 text-xs bg-${hpColor}-50 px-1.5 py-0.5 rounded border border-${hpColor}-100 whitespace-nowrap ml-1">${player.hp} <span class="text-[8px] font-bold">HP</span></div>
-                            </div>
-                            <div class="w-full bg-gray-100 rounded-full h-2 border border-gray-200 overflow-hidden"><div class="${barColor} h-full rounded-full transition-all duration-1000 relative" style="width: ${hpPercent}%"><div class="absolute inset-0 bg-white/20"></div></div></div>
-                        </div>
-                    </div>
-                `;
-            });
-            document.getElementById('dash-gamification').innerHTML = gameHtml;
+            document.getElementById('dash-gamification').innerHTML = renderTeamScene(ranking, highestNonPerfect, lowestScore);
         }
 
         // ================= ADMIN DASHBOARD FUNCTIONS =================
