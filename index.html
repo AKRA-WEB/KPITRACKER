@@ -589,7 +589,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260702.07";
+        const CURRENT_VERSION = "20260702.08";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -1452,9 +1452,21 @@
         }
 
         // ================= STARTUP LOGIC =================
+        // ตัดรายชื่อซ้ำ (เกิดจาก race ตอนบันทึก config ซ้อนกันใน backend รุ่นก่อน) — เก็บแถวหลังสุดของแต่ละ uid
+        function dedupeConfigList(configList) {
+            const seen = new Map();
+            configList.forEach(user => {
+                const key = String(user.uid || user.name || '').trim().toLowerCase();
+                if (!key) return;
+                seen.set(key, user);
+            });
+            return [...seen.values()];
+        }
+
         function processConfigList(configList) {
             if (!Array.isArray(configList) || configList.length === 0) return;
-            
+
+            configList = dedupeConfigList(configList);
             GLOBAL_CONFIG_LIST = configList;
             USER_DB = {};
             TRD_DEPARTMENTS = {};
@@ -2545,8 +2557,16 @@
             proceedSaveAdminEmp(uid, name, isAkra, isTrd, dept, gender);
         }
 
+        // ต่อคิวคำสั่งบันทึก config ทีละคำขอ — autosave ติด ๆ กันจะไม่ยิงซ้อนจนชีตฝั่ง GAS เขียนแทรกกัน
+        let adminSyncChain = Promise.resolve();
+        function syncAdminConfigToServer() {
+            const run = adminSyncChain.then(() => doSyncAdminConfig());
+            adminSyncChain = run.then(() => {}, () => {});
+            return run;
+        }
+
         // ส่งรายชื่อทั้งหมดขึ้น backend ทันที (auto-sync) แล้ว refresh ข้อมูลในหน่วยความจำ
-        async function syncAdminConfigToServer() {
+        async function doSyncAdminConfig() {
             if (await AppVersionGuard.blockIfStale()) return false;
             try {
                 await fetch(LOG_APP_SCRIPT_URL, {
