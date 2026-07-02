@@ -102,8 +102,11 @@
         .team-live-hpbar { position: relative; height: 0.42rem; margin-top: 0.22rem; overflow: hidden; border: 1px solid #111827; border-radius: 999px; background: #f8fafc; }
         .team-live-hpfill { display: block; width: var(--hp); height: 100%; background: var(--hp-color); }
         .team-live-worker.cashier { --sprite: url('assets/pixel/worker-cashier.png'); }
+        .team-live-worker.cashier.sprite-male { --sprite: url('assets/pixel/worker-cashier-male.png'); }
         .team-live-worker.store { --sprite: url('assets/pixel/worker-store.png'); }
+        .team-live-worker.store.sprite-male { --sprite: url('assets/pixel/worker-store-male.png'); }
         .team-live-worker.stock, .team-live-worker.warehouse { --sprite: url('assets/pixel/worker-warehouse.png'); }
+        .team-live-worker.stock.sprite-female, .team-live-worker.warehouse.sprite-female { --sprite: url('assets/pixel/worker-warehouse-female.png'); }
         .team-live-worker.hp-good { --hp-color: #16a34a; }
         .team-live-worker.hp-watch { --hp-color: #d97706; }
         .team-live-worker.hp-watch .team-live-avatar { filter: drop-shadow(0 0.18rem 0 rgba(17,24,39,0.4)) saturate(0.92); }
@@ -585,7 +588,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260702.05";
+        const CURRENT_VERSION = "20260702.06";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -1142,6 +1145,15 @@
             return counts;
         }
 
+        function teamSceneSpriteGender(player, role) {
+            const gender = getEmpGender(player.name);
+            if (gender === 'M') return 'male';
+            if (gender === 'F') return 'female';
+            if (role === 'warehouse' || role === 'stock') return 'male';
+            const nameValue = Array.from(String(player.name || '')).reduce((sum, ch) => sum + ch.codePointAt(0), 0);
+            return nameValue % 2 === 0 ? 'male' : 'female';
+        }
+
         function teamWorkerCard(player, highestNonPerfect, lowestScore, spot, role) {
             const hp = Math.max(0, Math.min(100, Number(player.hp) || 0));
             const tone = hpTone(hp);
@@ -1149,8 +1161,9 @@
             const badge = teamBadgeHtml(player, highestNonPerfect, lowestScore);
             const shortDept = dept || teamRoleTitle(role);
             const aria = `อันดับ ${player.rank} ${player.name} ${shortDept} ${hp} HP ${tone.label}`;
+            const spriteGender = teamSceneSpriteGender(player, role);
             return `
-                <div class="team-live-worker hp-${tone.key} ${role}" role="group" aria-label="${esc(aria)}" style="--x:${spot.x}%;--y:${spot.y}%;--mx:${spot.mx || spot.x}%;--my:${spot.my || spot.y}%;--hp:${hp}%;--delay:${spot.delay || '0s'}">
+                <div class="team-live-worker hp-${tone.key} ${role} sprite-${spriteGender}" role="group" aria-label="${esc(aria)}" style="--x:${spot.x}%;--y:${spot.y}%;--mx:${spot.mx || spot.x}%;--my:${spot.my || spot.y}%;--hp:${hp}%;--delay:${spot.delay || '0s'}">
                     <div class="team-live-nameplate">
                         <span class="team-live-name">#${player.rank} ${esc(player.name)}</span>
                         <span class="team-live-role">${esc(shortDept)} · ${hp} HP</span>
