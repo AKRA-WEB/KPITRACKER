@@ -86,37 +86,16 @@
         .team-live-scene { overflow: hidden; border: 1px solid #e5e7eb; border-radius: 0.875rem; background: #ffffff; container-type: inline-size; }
         .team-live-viewport { overflow-x: auto; -webkit-overflow-scrolling: touch; border-bottom: 1px solid #e5e7eb; }
         .team-live-scroll-hint { display: none; }
-        .team-live-stage { position: relative; width: 100%; min-width: 38rem; aspect-ratio: 16 / 9; overflow: hidden; container-type: inline-size; image-rendering: pixelated; }
-        .team-live-stage.trd { background: linear-gradient(to bottom, #dbeafe 0 40%, #fcd9a8 40% 43%, #e5e7eb 43% 100%); }
-        .team-live-stage.akra { background: linear-gradient(to bottom, #e2e8f0 0 36%, #94a3b8 36% 38.5%, #d6d3d1 38.5% 100%); }
-        .team-live-stage::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; pointer-events: none; background-image: linear-gradient(90deg, rgba(148,163,184,0.35) 2px, transparent 2px), linear-gradient(0deg, rgba(148,163,184,0.35) 2px, transparent 2px); background-size: 9cqw 9cqw; }
-        .team-live-stage.trd::before { top: 43%; }
-        .team-live-stage.akra::before { top: 38.5%; }
+        .team-live-stage { position: relative; width: 100%; min-width: 38rem; aspect-ratio: 16 / 9; overflow: hidden; container-type: inline-size; background: #f8fafc; image-rendering: pixelated; isolation: isolate; }
+        .team-live-bg { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; image-rendering: pixelated; }
+        .scene-open-glow { animation: sceneOpenBlink 1.45s steps(2, end) infinite; }
+        .scene-lamp-glow { animation: sceneLampFlicker 2.6s steps(4, end) infinite; }
+        .scene-window-light { animation: sceneWindowGlow 4.8s ease-in-out infinite; }
         .team-live-sign { position: absolute; top: 0.7rem; left: 0.7rem; z-index: 120; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.32rem 0.55rem; border: 1px solid rgba(148,163,184,0.55); background: rgba(15,23,42,0.85); color: #f8fafc; box-shadow: 0 2px 0 rgba(15,23,42,0.45); font-size: 0.64rem; font-weight: 1000; letter-spacing: 0.05em; }
         .team-live-status { position: absolute; top: 0.7rem; right: 0.7rem; z-index: 120; display: flex; gap: 0.35rem; align-items: center; padding: 0.32rem 0.55rem; border: 1px solid rgba(148,163,184,0.55); background: rgba(15,23,42,0.85); color: #4ade80; box-shadow: 0 2px 0 rgba(15,23,42,0.45); font-size: 0.62rem; font-weight: 1000; white-space: nowrap; }
         .team-live-pulse { width: 0.45rem; height: 0.45rem; border-radius: 999px; background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.65); animation: livePulse 1.5s ease-out infinite; }
-        /* scene props */
-        .tls-prop { position: absolute; box-sizing: border-box; }
-        .tls-shelf { display: grid; grid-template-rows: 1fr 1fr; gap: 4%; padding: 3% 4%; border: 3px solid #7c2d12; background: #fef3c7; box-shadow: 3px 3px 0 rgba(124,45,18,0.35); }
-        .tls-shelf-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8%; align-items: end; border-bottom: 3px solid #7c2d12; }
-        .tls-rack { display: grid; grid-template-rows: 1fr 1fr 1fr; gap: 2%; padding: 2% 3%; border: 4px solid #b45309; background: #fde68a; box-shadow: 3px 3px 0 rgba(146,64,14,0.35); }
-        .tls-rack .tls-shelf-row { grid-template-columns: repeat(5, 1fr); gap: 5%; border-bottom: 4px solid #b45309; }
-        .tls-sack { position: relative; height: 88%; border: 2px solid #a16207; border-radius: 45% 45% 12% 12% / 60% 60% 8% 8%; background: #fbe8c4; }
-        .tls-sack::before { content: ""; position: absolute; left: 32%; right: 32%; top: -14%; height: 24%; border: 2px solid #a16207; background: #d9b477; }
-        .tls-sack::after { content: ""; position: absolute; left: 20%; right: 20%; top: 42%; height: 26%; border: 2px solid #a16207; background: #ffffff; }
-        .tls-sack.brown { background: #d7a86e; }
-        .tls-sack.brown::after { background: #fde9c8; }
-        .tls-box { height: 88%; border: 2px solid #92400e; background: #fbbf24; box-shadow: inset 0 -6px 0 #d97706; }
-        .tls-crates { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5%; }
-        .tls-crates span { border: 3px solid #92400e; background: #fbbf24; box-shadow: inset 0 -8px 0 #d97706; }
-        .tls-door { border: 3px solid #1f2937; background: #94a3b8; box-shadow: inset 0 0 0 6px #cbd5e1; }
-        .tls-door::after { content: ""; position: absolute; right: 12%; top: 46%; width: 8px; height: 8px; border: 2px solid #1f2937; background: #fef3c7; }
-        .tls-wallsign { display: grid; place-items: center; border: 3px solid #7c2d12; background: #fff7ed; box-shadow: 3px 3px 0 rgba(124,45,18,0.5); color: #7c2d12; font-size: 0.6rem; font-weight: 1000; letter-spacing: 0.03em; text-align: center; padding: 0.2rem; }
-        .tls-pallet { border: 0; background: repeating-linear-gradient(90deg, #b45309 0 16%, #d97706 16% 20%, transparent 20% 26%); border-bottom: 4px solid #92400e; }
-        .tls-counter { z-index: 30; border: 3px solid #7c2d12; background: linear-gradient(to bottom, #fde9c8 0 22%, rgba(0,0,0,0) 22%), repeating-linear-gradient(90deg, #f97316 0 8%, #fb923c 8% 16%); box-shadow: 0 5px 0 rgba(124,45,18,0.3); }
-        .tls-register { z-index: 31; border: 3px solid #111827; background: #374151; box-shadow: inset 0 3px 0 #6ee7b7; }
         /* workers */
-        .team-live-worker { position: absolute; left: var(--x); top: var(--y); z-index: var(--z, 10); width: clamp(3.2rem, 7cqw, 4.6rem); transform: translate(-50%, -100%); }
+        .team-live-worker { position: absolute; left: var(--x); top: var(--y); z-index: var(--z, 10); width: clamp(3.6rem, 7.4cqw, 5.2rem); transform: translate(-50%, -100%); }
         .team-live-worker.cashier { --z: 20; }
         .tlw-mover { position: relative; }
         .tlw-mover::after { content: ""; position: absolute; left: 50%; bottom: -0.5rem; width: 60%; height: 0.3rem; border-radius: 999px; background: rgba(17,24,39,0.22); transform: translateX(-50%); }
@@ -125,7 +104,7 @@
         .tlw-flip { transform-origin: 50% 100%; }
         .team-live-worker.walking .tlw-flip { animation: tlwFaceR var(--walk-dur, 9s) steps(1, end) infinite; animation-delay: var(--delay, 0s); }
         .team-live-worker.walking.walk-left .tlw-flip { animation-name: tlwFaceL; }
-        .team-live-worker.lying { --z: 6; width: clamp(4.2rem, 9.2cqw, 6rem); }
+        .team-live-worker.lying { --z: 6; width: clamp(5rem, 10cqw, 7.2rem); }
         .team-live-worker.lying .tlw-mover::after { width: 96%; }
         .tlw-sprite { display: block; width: 100%; height: auto; image-rendering: pixelated; filter: drop-shadow(0 2px 0 rgba(17,24,39,0.3)); }
         .team-live-worker.walking .tlw-sprite { animation: tlwBob 0.56s steps(2, end) infinite; }
@@ -149,6 +128,9 @@
         .team-live-rankname { min-width: 0; flex: 1 1 auto; overflow: hidden; color: #111827; font-size: 0.68rem; font-weight: 1000; text-overflow: ellipsis; white-space: nowrap; }
         .team-live-rankhp { flex: 0 0 auto; color: var(--hp-color); font-size: 0.62rem; font-weight: 1000; white-space: nowrap; }
         @keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.65); } 100% { box-shadow: 0 0 0 0.45rem rgba(34,197,94,0); } }
+        @keyframes sceneOpenBlink { 0%, 58% { opacity: 1; } 59%, 72% { opacity: 0.35; } 73%, 100% { opacity: 1; } }
+        @keyframes sceneLampFlicker { 0%, 100% { opacity: 0.72; } 18% { opacity: 0.46; } 22% { opacity: 0.84; } 54% { opacity: 0.56; } 58% { opacity: 0.78; } }
+        @keyframes sceneWindowGlow { 0%, 100% { opacity: 0.62; } 50% { opacity: 0.88; } }
         @keyframes tlwPatrol { 0% { transform: translateX(0); } 46% { transform: translateX(var(--walk-dist, 12cqw)); } 50% { transform: translateX(var(--walk-dist, 12cqw)); } 96% { transform: translateX(0); } 100% { transform: translateX(0); } }
         @keyframes tlwFaceR { 0%, 46% { transform: scaleX(1); } 50%, 96% { transform: scaleX(-1); } 100% { transform: scaleX(1); } }
         @keyframes tlwFaceL { 0%, 46% { transform: scaleX(-1); } 50%, 96% { transform: scaleX(1); } 100% { transform: scaleX(-1); } }
@@ -615,7 +597,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260703.02";
+        const CURRENT_VERSION = "20260703.03";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -1101,10 +1083,10 @@
 
         // จานสีตัวละครฉาก: ตัวพิมพ์ใหญ่ = สีหลัก, ตัวพิมพ์เล็ก = เฉดเงา, K = เส้นขอบ
         const SCENE_FIXED_COLORS = {
-            K: '#1f2937', S: '#fcd9b8', s: '#eab48c', E: '#1f2937',
-            M: '#9a3412', O: '#7f1d1d', W: '#38bdf8', X: '#dc2626',
-            P: '#374151', p: '#252d3d', B: '#1f2937',
-            C: '#fbbf24', c: '#d97706', D: '#92400e'
+            K: '#241922', S: '#f7c7a7', s: '#d9957a', L: '#ffe1c8', E: '#111827',
+            M: '#7f1d1d', O: '#991b1b', W: '#38bdf8', X: '#dc2626',
+            P: '#3f5878', p: '#27384f', B: '#4a2a1d', b: '#2d1812',
+            C: '#c47a2c', c: '#8b4a1e', D: '#5a2d16'
         };
         const SCENE_GENDER_COLORS = {
             M: { T: '#f97316', t: '#c2410c', R: '#ffedd5', H: '#3f2c1e', h: '#2a1c11' },
@@ -1138,7 +1120,7 @@
                     { x: 24, y: 95, walk: 26, dur: 13, pose: 'carry', delay: '-2.9s' },
                     { x: 74, y: 60, walk: 10, dur: 10, pose: 'carry', delay: '-7.6s' },
                     { x: 86, y: 92, walk: -12, dur: 11, pose: 'carry', delay: '-1.4s' },
-                    { x: 10, y: 80, walk: 10, dur: 12, pose: 'carry', delay: '-4.1s' }
+                    { x: 43, y: 82, walk: -10, dur: 12, pose: 'carry', z: 18, delay: '-4.1s' }
                 ]
             }
         };
@@ -1190,133 +1172,270 @@
             return 'dead';
         }
 
-        // หัว chibi 24 คอลัมน์ 16 แถว พร้อมสีหน้าตาม tier
-        function sceneHeadRows(tier) {
-            let eyeRow = '..KSSSEESSSSSSSSEESSSK..';
-            let cheek = '..KSsSSSSSSSSSSSSSSsSK..';
-            let mouthA = '..KSSSSSSSSSSSSSSSSSSK..';
-            let mouthB = '..KSSSSSSSMMMMSSSSSSSK..';
-            if (tier === 'smile') { mouthA = '..KSSSSSMSSSSSSMSSSSSK..'; mouthB = '..KSSSSSSMMMMMMSSSSSSK..'; }
-            else if (tier === 'pout') { mouthA = '..KSSSSSSMMMMMMSSSSSSK..'; mouthB = '..KSSSSSMSSSSSSMSSSSSK..'; }
-            else if (tier === 'cry') { cheek = '..KSSSWSSSSSSSSSSWSSSK..'; mouthA = '..KSSSSSSSOOOOSSSSSSSK..'; mouthB = '..KSSSSSSSOOOOSSSSSSSK..'; }
-            else if (tier === 'dead') { eyeRow = '..KSSSXXSSSSSSSSXXSSSK..'; cheek = '..KSSSSSSSSSSSSSSSSSSK..'; }
-            return [
-                '........KKKKKKKK........',
-                '......KKHHHHHHHHKK......',
-                '.....KHHHHHHHHHHHHK.....',
-                '....KHHHHHHHHHHHHHHK....',
-                '...KHHHHHHHHHHHHHHHHK...',
-                '...KHHHHHHHHHHHHHHHHK...',
-                '..KHHhSSSSSSSSSSSShHHK..',
-                '..KHSSSSSSSSSSSSSSSSHK..',
-                '..KSSSSSSSSSSSSSSSSSSK..',
-                eyeRow,
-                eyeRow,
-                cheek,
-                mouthA,
-                mouthB,
-                '...KSSSSSSSSSSSSSSSSK...',
-                '....KKSSSSSSSSSSSSKK....'
-            ];
+        const SCENE_GRID_W = 32;
+        const SCENE_GRID_H = 48;
+        const SCENE_SPRITE_CACHE = new Map();
+
+        function sceneEmptyRows(width = SCENE_GRID_W, height = SCENE_GRID_H) {
+            return Array.from({ length: height }, () => Array(width).fill('.'));
         }
 
-        function sceneWorkerSvg(gender, tier, pose) {
+        function sceneRect(rows, x, y, w, h, c) {
+            for (let yy = y; yy < y + h; yy++) {
+                if (!rows[yy]) continue;
+                for (let xx = x; xx < x + w; xx++) {
+                    if (xx >= 0 && xx < rows[yy].length) rows[yy][xx] = c;
+                }
+            }
+        }
+
+        function scenePut(rows, x, y, pattern) {
+            pattern.forEach((row, dy) => {
+                for (let dx = 0; dx < row.length; dx++) {
+                    const c = row[dx];
+                    if (c !== '.') sceneRect(rows, x + dx, y + dy, 1, 1, c);
+                }
+            });
+        }
+
+        function sceneBand(rows, y, x, w, fill) {
+            sceneRect(rows, x, y, w, 1, 'K');
+            if (w > 2) sceneRect(rows, x + 1, y, w - 2, 1, fill);
+        }
+
+        function sceneFinalizeRows(rows) {
+            return rows.map(row => row.join(''));
+        }
+
+        function sceneSpriteFill(g, c) {
+            if (c === 'T' || c === 't' || c === 'R' || c === 'H' || c === 'h') return g[c];
+            return SCENE_FIXED_COLORS[c] || '#000000';
+        }
+
+        function sceneRowsToRects(rows, gender) {
             const g = SCENE_GENDER_COLORS[gender] || SCENE_GENDER_COLORS.U;
+            let out = '';
+            rows.forEach((row, y) => {
+                for (let x = 0; x < row.length; x++) {
+                    const c = row[x];
+                    if (c === '.') continue;
+                    out += `<rect x="${x}" y="${y}" width="1" height="1" fill="${sceneSpriteFill(g, c)}"/>`;
+                }
+            });
+            return out;
+        }
+
+        function sceneDrawFrontHead(rows, gender, tier) {
             const female = gender === 'F';
-            const shoulders = '...KTTTTTRRRRRRTTTTTK...';
-            const armRow = '..KTtTTTTTTTTTTTTTTtTK..';
-            const handRow = '..KSSTTTTTTTTTTTTTTSSK..';
-            const hemRow = '...KttttttttttttttttK...';
-            const hipRow = '....KPPPPPPPPPPPPPPK....';
-            const legStand = [
-                '....KPPPPPPKKPPPPPPK....',
-                '....KPPPPPK..KPPPPPK....',
-                '....KPPPPPK..KPPPPPK....',
-                '....KPPPPPK..KPPPPPK....',
-                '....KpppppK..KpppppK....',
-                '...KBBBBBBK..KBBBBBBK...',
-                '...KBBBBBBK..KBBBBBBK...',
-                '...KKKKKKKK..KKKKKKKK...'
-            ];
-            const legWalk = [
-                '....KPPPPPPKKPPPPPPK....',
-                '...KPPPPPK....KPPPPPK...',
-                '..KPPPPPK......KPPPPPK..',
-                '..KPPPPPK......KPPPPPK..',
-                '..KpppppK......KpppppK..',
-                '.KBBBBBBK......KBBBBBBK.',
-                '.KBBBBBBK......KBBBBBBK.',
-                '.KKKKKKKK......KKKKKKKK.'
-            ];
-            // ผมยาวผู้หญิง: ม่านผม 2px ขนาบใบหน้าลงถึงบ่า
-            const hairSide = row => row.slice(0, 3) + 'Hh' + row.slice(5, 19) + 'hH' + row.slice(21);
-            const hairShoulder = row => row.slice(0, 4) + 'Hh' + row.slice(6, 18) + 'hH' + row.slice(20);
-            const head = sceneHeadRows(tier);
-            if (female) for (let i = 8; i <= 13; i++) head[i] = hairSide(head[i]);
-            let body, legRows = null;
-            if (pose === 'sit') {
-                body = [
-                    female ? hairShoulder(shoulders) : shoulders,
-                    female ? hairSide(armRow) : armRow,
-                    armRow,
-                    handRow,
-                    hemRow,
-                    '...KKKKKKKKKKKKKKKKKK...'
-                ];
-            } else if (pose === 'carry') {
-                body = [
-                    female ? hairShoulder(shoulders) : shoulders,
-                    female ? hairSide(armRow) : armRow,
-                    armRow,
-                    '...KKKKKKKKKKKKKKKKKK...',
-                    '.KSKCCCCCDCCCCDCCCCCKSK.',
-                    '...KCCCCCDCCCCDCCCCCK...',
-                    '...KcccccDccccDcccccK...',
-                    '...KKKKKKKKKKKKKKKKKK...'
-                ];
-                legRows = { stand: legStand, walk: legWalk };
+            if (female) {
+                sceneRect(rows, 5, 5, 22, 19, 'K');
+                sceneRect(rows, 6, 6, 20, 17, 'H');
+                sceneRect(rows, 6, 12, 4, 14, 'h');
+                sceneRect(rows, 22, 12, 4, 14, 'h');
             } else {
-                body = [
-                    female ? hairShoulder(shoulders) : shoulders,
-                    female ? hairSide(armRow) : armRow,
-                    armRow,
-                    armRow,
-                    armRow,
-                    handRow,
-                    hemRow,
-                    hipRow
-                ];
-                legRows = { stand: legStand, walk: legWalk };
+                sceneRect(rows, 8, 3, 17, 6, 'K');
+                sceneRect(rows, 9, 4, 15, 4, 'H');
+                sceneRect(rows, 7, 7, 5, 5, 'h');
             }
-            const fillOf = c => (c === 'T' || c === 't' || c === 'R' || c === 'H' || c === 'h') ? g[c] : SCENE_FIXED_COLORS[c];
-            const lie = pose === 'lie';
-            const toRects = (rows, y0) => {
-                let out = '';
-                rows.forEach((row, i) => {
-                    for (let x = 0; x < row.length; x++) {
-                        const c = row[x];
-                        if (c === '.') continue;
-                        // ท่านอน: หมุน grid 90 องศา (หัวไปทางซ้าย) ให้ตัวนอนราบกับพื้นจริง
-                        const px = lie ? (y0 + i) : x;
-                        const py = lie ? (23 - x) : (y0 + i);
-                        out += `<rect x="${px}" y="${py}" width="1" height="1" fill="${fillOf(c)}"/>`;
-                    }
-                });
-                return out;
+            [
+                [10, 2, 12], [8, 3, 16], [7, 4, 18], [6, 5, 20],
+                [6, 6, 20], [5, 7, 22], [5, 8, 22], [5, 9, 22],
+                [5, 10, 22], [5, 11, 22], [6, 12, 20], [6, 13, 20],
+                [7, 14, 18], [8, 15, 16], [10, 16, 12]
+            ].forEach(([x, y, w]) => sceneBand(rows, y, x, w, 'S'));
+            sceneRect(rows, 8, 7, 4, 7, 's');
+            sceneRect(rows, 20, 5, 4, 4, 'L');
+            if (female) {
+                sceneRect(rows, 7, 5, 18, 3, 'H');
+                sceneRect(rows, 6, 8, 4, 13, 'H');
+                sceneRect(rows, 22, 8, 3, 13, 'h');
+            } else {
+                sceneRect(rows, 8, 5, 15, 3, 'H');
+                scenePut(rows, 9, 7, ['HHhH..HH']);
+            }
+            if (tier === 'dead') {
+                scenePut(rows, 11, 10, ['X.X', '.X.', 'X.X']);
+                scenePut(rows, 19, 10, ['X.X', '.X.', 'X.X']);
+                sceneRect(rows, 14, 14, 5, 1, 'M');
+                return;
+            }
+            sceneRect(rows, 12, 10, 2, 2, 'E');
+            sceneRect(rows, 19, 10, 2, 2, 'E');
+            if (tier === 'smile') {
+                sceneRect(rows, 14, 14, 1, 1, 'M'); sceneRect(rows, 15, 15, 3, 1, 'M'); sceneRect(rows, 18, 14, 1, 1, 'M');
+            } else if (tier === 'neutral') {
+                sceneRect(rows, 14, 14, 5, 1, 'M');
+            } else if (tier === 'pout') {
+                sceneRect(rows, 14, 15, 5, 1, 'M'); sceneRect(rows, 13, 14, 1, 1, 'M'); sceneRect(rows, 19, 14, 1, 1, 'M');
+            } else {
+                sceneRect(rows, 11, 12, 1, 3, 'W'); sceneRect(rows, 21, 12, 1, 3, 'W');
+                sceneRect(rows, 14, 14, 5, 3, 'O'); sceneRect(rows, 15, 15, 3, 1, 'M');
+            }
+        }
+
+        function sceneDrawSideHead(rows, gender, tier) {
+            const female = gender === 'F';
+            if (female) {
+                sceneRect(rows, 7, 5, 13, 21, 'K');
+                sceneRect(rows, 8, 6, 11, 19, 'H');
+                sceneRect(rows, 8, 14, 6, 13, 'h');
+            } else {
+                sceneRect(rows, 8, 4, 15, 5, 'K');
+                sceneRect(rows, 9, 5, 13, 3, 'H');
+                sceneRect(rows, 7, 8, 5, 8, 'h');
+            }
+            [
+                [11, 3, 11], [9, 4, 15], [8, 5, 17], [8, 6, 18],
+                [7, 7, 19], [7, 8, 19], [7, 9, 20], [7, 10, 20],
+                [8, 11, 18], [8, 12, 18], [9, 13, 16], [10, 14, 14],
+                [11, 15, 11], [12, 16, 8]
+            ].forEach(([x, y, w]) => sceneBand(rows, y, x, w, 'S'));
+            sceneRect(rows, 8, 8, 3, 6, 's');
+            sceneRect(rows, 20, 5, 3, 3, 'L');
+            sceneRect(rows, 23, 10, 3, 3, 'K');
+            sceneRect(rows, 23, 11, 2, 1, 'S');
+            if (female) sceneRect(rows, 8, 5, 12, 3, 'H');
+            else sceneRect(rows, 9, 5, 12, 3, 'H');
+            if (tier === 'dead') {
+                scenePut(rows, 18, 10, ['X.X', '.X.', 'X.X']);
+                sceneRect(rows, 18, 15, 5, 1, 'M');
+                return;
+            }
+            sceneRect(rows, 19, 10, 2, 2, 'E');
+            if (tier === 'smile') {
+                sceneRect(rows, 19, 15, 3, 1, 'M'); sceneRect(rows, 22, 14, 1, 1, 'M');
+            } else if (tier === 'neutral') {
+                sceneRect(rows, 18, 14, 5, 1, 'M');
+            } else if (tier === 'pout') {
+                sceneRect(rows, 18, 15, 5, 1, 'M'); sceneRect(rows, 17, 14, 1, 1, 'M');
+            } else {
+                sceneRect(rows, 18, 12, 1, 3, 'W');
+                sceneRect(rows, 19, 14, 4, 3, 'O');
+            }
+        }
+
+        function sceneDrawFrontBody(rows, gender, pose) {
+            const female = gender === 'F';
+            sceneRect(rows, 14, 17, 5, 3, 'K'); sceneRect(rows, 15, 17, 3, 3, 'S');
+            sceneRect(rows, 9, 20, 14, 14, 'K');
+            sceneRect(rows, 10, 21, 12, 12, 'T');
+            sceneRect(rows, 10, 22, 12, 1, 'R');
+            sceneRect(rows, 11, 25, 10, 1, 't');
+            sceneRect(rows, 10, 31, 12, 2, 't');
+            sceneRect(rows, 6, 22, 5, 11, 'K'); sceneRect(rows, 7, 23, 3, 8, 'T'); sceneRect(rows, 7, 31, 3, 3, 'S');
+            sceneRect(rows, 22, 22, 5, 11, 'K'); sceneRect(rows, 23, 23, 3, 8, 'T'); sceneRect(rows, 23, 31, 3, 3, 'S');
+            if (female) {
+                sceneRect(rows, 7, 19, 4, 11, 'H');
+                sceneRect(rows, 22, 19, 3, 11, 'h');
+            }
+            if (pose === 'sit') {
+                sceneRect(rows, 9, 34, 14, 5, 'K');
+                sceneRect(rows, 10, 35, 12, 3, 'P');
+                sceneRect(rows, 7, 37, 18, 3, 'K');
+                sceneRect(rows, 9, 37, 14, 2, 'p');
+            }
+        }
+
+        function sceneDrawSideBody(rows, gender, pose) {
+            const female = gender === 'F';
+            sceneRect(rows, 13, 17, 5, 3, 'K'); sceneRect(rows, 14, 17, 3, 3, 'S');
+            sceneRect(rows, 10, 20, 13, 14, 'K');
+            sceneRect(rows, 11, 21, 11, 12, 'T');
+            sceneRect(rows, 11, 22, 11, 1, 'R');
+            sceneRect(rows, 11, 26, 11, 1, 't');
+            sceneRect(rows, 11, 31, 11, 2, 't');
+            sceneRect(rows, 21, 23, 5, 10, 'K'); sceneRect(rows, 22, 24, 3, 7, 'T'); sceneRect(rows, 22, 31, 3, 3, 'S');
+            if (female) sceneRect(rows, 8, 18, 5, 13, 'H');
+            if (pose === 'carry') {
+                sceneRect(rows, 18, 25, 11, 8, 'K');
+                sceneRect(rows, 19, 26, 9, 6, 'C');
+                sceneRect(rows, 19, 29, 9, 1, 'c');
+                sceneRect(rows, 22, 26, 1, 6, 'D');
+                sceneRect(rows, 26, 26, 1, 6, 'D');
+            }
+        }
+
+        function sceneDrawFrontLegs(rows, frame) {
+            if (frame === 'walk') {
+                sceneRect(rows, 9, 34, 6, 8, 'K'); sceneRect(rows, 10, 35, 4, 6, 'P'); sceneRect(rows, 9, 41, 7, 3, 'B');
+                sceneRect(rows, 18, 34, 6, 9, 'K'); sceneRect(rows, 19, 35, 4, 7, 'p'); sceneRect(rows, 17, 43, 8, 3, 'B');
+                return;
+            }
+            sceneRect(rows, 10, 34, 5, 9, 'K'); sceneRect(rows, 11, 35, 3, 7, 'P'); sceneRect(rows, 9, 43, 7, 3, 'B');
+            sceneRect(rows, 17, 34, 5, 9, 'K'); sceneRect(rows, 18, 35, 3, 7, 'p'); sceneRect(rows, 16, 43, 7, 3, 'B');
+        }
+
+        function sceneDrawSideLegs(rows, frame) {
+            if (frame === 'walk') {
+                sceneRect(rows, 12, 34, 5, 8, 'K'); sceneRect(rows, 13, 35, 3, 6, 'P'); sceneRect(rows, 9, 41, 8, 3, 'B');
+                sceneRect(rows, 18, 34, 5, 8, 'K'); sceneRect(rows, 19, 35, 3, 6, 'p'); sceneRect(rows, 18, 42, 8, 3, 'B');
+                return;
+            }
+            sceneRect(rows, 13, 34, 5, 9, 'K'); sceneRect(rows, 14, 35, 3, 7, 'P'); sceneRect(rows, 12, 43, 7, 3, 'B');
+            sceneRect(rows, 18, 34, 5, 9, 'K'); sceneRect(rows, 19, 35, 3, 7, 'p'); sceneRect(rows, 17, 43, 7, 3, 'B');
+        }
+
+        function sceneWorkerRows(gender, tier, pose, facing) {
+            if (pose === 'lie') {
+                const rows = sceneEmptyRows(48, 32);
+                sceneRect(rows, 6, 12, 12, 12, 'K'); sceneRect(rows, 7, 13, 10, 10, 'S');
+                sceneRect(rows, 8, 12, 8, 3, gender === 'F' ? 'H' : 'h');
+                scenePut(rows, 10, 16, ['X.X', '.X.', 'X.X']);
+                scenePut(rows, 20, 14, [
+                    'KKKKKKKKKKKKKKKKK',
+                    'KTTTTTRRRRRTTTTTK',
+                    'KTTTTTTTTTTTTTTTK',
+                    'KtttttttttttttttK',
+                    'KKKKKKKKKKKKKKKKK'
+                ]);
+                sceneRect(rows, 36, 14, 8, 4, 'P'); sceneRect(rows, 36, 20, 8, 4, 'p');
+                sceneRect(rows, 43, 13, 5, 5, 'B'); sceneRect(rows, 43, 20, 5, 5, 'B');
+                return { base: sceneFinalizeRows(rows), viewBox: '0 0 48 32', legStand: [], legA: [], legB: [] };
+            }
+            const side = facing === 'side';
+            const base = sceneEmptyRows();
+            if (side) {
+                sceneDrawSideHead(base, gender, tier);
+                sceneDrawSideBody(base, gender, pose);
+            } else {
+                sceneDrawFrontHead(base, gender, tier);
+                sceneDrawFrontBody(base, gender, pose);
+            }
+            if (pose === 'sit') return { base: sceneFinalizeRows(base), viewBox: '0 0 32 48', legStand: [], legA: [], legB: [] };
+            const stand = sceneEmptyRows();
+            const walk = sceneEmptyRows();
+            const walkAlt = sceneEmptyRows();
+            if (side) {
+                sceneDrawSideLegs(stand, 'stand');
+                sceneDrawSideLegs(walk, 'walk');
+                sceneDrawSideLegs(walkAlt, 'stand');
+            } else {
+                sceneDrawFrontLegs(stand, 'stand');
+                sceneDrawFrontLegs(walk, 'walk');
+                sceneDrawFrontLegs(walkAlt, 'stand');
+            }
+            return {
+                base: sceneFinalizeRows(base),
+                viewBox: '0 0 32 48',
+                legStand: sceneFinalizeRows(stand),
+                legA: sceneFinalizeRows(walk),
+                legB: sceneFinalizeRows(walkAlt)
             };
-            let inner = toRects(head, 0) + toRects(body, head.length);
-            if (lie) {
-                inner += toRects(legStand, head.length + body.length);
-                return `<svg class="tlw-sprite" viewBox="0 0 32 24" shape-rendering="crispEdges" aria-hidden="true">${inner}</svg>`;
+        }
+
+        function sceneWorkerSvg(gender, tier, pose, facing) {
+            const key = `${gender}|${tier}|${pose}|${facing || 'front'}`;
+            if (SCENE_SPRITE_CACHE.has(key)) return SCENE_SPRITE_CACHE.get(key);
+            const sprite = sceneWorkerRows(gender, tier, pose, facing || 'front');
+            let inner = sceneRowsToRects(sprite.base, gender);
+            if (sprite.legStand.length) {
+                inner += `<g class="leg-stand">${sceneRowsToRects(sprite.legStand, gender)}</g>`;
+                inner += `<g class="leg-a">${sceneRowsToRects(sprite.legA, gender)}</g>`;
+                inner += `<g class="leg-b">${sceneRowsToRects(sprite.legB, gender)}</g>`;
             }
-            if (legRows) {
-                const legY = head.length + body.length;
-                inner += `<g class="leg-stand">${toRects(legRows.stand, legY)}</g>`;
-                inner += `<g class="leg-a">${toRects(legRows.walk, legY)}</g>`;
-                inner += `<g class="leg-b">${toRects(legRows.stand, legY)}</g>`;
-            }
-            const viewRows = head.length + body.length + (legRows ? legRows.stand.length : 0);
-            return `<svg class="tlw-sprite" viewBox="0 0 24 ${viewRows}" shape-rendering="crispEdges" aria-hidden="true">${inner}</svg>`;
+            const svg = `<svg class="tlw-sprite" viewBox="${sprite.viewBox}" shape-rendering="crispEdges" aria-hidden="true">${inner}</svg>`;
+            SCENE_SPRITE_CACHE.set(key, svg);
+            return svg;
         }
 
         function teamWorkerCard(player, spot, role) {
@@ -1326,8 +1445,9 @@
             const gender = sceneGenderKey(player, role);
             const seated = spot.pose === 'sit';
             const lying = tier === 'dead' && !seated;
-            const pose = seated ? 'sit' : (lying ? 'lie' : (spot.pose || 'stand'));
+            const pose = seated ? 'sit' : (lying ? 'lie' : (tier === 'cry' ? 'stand' : (spot.pose || 'stand')));
             const walking = !seated && !lying && tier !== 'cry' && !!spot.walk;
+            const facing = walking || pose === 'carry' ? 'side' : 'front';
             const dept = currentBranch === 'TRD' ? getTRDDept(player.name) : 'คลังสินค้า';
             const shortDept = dept || teamRoleTitle(role);
             const aria = `อันดับ ${player.rank} ${player.name} ${shortDept} ${hp} HP ${tone.label}`;
@@ -1345,45 +1465,116 @@
                             <span class="tlw-name">#${player.rank} ${esc(player.name)}</span>
                             <span class="tlw-hp" aria-hidden="true"><span></span></span>
                         </div>
-                        <div class="tlw-flip">${sceneWorkerSvg(gender, tier, pose)}</div>
+                        <div class="tlw-flip">${sceneWorkerSvg(gender, tier, pose, facing)}</div>
                     </div>
                 </div>
             `;
         }
 
-        function sceneSackRow(n, mix) {
-            let cells = '';
-            for (let i = 0; i < n; i++) cells += `<span class="tls-sack${mix && i % 2 ? ' brown' : ''}"></span>`;
-            return `<div class="tls-shelf-row">${cells}</div>`;
+        function sceneSvgRect(x, y, w, h, fill, extra = '') {
+            return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"${extra}/>`;
         }
 
-        function sceneBoxRow(n, sackEvery) {
-            let cells = '';
-            for (let i = 0; i < n; i++) cells += (sackEvery && i % sackEvery === 1) ? '<span class="tls-sack brown"></span>' : '<span class="tls-box"></span>';
-            return `<div class="tls-shelf-row">${cells}</div>`;
+        function sceneFloorTiles(y, colors) {
+            let out = '';
+            for (let row = 0; row < 6; row++) {
+                for (let col = 0; col < 20; col++) {
+                    const fill = (row + col) % 2 ? colors[0] : colors[1];
+                    out += sceneSvgRect(col * 8, y + row * 8, 8, 8, fill, ' opacity="0.72"');
+                }
+            }
+            return out;
         }
 
-        function scenePropsHtml() {
+        function sceneShopShelf(x, y, w, h, type) {
+            let out = sceneSvgRect(x, y, w, h, '#7c2d12') + sceneSvgRect(x + 2, y + 2, w - 4, h - 4, '#fef3c7');
+            out += sceneSvgRect(x + 2, y + Math.round(h / 2), w - 4, 2, '#7c2d12');
+            const count = type === 'rack' ? 5 : 4;
+            for (let i = 0; i < count; i++) {
+                const px = x + 5 + i * ((w - 10) / count);
+                out += sceneSvgRect(px, y + h - 12, 7, 8, i % 2 ? '#d7a86e' : '#fbe8c4', ' stroke="#8a4b20" stroke-width="1"');
+                out += sceneSvgRect(px + 1, y + 8, 8, 7, i % 2 ? '#f59e0b' : '#fb923c', ' stroke="#92400e" stroke-width="1"');
+            }
+            return out;
+        }
+
+        function sceneWarehouseRack(x, y, w, h) {
+            let out = sceneSvgRect(x, y, w, h, '#b45309') + sceneSvgRect(x + 2, y + 2, w - 4, h - 4, '#fde68a');
+            [y + 12, y + 24].forEach(yy => out += sceneSvgRect(x + 2, yy, w - 4, 2, '#b45309'));
+            for (let r = 0; r < 3; r++) {
+                for (let i = 0; i < 5; i++) {
+                    const px = x + 5 + i * ((w - 10) / 5);
+                    const py = y + 5 + r * 12;
+                    out += sceneSvgRect(px, py, 8, 7, (i + r) % 3 ? '#f59e0b' : '#94a3b8', ' stroke="#92400e" stroke-width="1"');
+                }
+            }
+            return out;
+        }
+
+        function teamSceneBackgroundHtml() {
             if (currentBranch === 'TRD') {
                 return `
-                    <div class="tls-prop tls-shelf" style="left:3%; top:10%; width:24%; height:31%" aria-hidden="true">${sceneSackRow(4)}${sceneSackRow(4, true)}</div>
-                    <div class="tls-prop tls-shelf" style="right:3%; top:10%; width:24%; height:31%" aria-hidden="true">${sceneSackRow(4, true)}${sceneSackRow(4)}</div>
-                    <div class="tls-prop tls-wallsign" style="left:31%; top:14%; width:17%; height:13%" aria-hidden="true">แป้ง · น้ำตาล<br>ยกกระสอบ</div>
-                    <div class="tls-prop tls-door" style="left:52%; top:9%; width:11%; height:34%" aria-hidden="true"></div>
-                    <div class="tls-prop tls-crates" style="right:4%; bottom:6%; width:14%; height:20%" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
-                    <div class="tls-prop tls-shelf-row" style="left:4%; bottom:8%; width:13%; height:13%" aria-hidden="true"><span class="tls-sack brown"></span><span class="tls-sack"></span><span class="tls-sack brown"></span><span class="tls-sack"></span></div>
-                    <div class="tls-prop tls-counter" style="left:28%; top:62%; width:44%; height:20%" aria-hidden="true"></div>
-                    <div class="tls-prop tls-register" style="left:30.5%; top:58%; width:6%; height:6%" aria-hidden="true"></div>
-                    <div class="tls-prop tls-register" style="left:48.5%; top:58%; width:6%; height:6%" aria-hidden="true"></div>
+                    <svg class="team-live-bg" viewBox="0 0 160 90" preserveAspectRatio="none" shape-rendering="crispEdges" aria-hidden="true">
+                        ${sceneSvgRect(0, 0, 160, 38, '#dbeafe')}
+                        ${sceneSvgRect(0, 38, 160, 4, '#fed7aa')}
+                        ${sceneSvgRect(0, 42, 160, 48, '#e5e7eb')}
+                        ${sceneFloorTiles(42, ['#d1d5db', '#f8fafc'])}
+                        ${sceneSvgRect(4, 5, 30, 24, '#bfdbfe', ' stroke="#1f2937" stroke-width="1"')}
+                        ${sceneSvgRect(7, 8, 24, 18, '#e0f2fe', ' class="scene-window-light"')}
+                        ${sceneSvgRect(49, 6, 17, 31, '#94a3b8', ' stroke="#1f2937" stroke-width="1"')}
+                        ${sceneSvgRect(53, 9, 9, 23, '#cbd5e1')}
+                        ${sceneSvgRect(54, 24, 2, 2, '#fef3c7')}
+                        ${sceneShopShelf(6, 12, 34, 25, 'shop')}
+                        ${sceneShopShelf(120, 12, 34, 25, 'shop')}
+                        ${sceneSvgRect(70, 9, 24, 10, '#fff7ed', ' stroke="#7c2d12" stroke-width="2"')}
+                        <text x="82" y="15" fill="#7c2d12" font-size="4" font-weight="900" text-anchor="middle">FLOUR · SUGAR</text>
+                        ${sceneSvgRect(96, 8, 17, 8, '#111827')}
+                        ${sceneSvgRect(98, 10, 13, 4, '#22c55e', ' class="scene-open-glow"')}
+                        <text x="104.5" y="13.5" fill="#052e16" font-size="3.2" font-weight="900" text-anchor="middle">OPEN</text>
+                        ${sceneSvgRect(47, 2, 66, 3, '#fef3c7', ' class="scene-lamp-glow" opacity="0.72"')}
+                        ${sceneSvgRect(45, 56, 70, 17, '#7c2d12')}
+                        ${sceneSvgRect(47, 58, 66, 13, '#fb923c')}
+                        ${sceneSvgRect(47, 58, 66, 3, '#fde9c8')}
+                        ${sceneSvgRect(49, 51, 10, 7, '#374151', ' stroke="#111827" stroke-width="1"')}
+                        ${sceneSvgRect(77, 51, 10, 7, '#374151', ' stroke="#111827" stroke-width="1"')}
+                        ${sceneSvgRect(51, 52, 6, 2, '#6ee7b7')}
+                        ${sceneSvgRect(79, 52, 6, 2, '#6ee7b7')}
+                        ${sceneSvgRect(11, 72, 23, 13, '#92400e')}
+                        ${sceneSvgRect(13, 74, 19, 9, '#fbbf24')}
+                        ${sceneSvgRect(125, 70, 27, 14, '#92400e')}
+                        ${sceneSvgRect(127, 72, 23, 10, '#fbbf24')}
+                    </svg>
                 `;
             }
             return `
-                <div class="tls-prop tls-rack" style="left:2%; top:4%; width:44%; height:40%" aria-hidden="true">${sceneBoxRow(5, 3)}${sceneBoxRow(5)}${sceneBoxRow(5, 2)}</div>
-                <div class="tls-prop tls-rack" style="right:2%; top:4%; width:44%; height:40%" aria-hidden="true">${sceneBoxRow(5)}${sceneBoxRow(5, 3)}${sceneBoxRow(5, 2)}</div>
-                <div class="tls-prop tls-crates" style="left:42%; top:56%; width:16%; height:18%" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
-                <div class="tls-prop tls-pallet" style="left:41%; top:74%; width:18%; height:3.5%" aria-hidden="true"></div>
-                <div class="tls-prop tls-shelf-row" style="left:5%; bottom:5%; width:14%; height:14%" aria-hidden="true"><span class="tls-sack brown"></span><span class="tls-sack"></span><span class="tls-sack brown"></span><span class="tls-sack"></span></div>
-                <div class="tls-prop tls-crates" style="right:5%; bottom:5%; width:13%; height:17%" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                <svg class="team-live-bg" viewBox="0 0 160 90" preserveAspectRatio="none" shape-rendering="crispEdges" aria-hidden="true">
+                    ${sceneSvgRect(0, 0, 160, 34, '#e2e8f0')}
+                    ${sceneSvgRect(0, 34, 160, 3, '#94a3b8')}
+                    ${sceneSvgRect(0, 37, 160, 53, '#d6d3d1')}
+                    ${sceneFloorTiles(42, ['#c7c2bd', '#e7e5e4'])}
+                    ${sceneSvgRect(62, 5, 36, 30, '#64748b', ' stroke="#1f2937" stroke-width="1"')}
+                    ${sceneSvgRect(65, 8, 30, 24, '#94a3b8')}
+                    ${sceneSvgRect(65, 16, 30, 2, '#475569')}
+                    ${sceneSvgRect(65, 24, 30, 2, '#475569')}
+                    ${sceneSvgRect(6, 7, 28, 9, '#bae6fd', ' class="scene-window-light" stroke="#1f2937" stroke-width="1"')}
+                    ${sceneSvgRect(126, 7, 28, 9, '#bae6fd', ' class="scene-window-light" stroke="#1f2937" stroke-width="1"')}
+                    ${sceneSvgRect(54, 2, 52, 3, '#fde68a', ' class="scene-lamp-glow" opacity="0.78"')}
+                    ${sceneSvgRect(65, 37, 30, 4, '#facc15')}
+                    ${sceneSvgRect(68, 37, 4, 4, '#111827')}${sceneSvgRect(78, 37, 4, 4, '#111827')}${sceneSvgRect(88, 37, 4, 4, '#111827')}
+                    ${sceneWarehouseRack(3, 5, 52, 33)}
+                    ${sceneWarehouseRack(105, 5, 52, 33)}
+                    ${sceneSvgRect(68, 49, 24, 16, '#92400e')}
+                    ${sceneSvgRect(70, 51, 20, 12, '#f59e0b')}
+                    ${sceneSvgRect(72, 65, 18, 4, '#b45309')}
+                    ${sceneSvgRect(9, 72, 23, 13, '#92400e')}
+                    ${sceneSvgRect(11, 74, 19, 9, '#fbbf24')}
+                    ${sceneSvgRect(126, 70, 24, 14, '#92400e')}
+                    ${sceneSvgRect(128, 72, 20, 10, '#f59e0b')}
+                    ${sceneSvgRect(112, 55, 20, 3, '#475569')}
+                    ${sceneSvgRect(126, 52, 4, 9, '#475569')}
+                    ${sceneSvgRect(131, 59, 5, 3, '#111827')}
+                    <text x="80" y="15" fill="#1f2937" font-size="6" font-weight="900" text-anchor="middle">AKRA</text>
+                </svg>
             `;
         }
 
@@ -1427,7 +1618,7 @@
                         <div class="team-live-stage ${currentBranch === 'TRD' ? 'trd' : 'akra'}" role="img" aria-label="${esc(liveLabel)}">
                             <div class="team-live-sign"><i class="fa-solid ${currentBranch === 'TRD' ? 'fa-wheat-awn' : 'fa-warehouse'}"></i>${sceneTitle}</div>
                             <div class="team-live-status"><span class="team-live-pulse"></span>Live Team HP</div>
-                            ${scenePropsHtml()}
+                            ${teamSceneBackgroundHtml()}
                             ${workersHtml}
                         </div>
                     </div>
