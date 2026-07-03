@@ -597,7 +597,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260703.03";
+        const CURRENT_VERSION = "20260703.04";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -1172,268 +1172,269 @@
             return 'dead';
         }
 
-        const SCENE_GRID_W = 32;
-        const SCENE_GRID_H = 48;
+        // ตัวละครวาดบน design grid 16x24 (row-string) แล้วสเกล x2 เป็น 32x48 — ลดจำนวน rect และคุมสัดส่วนง่าย
+        const SCENE_DESIGN_W = 16;
+        const SCENE_DESIGN_H = 24;
+        const SCENE_SPRITE_SCALE = 2;
         const SCENE_SPRITE_CACHE = new Map();
 
-        function sceneEmptyRows(width = SCENE_GRID_W, height = SCENE_GRID_H) {
-            return Array.from({ length: height }, () => Array(width).fill('.'));
+        function sceneGrid(w = SCENE_DESIGN_W, h = SCENE_DESIGN_H) {
+            return Array.from({ length: h }, () => Array(w).fill('.'));
         }
 
-        function sceneRect(rows, x, y, w, h, c) {
-            for (let yy = y; yy < y + h; yy++) {
-                if (!rows[yy]) continue;
-                for (let xx = x; xx < x + w; xx++) {
-                    if (xx >= 0 && xx < rows[yy].length) rows[yy][xx] = c;
-                }
-            }
+        function scenePx(g, x, y, ch) {
+            if (g[y] && x >= 0 && x < g[y].length) g[y][x] = ch;
         }
 
-        function scenePut(rows, x, y, pattern) {
+        function scenePutPattern(g, x, y, pattern) {
             pattern.forEach((row, dy) => {
                 for (let dx = 0; dx < row.length; dx++) {
-                    const c = row[dx];
-                    if (c !== '.') sceneRect(rows, x + dx, y + dy, 1, 1, c);
+                    if (row[dx] !== '.') scenePx(g, x + dx, y + dy, row[dx]);
                 }
             });
         }
 
-        function sceneBand(rows, y, x, w, fill) {
-            sceneRect(rows, x, y, w, 1, 'K');
-            if (w > 2) sceneRect(rows, x + 1, y, w - 2, 1, fill);
+        // ลำตัว+หัว (ไม่มีขา — ขาแยกเลเยอร์สำหรับเฟรมเดิน)
+        const SCENE_FRONT_BODY = [
+            '....KKKKKKKK....',
+            '...KHHHHHHHHK...',
+            '..KHHHHHHHHHHK..',
+            '..KHHHHHHHHHhK..',
+            '..KHHSSSSSSHhK..',
+            '.KSSSSSSSSSSssK.',
+            '.KSSSSSSSSSSssK.',
+            '..KSSSSSSSSSsK..',
+            '..KSSSSSSSSSsK..',
+            '..KSSSSSSSSSsK..',
+            '...KSSSSSSSsK...',
+            '..KTTTRRRRTttK..',
+            '.KTTTTTTTTTTttK.',
+            '.KTTTTTTTTTTttK.',
+            '.KTTTTTTTTTTttK.',
+            '.KSKTTTTTTTTKsK.',
+            '..KKTTTTTTttKK..'
+        ];
+        const SCENE_SIDE_BODY = [
+            '....KKKKKKKK....',
+            '...KHHHHHHHHK...',
+            '..KHHHHHHHHHHK..',
+            '..KHHHHHHHHHHK..',
+            '..KHHHSSSSSSSK..',
+            '.KHHHSSSSSSSSK..',
+            '.KHHhSSSSSESSK..',
+            '.KHHhSSSSSSSSSK.',
+            '.KHhhSSSSSSSsK..',
+            '..KKhSSSSSSsK...',
+            '...KKSSSSSsK....',
+            '..KTTTTTTTRttK..',
+            '.KTTTtttTTTTttK.',
+            '.KTTTtttTTTTttK.',
+            '.KTTTtttTTTTttK.',
+            '.KTTTKSSKTTTttK.',
+            '..KKttttttttKK..'
+        ];
+        const SCENE_FRONT_LEGS_STAND = [
+            '...KPPK..KPpK...',
+            '...KPPK..KPpK...',
+            '...KPPK..KPpK...',
+            '...KPPK..KPpK...',
+            '..KBBBK..KBBbK..',
+            '..KKKKK..KKKKK..'
+        ];
+        const SCENE_FRONT_LEGS_A = [
+            '...KPPK..KPpK...',
+            '...KPPK..KPpK...',
+            '...KPPK.KBBbK...',
+            '...KPPK..KKK....',
+            '..KBBBK.........',
+            '..KKKKK.........'
+        ];
+        const SCENE_FRONT_LEGS_B = [
+            '...KPPK..KPpK...',
+            '...KPPK..KPpK...',
+            '...KBBK..KPpK...',
+            '....KKK..KPpK...',
+            '.........KBBbK..',
+            '.........KKKKK..'
+        ];
+        const SCENE_SIDE_LEGS_STAND = [
+            '....KPPK.KppK...',
+            '....KPPK.KppK...',
+            '....KPPK.KppK...',
+            '....KPPK.KppK...',
+            '...KBBBK.KbbbK..',
+            '...KKKKK.KKKKK..'
+        ];
+        const SCENE_SIDE_LEGS_A = [
+            '....KPPKKppK....',
+            '....KPPK.KppK...',
+            '...KPPK..KppK...',
+            '...KPPK...KppK..',
+            '..KBBBK...KbbbK.',
+            '..KKKKK...KKKKK.'
+        ];
+        const SCENE_SIDE_LEGS_B = [
+            '....KPPK.KppK...',
+            '....KPPKKppK....',
+            '....KPPKKppK....',
+            '....KPPK.KppK...',
+            '...KBBBK.KbbbK..',
+            '...KKKKK.KKKKK..'
+        ];
+        // ท่าถือลัง (ทับบนลำตัวด้านข้าง)
+        const SCENE_SIDE_CARRY = [
+            '................',
+            '................',
+            '................',
+            '................',
+            '................',
+            '................',
+            '................',
+            '................',
+            '................',
+            '................',
+            '.........KKKKKK.',
+            '..TTTTtKKCCCCCK.',
+            '..KKKKtKCCCCCcK.',
+            '......SKCLCCCcK.',
+            '......SKCCCCCcK.',
+            '..KKKKtKCCCCCcK.',
+            '..TTTTtKKKKKKK..'
+        ];
+        // ท่านอน (HP หมด) วาดบน 24x16 → 48x32
+        const SCENE_LIE_BODY = [
+            '........................',
+            '........................',
+            '...KKKKK................',
+            '..KHHHHHK.KKKKKKKK......',
+            '.KHHSSSSKKTTTTTTTTKKKKK.',
+            '.KHSSSSSKTTTTTTTTTKPPPBK',
+            '.KHSSSSSKTTTTTTTTTKpppbK',
+            '.KHSSSSSKTTTTTTTTTKKKKK.',
+            '.KHSSSSSKTTTTTTTTTKPPPBK',
+            '.KHHSSSSKKttttttttKpppbK',
+            '..KHHHHHK.KSSSK...KKKKK.',
+            '...KKKKK...KKK..........'
+        ];
+
+        function sceneFemaleFrontHair(g) {
+            for (let y = 3; y <= 12; y++) { scenePx(g, 1, y, 'K'); scenePx(g, 2, y, 'H'); scenePx(g, 13, y, 'h'); scenePx(g, 14, y, 'K'); }
+            scenePx(g, 2, 13, 'H'); scenePx(g, 13, 13, 'h');
+            scenePx(g, 1, 13, 'K'); scenePx(g, 14, 13, 'K');
+            scenePx(g, 2, 14, 'K'); scenePx(g, 13, 14, 'K');
+            scenePutPattern(g, 3, 4, ['HHSSSSSSHh']);
         }
 
-        function sceneFinalizeRows(rows) {
-            return rows.map(row => row.join(''));
+        function sceneFemaleSideHair(g) {
+            for (let y = 4; y <= 13; y++) { scenePx(g, 0, y, 'K'); scenePx(g, 1, y, 'H'); scenePx(g, 2, y, 'H'); }
+            scenePx(g, 1, 14, 'K'); scenePx(g, 2, 14, 'h'); scenePx(g, 3, 14, 'K');
+            scenePx(g, 3, 13, 'h');
         }
 
-        function sceneSpriteFill(g, c) {
-            if (c === 'T' || c === 't' || c === 'R' || c === 'H' || c === 'h') return g[c];
-            return SCENE_FIXED_COLORS[c] || '#000000';
+        function sceneFrontFace(g, tier) {
+            if (tier === 'dead') {
+                scenePx(g, 4, 5, 'X'); scenePx(g, 6, 5, 'X'); scenePx(g, 5, 6, 'X'); scenePx(g, 4, 7, 'X'); scenePx(g, 6, 7, 'X');
+                scenePx(g, 9, 5, 'X'); scenePx(g, 11, 5, 'X'); scenePx(g, 10, 6, 'X'); scenePx(g, 9, 7, 'X'); scenePx(g, 11, 7, 'X');
+                scenePx(g, 7, 9, 'M'); scenePx(g, 8, 9, 'M');
+                return;
+            }
+            scenePx(g, 5, 6, 'E'); scenePx(g, 10, 6, 'E');
+            if (tier === 'smile') {
+                scenePx(g, 5, 8, 'M'); scenePx(g, 10, 8, 'M');
+                scenePx(g, 6, 9, 'M'); scenePx(g, 7, 9, 'M'); scenePx(g, 8, 9, 'M'); scenePx(g, 9, 9, 'M');
+            } else if (tier === 'neutral') {
+                scenePx(g, 6, 9, 'M'); scenePx(g, 7, 9, 'M'); scenePx(g, 8, 9, 'M'); scenePx(g, 9, 9, 'M');
+            } else if (tier === 'pout') {
+                scenePx(g, 6, 9, 'M'); scenePx(g, 9, 9, 'M'); scenePx(g, 7, 10, 'M'); scenePx(g, 8, 10, 'M');
+            } else {
+                scenePx(g, 4, 7, 'W'); scenePx(g, 11, 7, 'W');
+                scenePx(g, 7, 8, 'O'); scenePx(g, 8, 8, 'O'); scenePx(g, 7, 9, 'O'); scenePx(g, 8, 9, 'O');
+            }
         }
 
-        function sceneRowsToRects(rows, gender) {
-            const g = SCENE_GENDER_COLORS[gender] || SCENE_GENDER_COLORS.U;
+        function sceneSideFace(g, tier) {
+            if (tier === 'dead') {
+                scenePx(g, 10, 5, 'X'); scenePx(g, 12, 5, 'X'); scenePx(g, 11, 6, 'X'); scenePx(g, 10, 7, 'X'); scenePx(g, 12, 7, 'X');
+                scenePx(g, 10, 9, 'M'); scenePx(g, 11, 9, 'M');
+                return;
+            }
+            scenePx(g, 11, 6, 'E');
+            if (tier === 'smile') {
+                scenePx(g, 10, 9, 'M'); scenePx(g, 11, 9, 'M'); scenePx(g, 12, 8, 'M');
+            } else if (tier === 'neutral') {
+                scenePx(g, 10, 9, 'M'); scenePx(g, 11, 9, 'M');
+            } else if (tier === 'pout') {
+                scenePx(g, 10, 10, 'M'); scenePx(g, 11, 10, 'M'); scenePx(g, 12, 9, 'M');
+            } else {
+                scenePx(g, 10, 7, 'W');
+                scenePx(g, 10, 8, 'O'); scenePx(g, 11, 8, 'O'); scenePx(g, 10, 9, 'O'); scenePx(g, 11, 9, 'O');
+            }
+        }
+
+        function sceneSpriteFill(gp, ch) {
+            if (gp[ch] !== undefined) return gp[ch];
+            return SCENE_FIXED_COLORS[ch] || '#000000';
+        }
+
+        // แปลง grid เป็น rect (รวมช่องติดกันสีเดียวกันเป็น rect เดียวต่อแถว)
+        function sceneRowsToRects(g, gender) {
+            const gp = SCENE_GENDER_COLORS[gender] || SCENE_GENDER_COLORS.U;
+            const s = SCENE_SPRITE_SCALE;
             let out = '';
-            rows.forEach((row, y) => {
-                for (let x = 0; x < row.length; x++) {
-                    const c = row[x];
-                    if (c === '.') continue;
-                    out += `<rect x="${x}" y="${y}" width="1" height="1" fill="${sceneSpriteFill(g, c)}"/>`;
+            g.forEach((row, y) => {
+                let x = 0;
+                while (x < row.length) {
+                    const ch = row[x];
+                    if (ch === '.') { x++; continue; }
+                    let x2 = x + 1;
+                    while (x2 < row.length && row[x2] === ch) x2++;
+                    out += `<rect x="${x * s}" y="${y * s}" width="${(x2 - x) * s}" height="${s}" fill="${sceneSpriteFill(gp, ch)}"/>`;
+                    x = x2;
                 }
             });
             return out;
         }
 
-        function sceneDrawFrontHead(rows, gender, tier) {
-            const female = gender === 'F';
-            if (female) {
-                sceneRect(rows, 5, 5, 22, 19, 'K');
-                sceneRect(rows, 6, 6, 20, 17, 'H');
-                sceneRect(rows, 6, 12, 4, 14, 'h');
-                sceneRect(rows, 22, 12, 4, 14, 'h');
-            } else {
-                sceneRect(rows, 8, 3, 17, 6, 'K');
-                sceneRect(rows, 9, 4, 15, 4, 'H');
-                sceneRect(rows, 7, 7, 5, 5, 'h');
-            }
-            [
-                [10, 2, 12], [8, 3, 16], [7, 4, 18], [6, 5, 20],
-                [6, 6, 20], [5, 7, 22], [5, 8, 22], [5, 9, 22],
-                [5, 10, 22], [5, 11, 22], [6, 12, 20], [6, 13, 20],
-                [7, 14, 18], [8, 15, 16], [10, 16, 12]
-            ].forEach(([x, y, w]) => sceneBand(rows, y, x, w, 'S'));
-            sceneRect(rows, 8, 7, 4, 7, 's');
-            sceneRect(rows, 20, 5, 4, 4, 'L');
-            if (female) {
-                sceneRect(rows, 7, 5, 18, 3, 'H');
-                sceneRect(rows, 6, 8, 4, 13, 'H');
-                sceneRect(rows, 22, 8, 3, 13, 'h');
-            } else {
-                sceneRect(rows, 8, 5, 15, 3, 'H');
-                scenePut(rows, 9, 7, ['HHhH..HH']);
-            }
-            if (tier === 'dead') {
-                scenePut(rows, 11, 10, ['X.X', '.X.', 'X.X']);
-                scenePut(rows, 19, 10, ['X.X', '.X.', 'X.X']);
-                sceneRect(rows, 14, 14, 5, 1, 'M');
-                return;
-            }
-            sceneRect(rows, 12, 10, 2, 2, 'E');
-            sceneRect(rows, 19, 10, 2, 2, 'E');
-            if (tier === 'smile') {
-                sceneRect(rows, 14, 14, 1, 1, 'M'); sceneRect(rows, 15, 15, 3, 1, 'M'); sceneRect(rows, 18, 14, 1, 1, 'M');
-            } else if (tier === 'neutral') {
-                sceneRect(rows, 14, 14, 5, 1, 'M');
-            } else if (tier === 'pout') {
-                sceneRect(rows, 14, 15, 5, 1, 'M'); sceneRect(rows, 13, 14, 1, 1, 'M'); sceneRect(rows, 19, 14, 1, 1, 'M');
-            } else {
-                sceneRect(rows, 11, 12, 1, 3, 'W'); sceneRect(rows, 21, 12, 1, 3, 'W');
-                sceneRect(rows, 14, 14, 5, 3, 'O'); sceneRect(rows, 15, 15, 3, 1, 'M');
-            }
-        }
-
-        function sceneDrawSideHead(rows, gender, tier) {
-            const female = gender === 'F';
-            if (female) {
-                sceneRect(rows, 7, 5, 13, 21, 'K');
-                sceneRect(rows, 8, 6, 11, 19, 'H');
-                sceneRect(rows, 8, 14, 6, 13, 'h');
-            } else {
-                sceneRect(rows, 8, 4, 15, 5, 'K');
-                sceneRect(rows, 9, 5, 13, 3, 'H');
-                sceneRect(rows, 7, 8, 5, 8, 'h');
-            }
-            [
-                [11, 3, 11], [9, 4, 15], [8, 5, 17], [8, 6, 18],
-                [7, 7, 19], [7, 8, 19], [7, 9, 20], [7, 10, 20],
-                [8, 11, 18], [8, 12, 18], [9, 13, 16], [10, 14, 14],
-                [11, 15, 11], [12, 16, 8]
-            ].forEach(([x, y, w]) => sceneBand(rows, y, x, w, 'S'));
-            sceneRect(rows, 8, 8, 3, 6, 's');
-            sceneRect(rows, 20, 5, 3, 3, 'L');
-            sceneRect(rows, 23, 10, 3, 3, 'K');
-            sceneRect(rows, 23, 11, 2, 1, 'S');
-            if (female) sceneRect(rows, 8, 5, 12, 3, 'H');
-            else sceneRect(rows, 9, 5, 12, 3, 'H');
-            if (tier === 'dead') {
-                scenePut(rows, 18, 10, ['X.X', '.X.', 'X.X']);
-                sceneRect(rows, 18, 15, 5, 1, 'M');
-                return;
-            }
-            sceneRect(rows, 19, 10, 2, 2, 'E');
-            if (tier === 'smile') {
-                sceneRect(rows, 19, 15, 3, 1, 'M'); sceneRect(rows, 22, 14, 1, 1, 'M');
-            } else if (tier === 'neutral') {
-                sceneRect(rows, 18, 14, 5, 1, 'M');
-            } else if (tier === 'pout') {
-                sceneRect(rows, 18, 15, 5, 1, 'M'); sceneRect(rows, 17, 14, 1, 1, 'M');
-            } else {
-                sceneRect(rows, 18, 12, 1, 3, 'W');
-                sceneRect(rows, 19, 14, 4, 3, 'O');
-            }
-        }
-
-        function sceneDrawFrontBody(rows, gender, pose) {
-            const female = gender === 'F';
-            sceneRect(rows, 14, 17, 5, 3, 'K'); sceneRect(rows, 15, 17, 3, 3, 'S');
-            sceneRect(rows, 9, 20, 14, 14, 'K');
-            sceneRect(rows, 10, 21, 12, 12, 'T');
-            sceneRect(rows, 10, 22, 12, 1, 'R');
-            sceneRect(rows, 11, 25, 10, 1, 't');
-            sceneRect(rows, 10, 31, 12, 2, 't');
-            sceneRect(rows, 6, 22, 5, 11, 'K'); sceneRect(rows, 7, 23, 3, 8, 'T'); sceneRect(rows, 7, 31, 3, 3, 'S');
-            sceneRect(rows, 22, 22, 5, 11, 'K'); sceneRect(rows, 23, 23, 3, 8, 'T'); sceneRect(rows, 23, 31, 3, 3, 'S');
-            if (female) {
-                sceneRect(rows, 7, 19, 4, 11, 'H');
-                sceneRect(rows, 22, 19, 3, 11, 'h');
-            }
-            if (pose === 'sit') {
-                sceneRect(rows, 9, 34, 14, 5, 'K');
-                sceneRect(rows, 10, 35, 12, 3, 'P');
-                sceneRect(rows, 7, 37, 18, 3, 'K');
-                sceneRect(rows, 9, 37, 14, 2, 'p');
-            }
-        }
-
-        function sceneDrawSideBody(rows, gender, pose) {
-            const female = gender === 'F';
-            sceneRect(rows, 13, 17, 5, 3, 'K'); sceneRect(rows, 14, 17, 3, 3, 'S');
-            sceneRect(rows, 10, 20, 13, 14, 'K');
-            sceneRect(rows, 11, 21, 11, 12, 'T');
-            sceneRect(rows, 11, 22, 11, 1, 'R');
-            sceneRect(rows, 11, 26, 11, 1, 't');
-            sceneRect(rows, 11, 31, 11, 2, 't');
-            sceneRect(rows, 21, 23, 5, 10, 'K'); sceneRect(rows, 22, 24, 3, 7, 'T'); sceneRect(rows, 22, 31, 3, 3, 'S');
-            if (female) sceneRect(rows, 8, 18, 5, 13, 'H');
-            if (pose === 'carry') {
-                sceneRect(rows, 18, 25, 11, 8, 'K');
-                sceneRect(rows, 19, 26, 9, 6, 'C');
-                sceneRect(rows, 19, 29, 9, 1, 'c');
-                sceneRect(rows, 22, 26, 1, 6, 'D');
-                sceneRect(rows, 26, 26, 1, 6, 'D');
-            }
-        }
-
-        function sceneDrawFrontLegs(rows, frame) {
-            if (frame === 'walk') {
-                sceneRect(rows, 9, 34, 6, 8, 'K'); sceneRect(rows, 10, 35, 4, 6, 'P'); sceneRect(rows, 9, 41, 7, 3, 'B');
-                sceneRect(rows, 18, 34, 6, 9, 'K'); sceneRect(rows, 19, 35, 4, 7, 'p'); sceneRect(rows, 17, 43, 8, 3, 'B');
-                return;
-            }
-            sceneRect(rows, 10, 34, 5, 9, 'K'); sceneRect(rows, 11, 35, 3, 7, 'P'); sceneRect(rows, 9, 43, 7, 3, 'B');
-            sceneRect(rows, 17, 34, 5, 9, 'K'); sceneRect(rows, 18, 35, 3, 7, 'p'); sceneRect(rows, 16, 43, 7, 3, 'B');
-        }
-
-        function sceneDrawSideLegs(rows, frame) {
-            if (frame === 'walk') {
-                sceneRect(rows, 12, 34, 5, 8, 'K'); sceneRect(rows, 13, 35, 3, 6, 'P'); sceneRect(rows, 9, 41, 8, 3, 'B');
-                sceneRect(rows, 18, 34, 5, 8, 'K'); sceneRect(rows, 19, 35, 3, 6, 'p'); sceneRect(rows, 18, 42, 8, 3, 'B');
-                return;
-            }
-            sceneRect(rows, 13, 34, 5, 9, 'K'); sceneRect(rows, 14, 35, 3, 7, 'P'); sceneRect(rows, 12, 43, 7, 3, 'B');
-            sceneRect(rows, 18, 34, 5, 9, 'K'); sceneRect(rows, 19, 35, 3, 7, 'p'); sceneRect(rows, 17, 43, 7, 3, 'B');
-        }
-
-        function sceneWorkerRows(gender, tier, pose, facing) {
-            if (pose === 'lie') {
-                const rows = sceneEmptyRows(48, 32);
-                sceneRect(rows, 6, 12, 12, 12, 'K'); sceneRect(rows, 7, 13, 10, 10, 'S');
-                sceneRect(rows, 8, 12, 8, 3, gender === 'F' ? 'H' : 'h');
-                scenePut(rows, 10, 16, ['X.X', '.X.', 'X.X']);
-                scenePut(rows, 20, 14, [
-                    'KKKKKKKKKKKKKKKKK',
-                    'KTTTTTRRRRRTTTTTK',
-                    'KTTTTTTTTTTTTTTTK',
-                    'KtttttttttttttttK',
-                    'KKKKKKKKKKKKKKKKK'
-                ]);
-                sceneRect(rows, 36, 14, 8, 4, 'P'); sceneRect(rows, 36, 20, 8, 4, 'p');
-                sceneRect(rows, 43, 13, 5, 5, 'B'); sceneRect(rows, 43, 20, 5, 5, 'B');
-                return { base: sceneFinalizeRows(rows), viewBox: '0 0 48 32', legStand: [], legA: [], legB: [] };
-            }
-            const side = facing === 'side';
-            const base = sceneEmptyRows();
-            if (side) {
-                sceneDrawSideHead(base, gender, tier);
-                sceneDrawSideBody(base, gender, pose);
-            } else {
-                sceneDrawFrontHead(base, gender, tier);
-                sceneDrawFrontBody(base, gender, pose);
-            }
-            if (pose === 'sit') return { base: sceneFinalizeRows(base), viewBox: '0 0 32 48', legStand: [], legA: [], legB: [] };
-            const stand = sceneEmptyRows();
-            const walk = sceneEmptyRows();
-            const walkAlt = sceneEmptyRows();
-            if (side) {
-                sceneDrawSideLegs(stand, 'stand');
-                sceneDrawSideLegs(walk, 'walk');
-                sceneDrawSideLegs(walkAlt, 'stand');
-            } else {
-                sceneDrawFrontLegs(stand, 'stand');
-                sceneDrawFrontLegs(walk, 'walk');
-                sceneDrawFrontLegs(walkAlt, 'stand');
-            }
-            return {
-                base: sceneFinalizeRows(base),
-                viewBox: '0 0 32 48',
-                legStand: sceneFinalizeRows(stand),
-                legA: sceneFinalizeRows(walk),
-                legB: sceneFinalizeRows(walkAlt)
-            };
-        }
-
         function sceneWorkerSvg(gender, tier, pose, facing) {
             const key = `${gender}|${tier}|${pose}|${facing || 'front'}`;
             if (SCENE_SPRITE_CACHE.has(key)) return SCENE_SPRITE_CACHE.get(key);
-            const sprite = sceneWorkerRows(gender, tier, pose, facing || 'front');
-            let inner = sceneRowsToRects(sprite.base, gender);
-            if (sprite.legStand.length) {
-                inner += `<g class="leg-stand">${sceneRowsToRects(sprite.legStand, gender)}</g>`;
-                inner += `<g class="leg-a">${sceneRowsToRects(sprite.legA, gender)}</g>`;
-                inner += `<g class="leg-b">${sceneRowsToRects(sprite.legB, gender)}</g>`;
+            let inner = '';
+            let viewBox = '0 0 32 48';
+            if (pose === 'lie') {
+                const g = sceneGrid(24, 16);
+                scenePutPattern(g, 0, 0, SCENE_LIE_BODY);
+                if (gender === 'F') {
+                    for (let y = 4; y <= 10; y++) scenePx(g, 0, y, 'H');
+                    scenePx(g, 0, 3, 'K'); scenePx(g, 0, 11, 'K');
+                }
+                scenePx(g, 3, 6, 'X'); scenePx(g, 5, 6, 'X'); scenePx(g, 4, 7, 'X'); scenePx(g, 3, 8, 'X'); scenePx(g, 5, 8, 'X');
+                inner = sceneRowsToRects(g, gender);
+                viewBox = '0 0 48 32';
+            } else {
+                const side = facing === 'side';
+                const g = sceneGrid();
+                scenePutPattern(g, 0, 0, side ? SCENE_SIDE_BODY : SCENE_FRONT_BODY);
+                if (gender === 'F') (side ? sceneFemaleSideHair : sceneFemaleFrontHair)(g);
+                (side ? sceneSideFace : sceneFrontFace)(g, tier);
+                if (pose === 'carry') scenePutPattern(g, 0, 0, SCENE_SIDE_CARRY);
+                inner = sceneRowsToRects(g, gender);
+                if (pose === 'sit') {
+                    // แคชเชียร์ยืนหลังเคาน์เตอร์: ขานิ่ง ไม่มีเลเยอร์เดิน
+                    const sg = sceneGrid();
+                    scenePutPattern(sg, 0, 18, SCENE_FRONT_LEGS_STAND);
+                    inner += sceneRowsToRects(sg, gender);
+                } else {
+                    const mkLegs = (tpl) => {
+                        const lg = sceneGrid();
+                        scenePutPattern(lg, 0, 18, tpl);
+                        return sceneRowsToRects(lg, gender);
+                    };
+                    inner += `<g class="leg-stand">${mkLegs(side ? SCENE_SIDE_LEGS_STAND : SCENE_FRONT_LEGS_STAND)}</g>`;
+                    inner += `<g class="leg-a">${mkLegs(side ? SCENE_SIDE_LEGS_A : SCENE_FRONT_LEGS_A)}</g>`;
+                    inner += `<g class="leg-b">${mkLegs(side ? SCENE_SIDE_LEGS_B : SCENE_FRONT_LEGS_B)}</g>`;
+                }
             }
-            const svg = `<svg class="tlw-sprite" viewBox="${sprite.viewBox}" shape-rendering="crispEdges" aria-hidden="true">${inner}</svg>`;
+            const svg = `<svg class="tlw-sprite" viewBox="${viewBox}" shape-rendering="crispEdges" aria-hidden="true">${inner}</svg>`;
             SCENE_SPRITE_CACHE.set(key, svg);
             return svg;
         }
@@ -1475,107 +1476,197 @@
             return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"${extra}/>`;
         }
 
-        function sceneFloorTiles(y, colors) {
+        // ฟอนต์ pixel 3x5 (N กว้าง 4) สำหรับป้ายในฉาก — ไม่ใช้ <text> เพื่อคุมสไตล์ pixel
+        const SCENE_FONT = {
+            A: ['010', '101', '111', '101', '101'],
+            K: ['101', '101', '110', '101', '101'],
+            R: ['110', '101', '110', '101', '101'],
+            O: ['111', '101', '101', '101', '111'],
+            P: ['110', '101', '110', '100', '100'],
+            E: ['111', '100', '110', '100', '111'],
+            N: ['1001', '1101', '1011', '1001', '1001']
+        };
+
+        function scenePxText(x, y, s, color, str, extra = '') {
             let out = '';
-            for (let row = 0; row < 6; row++) {
-                for (let col = 0; col < 20; col++) {
-                    const fill = (row + col) % 2 ? colors[0] : colors[1];
-                    out += sceneSvgRect(col * 8, y + row * 8, 8, 8, fill, ' opacity="0.72"');
-                }
+            let cx = x;
+            for (const ch of str) {
+                const gl = SCENE_FONT[ch];
+                if (!gl) { cx += 4 * s; continue; }
+                const gw = gl[0].length;
+                gl.forEach((row, gy) => {
+                    for (let gx = 0; gx < gw; gx++) {
+                        if (row[gx] === '1') out += sceneSvgRect(cx + gx * s, y + gy * s, s, s, color, extra);
+                    }
+                });
+                cx += (gw + 1) * s;
             }
             return out;
         }
 
-        function sceneShopShelf(x, y, w, h, type) {
-            let out = sceneSvgRect(x, y, w, h, '#7c2d12') + sceneSvgRect(x + 2, y + 2, w - 4, h - 4, '#fef3c7');
-            out += sceneSvgRect(x + 2, y + Math.round(h / 2), w - 4, 2, '#7c2d12');
-            const count = type === 'rack' ? 5 : 4;
-            for (let i = 0; i < count; i++) {
-                const px = x + 5 + i * ((w - 10) / count);
-                out += sceneSvgRect(px, y + h - 12, 7, 8, i % 2 ? '#d7a86e' : '#fbe8c4', ' stroke="#8a4b20" stroke-width="1"');
-                out += sceneSvgRect(px + 1, y + 8, 8, 7, i % 2 ? '#f59e0b' : '#fb923c', ' stroke="#92400e" stroke-width="1"');
-            }
-            return out;
-        }
-
-        function sceneWarehouseRack(x, y, w, h) {
-            let out = sceneSvgRect(x, y, w, h, '#b45309') + sceneSvgRect(x + 2, y + 2, w - 4, h - 4, '#fde68a');
-            [y + 12, y + 24].forEach(yy => out += sceneSvgRect(x + 2, yy, w - 4, 2, '#b45309'));
-            for (let r = 0; r < 3; r++) {
-                for (let i = 0; i < 5; i++) {
-                    const px = x + 5 + i * ((w - 10) / 5);
-                    const py = y + 5 + r * 12;
-                    out += sceneSvgRect(px, py, 8, 7, (i + r) % 3 ? '#f59e0b' : '#94a3b8', ' stroke="#92400e" stroke-width="1"');
-                }
-            }
-            return out;
-        }
-
+        // พื้นหลัง pixel-art ต่อสาขา บน grid 384x216 (16:9 — พิกเซลสี่เหลี่ยมจัตุรัสเมื่อ stretch เต็ม stage)
         function teamSceneBackgroundHtml() {
+            const R = sceneSvgRect;
+            let o = '';
             if (currentBranch === 'TRD') {
-                return `
-                    <svg class="team-live-bg" viewBox="0 0 160 90" preserveAspectRatio="none" shape-rendering="crispEdges" aria-hidden="true">
-                        ${sceneSvgRect(0, 0, 160, 38, '#dbeafe')}
-                        ${sceneSvgRect(0, 38, 160, 4, '#fed7aa')}
-                        ${sceneSvgRect(0, 42, 160, 48, '#e5e7eb')}
-                        ${sceneFloorTiles(42, ['#d1d5db', '#f8fafc'])}
-                        ${sceneSvgRect(4, 5, 30, 24, '#bfdbfe', ' stroke="#1f2937" stroke-width="1"')}
-                        ${sceneSvgRect(7, 8, 24, 18, '#e0f2fe', ' class="scene-window-light"')}
-                        ${sceneSvgRect(49, 6, 17, 31, '#94a3b8', ' stroke="#1f2937" stroke-width="1"')}
-                        ${sceneSvgRect(53, 9, 9, 23, '#cbd5e1')}
-                        ${sceneSvgRect(54, 24, 2, 2, '#fef3c7')}
-                        ${sceneShopShelf(6, 12, 34, 25, 'shop')}
-                        ${sceneShopShelf(120, 12, 34, 25, 'shop')}
-                        ${sceneSvgRect(70, 9, 24, 10, '#fff7ed', ' stroke="#7c2d12" stroke-width="2"')}
-                        <text x="82" y="15" fill="#7c2d12" font-size="4" font-weight="900" text-anchor="middle">FLOUR · SUGAR</text>
-                        ${sceneSvgRect(96, 8, 17, 8, '#111827')}
-                        ${sceneSvgRect(98, 10, 13, 4, '#22c55e', ' class="scene-open-glow"')}
-                        <text x="104.5" y="13.5" fill="#052e16" font-size="3.2" font-weight="900" text-anchor="middle">OPEN</text>
-                        ${sceneSvgRect(47, 2, 66, 3, '#fef3c7', ' class="scene-lamp-glow" opacity="0.72"')}
-                        ${sceneSvgRect(45, 56, 70, 17, '#7c2d12')}
-                        ${sceneSvgRect(47, 58, 66, 13, '#fb923c')}
-                        ${sceneSvgRect(47, 58, 66, 3, '#fde9c8')}
-                        ${sceneSvgRect(49, 51, 10, 7, '#374151', ' stroke="#111827" stroke-width="1"')}
-                        ${sceneSvgRect(77, 51, 10, 7, '#374151', ' stroke="#111827" stroke-width="1"')}
-                        ${sceneSvgRect(51, 52, 6, 2, '#6ee7b7')}
-                        ${sceneSvgRect(79, 52, 6, 2, '#6ee7b7')}
-                        ${sceneSvgRect(11, 72, 23, 13, '#92400e')}
-                        ${sceneSvgRect(13, 74, 19, 9, '#fbbf24')}
-                        ${sceneSvgRect(125, 70, 27, 14, '#92400e')}
-                        ${sceneSvgRect(127, 72, 23, 10, '#fbbf24')}
-                    </svg>
-                `;
+                // ผนัง + คิ้ว + wainscot ไม้
+                o += R(0, 0, 384, 122, '#f6e7c9');
+                o += R(0, 0, 384, 8, '#d9c39a');
+                o += R(0, 8, 384, 2, '#c9b184');
+                for (let x = 46; x < 384; x += 48) o += R(x, 12, 2, 80, '#eddbb4');
+                o += R(0, 92, 384, 26, '#b97b48');
+                o += R(0, 92, 384, 3, '#8a4f28');
+                for (let x = 10; x < 384; x += 24) o += R(x, 98, 2, 16, '#a05f33');
+                o += R(0, 118, 384, 6, '#7c4222');
+                // พื้นกระเบื้องลายหมากรุกโทนอุ่น
+                o += R(0, 124, 384, 92, '#ead9b6');
+                for (let ty = 124; ty < 216; ty += 16) {
+                    for (let tx = 0; tx < 384; tx += 16) {
+                        if (((tx + ty) / 16) % 2 === 0) o += R(tx, ty, 16, 16, '#e0cda5');
+                    }
+                }
+                o += R(0, 124, 384, 2, '#c9b184');
+                // กันสาดลายทาง + หน้าต่างหน้าร้าน
+                for (let i = 0; i < 8; i++) o += R(14 + i * 12, 10, 12, 12, i % 2 ? '#fdf3e0' : '#f08c1e');
+                for (let i = 0; i < 8; i++) o += R(16 + i * 12, 22, 8, 3, i % 2 ? '#e8d5ae' : '#d9731a');
+                o += R(14, 10, 96, 2, '#8a4f28');
+                o += R(14, 25, 96, 68, '#6f4318');
+                o += R(20, 31, 84, 56, '#bfe3f2', ' class="scene-window-light"');
+                o += R(20, 31, 84, 12, '#dff2fa');
+                o += R(60, 31, 4, 56, '#6f4318');
+                o += R(20, 57, 84, 4, '#6f4318');
+                // แสงแดดส่องจากหน้าต่างลงพื้น
+                o += '<polygon points="20,93 104,93 148,168 64,168" fill="rgba(255,238,190,0.20)" class="scene-window-light"/>';
+                // ป้าย OPEN เหนือประตู
+                o += R(130, 8, 42, 20, '#1d2733');
+                o += R(132, 10, 38, 16, '#243447');
+                o += scenePxText(137, 13, 2, '#4ade80', 'OPEN', ' class="scene-open-glow"');
+                o += R(140, 28, 2, 4, '#1d2733');
+                o += R(160, 28, 2, 4, '#1d2733');
+                // ประตูกระจก (ตั้งถึงพื้น)
+                o += R(126, 32, 48, 86, '#6f4318');
+                o += R(131, 37, 38, 76, '#8a5a2c');
+                o += R(134, 40, 32, 42, '#cde9f4');
+                o += R(134, 40, 32, 8, '#e4f4fb');
+                o += R(134, 88, 32, 22, '#5d3a1c');
+                o += R(162, 74, 4, 9, '#f3c94f');
+                // ชั้นวางสินค้า 2 ตู้ (ถุงแป้ง/โหล/กล่อง)
+                [[210, 76], [298, 76]].forEach(([sx, sw]) => {
+                    o += R(sx, 44, sw, 74, '#8a5a2c');
+                    o += R(sx + 4, 48, sw - 8, 66, '#f4e6c8');
+                    [66, 88, 110].forEach(sy => o += R(sx + 2, sy, sw - 4, 4, '#6f4318'));
+                    o += R(sx, 44, sw, 4, '#6f4318');
+                    for (let i = 0; i < 3; i++) {
+                        const gx = sx + 8 + i * 22;
+                        o += R(gx - 1, 51, 16, 15, '#a8813f');
+                        o += R(gx, 52, 14, 14, '#f0dcb2');
+                        o += R(gx + 4, 50, 6, 4, '#c9a25e');
+                        o += R(gx + 3, 58, 8, 3, '#c9822b');
+                    }
+                    for (let i = 0; i < 4; i++) {
+                        const gx = sx + 7 + i * 17;
+                        o += R(gx - 1, 73, 12, 15, '#8a5a2c');
+                        o += R(gx, 74, 10, 14, '#e8a53c');
+                        o += R(gx, 74, 10, 3, '#6f4318');
+                        o += R(gx + 2, 80, 6, 4, '#f6d089');
+                    }
+                    for (let i = 0; i < 3; i++) {
+                        const gx = sx + 7 + i * 22;
+                        o += R(gx - 1, 93, 18, 17, '#7c5a30');
+                        o += R(gx, 94, 16, 16, i % 2 ? '#c98a3b' : '#a89c8a');
+                        o += R(gx + 6, 94, 4, 16, '#e8c25c');
+                    }
+                });
+                // เคาน์เตอร์แคชเชียร์ (พนักงานยืนด้านหลังที่ y~64%)
+                o += R(120, 138, 128, 10, '#c98f55');
+                o += R(120, 138, 128, 3, '#e3b57a');
+                o += R(120, 148, 128, 28, '#8a5a2c');
+                for (let x = 130; x < 248; x += 16) o += R(x, 152, 2, 20, '#7c4e24');
+                o += R(120, 174, 128, 4, '#6f4318');
+                o += R(124, 130, 12, 8, '#3a4454');
+                o += R(126, 132, 8, 4, '#7fe3b0');
+                o += R(232, 133, 12, 5, '#e8a53c');
+                o += R(232, 133, 12, 2, '#f6d089');
+                // โคมไฟแขวน
+                [64, 320].forEach(lx => {
+                    o += R(lx - 1, 0, 2, 16, '#4a3a28');
+                    o += R(lx - 9, 16, 18, 7, '#d9822b');
+                    o += R(lx - 6, 23, 12, 3, '#f3c94f');
+                    o += R(lx - 4, 26, 8, 4, '#ffe9b0', ' class="scene-lamp-glow"');
+                });
+            } else {
+                // ผนังเมทัลชีท + เสาเหล็ก
+                o += R(0, 0, 384, 122, '#cfd8e0');
+                for (let x = 0; x < 384; x += 10) o += R(x, 0, 2, 122, '#c2ccd6');
+                o += R(0, 0, 384, 10, '#9aa7b4');
+                o += R(0, 10, 384, 2, '#7c8894');
+                [58, 318].forEach(cx => {
+                    o += R(cx, 10, 10, 112, '#8d99a6');
+                    o += R(cx, 10, 2, 112, '#a6b1bd');
+                    o += R(cx + 8, 10, 2, 112, '#6b7684');
+                    for (let y = 20; y < 118; y += 22) o += R(cx + 4, y, 2, 2, '#5d6874');
+                });
+                // หน้าต่างสูงรับแสง
+                [[84, 48], [252, 48]].forEach(([wx, ww]) => {
+                    o += R(wx, 14, ww, 22, '#6b7684');
+                    o += R(wx + 2, 16, ww - 4, 18, '#f4e9c8', ' class="scene-window-light"');
+                    o += R(wx + ww / 2 - 1, 16, 2, 18, '#6b7684');
+                });
+                // ป้าย AKRA
+                o += R(150, 6, 84, 28, '#243447');
+                o += R(150, 6, 84, 3, '#f08c1e');
+                o += R(150, 31, 84, 3, '#f08c1e');
+                o += scenePxText(162, 12, 4, '#f08c1e', 'AKRA');
+                // ประตูม้วน + แถบกันชน
+                o += R(146, 38, 8, 80, '#5d6874');
+                o += R(230, 38, 8, 80, '#5d6874');
+                for (let y = 38, i = 0; y < 110; y += 9, i++) o += R(154, y, 76, 9, i % 2 ? '#9aa6b2' : '#aeb9c4');
+                o += R(154, 110, 76, 8, '#7c8894');
+                for (let x = 146, i = 0; x < 238; x += 8, i++) o += R(x, 118, 8, 6, i % 2 ? '#2b2b33' : '#f3c94f');
+                // ชั้นวางพาเลท (เสาเหล็กน้ำเงิน + คานส้ม + กล่อง)
+                [[8, 128], [248, 128]].forEach(([rx, rw]) => {
+                    [3, 62, 121].forEach(off => { if (off < rw) o += R(rx + off, 26, 5, 92, '#3b6ea5'); });
+                    [54, 84, 114].forEach(by => o += R(rx, by, rw, 4, '#f08c1e'));
+                    [[28, 54], [58, 84], [88, 114]].forEach(([topY, beamY]) => {
+                        [10, 69].forEach(bx => {
+                            if (bx + 50 > rw) return;
+                            o += R(rx + bx, beamY - 5, 50, 5, '#b98a4e');
+                            o += R(rx + bx, beamY - 5, 50, 2, '#cda05e');
+                            o += R(rx + bx + 2, topY + 4, 22, beamY - topY - 9, '#c98a3b');
+                            o += R(rx + bx + 10, topY + 4, 5, beamY - topY - 9, '#e8c25c');
+                            o += R(rx + bx + 27, topY + 8, 20, beamY - topY - 13, '#b8b2a6');
+                            o += R(rx + bx + 27, topY + 8, 20, 3, '#d6d0c4');
+                        });
+                    });
+                });
+                // พื้นคอนกรีต + เส้นเลน + อุปกรณ์
+                o += R(0, 124, 384, 92, '#c9c4bc');
+                o += R(0, 124, 384, 2, '#a8a29a');
+                for (let x = 64; x < 384; x += 96) o += R(x, 126, 2, 90, '#b8b2a8');
+                o += R(0, 170, 384, 2, '#b8b2a8');
+                o += R(0, 178, 384, 4, '#e0b83a');
+                for (let x = 8; x < 384; x += 48) o += R(x, 184, 16, 3, '#e0b83a');
+                o += R(20, 182, 20, 18, '#c98a3b');
+                o += R(27, 182, 5, 18, '#e8c25c');
+                o += R(44, 190, 16, 10, '#b8b2a6');
+                o += R(24, 168, 16, 14, '#c98a3b');
+                o += R(30, 168, 4, 14, '#e8c25c');
+                o += R(300, 196, 44, 5, '#f08c1e');
+                o += R(298, 199, 8, 6, '#2b2b33');
+                o += R(336, 200, 6, 5, '#2b2b33');
+                o += R(300, 178, 4, 18, '#d94343');
+                o += R(296, 174, 12, 5, '#d94343');
+                o += R(266, 196, 12, 3, '#f08c1e');
+                o += R(269, 188, 6, 8, '#f08c1e');
+                o += R(269, 191, 6, 2, '#fdf3e0');
+                [110, 274].forEach(lx => {
+                    o += R(lx - 1, 0, 2, 18, '#39434e');
+                    o += R(lx - 9, 18, 18, 7, '#39434e');
+                    o += R(lx - 6, 25, 12, 4, '#ffe9b0', ' class="scene-lamp-glow"');
+                    o += R(lx - 10, 29, 20, 12, 'rgba(255,233,176,0.12)', ' class="scene-lamp-glow"');
+                });
             }
-            return `
-                <svg class="team-live-bg" viewBox="0 0 160 90" preserveAspectRatio="none" shape-rendering="crispEdges" aria-hidden="true">
-                    ${sceneSvgRect(0, 0, 160, 34, '#e2e8f0')}
-                    ${sceneSvgRect(0, 34, 160, 3, '#94a3b8')}
-                    ${sceneSvgRect(0, 37, 160, 53, '#d6d3d1')}
-                    ${sceneFloorTiles(42, ['#c7c2bd', '#e7e5e4'])}
-                    ${sceneSvgRect(62, 5, 36, 30, '#64748b', ' stroke="#1f2937" stroke-width="1"')}
-                    ${sceneSvgRect(65, 8, 30, 24, '#94a3b8')}
-                    ${sceneSvgRect(65, 16, 30, 2, '#475569')}
-                    ${sceneSvgRect(65, 24, 30, 2, '#475569')}
-                    ${sceneSvgRect(6, 7, 28, 9, '#bae6fd', ' class="scene-window-light" stroke="#1f2937" stroke-width="1"')}
-                    ${sceneSvgRect(126, 7, 28, 9, '#bae6fd', ' class="scene-window-light" stroke="#1f2937" stroke-width="1"')}
-                    ${sceneSvgRect(54, 2, 52, 3, '#fde68a', ' class="scene-lamp-glow" opacity="0.78"')}
-                    ${sceneSvgRect(65, 37, 30, 4, '#facc15')}
-                    ${sceneSvgRect(68, 37, 4, 4, '#111827')}${sceneSvgRect(78, 37, 4, 4, '#111827')}${sceneSvgRect(88, 37, 4, 4, '#111827')}
-                    ${sceneWarehouseRack(3, 5, 52, 33)}
-                    ${sceneWarehouseRack(105, 5, 52, 33)}
-                    ${sceneSvgRect(68, 49, 24, 16, '#92400e')}
-                    ${sceneSvgRect(70, 51, 20, 12, '#f59e0b')}
-                    ${sceneSvgRect(72, 65, 18, 4, '#b45309')}
-                    ${sceneSvgRect(9, 72, 23, 13, '#92400e')}
-                    ${sceneSvgRect(11, 74, 19, 9, '#fbbf24')}
-                    ${sceneSvgRect(126, 70, 24, 14, '#92400e')}
-                    ${sceneSvgRect(128, 72, 20, 10, '#f59e0b')}
-                    ${sceneSvgRect(112, 55, 20, 3, '#475569')}
-                    ${sceneSvgRect(126, 52, 4, 9, '#475569')}
-                    ${sceneSvgRect(131, 59, 5, 3, '#111827')}
-                    <text x="80" y="15" fill="#1f2937" font-size="6" font-weight="900" text-anchor="middle">AKRA</text>
-                </svg>
-            `;
+            return `<svg class="team-live-bg" viewBox="0 0 384 216" preserveAspectRatio="none" shape-rendering="crispEdges" aria-hidden="true">${o}</svg>`;
         }
 
         function teamLiveRankItem(player) {
@@ -2582,9 +2673,12 @@
             }
             document.getElementById('dash-smart-summary').innerHTML = smartSummaryHtml;
 
-            // Gamification
+            // Gamification — แสดงเฉพาะพนักงานตาม config ปัจจุบัน (ชื่อเก่าใน error records เดิมไม่ต้องโผล่ในฉาก)
             let ranking = [];
-            for (const [name, hp] of Object.entries(empHP)) { ranking.push({ name: name, hp: hp < 0 ? 0 : hp }); }
+            BRANCH_CONFIG[currentBranch].employees.forEach(name => {
+                const hp = empHP[name] !== undefined ? empHP[name] : 100;
+                ranking.push({ name: name, hp: hp < 0 ? 0 : hp });
+            });
             ranking.sort((a, b) => b.hp - a.hp);
 
             document.getElementById('dash-gamification').innerHTML = renderTeamScene(ranking);
