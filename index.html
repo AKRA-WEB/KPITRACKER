@@ -615,7 +615,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260703.01";
+        const CURRENT_VERSION = "20260703.02";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -1099,14 +1099,25 @@
             return { key: 'risk', label: 'ต้องช่วยด่วน', color: '#dc2626' };
         }
 
-        const SCENE_EXTRA_COLORS = { C: '#fbbf24', D: '#b45309' };
+        // จานสีตัวละครฉาก: ตัวพิมพ์ใหญ่ = สีหลัก, ตัวพิมพ์เล็ก = เฉดเงา, K = เส้นขอบ
+        const SCENE_FIXED_COLORS = {
+            K: '#1f2937', S: '#fcd9b8', s: '#eab48c', E: '#1f2937',
+            M: '#9a3412', O: '#7f1d1d', W: '#38bdf8', X: '#dc2626',
+            P: '#374151', p: '#252d3d', B: '#1f2937',
+            C: '#fbbf24', c: '#d97706', D: '#92400e'
+        };
+        const SCENE_GENDER_COLORS = {
+            M: { T: '#f97316', t: '#c2410c', R: '#ffedd5', H: '#3f2c1e', h: '#2a1c11' },
+            F: { T: '#ffffff', t: '#cbd5e1', R: '#fca5a5', H: '#5b3a29', h: '#3f2818' },
+            U: { T: '#9ca3af', t: '#6b7280', R: '#e5e7eb', H: '#4b5563', h: '#374151' }
+        };
 
         const TEAM_SCENE_SPOTS = {
             TRD: {
                 cashier: [
-                    { x: 38, y: 68, pose: 'sit', delay: '-0.2s' },
-                    { x: 56, y: 68, pose: 'sit', delay: '-0.7s' },
-                    { x: 47, y: 68, pose: 'sit', delay: '-1.1s' }
+                    { x: 38, y: 64, pose: 'sit', delay: '-0.2s' },
+                    { x: 56, y: 64, pose: 'sit', delay: '-0.7s' },
+                    { x: 47, y: 64, pose: 'sit', delay: '-1.1s' }
                 ],
                 store: [
                     { x: 16, y: 88, walk: 9, dur: 10, delay: '-0.3s' },
@@ -1179,45 +1190,105 @@
             return 'dead';
         }
 
-        function sceneWorkerSvg(gender, tier, pose) {
-            const g = PIXEL_GENDER_STYLES[gender] || PIXEL_GENDER_STYLES.U;
-            const female = gender === 'F';
-            const face = inner => female ? '.H' + inner + 'H.' : '..' + inner + '..';
-            const eyes = tier === 'dead' ? 'SSXSSXSS' : 'SSESSESS';
-            let cheek = 'SSSSSSSS', mouthA = 'SSMMMMSS', mouthB = 'SSSSSSSS';
-            if (tier === 'smile') { mouthA = 'SMSSSSMS'; mouthB = 'SSMMMMSS'; }
-            else if (tier === 'pout') { mouthA = 'SSMMMMSS'; mouthB = 'SMSSSSMS'; }
-            else if (tier === 'cry') { cheek = 'SWSSSSWS'; mouthA = 'SSSOOSSS'; }
-            const head = [
-                '...HHHHHH...',
-                '..HHHHHHHH..',
-                female ? '.HHSSSSSSHH.' : '..HSSSSSSH..',
-                face('SSSSSSSS'),
-                face(eyes),
-                face(cheek),
-                face(mouthA),
-                face(mouthB)
+        // หัว chibi 24 คอลัมน์ 16 แถว พร้อมสีหน้าตาม tier
+        function sceneHeadRows(tier) {
+            let eyeRow = '..KSSSEESSSSSSSSEESSSK..';
+            let cheek = '..KSsSSSSSSSSSSSSSSsSK..';
+            let mouthA = '..KSSSSSSSSSSSSSSSSSSK..';
+            let mouthB = '..KSSSSSSSMMMMSSSSSSSK..';
+            if (tier === 'smile') { mouthA = '..KSSSSSMSSSSSSMSSSSSK..'; mouthB = '..KSSSSSSMMMMMMSSSSSSK..'; }
+            else if (tier === 'pout') { mouthA = '..KSSSSSSMMMMMMSSSSSSK..'; mouthB = '..KSSSSSMSSSSSSMSSSSSK..'; }
+            else if (tier === 'cry') { cheek = '..KSSSWSSSSSSSSSSWSSSK..'; mouthA = '..KSSSSSSSOOOOSSSSSSSK..'; mouthB = '..KSSSSSSSOOOOSSSSSSSK..'; }
+            else if (tier === 'dead') { eyeRow = '..KSSSXXSSSSSSSSXXSSSK..'; cheek = '..KSSSSSSSSSSSSSSSSSSK..'; }
+            return [
+                '........KKKKKKKK........',
+                '......KKHHHHHHHHKK......',
+                '.....KHHHHHHHHHHHHK.....',
+                '....KHHHHHHHHHHHHHHK....',
+                '...KHHHHHHHHHHHHHHHHK...',
+                '...KHHHHHHHHHHHHHHHHK...',
+                '..KHHhSSSSSSSSSSSShHHK..',
+                '..KHSSSSSSSSSSSSSSSSHK..',
+                '..KSSSSSSSSSSSSSSSSSSK..',
+                eyeRow,
+                eyeRow,
+                cheek,
+                mouthA,
+                mouthB,
+                '...KSSSSSSSSSSSSSSSSK...',
+                '....KKSSSSSSSSSSSSKK....'
             ];
-            const shoulders = female ? '.HRTTTTTTRH.' : '..RTTTTTTR..';
-            const torsoRow = female ? '.HTTTTTTTTH.' : '.STTTTTTTTS.';
-            let body, legsNeeded = true, viewRows = 16;
+        }
+
+        function sceneWorkerSvg(gender, tier, pose) {
+            const g = SCENE_GENDER_COLORS[gender] || SCENE_GENDER_COLORS.U;
+            const female = gender === 'F';
+            const shoulders = '...KTTTTTRRRRRRTTTTTK...';
+            const armRow = '..KTtTTTTTTTTTTTTTTtTK..';
+            const handRow = '..KSSTTTTTTTTTTTTTTSSK..';
+            const hemRow = '...KttttttttttttttttK...';
+            const hipRow = '....KPPPPPPPPPPPPPPK....';
+            const legStand = [
+                '....KPPPPPPKKPPPPPPK....',
+                '....KPPPPPK..KPPPPPK....',
+                '....KPPPPPK..KPPPPPK....',
+                '....KPPPPPK..KPPPPPK....',
+                '....KpppppK..KpppppK....',
+                '...KBBBBBBK..KBBBBBBK...',
+                '...KBBBBBBK..KBBBBBBK...',
+                '...KKKKKKKK..KKKKKKKK...'
+            ];
+            const legWalk = [
+                '....KPPPPPPKKPPPPPPK....',
+                '...KPPPPPK....KPPPPPK...',
+                '..KPPPPPK......KPPPPPK..',
+                '..KPPPPPK......KPPPPPK..',
+                '..KpppppK......KpppppK..',
+                '.KBBBBBBK......KBBBBBBK.',
+                '.KBBBBBBK......KBBBBBBK.',
+                '.KKKKKKKK......KKKKKKKK.'
+            ];
+            // ผมยาวผู้หญิง: ม่านผม 2px ขนาบใบหน้าลงถึงบ่า
+            const hairSide = row => row.slice(0, 3) + 'Hh' + row.slice(5, 19) + 'hH' + row.slice(21);
+            const hairShoulder = row => row.slice(0, 4) + 'Hh' + row.slice(6, 18) + 'hH' + row.slice(20);
+            const head = sceneHeadRows(tier);
+            if (female) for (let i = 8; i <= 13; i++) head[i] = hairSide(head[i]);
+            let body, legRows = null;
             if (pose === 'sit') {
-                body = [shoulders, torsoRow, torsoRow, '.SSTTTTTTSS.'];
-                legsNeeded = false;
-                viewRows = 12;
+                body = [
+                    female ? hairShoulder(shoulders) : shoulders,
+                    female ? hairSide(armRow) : armRow,
+                    armRow,
+                    handRow,
+                    hemRow,
+                    '...KKKKKKKKKKKKKKKKKK...'
+                ];
             } else if (pose === 'carry') {
-                body = [shoulders, torsoRow, 'SDCCCCCCCCDS', '.DCCCCCCCCD.', '.DDDDDDDDDD.'];
+                body = [
+                    female ? hairShoulder(shoulders) : shoulders,
+                    female ? hairSide(armRow) : armRow,
+                    armRow,
+                    '...KKKKKKKKKKKKKKKKKK...',
+                    '.KSKCCCCCDCCCCDCCCCCKSK.',
+                    '...KCCCCCDCCCCDCCCCCK...',
+                    '...KcccccDccccDcccccK...',
+                    '...KKKKKKKKKKKKKKKKKK...'
+                ];
+                legRows = { stand: legStand, walk: legWalk };
             } else {
-                body = [shoulders, torsoRow, torsoRow, female ? '.HTTTTTTTTH.' : '..TTTTTTTT..', '..PPPPPPPP..'];
+                body = [
+                    female ? hairShoulder(shoulders) : shoulders,
+                    female ? hairSide(armRow) : armRow,
+                    armRow,
+                    armRow,
+                    armRow,
+                    handRow,
+                    hemRow,
+                    hipRow
+                ];
+                legRows = { stand: legStand, walk: legWalk };
             }
-            const legStand = ['..PPP..PPP..', '..PPP..PPP..', '.BBBB..BBBB.'];
-            const legWalk = ['.PPP....PPP.', '.PPP....PPP.', 'BBBB....BBBB'];
-            const fillOf = c => {
-                if (c === 'H') return g.hair;
-                if (c === 'T') return g.shirt;
-                if (c === 'R') return g.trim;
-                return PIXEL_FIXED_COLORS[c] || SCENE_EXTRA_COLORS[c];
-            };
+            const fillOf = c => (c === 'T' || c === 't' || c === 'R' || c === 'H' || c === 'h') ? g[c] : SCENE_FIXED_COLORS[c];
             const lie = pose === 'lie';
             const toRects = (rows, y0) => {
                 let out = '';
@@ -1227,7 +1298,7 @@
                         if (c === '.') continue;
                         // ท่านอน: หมุน grid 90 องศา (หัวไปทางซ้าย) ให้ตัวนอนราบกับพื้นจริง
                         const px = lie ? (y0 + i) : x;
-                        const py = lie ? (11 - x) : (y0 + i);
+                        const py = lie ? (23 - x) : (y0 + i);
                         out += `<rect x="${px}" y="${py}" width="1" height="1" fill="${fillOf(c)}"/>`;
                     }
                 });
@@ -1236,15 +1307,16 @@
             let inner = toRects(head, 0) + toRects(body, head.length);
             if (lie) {
                 inner += toRects(legStand, head.length + body.length);
-                return `<svg class="tlw-sprite" viewBox="0 0 16 12" shape-rendering="crispEdges" aria-hidden="true">${inner}</svg>`;
+                return `<svg class="tlw-sprite" viewBox="0 0 32 24" shape-rendering="crispEdges" aria-hidden="true">${inner}</svg>`;
             }
-            if (legsNeeded) {
+            if (legRows) {
                 const legY = head.length + body.length;
-                inner += `<g class="leg-stand">${toRects(legStand, legY)}</g>`;
-                inner += `<g class="leg-a">${toRects(legWalk, legY)}</g>`;
-                inner += `<g class="leg-b">${toRects(legStand, legY)}</g>`;
+                inner += `<g class="leg-stand">${toRects(legRows.stand, legY)}</g>`;
+                inner += `<g class="leg-a">${toRects(legRows.walk, legY)}</g>`;
+                inner += `<g class="leg-b">${toRects(legRows.stand, legY)}</g>`;
             }
-            return `<svg class="tlw-sprite" viewBox="0 0 12 ${viewRows}" shape-rendering="crispEdges" aria-hidden="true">${inner}</svg>`;
+            const viewRows = head.length + body.length + (legRows ? legRows.stand.length : 0);
+            return `<svg class="tlw-sprite" viewBox="0 0 24 ${viewRows}" shape-rendering="crispEdges" aria-hidden="true">${inner}</svg>`;
         }
 
         function teamWorkerCard(player, spot, role) {
