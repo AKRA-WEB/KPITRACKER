@@ -597,7 +597,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260703.04";
+        const CURRENT_VERSION = "20260703.05";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -880,60 +880,54 @@
 
         // ================= DYNAMIC DATA CONTAINERS =================
         let GLOBAL_CONFIG_LIST = [
-            { uid: "250013", name: "เฉิน", branches: "AKRA,TRD", dept: "Admin" },
-            { uid: "172980", name: "AKRA (Admin)", branches: "AKRA,TRD", dept: "Admin" },
-            { uid: "hhsawyer", name: "Herehorr", branches: "AKRA,TRD", dept: "Admin" },
-            { uid: "stamp111", name: "Stamp", branches: "AKRA,TRD", dept: "Admin" },
-            { uid: "stamp1112", name: "Stamp (New)", branches: "AKRA,TRD", dept: "Admin" },
-            { uid: "250007", name: "หยอง", branches: "AKRA", dept: "" },
-            { uid: "250022", name: "บรรเลง", branches: "AKRA", dept: "" },
-            { uid: "250025", name: "พุช", branches: "AKRA", dept: "" },
-            { uid: "250005", name: "ท็อป", branches: "TRD", dept: "หน้าร้าน/ในร้าน" },
-            { uid: "250019", name: "เปา", branches: "TRD", dept: "หน้าร้าน/ในร้าน" },
-            { uid: "250020", name: "หมี", branches: "TRD", dept: "หน้าร้าน/ในร้าน" },
-            { uid: "250008", name: "น้องใหม่", branches: "TRD", dept: "หน้าร้าน/ในร้าน" },
-            { uid: "250024", name: "บอย", branches: "TRD", dept: "หน้าร้าน/ในร้าน" },
-            { uid: "250027", name: "เจมส์", branches: "TRD", dept: "หน้าร้าน/ในร้าน" },
-            { uid: "250023", name: "มะปราง", branches: "TRD", dept: "แคชเชียร์" },
-            { uid: "250028", name: "แสน", branches: "TRD", dept: "คลัง" },
-            { uid: "250010", name: "เอี้ยง", branches: "TRD", dept: "คลัง" }
-        ]; 
+            { uid: "250013", name: "เฉิน", branches: "AKRA,TRD", dept: "Admin", gender: "" },
+            { uid: "hhsawyer", name: "Herehorr", branches: "AKRA,TRD", dept: "Admin", gender: "" },
+            { uid: "stamp111", name: "Stamp", branches: "AKRA,TRD", dept: "Admin", gender: "" },
+            { uid: "250002", name: "ท็อป", branches: "TRD", dept: "หน้าร้าน/ในร้าน", gender: "M" },
+            { uid: "250007", name: "หมูหยอง", branches: "AKRA", dept: "", gender: "M" },
+            { uid: "250008", name: "น้องใหม่", branches: "TRD", dept: "หน้าร้าน/ในร้าน", gender: "F" },
+            { uid: "250010", name: "เอี้ยง", branches: "AKRA", dept: "", gender: "M" },
+            { uid: "250022", name: "บรรเลง", branches: "TRD", dept: "หน้าร้าน/ในร้าน", gender: "M" },
+            { uid: "250024", name: "บอย", branches: "TRD", dept: "หน้าร้าน/ในร้าน", gender: "M" },
+            { uid: "250023", name: "มะปราง", branches: "TRD", dept: "แคชเชียร์", gender: "F" },
+            { uid: "260030", name: "จอนห์นี่", branches: "AKRA", dept: "", gender: "M" },
+            { uid: "260029", name: "ปีเตอร์", branches: "AKRA", dept: "", gender: "M" },
+            { uid: "260031", name: "ปิ่น", branches: "TRD", dept: "แคชเชียร์", gender: "F" },
+            { uid: "เอส", name: "เอส", branches: "AKRA", dept: "", gender: "M" }
+        ];
 
         let TRD_DEPARTMENTS = {
-            "หน้าร้าน/ในร้าน": ['ท็อป', 'เปา', 'หมี', 'น้องใหม่', 'บอย', 'เจมส์'],
-            "แคชเชียร์": ['มะปราง'],
-            "คลัง": ['แสน', 'เอี้ยง']
+            "หน้าร้าน/ในร้าน": ['ท็อป', 'น้องใหม่', 'บรรเลง', 'บอย'],
+            "แคชเชียร์": ['มะปราง', 'ปิ่น']
         };
 
         let USER_DB = {
             "250013": ["AKRA", "TRD"], "chen": ["AKRA", "TRD"], "เฉิน": ["AKRA", "TRD"],
-            "172980": ["AKRA", "TRD"],
             "hhsawyer": ["AKRA", "TRD"], "herehorr": ["AKRA", "TRD"],
             "stamp111": ["AKRA", "TRD"], "stamp": ["AKRA", "TRD"],
+            "250002": ["TRD"], "top": ["TRD"],
             "250007": ["AKRA"], "yong": ["AKRA"],
-            "250022": ["AKRA"], "bunleng": ["AKRA"],
-            "250025": ["AKRA"], "push": ["AKRA"],
-            "250005": ["TRD"], "top": ["TRD"],
+            "250010": ["AKRA"], "eng": ["AKRA"],
             "250008": ["TRD"], "nongmai": ["TRD"],
-            "250010": ["TRD"], "eng": ["TRD"],
-            "250019": ["TRD"], "pao": ["TRD"],
-            "250020": ["TRD"], "mhee": ["TRD"],
-            "250023": ["TRD"], "maprang": ["TRD"],
+            "250022": ["TRD"], "bunleng": ["TRD"],
             "250024": ["TRD"], "boy": ["TRD"],
-            "250027": ["TRD"], "jame": ["TRD"], "เจมส์": ["TRD"],
-            "250028": ["TRD"], "san": ["TRD"]
+            "250023": ["TRD"], "maprang": ["TRD"],
+            "260030": ["AKRA"], "johnny": ["AKRA"],
+            "260029": ["AKRA"], "peter": ["AKRA"],
+            "260031": ["TRD"], "pin": ["TRD"],
+            "เอส": ["AKRA"]
         };
 
         let BRANCH_CONFIG = {
             "AKRA": {
-                employees: ['หยอง', 'พุช', 'บรรเลง'], 
+                employees: ['หมูหยอง', 'เอี้ยง', 'จอนห์นี่', 'ปีเตอร์', 'เอส'],
                 showZone2: true,
                 errorTypes: [
                     { group: "หมวดหมู่หลัก", options: ["แก้ไขได้ก่อนจัดส่ง", "ส่งถึงหน้าร้านแล้ว", "ส่งถึงลูกค้าแล้ว", "ผิดพลาดในการรับลงสินค้า", "สินค้าขาดสต๊อก", "ความผิดอื่น ๆ"] }
                 ]
             },
             "TRD": {
-                employees: ['ท็อป', 'เปา', 'หมี', 'น้องใหม่', 'บอย', 'เจมส์', 'มะปราง', 'แสน', 'เอี้ยง'], 
+                employees: ['ท็อป', 'น้องใหม่', 'บรรเลง', 'บอย', 'มะปราง', 'ปิ่น'],
                 showZone2: false,
                 errorTypes: [
                     { group: "1. หน้าร้าน / ในร้าน", options: ["จัดบิลผิด", "หยิบของผิด", "จำนวนไม่ครบ", "ลูกค้ารอสินค้านานเกิน 15 นาที", "ปล่อยของผิดถึงลูกค้า (Checker)", "ไม่ช่วยใส่ถุง", "ไม่แนะนำสินค้า", "ไม่เดินดูแลลูกค้าเดินช้อป", "บริการไม่สุภาพ", "ปล่อยชั้นวางว่าง (เรียงของเติม)"] },
