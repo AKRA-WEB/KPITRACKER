@@ -204,6 +204,18 @@
                 <input type="date" id="record-date" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 font-medium">
             </div>
 
+            <!-- AKRA Core Roster -->
+            <div id="akra-core-roster-card" class="hidden bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500 border-y border-r border-gray-100 md-colspan-2">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                    <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-warehouse text-amber-500 mr-2"></i>ทีม AKRA วันนี้</h2>
+                    <span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full" id="akra-duty-count">0 คน</span>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-2">พนักงานที่เข้ากะ</label>
+                    <div id="akra-duty-roster" class="flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+
             <!-- Errors -->
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500 border-y border-r border-gray-100">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
@@ -434,6 +446,12 @@
                 </div>
             </div>
 
+            <!-- AKRA Period Score -->
+            <div id="admin-akra-hp-card" class="hidden bg-white p-4 rounded-xl shadow-sm border border-amber-100">
+                <h3 class="font-bold text-gray-800 text-sm mb-3 border-b border-gray-100 pb-2"><i class="fa-solid fa-heart-pulse text-amber-500 mr-2"></i>คะแนน AKRA รายเดือน</h3>
+                <div id="admin-akra-hp-summary" class="space-y-2.5"></div>
+            </div>
+
             <!-- Top Error Makers -->
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <h3 class="font-bold text-gray-800 text-sm mb-3 border-b border-gray-100 pb-2"><i class="fa-solid fa-ranking-star text-orange-500 mr-2"></i>พนักงานที่ผิดพลาดบ่อย (Top 5)</h3>
@@ -589,7 +607,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260704.03";
+        const CURRENT_VERSION = "20260704.05";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -910,12 +928,28 @@
             "เอส": ["AKRA"]
         };
 
+        const AKRA_CASE_MARKER = '[AKRA_CASE:';
+        const AKRA_CORE_CATALOG = [
+            { core: 'inbound', coreLabel: 'รับเข้า', type: 'ลงรับในแอปผิด', penalty: 5 },
+            { core: 'inbound', coreLabel: 'รับเข้า', type: 'วางสินค้าไม่เรียบร้อย/ผิดตำแหน่ง', penalty: 3 },
+            { core: 'outbound', coreLabel: 'จ่ายออก', type: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5 },
+            { core: 'outbound', coreLabel: 'จ่ายออก', type: 'หยิบผิด ถึงหน้าร้านแล้ว', penalty: 10 },
+            { core: 'outbound', coreLabel: 'จ่ายออก', type: 'หยิบผิด ถึงลูกค้าแล้ว', penalty: 20 },
+            { core: 'internal', coreLabel: 'ย้ายภายใน', type: 'ช่องหน้าร้านว่างนานเกินไป', penalty: 5 },
+            { core: 'internal', coreLabel: 'ย้ายภายใน', type: 'โอน W2→W1 จำนวนไม่ตรง', penalty: 5 },
+            { core: 'shared', coreLabel: 'รับผิดชอบร่วม', type: 'สินค้าหมดโดยไม่แจ้งล่วงหน้า', penalty: 5 }
+        ];
+
         let BRANCH_CONFIG = {
             "AKRA": {
                 employees: ['หมูหยอง', 'เอี้ยง', 'จอนห์นี่', 'ปีเตอร์', 'เอส'],
                 showZone2: true,
                 errorTypes: [
-                    { group: "หมวดหมู่หลัก", options: ["แก้ไขได้ก่อนจัดส่ง", "ส่งถึงหน้าร้านแล้ว", "ส่งถึงลูกค้าแล้ว", "ผิดพลาดในการรับลงสินค้า", "สินค้าขาดสต๊อก", "ความผิดอื่น ๆ"] }
+                    { group: "1. รับเข้า", options: AKRA_CORE_CATALOG.filter(i => i.core === 'inbound').map(i => i.type) },
+                    { group: "2. จ่ายออก", options: AKRA_CORE_CATALOG.filter(i => i.core === 'outbound').map(i => i.type) },
+                    { group: "3. ย้ายภายใน", options: AKRA_CORE_CATALOG.filter(i => i.core === 'internal').map(i => i.type) },
+                    { group: "4. รับผิดชอบร่วม", options: AKRA_CORE_CATALOG.filter(i => i.core === 'shared').map(i => i.type) },
+                    { group: "5. อื่น ๆ", options: ["ความผิดอื่น ๆ"] }
                 ]
             },
             "TRD": {
@@ -979,6 +1013,90 @@
             let n = (name || "").trim();
             if (n === "บันเลง") return "บรรเลง";
             return n;
+        }
+
+        function getAkraCatalogItem(type) {
+            return AKRA_CORE_CATALOG.find(item => item.type === type) || null;
+        }
+
+        function isAkraSharedType(type) {
+            const item = getAkraCatalogItem(type);
+            return !!item && item.core === 'shared';
+        }
+
+        function encodeAkraCaseMeta(meta) {
+            return `${AKRA_CASE_MARKER}${encodeURIComponent(JSON.stringify(meta))}]`;
+        }
+
+        function parseAkraCaseNote(note) {
+            const raw = String(note || '');
+            if (!raw.startsWith(AKRA_CASE_MARKER)) return { meta: null, note: raw };
+            const end = raw.indexOf(']');
+            if (end === -1) return { meta: null, note: raw };
+            try {
+                const encoded = raw.slice(AKRA_CASE_MARKER.length, end);
+                return { meta: JSON.parse(decodeURIComponent(encoded)), note: raw.slice(end + 1).trim() };
+            } catch (e) {
+                return { meta: null, note: raw };
+            }
+        }
+
+        function getLegacyPenaltyDetail(error) {
+            let penalty = 0;
+            let cleanNote = error.note || '';
+            let isReachedCustomer = false;
+            let isFixedBefore = false;
+
+            if (cleanNote.includes('[ถึงลูกค้าแล้ว]')) {
+                isReachedCustomer = true;
+                cleanNote = cleanNote.replace(/^\[ถึงลูกค้าแล้ว\]\s*/, '');
+            } else if (cleanNote.includes('[แก้ไขได้ก่อนส่ง]')) {
+                isFixedBefore = true;
+                cleanNote = cleanNote.replace(/^\[แก้ไขได้ก่อนส่ง\]\s*/, '');
+            }
+
+            if (error.type === 'ความผิดอื่น ๆ') {
+                let match = cleanNote.match(/^\[หัก (\d+) HP\]\s*(.*)/);
+                if (match) {
+                    penalty = parseInt(match[1], 10);
+                    cleanNote = match[2];
+                } else {
+                    penalty = 10;
+                }
+            } else {
+                penalty = HP_PENALTY[error.type] !== undefined ? HP_PENALTY[error.type] : 10;
+                if (isReachedCustomer) penalty = 30;
+                else if (isFixedBefore) penalty = 5;
+            }
+
+            return { penalty, cleanNote, isReachedCustomer, isFixedBefore, type: error.type, meta: null, isAkraCase: false };
+        }
+
+        function getErrorDetail(error, sourceBranch) {
+            if (sourceBranch === 'AKRA') {
+                const parsed = parseAkraCaseNote(error.note);
+                if (parsed.meta && parsed.meta.v === 1) {
+                    const item = getAkraCatalogItem(parsed.meta.type || error.type);
+                    return {
+                        penalty: parseInt(parsed.meta.penalty, 10) || (item ? item.penalty : 10),
+                        cleanNote: parsed.note,
+                        isReachedCustomer: false,
+                        isFixedBefore: false,
+                        type: parsed.meta.type || error.type,
+                        core: parsed.meta.core || (item ? item.core : ''),
+                        coreLabel: parsed.meta.coreLabel || (item ? item.coreLabel : ''),
+                        caseId: parsed.meta.caseId || '',
+                        meta: parsed.meta,
+                        isAkraCase: true
+                    };
+                }
+            }
+            return getLegacyPenaltyDetail(error);
+        }
+
+        function stripErrorNoteForExport(note, sourceBranch) {
+            let detail = sourceBranch === 'AKRA' ? parseAkraCaseNote(note) : { note };
+            return detail.note || '';
         }
 
         function getStartOfWeek(d) {
@@ -2091,6 +2209,56 @@
             return false;
         }
 
+        function akraRosterChipHtml(emp, id, className, checked = false) {
+            return `
+                <div class="relative">
+                    <input type="checkbox" id="${id}" value="${esc(emp)}" class="hidden peer ${className}" ${checked ? 'checked' : ''} onchange="handleAkraRosterChange()">
+                    <label for="${id}" class="emp-label inline-block bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-gray-600 cursor-pointer peer-checked:bg-amber-500 peer-checked:text-white peer-checked:border-amber-500 shadow-sm hover:bg-gray-50 peer-checked:shadow-md select-none">${esc(emp)}</label>
+                </div>
+            `;
+        }
+
+        function renderAkraRoster() {
+            const card = document.getElementById('akra-core-roster-card');
+            if (!card) return;
+            if (currentBranch !== 'AKRA') {
+                card.classList.add('hidden');
+                return;
+            }
+
+            const emps = BRANCH_CONFIG.AKRA.employees || [];
+            card.classList.remove('hidden');
+            document.getElementById('akra-duty-roster').innerHTML = emps.map((emp, i) => akraRosterChipHtml(emp, `akra-duty-${i}`, 'akra-duty-cb', true)).join('');
+            updateAkraDutyCount();
+        }
+
+        function getCheckedValues(selector) {
+            return Array.from(document.querySelectorAll(selector + ':checked')).map(cb => cb.value);
+        }
+
+        function getAkraOnDutyEmployees() {
+            return getCheckedValues('.akra-duty-cb');
+        }
+
+        function getAkraCoreRoster() {
+            return {
+                inbound: getCheckedValues('.akra-core-inbound-cb'),
+                outbound: getCheckedValues('.akra-core-outbound-cb'),
+                internal: getCheckedValues('.akra-core-internal-cb')
+            };
+        }
+
+        function updateAkraDutyCount() {
+            const el = document.getElementById('akra-duty-count');
+            if (el) el.innerText = `${getAkraOnDutyEmployees().length} คน`;
+        }
+
+        function handleAkraRosterChange() {
+            updateAkraDutyCount();
+            syncAkraSharedEntries();
+            saveRecordDraftDebounced();
+        }
+
         async function loadConfig() {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -2358,6 +2526,7 @@
             document.getElementById('error-entries-container').innerHTML = '';
             document.getElementById('task-entries-container').innerHTML = '';
 
+            renderAkraRoster();
             addErrorEntryRow();
             loadTasksForSelectedDate();
             restoreRecordDraft();
@@ -2535,6 +2704,8 @@
                     `;
                 }
 
+                let akraDailyCaps = {};
+
                 (day.errors || []).forEach(e => {
                     let empName = normalizeEmpName(e.emp);
 
@@ -2544,56 +2715,44 @@
                         categorizedNotes[empName] = {};
                     }
 
+                    const detail = getErrorDetail(e, currentBranch);
+                    const displayType = detail.type || e.type;
                     empErrCount[empName]++;
-                    if(!categorizedNotes[empName][e.type]) categorizedNotes[empName][e.type] = [];
-                    if(errorTypeCounts[e.type] === undefined) {
-                        errorTypeCounts[e.type] = 0;
-                        errorNotesList[e.type] = [];
+                    if(!categorizedNotes[empName][displayType]) categorizedNotes[empName][displayType] = [];
+                    if(errorTypeCounts[displayType] === undefined) {
+                        errorTypeCounts[displayType] = 0;
+                        errorNotesList[displayType] = [];
                     }
-                    errorTypeCounts[e.type]++;
+                    errorTypeCounts[displayType]++;
 
-                    let penaltyToApply = 0;
-                    let cleanNote = e.note;
-                    let isReachedCustomer = false;
-                    let isFixedBefore = false;
+                    let penaltyToApply = detail.penalty;
+                    let cleanNote = detail.cleanNote;
 
-                    if (cleanNote.includes('[ถึงลูกค้าแล้ว]')) {
-                        isReachedCustomer = true;
-                        cleanNote = cleanNote.replace(/^\[ถึงลูกค้าแล้ว\]\s*/, '');
-                    } else if (cleanNote.includes('[แก้ไขได้ก่อนส่ง]')) {
-                        isFixedBefore = true;
-                        cleanNote = cleanNote.replace(/^\[แก้ไขได้ก่อนส่ง\]\s*/, '');
-                    }
-
-                    if (e.type === 'ความผิดอื่น ๆ') {
-                        let match = cleanNote.match(/^\[หัก (\d+) HP\]\s*(.*)/);
-                        if (match) {
-                            penaltyToApply = parseInt(match[1]);
-                            cleanNote = match[2];
-                        } else {
-                            penaltyToApply = 10;
-                        }
-                    } else {
-                        penaltyToApply = HP_PENALTY[e.type] !== undefined ? HP_PENALTY[e.type] : 10;
-                        if (isReachedCustomer) penaltyToApply = 30;
-                        else if (isFixedBefore) penaltyToApply = 5;
-                    }
-
-                    teamLostHP += penaltyToApply;
-                    if(!errorNotesList[e.type].includes(cleanNote)) errorNotesList[e.type].push(cleanNote);
+                    if(!errorNotesList[displayType].includes(cleanNote)) errorNotesList[displayType].push(cleanNote);
 
                     let stageBadge = '';
-                    if (isReachedCustomer) stageBadge = `<span class="text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-red-200 shadow-sm align-middle whitespace-nowrap">🚨 ถึงลูกค้า</span>`;
-                    else if (isFixedBefore) stageBadge = `<span class="text-emerald-600 font-bold bg-emerald-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-emerald-200 shadow-sm align-middle whitespace-nowrap">🛡️ แก้ทัน</span>`;
+                    if (detail.isReachedCustomer) stageBadge = `<span class="text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-red-200 shadow-sm align-middle whitespace-nowrap">🚨 ถึงลูกค้า</span>`;
+                    else if (detail.isFixedBefore) stageBadge = `<span class="text-emerald-600 font-bold bg-emerald-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-emerald-200 shadow-sm align-middle whitespace-nowrap">🛡️ แก้ทัน</span>`;
+                    if (detail.isAkraCase && detail.coreLabel) stageBadge += `<span class="text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-amber-100 shadow-sm align-middle whitespace-nowrap">${esc(detail.coreLabel)}</span>`;
 
                     let displayNote = `<span class="text-red-600 font-black bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 shadow-sm border border-red-200 text-[9px] inline-block whitespace-nowrap align-middle">-${penaltyToApply} HP</span>${stageBadge}<span class="text-gray-700 leading-snug">${esc(cleanNote)}</span>`;
 
-                    categorizedNotes[empName][e.type].push({ note: displayNote, date: day.date });
+                    categorizedNotes[empName][displayType].push({ note: displayNote, date: day.date });
                     hasAnyNotes = true;
 
                     if (empHP[empName] !== undefined) {
-                        empHP[empName] -= penaltyToApply;
+                        if (detail.isAkraCase) {
+                            akraDailyCaps[empName] = Math.max(akraDailyCaps[empName] || 0, penaltyToApply);
+                        } else {
+                            teamLostHP += penaltyToApply;
+                            empHP[empName] -= penaltyToApply;
+                        }
                     }
+                });
+
+                Object.entries(akraDailyCaps).forEach(([empName, penalty]) => {
+                    teamLostHP += penalty;
+                    empHP[empName] -= penalty;
                 });
 
                 if(day.tasks && Array.isArray(day.tasks)) {
@@ -2815,6 +2974,47 @@
             }
         }
 
+        function renderAdminAkraHpSummary(lossMap, branchFilter, empFilter) {
+            const card = document.getElementById('admin-akra-hp-card');
+            const container = document.getElementById('admin-akra-hp-summary');
+            if (!card || !container) return;
+            if (branchFilter === 'TRD') {
+                card.classList.add('hidden');
+                return;
+            }
+
+            let names = (BRANCH_CONFIG.AKRA.employees || []).slice();
+            if (empFilter !== 'ALL') names = names.filter(name => name === empFilter);
+            if (names.length === 0) {
+                card.classList.add('hidden');
+                return;
+            }
+
+            const rows = names.map(name => {
+                const loss = lossMap[name] || 0;
+                return { name, loss, hp: Math.max(0, 100 - loss) };
+            }).sort((a, b) => b.hp - a.hp || a.name.localeCompare(b.name, 'th'));
+
+            container.innerHTML = rows.map(row => {
+                const pct = Math.max(0, Math.min(100, row.hp));
+                const barClass = row.hp >= 90 ? 'bg-green-500' : (row.hp >= 75 ? 'bg-yellow-400' : 'bg-red-500');
+                const badgeClass = row.hp >= 90 ? 'text-green-700 border-green-200' : (row.hp >= 75 ? 'text-yellow-700 border-yellow-200' : 'text-red-700 border-red-200');
+                return `
+                    <div class="bg-gray-50 border border-gray-100 p-2.5 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-xs font-bold text-gray-800">${esc(row.name)}</span>
+                            <span class="text-[11px] font-black bg-white px-2 py-0.5 rounded-md border ${badgeClass}">${row.hp} HP</span>
+                        </div>
+                        <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden border border-gray-200">
+                            <div class="${barClass} h-full rounded-full" style="width:${pct}%"></div>
+                        </div>
+                        <div class="text-[9px] text-gray-400 font-semibold mt-1">หักรวมหลัง daily cap: ${row.loss} HP</div>
+                    </div>
+                `;
+            }).join('');
+            card.classList.remove('hidden');
+        }
+
         function renderAdminDashboard() {
             if (!can("adminDashboard")) return;
 
@@ -2852,14 +3052,29 @@
 
             let totalErrors = 0; let totalVol = 0;
             let empErrorMap = {}; let logsHtmlContent = '';
+            let akraPeriodLossMap = {};
 
             filteredData.forEach(day => {
                 if (day.volume) totalVol += ((day.volume.transfer||0) + (day.volume.pickup||0) + (day.volume.upcountry||0) + (day.volume.inmarket||0) + (day.volume.outmarket||0));
+                let akraDailyCaps = {};
 
                 (day.errors || []).forEach(err => {
                     let empName = normalizeEmpName(err.emp);
                     if (empFilter !== 'ALL' && empName !== empFilter) return;
 
+                    const detail = getErrorDetail(err, day.sourceBranch);
+                    if (day.sourceBranch === 'AKRA') {
+                        if (detail.isAkraCase) {
+                            akraDailyCaps[empName] = Math.max(akraDailyCaps[empName] || 0, detail.penalty);
+                        } else {
+                            akraPeriodLossMap[empName] = (akraPeriodLossMap[empName] || 0) + detail.penalty;
+                        }
+                    }
+                    const displayType = detail.type || err.type;
+                    const coreBadge = detail.isAkraCase && detail.coreLabel
+                        ? `<span class="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded mr-1">${esc(detail.coreLabel)}</span>`
+                        : '';
+                    const penaltyBadge = `<span class="text-[9px] font-black text-red-600 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded mr-1">-${detail.penalty} HP</span>`;
                     totalErrors++;
                     if (!empErrorMap[empName]) empErrorMap[empName] = 0;
                     empErrorMap[empName]++;
@@ -2875,16 +3090,22 @@
                             <div class="flex items-start mt-0.5">
                                 <div class="font-black text-red-600 w-[28%] break-words leading-tight"><i class="fa-solid fa-user text-gray-400 mr-1.5"></i>${esc(empName)}</div>
                                 <div class="w-[72%] pl-2 border-l border-gray-200">
-                                    <div class="font-bold text-gray-800 mb-0.5 text-[11px] leading-tight">${esc(err.type)}</div>
-                                    <div class="text-gray-500 text-[10px] leading-relaxed break-words">${esc(err.note)}</div>
+                                    <div class="font-bold text-gray-800 mb-0.5 text-[11px] leading-tight">${esc(displayType)}</div>
+                                    <div class="text-gray-500 text-[10px] leading-relaxed break-words">${penaltyBadge}${coreBadge}${esc(detail.cleanNote)}</div>
                                 </div>
                             </div>
                         </div>
                     `;
                 });
+
+                Object.entries(akraDailyCaps).forEach(([empName, penalty]) => {
+                    akraPeriodLossMap[empName] = (akraPeriodLossMap[empName] || 0) + penalty;
+                });
             });
 
             if (!logsHtmlContent) logsHtmlContent = '<div class="text-center text-gray-400 text-sm py-6 bg-gray-50 border border-dashed border-gray-200 rounded-xl">ไม่พบข้อมูลความผิดพลาดในเดือนนี้ 🎉</div>';
+
+            renderAdminAkraHpSummary(akraPeriodLossMap, branchFilter, empFilter);
 
             document.getElementById('admin-stat-err').innerText = totalErrors;
             document.getElementById('admin-stat-vol').innerText = totalVol;
@@ -2944,8 +3165,9 @@
                     if (empFilter !== 'ALL' && empName !== empFilter) return;
 
                     hasData = true;
-                    let safeType = (err.type || "").replace(/"/g, '""').replace(/\n/g, ' ');
-                    let safeNote = (err.note || "").replace(/"/g, '""').replace(/\n/g, ' ');
+                    const detail = getErrorDetail(err, day.sourceBranch);
+                    let safeType = (detail.type || err.type || "").replace(/"/g, '""').replace(/\n/g, ' ');
+                    let safeNote = (detail.cleanNote || stripErrorNoteForExport(err.note, day.sourceBranch)).replace(/"/g, '""').replace(/\n/g, ' ');
 
                     csvContent += `"${safeDate}","${day.sourceBranch}","${empName}","${safeType}","${safeNote}"\n`;
                 });
@@ -3252,10 +3474,15 @@
         function getErrorTypeOptionsHtml(branch) {
             const groups = BRANCH_CONFIG[branch].errorTypes;
             return groups.map(g => {
+                const renderOption = (opt) => {
+                    const item = branch === 'AKRA' ? getAkraCatalogItem(opt) : null;
+                    const label = item ? `${opt} (-${item.penalty} HP)` : opt;
+                    return `<option value="${esc(opt)}">${esc(label)}</option>`;
+                };
                 if(g.group === "หมวดหมู่หลัก") {
-                    return g.options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+                    return g.options.map(renderOption).join('');
                 } else {
-                    return `<optgroup label="${g.group}">` + g.options.map(opt => `<option value="${opt}">${opt}</option>`).join('') + `</optgroup>`;
+                    return `<optgroup label="${esc(g.group)}">` + g.options.map(renderOption).join('') + `</optgroup>`;
                 }
             }).join('');
         }
@@ -3267,6 +3494,30 @@
             } else {
                 container.classList.add('hidden');
             }
+            syncAkraSharedEntry(selectEl.closest('.error-entry'));
+        }
+
+        function syncAkraSharedEntry(entry) {
+            if (!entry || currentBranch !== 'AKRA') return;
+            const type = entry.querySelector('.err-type').value;
+            const isShared = isAkraSharedType(type);
+            const onDuty = getAkraOnDutyEmployees();
+            entry.querySelectorAll('.err-emp-cb').forEach(cb => {
+                if (isShared) cb.checked = onDuty.includes(cb.value);
+                cb.disabled = isShared;
+                const label = entry.querySelector(`label[for="${cb.id}"]`);
+                if (label) {
+                    label.classList.toggle('opacity-60', isShared);
+                    label.classList.toggle('cursor-not-allowed', isShared);
+                }
+            });
+            const note = entry.querySelector('.akra-shared-note');
+            if (note) note.classList.toggle('hidden', !isShared);
+        }
+
+        function syncAkraSharedEntries() {
+            if (currentBranch !== 'AKRA') return;
+            document.querySelectorAll('.error-entry').forEach(syncAkraSharedEntry);
         }
 
         // ================= QUICK ERROR-TYPE CHIPS (C1) =================
@@ -3359,9 +3610,10 @@
 
                     <div class="mb-4 pr-8">
                         <label class="flex items-center text-xs font-bold text-gray-700 mb-1.5 bg-gray-100 w-max px-2 py-1 rounded">
-                            <span class="bg-gray-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] mr-1.5">1</span> เลือกผู้กระทำผิด
+                            <span class="bg-gray-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] mr-1.5">1</span> ${currentBranch === 'AKRA' ? 'เลือกผู้รับผิดชอบในเคส' : 'เลือกผู้กระทำผิด'}
                         </label>
                         ${empsHtml}
+                        ${currentBranch === 'AKRA' ? '<div class="akra-shared-note hidden mt-2 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-2"><i class="fa-solid fa-users mr-1.5"></i>ใช้รายชื่อพนักงานที่เข้ากะทั้งหมดสำหรับเคสร่วม</div>' : ''}
                     </div>
 
                     <div class="border-t border-gray-100 pt-3">
@@ -3403,6 +3655,7 @@
                 </div>
             `;
             container.insertAdjacentHTML('beforeend', html);
+            syncAkraSharedEntry(container.lastElementChild);
         }
 
         function addTaskEntryRow(name = "", status = "ยังไม่เริ่ม", assignee = "") {
@@ -3542,6 +3795,9 @@
 
         function collectRecordDraft() {
             const draft = { date: document.getElementById('record-date').value, errors: [], tasks: [], volume: {}, notes: {} };
+            if (currentBranch === 'AKRA') {
+                draft.akraRoster = { onDuty: getAkraOnDutyEmployees(), cores: getAkraCoreRoster() };
+            }
             document.querySelectorAll('.error-entry').forEach(entry => {
                 const stageSel = entry.querySelector('.err-stage');
                 draft.errors.push({
@@ -3573,6 +3829,13 @@
             if ((draft.errors || []).some(e => (e.emps || []).length > 0 || (e.note || '').trim() !== '')) return true;
             if (Object.values(draft.volume || {}).some(v => (parseInt(v) || 0) > 0)) return true;
             if (Object.values(draft.notes || {}).some(v => (v || '').trim() !== '')) return true;
+            if (draft.akraRoster) {
+                const onDuty = draft.akraRoster.onDuty || [];
+                const allAkra = (BRANCH_CONFIG.AKRA && BRANCH_CONFIG.AKRA.employees) || [];
+                const cores = draft.akraRoster.cores || {};
+                if (onDuty.length !== allAkra.length) return true;
+                if (Object.values(cores).some(list => Array.isArray(list) && list.length > 0)) return true;
+            }
             return false;
         }
 
@@ -3601,6 +3864,22 @@
             draft.tasks.forEach(t => addTaskEntryRow(t.name || '', t.status || 'ยังไม่เริ่ม', (t.assignees || []).join(', ')));
         }
 
+        function setCheckedValues(selector, values) {
+            const selected = new Set(values || []);
+            document.querySelectorAll(selector).forEach(cb => { cb.checked = selected.has(cb.value); });
+        }
+
+        function applyAkraRosterDraft(roster) {
+            if (currentBranch !== 'AKRA' || !roster) return;
+            setCheckedValues('.akra-duty-cb', roster.onDuty || []);
+            const cores = roster.cores || {};
+            setCheckedValues('.akra-core-inbound-cb', cores.inbound || []);
+            setCheckedValues('.akra-core-outbound-cb', cores.outbound || []);
+            setCheckedValues('.akra-core-internal-cb', cores.internal || []);
+            updateAkraDutyCount();
+            syncAkraSharedEntries();
+        }
+
         function restoreRecordDraft() {
             const draft = readRecordDraft();
             if (!draftHasContent(draft)) return;
@@ -3610,6 +3889,7 @@
                     document.getElementById('record-date').value = draft.date;
                     loadTasksForSelectedDate();
                 }
+                applyAkraRosterDraft(draft.akraRoster);
                 const container = document.getElementById('error-entries-container');
                 container.innerHTML = '';
                 (draft.errors && draft.errors.length ? draft.errors : [null]).forEach(errDraft => {
@@ -3623,6 +3903,7 @@
                     if (stageSel && errDraft.stage) stageSel.value = errDraft.stage;
                     if (errDraft.penalty) entry.querySelector('.err-penalty').value = errDraft.penalty;
                     entry.querySelector('.err-note').value = errDraft.note || '';
+                    syncAkraSharedEntry(entry);
                 });
                 if (BRANCH_CONFIG[currentBranch].showZone2) {
                     Object.entries(draft.volume || {}).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
@@ -3678,20 +3959,26 @@
             const btn = document.getElementById('btn-save');
             const date = document.getElementById('record-date').value;
 
+            if (!date) return showToast("กรุณาเลือกวันที่บันทึก", true);
+
             let currentErrors = [];
             const entries = document.querySelectorAll('.error-entry');
             let hasIncompleteError = false;
 
-            entries.forEach(entry => {
-                const checkedCbs = entry.querySelectorAll('.err-emp-cb:checked');
+            entries.forEach((entry, entryIndex) => {
                 const type = entry.querySelector('.err-type').value;
                 const rawNote = entry.querySelector('.err-note').value;
                 let note = rawNote;
+                let participantNames = Array.from(entry.querySelectorAll('.err-emp-cb:checked')).map(cb => cb.value);
 
                 let stageSelect = entry.querySelector('.err-stage');
                 let stage = stageSelect ? stageSelect.value : '';
 
-                if (type === 'ความผิดอื่น ๆ') {
+                if (currentBranch === 'AKRA' && isAkraSharedType(type)) {
+                    participantNames = getAkraOnDutyEmployees();
+                }
+
+                if (currentBranch !== 'AKRA' && type === 'ความผิดอื่น ๆ') {
                     const penalty = entry.querySelector('.err-penalty').value;
                     note = `[หัก ${penalty} HP] ${note}`;
                 }
@@ -3700,14 +3987,32 @@
                     note = `[${stage}] ${note}`;
                 }
 
-                if (checkedCbs.length > 0 && rawNote.trim() !== "") {
-                    checkedCbs.forEach(cb => { currentErrors.push({ id: Date.now() + Math.random(), emp: cb.value, type, note }); });
-                } else if (checkedCbs.length > 0 || rawNote.trim() !== "") {
+                if (participantNames.length > 0 && rawNote.trim() !== "") {
+                    if (currentBranch === 'AKRA') {
+                        const catalogItem = getAkraCatalogItem(type);
+                        const penalty = type === 'ความผิดอื่น ๆ'
+                            ? (parseInt(entry.querySelector('.err-penalty').value, 10) || 10)
+                            : (catalogItem ? catalogItem.penalty : 10);
+                        const meta = {
+                            v: 1,
+                            caseId: `${date}-${Date.now()}-${entryIndex}`,
+                            core: catalogItem ? catalogItem.core : 'other',
+                            coreLabel: catalogItem ? catalogItem.coreLabel : 'อื่น ๆ',
+                            type,
+                            penalty,
+                            participants: participantNames,
+                            onDuty: getAkraOnDutyEmployees(),
+                            coreRoster: getAkraCoreRoster()
+                        };
+                        note = `${encodeAkraCaseMeta(meta)} ${rawNote}`;
+                    }
+                    participantNames.forEach(emp => { currentErrors.push({ id: Date.now() + Math.random(), emp, type, note }); });
+                } else if (participantNames.length > 0 || rawNote.trim() !== "") {
                     hasIncompleteError = true;
                 }
             });
 
-            if (hasIncompleteError) return showToast("กรุณาเลือกผู้กระทำผิดและใส่หมายเหตุให้ครบถ้วน", true);
+            if (hasIncompleteError) return showToast("กรุณาเลือกรายชื่อและใส่หมายเหตุให้ครบถ้วน", true);
 
             let currentTasks = [];
             document.querySelectorAll('.task-entry').forEach(entry => {
