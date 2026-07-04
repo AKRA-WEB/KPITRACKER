@@ -607,7 +607,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260704.05";
+        const CURRENT_VERSION = "20260704.06";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -3987,7 +3987,11 @@
                     note = `[${stage}] ${note}`;
                 }
 
-                if (participantNames.length > 0 && rawNote.trim() !== "") {
+                const hasParticipants = participantNames.length > 0;
+                const hasNote = rawNote.trim() !== "";
+                const requiresNote = type === 'ความผิดอื่น ๆ';
+
+                if (hasParticipants && (!requiresNote || hasNote)) {
                     if (currentBranch === 'AKRA') {
                         const catalogItem = getAkraCatalogItem(type);
                         const penalty = type === 'ความผิดอื่น ๆ'
@@ -4007,12 +4011,12 @@
                         note = `${encodeAkraCaseMeta(meta)} ${rawNote}`;
                     }
                     participantNames.forEach(emp => { currentErrors.push({ id: Date.now() + Math.random(), emp, type, note }); });
-                } else if (participantNames.length > 0 || rawNote.trim() !== "") {
+                } else if (hasParticipants || hasNote) {
                     hasIncompleteError = true;
                 }
             });
 
-            if (hasIncompleteError) return showToast("กรุณาเลือกรายชื่อและใส่หมายเหตุให้ครบถ้วน", true);
+            if (hasIncompleteError) return showToast("กรุณาเลือกรายชื่อให้ครบถ้วน และใส่หมายเหตุเมื่อเลือกความผิดอื่น ๆ", true);
 
             let currentTasks = [];
             document.querySelectorAll('.task-entry').forEach(entry => {
