@@ -100,21 +100,15 @@
         .tlw-mover { position: relative; }
         .tlw-mover::after { content: ""; position: absolute; left: 50%; bottom: -0.5rem; width: 60%; height: 0.3rem; border-radius: 999px; background: rgba(17,24,39,0.22); transform: translateX(-50%); }
         .team-live-worker.cashier .tlw-mover::after { display: none; }
-        .team-live-worker.walking .tlw-mover { animation: tlwPatrol var(--walk-dur, 9s) linear infinite; animation-delay: var(--delay, 0s); }
         .tlw-flip { transform-origin: 50% 100%; }
-        .team-live-worker.walking .tlw-flip { animation: tlwFaceR var(--walk-dur, 9s) steps(1, end) infinite; animation-delay: var(--delay, 0s); }
-        .team-live-worker.walking.walk-left .tlw-flip { animation-name: tlwFaceL; }
+        .tlw-flip.facing-left { transform: scaleX(-1); }
         .team-live-worker.lying { --z: 6; width: clamp(5rem, 10cqw, 7.2rem); }
         .team-live-worker.lying .tlw-mover::after { width: 96%; }
         .tlw-sprite { display: block; width: 100%; height: auto; image-rendering: pixelated; filter: drop-shadow(0 2px 0 rgba(17,24,39,0.3)); }
-        .team-live-worker.walking .tlw-sprite { animation: tlwBob 0.56s steps(2, end) infinite; }
-        .team-live-worker.idle .tlw-sprite { animation: tlwIdle 2.4s steps(2, end) infinite; animation-delay: var(--delay, 0s); }
-        .tlw-sprite .leg-a, .tlw-sprite .leg-b { visibility: hidden; }
-        .team-live-worker.walking .tlw-sprite .leg-stand { visibility: hidden; }
-        /* static leg-b visible กันตัวละครไร้ขาเมื่อ prefers-reduced-motion ตัด animation */
-        .team-live-worker.walking .tlw-sprite .leg-b { visibility: visible; }
-        .team-live-worker.walking .tlw-sprite .leg-a { animation: tlwLegA 0.56s steps(1, end) infinite; }
-        .team-live-worker.walking .tlw-sprite .leg-b { animation: tlwLegB 0.56s steps(1, end) infinite; }
+        .tlw-sprite-wrap { display: block; width: 100%; line-height: 0; transform-origin: 50% 100%; translate: 0 0; rotate: 0deg; scale: 1; will-change: translate, rotate, scale; }
+        .team-live-worker:not(.lying) .tlw-sprite-wrap { animation: tlwBodySway var(--move-dur, 2.8s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
+        .tlw-sprite-img { object-fit: contain; object-position: 50% 100%; pointer-events: none; user-select: none; }
+        .tlw-sprite-fallback { display: block; width: 100%; }
         .tlw-plate { position: absolute; left: 50%; bottom: calc(100% + 0.1rem); z-index: 4; width: max-content; max-width: 5.6rem; min-width: 3.4rem; padding: 0.16rem 0.32rem 0.2rem; border: 1px solid rgba(17,24,39,0.82); border-radius: 0.5rem; background: rgba(255,255,255,0.92); box-shadow: 2px 2px 0 rgba(17,24,39,0.82); text-align: center; line-height: 1; transform: translateX(-50%); }
         .tlw-name { display: block; overflow: hidden; color: #111827; font-size: 0.56rem; font-weight: 1000; text-overflow: ellipsis; white-space: nowrap; }
         .tlw-hp { display: block; height: 0.36rem; margin-top: 0.16rem; overflow: hidden; border: 1px solid #111827; border-radius: 999px; background: #f1f5f9; }
@@ -131,13 +125,11 @@
         @keyframes sceneOpenBlink { 0%, 58% { opacity: 1; } 59%, 72% { opacity: 0.35; } 73%, 100% { opacity: 1; } }
         @keyframes sceneLampFlicker { 0%, 100% { opacity: 0.72; } 18% { opacity: 0.46; } 22% { opacity: 0.84; } 54% { opacity: 0.56; } 58% { opacity: 0.78; } }
         @keyframes sceneWindowGlow { 0%, 100% { opacity: 0.62; } 50% { opacity: 0.88; } }
-        @keyframes tlwPatrol { 0% { transform: translateX(0); } 46% { transform: translateX(var(--walk-dist, 12cqw)); } 50% { transform: translateX(var(--walk-dist, 12cqw)); } 96% { transform: translateX(0); } 100% { transform: translateX(0); } }
-        @keyframes tlwFaceR { 0%, 46% { transform: scaleX(1); } 50%, 96% { transform: scaleX(-1); } 100% { transform: scaleX(1); } }
-        @keyframes tlwFaceL { 0%, 46% { transform: scaleX(-1); } 50%, 96% { transform: scaleX(1); } 100% { transform: scaleX(-1); } }
-        @keyframes tlwLegA { 0%, 100% { visibility: visible; } 50% { visibility: hidden; } }
-        @keyframes tlwLegB { 0%, 100% { visibility: hidden; } 50% { visibility: visible; } }
-        @keyframes tlwBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
-        @keyframes tlwIdle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
+        @keyframes tlwBodySway {
+            0%, 100% { translate: 0 0; rotate: 0deg; scale: 1; }
+            32% { translate: 0 -2px; rotate: -1.4deg; scale: 1.01 0.995; }
+            68% { translate: 0 -1px; rotate: 1.2deg; scale: 0.998 1.004; }
+        }
         @media (max-width: 640px) {
             .team-live-status { top: 3rem; right: auto; left: 0.7rem; }
             .team-live-scroll-hint { display: block; padding: 0.35rem 0.65rem; border-bottom: 1px solid #e5e7eb; background: #f8fafc; color: #64748b; font-size: 0.58rem; font-weight: 800; text-align: center; }
@@ -202,7 +194,7 @@
 
     <!-- Main Content Area -->
     <main id="app-content" class="p-4 max-w-md mx-auto hidden md:max-w-3xl lg:max-w-5xl md:p-6">
-        
+
         <!-- ================= VIEW: RECORD ================= -->
         <div id="view-record" class="space-y-6 md-grid-2">
 
@@ -217,9 +209,9 @@
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
                     <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>บันทึกความผิดพลาด (KPI)</h2>
                 </div>
-                
+
                 <div id="error-entries-container" class="space-y-4"></div>
-                
+
                 <button onclick="addErrorEntryRow()" class="mt-4 w-full bg-red-50 text-red-600 border border-red-200 font-bold py-3 rounded-xl text-sm active:bg-red-100 shadow-sm transition-all hover:bg-red-100 flex justify-center items-center">
                     <i class="fa-solid fa-plus-circle mr-2 text-lg"></i> เพิ่มรายการความผิดพลาด
                 </button>
@@ -228,7 +220,7 @@
             <!-- General Data (Hidden for TRD) -->
             <div id="zone-2-container" class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 border-y border-r border-gray-100">
                 <h2 class="text-lg font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2"><i class="fa-solid fa-boxes-stacked text-blue-500 mr-2"></i>ข้อมูลงานประจำวัน</h2>
-                
+
                 <div class="space-y-4">
                     <div class="flex justify-between items-center border-b border-gray-100 pb-3">
                         <span class="text-sm font-medium text-gray-700">บิลย้ายคลัง <span class="text-[10px] text-gray-400 block">(หน้าร้านเบิก)</span></span>
@@ -238,7 +230,7 @@
                             <button onclick="adjVol('vol-transfer', 1)" data-vol="vol-transfer" data-step="1" aria-label="เพิ่มจำนวนบิลย้ายคลัง" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                         </div>
                     </div>
-                    
+
                     <div class="border-b border-gray-100 pb-3">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">ลูกค้ามารับที่ร้าน</span>
@@ -250,7 +242,7 @@
                         </div>
                         <input type="text" id="note-pickup" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="ระบุชื่อลูกค้า หรือ หมายเหตุเพิ่มเติม...">
                     </div>
-                    
+
                     <div class="border-b border-gray-100 pb-3">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">ส่งต่างจังหวัด (ตจว.)</span>
@@ -295,9 +287,9 @@
                     <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>แผนงาน (สัปดาห์นี้)</h2>
                     <p class="text-[11px] text-gray-500 mt-1">อัปเดตความคืบหน้างาน โปรดระบุผู้รับผิดชอบ</p>
                 </div>
-                
+
                 <div id="task-entries-container" class="space-y-3"></div>
-                
+
                 <button onclick="addTaskEntryRow()" class="mt-4 w-full bg-purple-50 text-purple-600 border border-purple-200 font-bold py-3 rounded-xl text-sm active:bg-purple-100 shadow-sm transition-all hover:bg-purple-100 flex justify-center items-center">
                     <i class="fa-solid fa-plus-circle mr-2 text-lg"></i> เพิ่มแผนงานใหม่
                 </button>
@@ -411,7 +403,7 @@
                         <i class="fa-solid fa-file-csv mr-1.5 text-sm"></i> Export
                     </button>
                 </div>
-                
+
                 <!-- Filters -->
                 <div class="flex flex-col space-y-2 bg-white/10 p-3 rounded-lg backdrop-blur-sm">
                     <input type="month" id="admin-dash-month" class="w-full p-2 border-0 rounded-md text-sm outline-none bg-white text-gray-800 font-bold" onchange="renderAdminDashboard()">
@@ -461,10 +453,10 @@
 
         <!-- ================= VIEW: ADMIN PANEL (ตั้งค่า) ================= -->
         <div id="view-admin" class="hidden space-y-4 pb-6 md-grid-2">
-            
+
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <h2 class="text-lg font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2"><i class="fa-solid fa-user-plus text-blue-500 mr-2"></i>เพิ่ม/แก้ไขพนักงาน</h2>
-                
+
                 <div class="space-y-3">
                     <div>
                         <label class="block text-[11px] font-bold text-gray-600 mb-1">รหัสพนักงาน (หรือชื่อภาษาอังกฤษ)</label>
@@ -513,7 +505,7 @@
                             </label>
                         </div>
                     </div>
-                    
+
                     <div class="flex space-x-2 mt-2" id="admin-form-actions">
                         <button onclick="saveEmployeeFromAdmin()" id="btn-submit-emp" class="w-full bg-blue-100 text-blue-700 border border-blue-200 font-bold py-3 rounded-xl text-sm active:bg-blue-200 shadow-sm transition-all hover:bg-blue-200 flex justify-center items-center">
                             <i class="fa-solid fa-plus mr-2 text-lg"></i> เพิ่มเข้าสู่รายชื่อ
@@ -530,11 +522,11 @@
                      <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-users text-purple-500 mr-2"></i>รายชื่อพนักงานทั้งหมด</h3>
                      <span id="admin-emp-count" class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold">0 คน</span>
                 </div>
-                
+
                 <div id="admin-employee-list" class="space-y-2 max-h-96 overflow-y-auto pr-1">
                     <!-- Employee cards will be injected here -->
                 </div>
-                
+
                 <p class="text-[10px] text-gray-400 mt-3 text-center"><i class="fa-solid fa-circle-check text-green-400 mr-1"></i>เพิ่ม/แก้ไข/ลบ แล้วระบบบันทึกเข้าฐานข้อมูลให้อัตโนมัติ — ปุ่มด้านล่างใช้บันทึกซ้ำกรณีเน็ตมีปัญหา</p>
                 <button onclick="saveAdminConfig()" id="btn-save-admin" class="mt-2 w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-transform flex justify-center items-center">
                     <i class="fa-solid fa-cloud-arrow-up mr-2"></i> อัปเดตเข้าระบบฐานข้อมูล
@@ -596,8 +588,8 @@
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
-        const CURRENT_APP_NAME = "KPITRACKER"; 
-        const CURRENT_VERSION = "20260703.05";
+        const CURRENT_APP_NAME = "KPITRACKER";
+        const CURRENT_VERSION = "20260704.03";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -786,7 +778,7 @@
         // ช่วยให้ผู้ใช้งานบนคอมพิวเตอร์สามารถเข้าใช้งานได้ด้วยรหัสพนักงานโดยตรงเมื่อ SSO หรือ LocalStorage มีปัญหา
         function showManualLoginModal(errorMsg = "") {
             let errorHtml = errorMsg ? `<p class="text-red-500 text-xs font-bold mt-2.5 animate-pulse"><i class="fa-solid fa-circle-exclamation mr-1"></i>${errorMsg}</p>` : '';
-            
+
             let messageHtml = `
                 <p class="text-xs text-gray-500 mb-4 font-medium">ไม่พบบัญชีผู้ใช้จากการเข้าสู่ระบบอัตโนมัติ กรุณากรอกรหัสพนักงาน (User ID) เพื่อใช้งาน</p>
                 <div class="relative mt-2">
@@ -799,9 +791,9 @@
             `;
 
             showModal(
-                "กรุณาเข้าสู่ระบบ", 
-                messageHtml, 
-                "confirm", 
+                "กรุณาเข้าสู่ระบบ",
+                messageHtml,
+                "confirm",
                 null
             );
 
@@ -809,7 +801,7 @@
             const confirmBtn = document.getElementById('modal-btn-confirm');
             const cancelBtn = document.getElementById('modal-btn-cancel');
             const actionsEl = document.getElementById('custom-modal-actions');
-            
+
             if (actionsEl) {
                 actionsEl.innerHTML = `
                     <div class="flex flex-col gap-2 w-full mt-2">
@@ -828,7 +820,7 @@
                         showManualLoginModal("กรุณาระบุรหัสพนักงาน");
                         return;
                     }
-                    
+
                     const normalizedUid = String(inputUid).toLowerCase();
                     if (USER_DB[normalizedUid]) {
                         const foundEmp = GLOBAL_CONFIG_LIST.find(e => String(e.uid).toLowerCase() === normalizedUid);
@@ -841,9 +833,9 @@
                             name: empName,
                             roles: empRoles
                         };
-                        
+
                         safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
-                        
+
                         document.getElementById('custom-modal').classList.add('hidden');
                         showToast(`ยินดีต้อนรับคุณ ${empName}`);
                         checkAuth();
@@ -949,12 +941,12 @@
         };
 
         // ================= AUTH & STATE =================
-        const PORTAL_URL = "https://akra-web.github.io/Main/"; 
-        let currentUser = null;       
-        let displayUserName = "";     
+        const PORTAL_URL = "https://akra-web.github.io/Main/";
+        let currentUser = null;
+        let displayUserName = "";
         let currentRoles = [];
         let currentBranch = safeSessionStorage.getItem('active_branch') || "";
-        let viewOffsetWeek = 0; 
+        let viewOffsetWeek = 0;
         let IS_ADMIN = false;
         let _kpiPerms = [];
         function can(perm) {
@@ -1079,42 +1071,58 @@
         const SCENE_FIXED_COLORS = {
             K: '#241922', S: '#f7c7a7', s: '#d9957a', L: '#ffe1c8', E: '#111827',
             M: '#7f1d1d', O: '#991b1b', W: '#38bdf8', X: '#dc2626',
-            P: '#3f5878', p: '#27384f', B: '#4a2a1d', b: '#2d1812',
+            N: '#f2a391', Q: '#ffffff',
+            B: '#0ea5e9', // Blue "BM" logo
             C: '#c47a2c', c: '#8b4a1e', D: '#5a2d16'
         };
         const SCENE_GENDER_COLORS = {
-            M: { T: '#f97316', t: '#c2410c', R: '#ffedd5', H: '#3f2c1e', h: '#2a1c11' },
-            F: { T: '#ffffff', t: '#cbd5e1', R: '#fca5a5', H: '#5b3a29', h: '#3f2818' },
-            U: { T: '#9ca3af', t: '#6b7280', R: '#e5e7eb', H: '#4b5563', h: '#374151' }
+            M: {
+                T: '#ffffff', t: '#cbd5e1', // White shirt
+                R: '#a17453', r: '#7c634d', // Brown apron
+                H: '#202020', h: '#101010', // Black hair
+                P: '#3f5878', p: '#27384f'  // Blue pants
+            },
+            F: {
+                T: '#ffffff', t: '#cbd5e1', // White shirt
+                R: '#a17453', r: '#7c634d', // Brown apron
+                H: '#a17453', h: '#7c634d', // Brown hair
+                P: '#243950', p: '#18233c'  // Blue skirt
+            },
+            U: {
+                T: '#ffffff', t: '#cbd5e1',
+                R: '#a17453', r: '#7c634d',
+                H: '#202020', h: '#101010',
+                P: '#3f5878', p: '#27384f'
+            }
         };
 
         const TEAM_SCENE_SPOTS = {
             TRD: {
                 cashier: [
-                    { x: 38, y: 64, pose: 'sit', delay: '-0.2s' },
-                    { x: 56, y: 64, pose: 'sit', delay: '-0.7s' },
-                    { x: 47, y: 64, pose: 'sit', delay: '-1.1s' }
+                    { x: 38, y: 64, deadY: 78, delay: '-0.2s' },
+                    { x: 56, y: 64, deadY: 78, delay: '-0.7s' },
+                    { x: 47, y: 64, deadY: 78, delay: '-1.1s' }
                 ],
                 store: [
-                    { x: 16, y: 88, walk: 9, dur: 10, delay: '-0.3s' },
-                    { x: 60, y: 90, walk: -22, dur: 13, z: 32, delay: '-3.2s' },
-                    { x: 34, y: 96, walk: 24, dur: 12, z: 32, delay: '-6.1s' },
-                    { x: 80, y: 72, walk: 8, dur: 10, delay: '-1.8s' }
+                    { x: 16, y: 88, delay: '-0.3s' },
+                    { x: 60, y: 90, z: 32, delay: '-3.2s' },
+                    { x: 34, y: 96, z: 32, delay: '-6.1s' },
+                    { x: 80, y: 72, delay: '-1.8s' }
                 ],
                 stock: [
-                    { x: 12, y: 60, walk: 6, dur: 9, delay: '-0.5s' },
-                    { x: 80, y: 95, walk: -12, dur: 12, z: 32, delay: '-4.2s' },
-                    { x: 22, y: 64, walk: 5, dur: 10, delay: '-2.7s' }
+                    { x: 12, y: 60, delay: '-0.5s' },
+                    { x: 80, y: 95, z: 32, delay: '-4.2s' },
+                    { x: 22, y: 64, delay: '-2.7s' }
                 ]
             },
             AKRA: {
                 warehouse: [
-                    { x: 12, y: 68, walk: 18, dur: 12, pose: 'carry', delay: '-0.2s' },
-                    { x: 62, y: 86, walk: -20, dur: 14, pose: 'carry', delay: '-5.4s' },
-                    { x: 24, y: 95, walk: 26, dur: 13, pose: 'carry', delay: '-2.9s' },
-                    { x: 74, y: 60, walk: 10, dur: 10, pose: 'carry', delay: '-7.6s' },
-                    { x: 86, y: 92, walk: -12, dur: 11, pose: 'carry', delay: '-1.4s' },
-                    { x: 43, y: 82, walk: -10, dur: 12, pose: 'carry', z: 18, delay: '-4.1s' }
+                    { x: 18, y: 74, delay: '-0.2s' },
+                    { x: 62, y: 86, delay: '-5.4s' },
+                    { x: 24, y: 95, delay: '-2.9s' },
+                    { x: 74, y: 60, delay: '-7.6s' },
+                    { x: 86, y: 92, delay: '-1.4s' },
+                    { x: 43, y: 82, z: 18, delay: '-4.1s' }
                 ]
             }
         };
@@ -1166,10 +1174,11 @@
             return 'dead';
         }
 
-        // ตัวละครวาดบน design grid 16x24 (row-string) แล้วสเกล x2 เป็น 32x48 — ลดจำนวน rect และคุมสัดส่วนง่าย
-        const SCENE_DESIGN_W = 16;
-        const SCENE_DESIGN_H = 24;
-        const SCENE_SPRITE_SCALE = 2;
+
+        // ตัวละครวาดบน design grid 24x60 แล้วสเกล x1 เป็น 24x60
+        const SCENE_DESIGN_W = 24;
+        const SCENE_DESIGN_H = 60;
+        const SCENE_SPRITE_SCALE = 1;
         const SCENE_SPRITE_CACHE = new Map();
 
         function sceneGrid(w = SCENE_DESIGN_W, h = SCENE_DESIGN_H) {
@@ -1188,181 +1197,247 @@
             });
         }
 
-        // ลำตัว+หัว (ไม่มีขา — ขาแยกเลเยอร์สำหรับเฟรมเดิน)
-        const SCENE_FRONT_BODY = [
-            '....KKKKKKKK....',
-            '...KHHHHHHHHK...',
-            '..KHHHHHHHHHHK..',
-            '..KHHHHHHHHHhK..',
-            '..KHHSSSSSSHhK..',
-            '.KSSSSSSSSSSssK.',
-            '.KSSSSSSSSSSssK.',
-            '..KSSSSSSSSSsK..',
-            '..KSSSSSSSSSsK..',
-            '..KSSSSSSSSSsK..',
-            '...KSSSSSSSsK...',
-            '..KTTTRRRRTttK..',
-            '.KTTTTTTTTTTttK.',
-            '.KTTTTTTTTTTttK.',
-            '.KTTTTTTTTTTttK.',
-            '.KSKTTTTTTTTKsK.',
-            '..KKTTTTTTttKK..'
-        ];
-        const SCENE_SIDE_BODY = [
-            '....KKKKKKKK....',
-            '...KHHHHHHHHK...',
-            '..KHHHHHHHHHHK..',
-            '..KHHHHHHHHHHK..',
-            '..KHHHSSSSSSSK..',
-            '.KHHHSSSSSSSSK..',
-            '.KHHhSSSSSESSK..',
-            '.KHHhSSSSSSSSSK.',
-            '.KHhhSSSSSSSsK..',
-            '..KKhSSSSSSsK...',
-            '...KKSSSSSsK....',
-            '..KTTTTTTTRttK..',
-            '.KTTTtttTTTTttK.',
-            '.KTTTtttTTTTttK.',
-            '.KTTTtttTTTTttK.',
-            '.KTTTKSSKTTTttK.',
-            '..KKttttttttKK..'
-        ];
-        const SCENE_FRONT_LEGS_STAND = [
-            '...KPPK..KPpK...',
-            '...KPPK..KPpK...',
-            '...KPPK..KPpK...',
-            '...KPPK..KPpK...',
-            '..KBBBK..KBBbK..',
-            '..KKKKK..KKKKK..'
-        ];
-        const SCENE_FRONT_LEGS_A = [
-            '...KPPK..KPpK...',
-            '...KPPK..KPpK...',
-            '...KPPK.KBBbK...',
-            '...KPPK..KKK....',
-            '..KBBBK.........',
-            '..KKKKK.........'
-        ];
-        const SCENE_FRONT_LEGS_B = [
-            '...KPPK..KPpK...',
-            '...KPPK..KPpK...',
-            '...KBBK..KPpK...',
-            '....KKK..KPpK...',
-            '.........KBBbK..',
-            '.........KKKKK..'
-        ];
-        const SCENE_SIDE_LEGS_STAND = [
-            '....KPPK.KppK...',
-            '....KPPK.KppK...',
-            '....KPPK.KppK...',
-            '....KPPK.KppK...',
-            '...KBBBK.KbbbK..',
-            '...KKKKK.KKKKK..'
-        ];
-        const SCENE_SIDE_LEGS_A = [
-            '....KPPKKppK....',
-            '....KPPK.KppK...',
-            '...KPPK..KppK...',
-            '...KPPK...KppK..',
-            '..KBBBK...KbbbK.',
-            '..KKKKK...KKKKK.'
-        ];
-        const SCENE_SIDE_LEGS_B = [
-            '....KPPK.KppK...',
-            '....KPPKKppK....',
-            '....KPPKKppK....',
-            '....KPPK.KppK...',
-            '...KBBBK.KbbbK..',
-            '...KKKKK.KKKKK..'
-        ];
-        // ท่าถือลัง (ทับบนลำตัวด้านข้าง)
-        const SCENE_SIDE_CARRY = [
-            '................',
-            '................',
-            '................',
-            '................',
-            '................',
-            '................',
-            '................',
-            '................',
-            '................',
-            '................',
-            '.........KKKKKK.',
-            '..TTTTtKKCCCCCK.',
-            '..KKKKtKCCCCCcK.',
-            '......SKCLCCCcK.',
-            '......SKCCCCCcK.',
-            '..KKKKtKCCCCCcK.',
-            '..TTTTtKKKKKKK..'
-        ];
-        // ท่านอน (HP หมด) วาดบน 24x16 → 48x32
-        const SCENE_LIE_BODY = [
-            '........................',
-            '........................',
-            '...KKKKK................',
-            '..KHHHHHK.KKKKKKKK......',
-            '.KHHSSSSKKTTTTTTTTKKKKK.',
-            '.KHSSSSSKTTTTTTTTTKPPPBK',
-            '.KHSSSSSKTTTTTTTTTKpppbK',
-            '.KHSSSSSKTTTTTTTTTKKKKK.',
-            '.KHSSSSSKTTTTTTTTTKPPPBK',
-            '.KHHSSSSKKttttttttKpppbK',
-            '..KHHHHHK.KSSSK...KKKKK.',
-            '...KKKKK...KKK..........'
+        const SCENE_STAND_BODY_F = [
+            "........................",
+            "....KKKK................",
+            "...KHHHHK...............",
+            "..KHHhhHHK..............",
+            "..KHHHHHHK..............",
+            "...KHHHHK...............",
+            "....KHHK..KKKKKK........",
+            ".....KK.KKHHHHHHKK......",
+            ".......KHHHHHHHHHHK.....",
+            "......KHHHHHHHHHHHHK....",
+            ".....KHHHHHHHHHHHHHK....",
+            ".....KHHHSSSSSSSSHHK....",
+            "....KHHHSSSSSSSSssHK....",
+            "....KHHSSSSSSSSSSssK....",
+            "....KHHSSSSSSSSSSssK....",
+            "....KHHSSSSSSSSSSssK....",
+            "....KHhSSSSSSSSSSsK.....",
+            ".....KHSSSSSSSSSSsK.....",
+            ".....KSSSSSSSSSSsK......",
+            "......KSSSSSSSSSK.......",
+            ".......KSSSSSSSK........",
+            "........KKSSSKK.........",
+            ".........KSSK...........",
+            "........KSSSSK..........",
+            "......KKTTTTTTKK........",
+            ".....KTTTTTTTTTTK.......",
+            "....KTTKTTTTTTKTK.......",
+            "...KTTKKRRRRRRKKTTK.....",
+            "...KTKRRRRRRRRRRKTK.....",
+            "..KTTKRRRRRRRRRRKTTK....",
+            "..KTsKRRRBBBBRRRKsTK....",
+            "..KSsKRRRBRBRBRRKsSK....",
+            "..KSsKRRRBBBBRRRKsSK....",
+            "..KSsKRRRRRRRRRRKsSK....",
+            "..KSsKRRRRRRRRRRKsSK....",
+            "..KSSKRRRRRRRRRRKSSK....",
+            "...KKKRRRRRRRRRRKKK.....",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KrrrrrrrrrrrrK......",
+            "...KPPPPPPPPPPPPPPK.....",
+            "...KPPPPPPPPPPPPPPK.....",
+            "....KKKKKKKKKKKKKK......",
+            "......KSSK..KSSK........",
+            "......KSSK..KSSK........",
+            "......KssK..KssK........",
+            "......KssK..KssK........",
+            "......KssK..KssK........",
+            ".....KKKK....KKKK.......",
+            ".....KEEK....KEEK.......",
+            ".....KEEK....KEEK.......",
+            ".....KKKK....KKKK.......",
+            "........................"
         ];
 
-        function sceneFemaleFrontHair(g) {
-            for (let y = 3; y <= 12; y++) { scenePx(g, 1, y, 'K'); scenePx(g, 2, y, 'H'); scenePx(g, 13, y, 'h'); scenePx(g, 14, y, 'K'); }
-            scenePx(g, 2, 13, 'H'); scenePx(g, 13, 13, 'h');
-            scenePx(g, 1, 13, 'K'); scenePx(g, 14, 13, 'K');
-            scenePx(g, 2, 14, 'K'); scenePx(g, 13, 14, 'K');
-            scenePutPattern(g, 3, 4, ['HHSSSSSSHh']);
+        const SCENE_STAND_BODY_M = [
+            "........................",
+            "........................",
+            ".......KKKKKKK..........",
+            ".....KKHHHHHHHKK........",
+            "....KHHHHHHHHHHHK.......",
+            "...KHHHHHHHHHHHHHK......",
+            "...KHHHHHHHHHHHHHK......",
+            "...KHHHHHHHHHHHHHK......",
+            "...KHHHHHHHHHHHHHK......",
+            "....KHHHKKHHHKKHHK......",
+            "....KHHKSSSSSSSHHK......",
+            "....KHHSSSSSSSSSHK......",
+            "....KHSSSSSSSSSSsK......",
+            "....KSSSSSSSSSSSsK......",
+            "....KSSSSSSSSSSSsK......",
+            "....KSSSSSSSSSSSsK......",
+            "....KSSSSSSSSSSSsK......",
+            ".....KSSSSSSSSSSK.......",
+            ".....KSSSSSSSSSSK.......",
+            "......KSSSSSSSSK........",
+            ".......KSSSSSSK.........",
+            "........KKSSKK..........",
+            ".........KSSK...........",
+            "........KSSSSK..........",
+            "......KKTTTTTTKK........",
+            ".....KTTTTTTTTTTK.......",
+            "....KTTKTTTTTTKTK.......",
+            "...KTTKKRRRRRRKKTTK.....",
+            "...KTKRRRRRRRRRRKTK.....",
+            "..KTTKRRRRRRRRRRKTTK....",
+            "..KTsKRRRBBBBRRRKsTK....",
+            "..KSsKRRRBRBRBRRKsSK....",
+            "..KSsKRRRBBBBRRRKsSK....",
+            "..KSsKRRRRRRRRRRKsSK....",
+            "..KSsKRRRRRRRRRRKsSK....",
+            "..KSSKRRRRRRRRRRKSSK....",
+            "...KKKRRRRRRRRRRKKK.....",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KRRRRRRRRRRRRK......",
+            "....KrrrrrrrrrrrrK......",
+            ".....KKKKKKKKKKKK.......",
+            "......KPPK..KPPK........",
+            "......KPPK..KPPK........",
+            "......KppK..KppK........",
+            "......KppK..KppK........",
+            "......KppK..KppK........",
+            "......KppK..KppK........",
+            "......KppK..KppK........",
+            "......KppK..KppK........",
+            ".....KKKK....KKKK.......",
+            ".....KEEK....KEEK.......",
+            ".....KEEK....KEEK.......",
+            ".....KKKK....KKKK.......",
+            "........................"
+        ];
+
+        function sceneBuildStandingSprite(gender, tier) {
+            const g = sceneGrid();
+            scenePutPattern(g, 0, 0, gender === 'F' ? SCENE_STAND_BODY_F : SCENE_STAND_BODY_M);
+            sceneApplyFace(g, tier);
+            return g;
         }
 
-        function sceneFemaleSideHair(g) {
-            for (let y = 4; y <= 13; y++) { scenePx(g, 0, y, 'K'); scenePx(g, 1, y, 'H'); scenePx(g, 2, y, 'H'); }
-            scenePx(g, 1, 14, 'K'); scenePx(g, 2, 14, 'h'); scenePx(g, 3, 14, 'K');
-            scenePx(g, 3, 13, 'h');
+        const SCENE_LIE_BODY_M = [
+"............................................................",
+            "............................................................",
+            "............................................................",
+            "......KKKKKKKKKKK........KK......rsSSSSSSSSrP...............",
+            "....KKKKKKKKhhSSSK......K........rsSSSSSSSsrp...............",
+            "...KHKKKKKKKhhSSSKK....K.........rKKKKKKSSKKKKKKKKKKKKKKKKKK",
+            "...KKKKKKKKKKKKKSSKK...K......KKKKKKrrppKKppppppppppppppKKKK",
+            "..KKKKKKHKKtSSSSSSSSK.Kr..........rrrrrrrrrrrrrrrpppppppKKKK",
+            ".pKKHKKHKtSSSSSSSSSSsKKrrrrrrrrrrrRRRrRRRRRRRRRRRKppPPPPKKKK",
+            ".KKHHHKhRSSRsSSSSSSSsKRtrrRRRPPrRRRRRRRRRRRRRRRRRKppppppKKKK",
+            ".KHHHHKKsSSKrSSSSSSSSKTTrRRRRRRRRRRRRRRRRRRRRRRRRKppKKKKKKKK",
+            ".KHHHHKKKSSKrSKKSSSSSSrTTPTRrBBRRRRRRRRRRRRRRRRRRKKKTtTttKKK",
+            ".KHHHHHHKSSHrSSSSSsSSSsrTtTRrBRRRRRRRRRRRRRRRRRRRKtTtTtTTtKK",
+            ".KHHHKKHKSSSSSSSSSTsSSSSrTTRRRRRRRRRRRRRRRRRRRRRRKKKKKKKKKKt",
+            ".KHHHKKKKSSSSSSSSSTsSSSSSRrrRRRRRRRRRRRRRRRRRRRRRKppppppKKKK",
+            ".KKKHHKKKSSSSSSSSSTsSsRRRTTRrRRRRRRRRRRRRRRRRRRRRKppppppKKKK",
+            ".KHHHHHHKKSKRSSSSSsSSKKTTrTRrRRRRRRRRRRRRRRRRRRRRKppPPPPKKKK",
+            "..KHHHHHKSSKrSKKSSSSSK.KrRRRRRRRRRRRRRRRRRRRRRRRRKppPPPPKKKK",
+            "..KKHHHKKSSKrSSSSSSSK..KTrrrRRRRRRRRRrRRRRRRRRRRRKKKKKKKKKKK",
+            "...KHKKKHKSSSSSSSSSK....KTTTtPPPrKKKKKKKKKKKKKKKK........KKK",
+            "....KKKKHHKKKKKKKKK......KKTTTTtTPSSSSSSSSsrP.............KK",
+            "......KKKKK................rKKKTTKKKKKKKSSK.................",
+            "...............................KK.......KK..................",
+            "............................................................"
+        ];
+
+        const SCENE_LIE_BODY_F = [
+"............................................................",
+            "........................................KKK.................",
+            ".........KKKKKK...............KK....KKKKSSsrp..KKK........KK",
+            "......KKKhhhhhhhhKKK......KKKKtTKKKKSSSSsKKKKKKPPPK......KKK",
+            ".....KhhshhhHSSSSSSSK....KtttKKKKSSSKKKKKRRRRRrpPPKKKKKKKKKK",
+            "....KHhHhhSSsHShSSSSSK..KTrRPBBRrKKKRRRRRRRRRRRpPPKsSSSSSKKK",
+            "....KhshhSSSsHhhhSSSSSKKrrRRRPRRRrrrRRRRRRRRRRRpPPKSSSSSSKKK",
+            "...KhhhshhSSSSSSSSSSSSKTTtTRRRRRRrrRRRRRRRRRRRRpPPKSSSSSKKK.",
+            "...KhhhHHhhSSSSSSSSsSSKhRTTRPBBRRrrRRRRRRRRRRRRpPPKKKKKKKKKK",
+            "...KhhhHhsHhHSSSSSSsSSSSSRRRRRRRRrrRRRRRRRRRRRRpPPKtTttTtKKK",
+            "...KhhhHhHhhhsSSSSsSSSSSttTRRRRRRrrRRRRRRRRRRRRpPPKrRrrRrKKK",
+            "...KhhhHHhhhhHsssSsSSSSttTTRRRRRRrrRRRRRRRRRRRRpPPKKKKKKKKKK",
+            "...KhhhhshhhhHhhKSSSSSShTtTRRRRRRrrRRRRRRRRRRRRpPPKsSSSSSKKK",
+            "...KhhhhhshhhhShSSSSSShTTTRRRRRRrrrrRRRRRRRRRRRpPPKSSSSSSKKK",
+            "...KhhhhshhhhhSSSSSSSKKTTrrrrrrrrrrrrrrRRRRRRRrpPPKSsssSKKK.",
+            "..KKHhHHHhhhhhhSSSSSK..KrRtTTtrrttrrKprrrrrrrrrpppKKKKKKKKKK",
+            ".KhhKhHHhhhhhhHhhhhK...KtTTTTTtTPKKKKpppKKppppppppK.........",
+            "KhshKhshhhhhhhhssSK.....KTTTTTTTrsssKKKKSSKKKpppppK.........",
+            "KHhhhKhhhhhhhHKSSsK......KtTTTtTPSSSSSSSSSSrKKKKKpK.........",
+            "KhhhhhKKHhhhhHHKKK........KKKKTrssSSSSSSSSsrr....K..........",
+            ".KhhhhhKKKKKKKKK..............KK..KKKKKKKKK.................",
+            "..KhhhK.....................................................",
+            "...KKK......................................................",
+            "............................................................"
+        ];
+
+        const SCENE_FRONT_FACES = {
+            smile: [
+                'K.....K',
+                '.E...E.',
+                '.E...E.',
+                '...s...',
+                '.N...N.',
+                '..MQQ..'
+            ],
+            neutral: [
+                'K.....K',
+                '.E...E.',
+                '.E...E.',
+                '...s...',
+                '.N...N.',
+                '..KK...'
+            ],
+            pout: [
+                'K.....K',
+                '.E...E.',
+                '.E...E.',
+                '...s...',
+                '.N...N.',
+                '...O...',
+                '..O.O..'
+            ],
+            cry: [
+                'K.....K',
+                '.E...E.',
+                '.E...E.',
+                'W..s..W',
+                'W.N.N.W',
+                '..XX...',
+                '.X..X..'
+            ],
+            dead: [
+                'X.X..X.',
+                '.X....X',
+                'X.X..X.',
+                '..KK...'
+            ]
+        };
+
+        function sceneApplyFace(g, tier) {
+            const faceTpl = SCENE_FRONT_FACES[tier] || SCENE_FRONT_FACES.smile;
+            scenePutPattern(g, 9, 12, faceTpl);
         }
 
-        function sceneFrontFace(g, tier) {
-            if (tier === 'dead') {
-                scenePx(g, 4, 5, 'X'); scenePx(g, 6, 5, 'X'); scenePx(g, 5, 6, 'X'); scenePx(g, 4, 7, 'X'); scenePx(g, 6, 7, 'X');
-                scenePx(g, 9, 5, 'X'); scenePx(g, 11, 5, 'X'); scenePx(g, 10, 6, 'X'); scenePx(g, 9, 7, 'X'); scenePx(g, 11, 7, 'X');
-                scenePx(g, 7, 9, 'M'); scenePx(g, 8, 9, 'M');
-                return;
-            }
-            scenePx(g, 5, 6, 'E'); scenePx(g, 10, 6, 'E');
-            if (tier === 'smile') {
-                scenePx(g, 5, 8, 'M'); scenePx(g, 10, 8, 'M');
-                scenePx(g, 6, 9, 'M'); scenePx(g, 7, 9, 'M'); scenePx(g, 8, 9, 'M'); scenePx(g, 9, 9, 'M');
-            } else if (tier === 'neutral') {
-                scenePx(g, 6, 9, 'M'); scenePx(g, 7, 9, 'M'); scenePx(g, 8, 9, 'M'); scenePx(g, 9, 9, 'M');
-            } else if (tier === 'pout') {
-                scenePx(g, 6, 9, 'M'); scenePx(g, 9, 9, 'M'); scenePx(g, 7, 10, 'M'); scenePx(g, 8, 10, 'M');
-            } else {
-                scenePx(g, 4, 7, 'W'); scenePx(g, 11, 7, 'W');
-                scenePx(g, 7, 8, 'O'); scenePx(g, 8, 8, 'O'); scenePx(g, 7, 9, 'O'); scenePx(g, 8, 9, 'O');
-            }
-        }
-
-        function sceneSideFace(g, tier) {
-            if (tier === 'dead') {
-                scenePx(g, 10, 5, 'X'); scenePx(g, 12, 5, 'X'); scenePx(g, 11, 6, 'X'); scenePx(g, 10, 7, 'X'); scenePx(g, 12, 7, 'X');
-                scenePx(g, 10, 9, 'M'); scenePx(g, 11, 9, 'M');
-                return;
-            }
-            scenePx(g, 11, 6, 'E');
-            if (tier === 'smile') {
-                scenePx(g, 10, 9, 'M'); scenePx(g, 11, 9, 'M'); scenePx(g, 12, 8, 'M');
-            } else if (tier === 'neutral') {
-                scenePx(g, 10, 9, 'M'); scenePx(g, 11, 9, 'M');
-            } else if (tier === 'pout') {
-                scenePx(g, 10, 10, 'M'); scenePx(g, 11, 10, 'M'); scenePx(g, 12, 9, 'M');
-            } else {
-                scenePx(g, 10, 7, 'W');
-                scenePx(g, 10, 8, 'O'); scenePx(g, 11, 8, 'O'); scenePx(g, 10, 9, 'O'); scenePx(g, 11, 9, 'O');
-            }
+        function sceneApplyLieFace(g, gender) {
+            scenePutPattern(g, gender === 'F' ? 6 : 7, 9, [
+                'X.X..X.X',
+                '.X....X.',
+                'X.X..X.X'
+            ]);
         }
 
         function sceneSpriteFill(gp, ch) {
@@ -1389,48 +1464,45 @@
             return out;
         }
 
-        function sceneWorkerSvg(gender, tier, pose, facing) {
-            const key = `${gender}|${tier}|${pose}|${facing || 'front'}`;
+        function sceneWorkerSvg(gender, tier, pose) {
+            const normalizedPose = pose === 'lie' || tier === 'dead' ? 'lie' : 'stand';
+            const key = `${gender}|${tier}|${normalizedPose}`;
             if (SCENE_SPRITE_CACHE.has(key)) return SCENE_SPRITE_CACHE.get(key);
             let inner = '';
-            let viewBox = '0 0 32 48';
-            if (pose === 'lie') {
-                const g = sceneGrid(24, 16);
-                scenePutPattern(g, 0, 0, SCENE_LIE_BODY);
-                if (gender === 'F') {
-                    for (let y = 4; y <= 10; y++) scenePx(g, 0, y, 'H');
-                    scenePx(g, 0, 3, 'K'); scenePx(g, 0, 11, 'K');
-                }
-                scenePx(g, 3, 6, 'X'); scenePx(g, 5, 6, 'X'); scenePx(g, 4, 7, 'X'); scenePx(g, 3, 8, 'X'); scenePx(g, 5, 8, 'X');
+            let viewBox = '0 0 24 60';
+            if (normalizedPose === 'lie') {
+                const g = sceneGrid(60, 24);
+                scenePutPattern(g, 0, 0, gender === 'F' ? SCENE_LIE_BODY_F : SCENE_LIE_BODY_M);
+                sceneApplyLieFace(g, gender);
                 inner = sceneRowsToRects(g, gender);
-                viewBox = '0 0 48 32';
+                viewBox = '0 0 60 24';
             } else {
-                const side = facing === 'side';
-                const g = sceneGrid();
-                scenePutPattern(g, 0, 0, side ? SCENE_SIDE_BODY : SCENE_FRONT_BODY);
-                if (gender === 'F') (side ? sceneFemaleSideHair : sceneFemaleFrontHair)(g);
-                (side ? sceneSideFace : sceneFrontFace)(g, tier);
-                if (pose === 'carry') scenePutPattern(g, 0, 0, SCENE_SIDE_CARRY);
+                const g = sceneBuildStandingSprite(gender, tier);
                 inner = sceneRowsToRects(g, gender);
-                if (pose === 'sit') {
-                    // แคชเชียร์ยืนหลังเคาน์เตอร์: ขานิ่ง ไม่มีเลเยอร์เดิน
-                    const sg = sceneGrid();
-                    scenePutPattern(sg, 0, 18, SCENE_FRONT_LEGS_STAND);
-                    inner += sceneRowsToRects(sg, gender);
-                } else {
-                    const mkLegs = (tpl) => {
-                        const lg = sceneGrid();
-                        scenePutPattern(lg, 0, 18, tpl);
-                        return sceneRowsToRects(lg, gender);
-                    };
-                    inner += `<g class="leg-stand">${mkLegs(side ? SCENE_SIDE_LEGS_STAND : SCENE_FRONT_LEGS_STAND)}</g>`;
-                    inner += `<g class="leg-a">${mkLegs(side ? SCENE_SIDE_LEGS_A : SCENE_FRONT_LEGS_A)}</g>`;
-                    inner += `<g class="leg-b">${mkLegs(side ? SCENE_SIDE_LEGS_B : SCENE_FRONT_LEGS_B)}</g>`;
-                }
             }
             const svg = `<svg class="tlw-sprite" viewBox="${viewBox}" shape-rendering="crispEdges" aria-hidden="true">${inner}</svg>`;
             SCENE_SPRITE_CACHE.set(key, svg);
             return svg;
+        }
+
+        const SCENE_WORKER_ASSET_BASE = 'assets/sprites/workers/clean/';
+        const SCENE_WORKER_ASSET_GENDER = { M: 'male', F: 'female', U: 'male' };
+
+        function sceneWorkerAssetPath(gender, tier) {
+            const genderKey = SCENE_WORKER_ASSET_GENDER[gender] || SCENE_WORKER_ASSET_GENDER.U;
+            const tierKey = ['smile', 'neutral', 'pout', 'cry', 'dead'].includes(tier) ? tier : 'smile';
+            return `${SCENE_WORKER_ASSET_BASE}${genderKey}-${tierKey}.png`;
+        }
+
+        function sceneWorkerGraphic(gender, tier, pose) {
+            const src = sceneWorkerAssetPath(gender, tier);
+            const fallback = sceneWorkerSvg(gender, tier, pose);
+            return `
+                <span class="tlw-sprite-wrap">
+                    <img class="tlw-sprite tlw-sprite-img" src="${src}" alt="" aria-hidden="true" draggable="false" decoding="async" onerror="this.hidden=true;this.nextElementSibling.hidden=false">
+                    <span class="tlw-sprite-fallback" hidden>${fallback}</span>
+                </span>
+            `;
         }
 
         function teamWorkerCard(player, spot, role) {
@@ -1438,21 +1510,18 @@
             const tone = hpTone(hp);
             const tier = sceneFaceTier(hp);
             const gender = sceneGenderKey(player, role);
-            const seated = spot.pose === 'sit';
-            const lying = tier === 'dead' && !seated;
-            const pose = seated ? 'sit' : (lying ? 'lie' : (tier === 'cry' ? 'stand' : (spot.pose || 'stand')));
-            const walking = !seated && !lying && tier !== 'cry' && !!spot.walk;
-            const facing = walking || pose === 'carry' ? 'side' : 'front';
+            const lying = tier === 'dead';
+            const pose = lying ? 'lie' : 'stand';
             const dept = currentBranch === 'TRD' ? getTRDDept(player.name) : 'คลังสินค้า';
             const shortDept = dept || teamRoleTitle(role);
             const aria = `อันดับ ${player.rank} ${player.name} ${shortDept} ${hp} HP ${tone.label}`;
             const cls = ['team-live-worker', role, `tier-${tier}`];
-            if (walking) { cls.push('walking'); if (spot.walk < 0) cls.push('walk-left'); }
-            else if (lying) cls.push('lying');
-            else if (tier !== 'cry') cls.push('idle');
-            let style = `--x:${spot.x}%;--y:${spot.y}%;--hp:${hp}%;--hp-color:${tone.color};--delay:${spot.delay || '0s'}`;
+            if (lying) cls.push('lying');
+            const facing = spot.facing || (spot.x > 50 ? 'left' : 'right');
+            const flipCls = !lying && facing === 'left' ? ' facing-left' : '';
+            const y = lying && Number.isFinite(Number(spot.deadY)) ? Number(spot.deadY) : spot.y;
+            let style = `--x:${spot.x}%;--y:${y}%;--hp:${hp}%;--hp-color:${tone.color};--delay:${spot.delay || '0s'}`;
             if (spot.z) style += `;--z:${spot.z}`;
-            if (walking) style += `;--walk-dist:${spot.walk}cqw;--walk-dur:${spot.dur || 9}s`;
             return `
                 <div class="${cls.join(' ')}" role="group" aria-label="${esc(aria)}" style="${style}">
                     <div class="tlw-mover">
@@ -1460,7 +1529,7 @@
                             <span class="tlw-name">#${player.rank} ${esc(player.name)}</span>
                             <span class="tlw-hp" aria-hidden="true"><span></span></span>
                         </div>
-                        <div class="tlw-flip">${sceneWorkerSvg(gender, tier, pose, facing)}</div>
+                        <div class="tlw-flip${flipCls}">${sceneWorkerGraphic(gender, tier, pose)}</div>
                     </div>
                 </div>
             `;
@@ -1694,8 +1763,8 @@
             `).join('');
             const sceneTitle = currentBranch === 'TRD' ? 'BAKERY SUPPLY · TRD' : 'AKRA WAREHOUSE';
             const liveLabel = currentBranch === 'TRD'
-                ? 'ฉากร้านขายวัตถุดิบเบเกอรี่ แสดงแคชเชียร์หลังเคาน์เตอร์ พนักงานเดินเติมสินค้า และคลังหน้าร้านตามอันดับ HP'
-                : 'ฉากโกดัง AKRA แสดงทีมคลังเดินแบกสินค้าตามอันดับ HP';
+                ? 'ฉากร้านขายวัตถุดิบเบเกอรี่ แสดงพนักงานยืนประจำจุดตามอันดับ HP'
+                : 'ฉากโกดัง AKRA แสดงทีมคลังยืนประจำจุดตามอันดับ HP';
 
             return `
                 <div class="team-live-scene team-live-${currentBranch.toLowerCase()}">
@@ -1903,7 +1972,7 @@
 
             titleEl.innerText = title;
             textEl.innerHTML = message;
-            
+
             const closeModal = () => {
                 document.getElementById('custom-modal-content').classList.replace('scale-100', 'scale-95');
                 setTimeout(() => modal.classList.add('hidden'), 200);
@@ -1965,7 +2034,7 @@
                 if (!user.uid) return;
                 const uidStr = String(user.uid).toLowerCase();
                 const branches = user.branches.split(',').map(b => b.trim().toUpperCase()).filter(b => b);
-                
+
                 USER_DB[uidStr] = branches;
                 const isSystemAdmin = user.dept && user.dept.toLowerCase() === 'admin';
 
@@ -1991,7 +2060,7 @@
                 const url = new URL(window.location.href);
                 if (!url.searchParams.has('openExternalBrowser')) {
                     url.searchParams.set('openExternalBrowser', '1');
-                    
+
                     // Show a premium custom modal with warning and direct external link
                     showModal(
                         "แนะนำให้เปิดผ่าน Chrome / Safari",
@@ -2011,7 +2080,7 @@
                             window.location.href = url.toString();
                         }
                     );
-                    
+
                     // Auto-redirect after 1.5 seconds
                     setTimeout(() => {
                         window.location.href = url.toString();
@@ -2193,10 +2262,10 @@
 
             const userNameDisplay = document.getElementById('showUserName');
             if(userNameDisplay) userNameDisplay.innerText = displayUserName;
-            
+
             const recordDate = document.getElementById('record-date');
             if(recordDate) recordDate.valueAsDate = new Date();
-            
+
             IS_ADMIN = currentRoles.includes('Admin') || currentRoles.includes('admin') ||
                        ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase());
             const _ssoData = JSON.parse(safeStorage.getItem('akra_sso_user_data') || '{}');
@@ -2206,12 +2275,12 @@
             if(can("adminDashboard")) {
                 document.getElementById('tab-admin').classList.remove('hidden');
                 document.getElementById('tab-admin').classList.add('flex');
-                
+
                 document.getElementById('tab-admin-dash').classList.remove('hidden');
                 document.getElementById('tab-admin-dash').classList.add('flex');
-                
-                renderAdminPanel(); 
-                syncAllBranchesForAdmin(); 
+
+                renderAdminPanel();
+                syncAllBranchesForAdmin();
             }
 
             applyRolePermissions();
@@ -2220,7 +2289,7 @@
         function applyRolePermissions() {
             // ดึงสิทธิ์จากฐานข้อมูลพนักงานภายในก่อน
             let permissions = USER_DB[String(currentUser).toLowerCase()] || [];
-            
+
             // เพิ่มสิทธิ์จาก SSO Roles (ถ้ามี AKRA หรือ TRD) เพื่อให้รองรับพนักงานใหม่ที่ยังไม่ได้เพิ่มในแอป KPI
             const ssoBranches = currentRoles.filter(role => ['AKRA', 'TRD'].includes(String(role).toUpperCase()));
             ssoBranches.forEach(b => {
@@ -2273,7 +2342,7 @@
             }
 
             if(permissions.length > 1) document.getElementById('btn-switch-branch').classList.remove('hidden');
-            
+
             if (BRANCH_CONFIG[branch].showZone2) {
                 document.getElementById('zone-2-container').classList.remove('hidden');
                 document.getElementById('dash-vol-card').classList.remove('hidden');
@@ -2283,7 +2352,7 @@
                 document.getElementById('zone-2-container').classList.add('hidden');
                 document.getElementById('dash-vol-card').classList.add('hidden');
                 document.getElementById('dash-customer-notes-container').classList.add('hidden');
-                document.getElementById('dash-err-card').classList.add('col-span-2'); 
+                document.getElementById('dash-err-card').classList.add('col-span-2');
             }
 
             document.getElementById('error-entries-container').innerHTML = '';
@@ -2309,7 +2378,7 @@
             if (btnSync) { btnSync.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1"></i> ซิงค์...'; btnSync.disabled = true; }
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000); 
+            const timeoutId = setTimeout(() => controller.abort(), 12000);
 
             try {
                 // ดึงเฉพาะ 3 เดือนล่าสุด (backend เก่าไม่รู้จัก months จะส่งทั้งหมดตามเดิม ไม่พัง)
@@ -2317,7 +2386,7 @@
                 const response = await fetch(fetchUrl, { signal: controller.signal });
                 clearTimeout(timeoutId);
                 const data = await response.json();
-                
+
                 if (Array.isArray(data)) {
                     safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
                     safeStorage.setItem('kpiData_' + currentBranch + '_ts', String(Date.now()));
@@ -2342,13 +2411,13 @@
         function changeWeek(offset) {
             viewOffsetWeek += offset;
             if(viewOffsetWeek > 0) viewOffsetWeek = 0;
-            
+
             const btnNext = document.getElementById('btn-next-week');
             if (btnNext) {
                 if(viewOffsetWeek === 0) {
-                    btnNext.disabled = true; 
+                    btnNext.disabled = true;
                 } else {
-                    btnNext.disabled = false; 
+                    btnNext.disabled = false;
                 }
             }
             loadDashboardData();
@@ -2356,7 +2425,7 @@
 
         function renderEmpBreakdown() {
             if (!window._empBreakdownData) return;
-            
+
             let empCount = window._empBreakdownData.count;
             let lastEmpCount = window._empBreakdownData.lastCount;
             let filterDept = document.getElementById('dash-dept-filter').value;
@@ -2379,7 +2448,7 @@
                     let percent = (count / maxErr) * 100;
                     let diff = count - lastCount;
                     let trendHtml = '';
-                    
+
                     if (diff > 0) {
                         let pChange = lastCount > 0 ? Math.round((diff / lastCount) * 100) : 100;
                         trendHtml = `<span class="text-[10px] ml-1 text-red-600 bg-red-100 px-1.5 py-0.5 rounded-md font-bold"><i class="fa-solid fa-arrow-trend-up"></i> +${pChange}%</span>`;
@@ -2408,15 +2477,15 @@
 
         function loadDashboardData() {
             const rawData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
-            
+
             const today = new Date();
-            const startOfCurrentWeek = getStartOfWeek(today); 
+            const startOfCurrentWeek = getStartOfWeek(today);
             startOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + (viewOffsetWeek * 7));
             const endOfWeek = new Date(startOfCurrentWeek);
             endOfWeek.setDate(endOfWeek.getDate() + 6);
 
             document.getElementById('dash-week-label').innerText = viewOffsetWeek === 0 ? "สัปดาห์นี้" : (viewOffsetWeek === -1 ? "สัปดาห์ที่แล้ว" : "อดีต");
-            
+
             const formatDateObj = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${String(d.getFullYear()).substring(2)}`;
             document.getElementById('dash-date-range').innerText = `${formatDateObj(startOfCurrentWeek)} - ${formatDateObj(endOfWeek)}`;
 
@@ -2430,8 +2499,8 @@
             let totalVol = 0; let totalErr = 0;
             let empErrCount = {};
             let empHP = {};
-            let categorizedNotes = {}; 
-            
+            let categorizedNotes = {};
+
             BRANCH_CONFIG[currentBranch].employees.forEach(emp => {
                 empErrCount[emp] = 0;
                 empHP[emp] = 100;
@@ -2440,18 +2509,18 @@
 
             let allCustomerNotesHtml = '';
             let totalCustomerNotesCount = 0;
-            let weeklyTasksMap = {}; 
+            let weeklyTasksMap = {};
             let hasAnyNotes = false;
             let errorTypeCounts = {};
             let errorNotesList = {};
-            let teamLostHP = 0; 
+            let teamLostHP = 0;
 
             targetWeekData.forEach(day => {
                 if (day.volume) {
                     totalVol += (day.volume.transfer + day.volume.pickup + day.volume.upcountry + day.volume.inmarket + day.volume.outmarket);
                 }
                 totalErr += (day.errors || []).length;
-                
+
                 if (BRANCH_CONFIG[currentBranch].showZone2 && day.customerNotes && day.customerNotes.trim() !== '') {
                     let notesLines = day.customerNotes.split('\n').filter(line => line.trim() !== '');
                     totalCustomerNotesCount += notesLines.length;
@@ -2467,21 +2536,21 @@
                 }
 
                 (day.errors || []).forEach(e => {
-                    let empName = normalizeEmpName(e.emp); 
+                    let empName = normalizeEmpName(e.emp);
 
                     if(empErrCount[empName] === undefined) {
                         empErrCount[empName] = 0;
                         empHP[empName] = 100;
                         categorizedNotes[empName] = {};
                     }
-                    
+
                     empErrCount[empName]++;
                     if(!categorizedNotes[empName][e.type]) categorizedNotes[empName][e.type] = [];
                     if(errorTypeCounts[e.type] === undefined) {
                         errorTypeCounts[e.type] = 0;
                         errorNotesList[e.type] = [];
                     }
-                    errorTypeCounts[e.type]++; 
+                    errorTypeCounts[e.type]++;
 
                     let penaltyToApply = 0;
                     let cleanNote = e.note;
@@ -2510,7 +2579,7 @@
                         else if (isFixedBefore) penaltyToApply = 5;
                     }
 
-                    teamLostHP += penaltyToApply; 
+                    teamLostHP += penaltyToApply;
                     if(!errorNotesList[e.type].includes(cleanNote)) errorNotesList[e.type].push(cleanNote);
 
                     let stageBadge = '';
@@ -2541,9 +2610,9 @@
             let branchHPPercent = branchStartHP > 0 ? (branchCurrentHP / branchStartHP) * 100 : 0;
 
             let grade = 'F'; let gradeText = 'ต้องปรับปรุงด่วน'; let tColor = { text: 'text-red-500', bar: 'bg-red-500', badge: 'text-red-700 bg-red-100 border-red-200' };
-            if (branchHPPercent === 100) { grade = 'S'; gradeText = 'ยอดเยี่ยมไร้ที่ติ!'; tColor = { text: 'text-green-500', bar: 'bg-green-500', badge: 'text-green-700 bg-green-100 border-green-200' }; } 
-            else if (branchHPPercent >= 90) { grade = 'A'; gradeText = 'ผลงานดีเยี่ยม'; tColor = { text: 'text-blue-500', bar: 'bg-blue-500', badge: 'text-blue-700 bg-blue-100 border-blue-200' }; } 
-            else if (branchHPPercent >= 75) { grade = 'B'; gradeText = 'ตามเกณฑ์มาตรฐาน'; tColor = { text: 'text-yellow-500', bar: 'bg-yellow-400', badge: 'text-yellow-700 bg-yellow-100 border-yellow-300' }; } 
+            if (branchHPPercent === 100) { grade = 'S'; gradeText = 'ยอดเยี่ยมไร้ที่ติ!'; tColor = { text: 'text-green-500', bar: 'bg-green-500', badge: 'text-green-700 bg-green-100 border-green-200' }; }
+            else if (branchHPPercent >= 90) { grade = 'A'; gradeText = 'ผลงานดีเยี่ยม'; tColor = { text: 'text-blue-500', bar: 'bg-blue-500', badge: 'text-blue-700 bg-blue-100 border-blue-200' }; }
+            else if (branchHPPercent >= 75) { grade = 'B'; gradeText = 'ตามเกณฑ์มาตรฐาน'; tColor = { text: 'text-yellow-500', bar: 'bg-yellow-400', badge: 'text-yellow-700 bg-yellow-100 border-yellow-300' }; }
             else if (branchHPPercent >= 60) { grade = 'C'; gradeText = 'เฝ้าระวังข้อผิดพลาด'; tColor = { text: 'text-orange-500', bar: 'bg-orange-400', badge: 'text-orange-700 bg-orange-100 border-orange-200' }; }
 
             document.getElementById('dash-team-kpi').innerHTML = `
@@ -2576,7 +2645,7 @@
                     let badgeClass = tData.status === 'เสร็จแล้ว' ? 'bg-green-100 text-green-700 border-green-200' : (tData.status === 'กำลังทำ' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-600 border-gray-200');
                     let iconClass = tData.status === 'เสร็จแล้ว' ? 'fa-check-circle' : (tData.status === 'กำลังทำ' ? 'fa-spinner fa-spin' : 'fa-circle-minus');
                     let assigneeHtml = (tData.assignee || "").split(',').filter(a=>a).map(a => `<span class="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-md font-bold mt-1.5 mr-1.5 inline-block border border-purple-200 shadow-sm"><i class="fa-solid fa-user mr-1 opacity-70"></i>${esc(a.trim())}</span>`).join('');
-                    
+
                     tasksHtml += `
                         <div class="flex justify-between items-center bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 shadow-sm mb-2">
                             <div class="flex flex-col"><span class="text-gray-800 font-bold text-sm">${esc(tName)}</span><div class="flex flex-wrap">${assigneeHtml}</div></div>
@@ -2590,7 +2659,7 @@
             // Render Notes & Errors
             let allNotesHtml = '';
             const colorThemes = [{bg: 'red-50', border: 'red-100', text: 'red-700', icon: 'red-500'}, {bg: 'orange-50', border: 'orange-100', text: 'orange-700', icon: 'orange-500'}, {bg: 'amber-50', border: 'amber-100', text: 'amber-700', icon: 'amber-500'}, {bg: 'blue-50', border: 'blue-100', text: 'blue-700', icon: 'blue-500'}, {bg: 'purple-50', border: 'purple-100', text: 'purple-700', icon: 'purple-500'}];
-            
+
             if (!hasAnyNotes) {
                 allNotesHtml = '<div class="text-center text-gray-400 text-sm py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200"><i class="fa-regular fa-face-smile-beam text-2xl mb-2 block text-green-400"></i>ไม่มีข้อผิดพลาดในสัปดาห์นี้ 🎉</div>';
             } else {
@@ -2624,10 +2693,10 @@
                 const itemD = new Date(d.date); itemD.setHours(0,0,0,0);
                 if(itemD >= lastWeekStart && itemD <= lastWeekEnd) {
                     lastWeekErrTotal += (d.errors || []).length;
-                    (d.errors || []).forEach(e => { 
-                        let empName = normalizeEmpName(e.emp); 
+                    (d.errors || []).forEach(e => {
+                        let empName = normalizeEmpName(e.emp);
                         if(lastWeekEmpErrCount[empName] === undefined) lastWeekEmpErrCount[empName] = 0;
-                        lastWeekEmpErrCount[empName]++; 
+                        lastWeekEmpErrCount[empName]++;
                     });
                 }
             });
@@ -2646,11 +2715,11 @@
             } else {
                 let topErrorType = ''; let topErrorCount = -1;
                 for (const [type, count] of Object.entries(errorTypeCounts)) { if (count > topErrorCount) { topErrorCount = count; topErrorType = type; } }
-                
+
                 let trendHtml = diffTotal > 0 ? `<span class="text-red-600 font-black">เพิ่มขึ้น ${diffTotal} ครั้ง</span>` : (diffTotal < 0 ? `<span class="text-green-600 font-black">ลดลง ${Math.abs(diffTotal)} ครั้ง</span>` : `<span class="font-bold">เท่ากับสัปดาห์ก่อน</span>`);
-                
+
                 smartSummaryHtml += `<div class="mb-2 pb-2 border-b border-indigo-200/50"><i class="fa-solid fa-chart-pie text-indigo-400 mr-1.5"></i><b>ภาพรวม:</b> สัปดาห์นี้พบความผิดพลาดรวม <b>${totalErr}</b> ครั้ง ซึ่ง${trendHtml}</div>`;
-                
+
                 if(topErrorCount > 0) {
                     let sampleNotes = errorNotesList[topErrorType].slice(0, 2).join(', ').replace(/<span.*?>.*?<\/span>\s*/g, '');
                     let noteContext = sampleNotes ? ` <span class="text-[11px] text-gray-500 block mt-1">(ตย. ${esc(sampleNotes)})</span>` : '';
@@ -2683,18 +2752,18 @@
             const branchFilter = document.getElementById('admin-dash-branch').value;
             const select = document.getElementById('admin-dash-emp');
             const currentVal = select.value;
-            
+
             let emps = [];
             GLOBAL_CONFIG_LIST.forEach(e => {
-                if (!e.name || e.dept === "Admin") return; 
+                if (!e.name || e.dept === "Admin") return;
                 const bArr = e.branches.split(',').map(b => b.trim());
                 if (branchFilter === 'ALL' || bArr.includes(branchFilter)) { emps.push(e.name); }
             });
-            
-            emps = [...new Set(emps)].sort(); 
+
+            emps = [...new Set(emps)].sort();
             let html = '<option value="ALL">พนักงานทุกคน</option>';
             emps.forEach(emp => { html += `<option value="${emp}">${emp}</option>`; });
-            
+
             select.innerHTML = html;
             if (emps.includes(currentVal)) select.value = currentVal; else select.value = 'ALL';
         }
@@ -2748,7 +2817,7 @@
 
         function renderAdminDashboard() {
             if (!can("adminDashboard")) return;
-            
+
             let monthInput = document.getElementById('admin-dash-month').value;
             if (!monthInput) {
                 const today = new Date();
@@ -2762,7 +2831,7 @@
 
             const branchFilter = document.getElementById('admin-dash-branch').value;
             const empFilter = document.getElementById('admin-dash-emp').value;
-            
+
             let allData = [];
             if (branchFilter === 'ALL' || branchFilter === 'AKRA') {
                 let d = JSON.parse(safeStorage.getItem('kpiData_AKRA') || '[]');
@@ -2774,19 +2843,19 @@
                 d.forEach(x => x.sourceBranch = 'TRD');
                 allData = allData.concat(d);
             }
-            
+
             let filteredData = allData.filter(d => {
                 if (!d.date) return false;
                 return d.date.startsWith(monthInput);
             });
             filteredData.sort((a,b) => new Date(b.date) - new Date(a.date));
-            
+
             let totalErrors = 0; let totalVol = 0;
             let empErrorMap = {}; let logsHtmlContent = '';
-            
+
             filteredData.forEach(day => {
                 if (day.volume) totalVol += ((day.volume.transfer||0) + (day.volume.pickup||0) + (day.volume.upcountry||0) + (day.volume.inmarket||0) + (day.volume.outmarket||0));
-                
+
                 (day.errors || []).forEach(err => {
                     let empName = normalizeEmpName(err.emp);
                     if (empFilter !== 'ALL' && empName !== empFilter) return;
@@ -2794,9 +2863,9 @@
                     totalErrors++;
                     if (!empErrorMap[empName]) empErrorMap[empName] = 0;
                     empErrorMap[empName]++;
-                    
+
                     let branchBadge = day.sourceBranch === 'AKRA' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-blue-100 text-blue-700 border-blue-200';
-                    
+
                     logsHtmlContent += `
                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs shadow-sm flex flex-col gap-1.5 transition-colors hover:bg-white">
                             <div class="flex justify-between items-center border-b border-gray-200 pb-1.5">
@@ -2814,22 +2883,22 @@
                     `;
                 });
             });
-            
+
             if (!logsHtmlContent) logsHtmlContent = '<div class="text-center text-gray-400 text-sm py-6 bg-gray-50 border border-dashed border-gray-200 rounded-xl">ไม่พบข้อมูลความผิดพลาดในเดือนนี้ 🎉</div>';
-            
+
             document.getElementById('admin-stat-err').innerText = totalErrors;
             document.getElementById('admin-stat-vol').innerText = totalVol;
             document.getElementById('admin-log-count').innerText = `${totalErrors} รายการ`;
             document.getElementById('admin-data-log').innerHTML = logsHtmlContent;
-            
+
             let topErrorsArr = Object.keys(empErrorMap).map(k => ({ name: k, count: empErrorMap[k] }));
             topErrorsArr.sort((a,b) => b.count - a.count);
-            
+
             let topHtml = '';
             if (topErrorsArr.length === 0) {
                 topHtml = '<div class="text-center text-gray-400 text-xs py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">ยังไม่มีข้อมูลพนักงานทำผิดในเดือนนี้</div>';
             } else {
-                topErrorsArr.slice(0, 5).forEach((p, i) => { 
+                topErrorsArr.slice(0, 5).forEach((p, i) => {
                     let rankIcon = i === 0 ? '<i class="fa-solid fa-crown text-yellow-500 mr-1"></i>' : (i === 1 ? '<i class="fa-solid fa-medal text-gray-400 mr-1"></i>' : (i === 2 ? '<i class="fa-solid fa-medal text-orange-400 mr-1"></i>' : `<span class="text-gray-400 mr-2 font-black">#${i+1}</span>`));
                     topHtml += `
                         <div class="flex justify-between items-center bg-gray-50 border border-gray-100 p-2.5 rounded-lg shadow-sm">
@@ -2847,7 +2916,7 @@
             const monthInput = document.getElementById('admin-dash-month').value;
             const branchFilter = document.getElementById('admin-dash-branch').value;
             const empFilter = document.getElementById('admin-dash-emp').value;
-            
+
             let allData = [];
             if (branchFilter === 'ALL' || branchFilter === 'AKRA') {
                 let d = JSON.parse(safeStorage.getItem('kpiData_AKRA') || '[]');
@@ -2859,13 +2928,13 @@
                 d.forEach(x => x.sourceBranch = 'TRD');
                 allData = allData.concat(d);
             }
-            
+
             let filteredData = allData.filter(d => d.date && d.date.startsWith(monthInput));
             filteredData.sort((a,b) => new Date(b.date) - new Date(a.date));
-            
-            let csvContent = "\uFEFF"; 
+
+            let csvContent = "\uFEFF";
             csvContent += "วันที่,สาขา,ชื่อพนักงาน,ประเภทความผิดพลาด,หมายเหตุ\n";
-            
+
             let hasData = false;
             filteredData.forEach(day => {
                 let safeDate = (day.date || "").split('T')[0];
@@ -2873,20 +2942,20 @@
                 (day.errors || []).forEach(err => {
                     let empName = normalizeEmpName(err.emp);
                     if (empFilter !== 'ALL' && empName !== empFilter) return;
-                    
+
                     hasData = true;
                     let safeType = (err.type || "").replace(/"/g, '""').replace(/\n/g, ' ');
                     let safeNote = (err.note || "").replace(/"/g, '""').replace(/\n/g, ' ');
-                    
+
                     csvContent += `"${safeDate}","${day.sourceBranch}","${empName}","${safeType}","${safeNote}"\n`;
                 });
             });
-            
+
             if (!hasData) {
                 showToast("ไม่มีข้อมูลสำหรับ Export ในรอบนี้", true);
                 return;
             }
-            
+
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -2896,12 +2965,12 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             showToast("ส่งออกไฟล์ CSV สำเร็จ");
         }
 
         // ================= ADMIN FUNCTIONS =================
-        let editingEmpIndex = -1; 
+        let editingEmpIndex = -1;
 
         function getAdminGenderValue() {
             const el = document.querySelector('input[name="admin-input-gender"]:checked');
@@ -2930,7 +2999,7 @@
             const container = document.getElementById('admin-employee-list');
             let html = '';
             let displayedCount = 0;
-            
+
             GLOBAL_CONFIG_LIST.forEach((emp, index) => {
                 const isSystemAdmin = emp.dept && emp.dept.toLowerCase() === 'admin';
                 if (isSystemAdmin) return; // ไม่แสดงรายชื่อ Admin ในหน้าจัดการพนักงาน
@@ -2966,7 +3035,7 @@
                     </div>
                 `;
             });
-            
+
             document.getElementById('admin-emp-count').innerText = `${displayedCount} คน`;
             container.innerHTML = html || '<div class="text-center text-gray-400 text-sm py-4">ไม่พบรายชื่อพนักงาน</div>';
         }
@@ -2974,14 +3043,14 @@
         function editEmployeeFromAdmin(index) {
             editingEmpIndex = index;
             const emp = GLOBAL_CONFIG_LIST[index];
-            
+
             document.getElementById('admin-input-uid').value = emp.uid;
             document.getElementById('admin-input-name').value = emp.name;
-            
+
             const branches = emp.branches.split(',').map(b => b.trim());
             document.getElementById('admin-input-branch-akra').checked = branches.includes('AKRA');
             document.getElementById('admin-input-branch-trd').checked = branches.includes('TRD');
-            
+
             document.getElementById('admin-input-dept').value = emp.dept || '';
             setAdminGenderValue(emp.gender ? String(emp.gender).trim().toUpperCase() : '');
             toggleAdminDept();
@@ -2989,10 +3058,10 @@
             const btnSubmit = document.getElementById('btn-submit-emp');
             btnSubmit.innerHTML = '<i class="fa-solid fa-save mr-2 text-lg"></i> บันทึกการแก้ไข';
             btnSubmit.className = "w-2/3 bg-yellow-100 text-yellow-700 border border-yellow-200 font-bold py-3 rounded-xl text-sm active:bg-yellow-200 shadow-sm transition-all hover:bg-yellow-200 flex justify-center items-center";
-            
+
             document.getElementById('btn-cancel-emp').classList.remove('hidden');
             document.getElementById('btn-cancel-emp').classList.add('flex');
-            
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -3009,7 +3078,7 @@
             const btnSubmit = document.getElementById('btn-submit-emp');
             btnSubmit.innerHTML = '<i class="fa-solid fa-plus mr-2 text-lg"></i> เพิ่มเข้าสู่รายชื่อ';
             btnSubmit.className = "w-full bg-blue-100 text-blue-700 border border-blue-200 font-bold py-3 rounded-xl text-sm active:bg-blue-200 shadow-sm transition-all hover:bg-blue-200 flex justify-center items-center";
-            
+
             document.getElementById('btn-cancel-emp').classList.add('hidden');
             document.getElementById('btn-cancel-emp').classList.remove('flex');
         }
@@ -3033,7 +3102,7 @@
                          GLOBAL_CONFIG_LIST.splice(existsIndex, 1);
                     } else if (existsIndex < editingEmpIndex && editingEmpIndex !== -1) {
                          GLOBAL_CONFIG_LIST.splice(existsIndex, 1);
-                         editingEmpIndex--; 
+                         editingEmpIndex--;
                     } else if (editingEmpIndex === -1) {
                          GLOBAL_CONFIG_LIST.splice(existsIndex, 1);
                     }
@@ -3145,7 +3214,7 @@
         function switchTab(tab) {
             const views = ['view-record', 'view-dashboard', 'view-admin-dash', 'view-admin'];
             const tabs = ['tab-record', 'tab-dashboard', 'tab-admin-dash', 'tab-admin'];
-            
+
             views.forEach(v => {
                 const el = document.getElementById(v);
                 if(el) el.classList.add('hidden');
@@ -3243,7 +3312,7 @@
                             </div>`;
 
             let empsHtml = '';
-            
+
             if (currentBranch === 'TRD') {
                 const deptTheme = {
                     "หน้าร้าน/ในร้าน": { bg: "bg-blue-50/70", border: "border-blue-100", text: "text-blue-700", icon: "fa-store", activeBg: "peer-checked:bg-blue-500", activeBorder: "peer-checked:border-blue-500" },
@@ -3287,14 +3356,14 @@
             const html = `
                 <div class="error-entry bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative transition-all">
                     <button onclick="this.parentElement.remove()" aria-label="ลบรายการความผิดพลาดนี้" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"><i class="fa-solid fa-trash-can text-sm"></i></button>
-                    
+
                     <div class="mb-4 pr-8">
                         <label class="flex items-center text-xs font-bold text-gray-700 mb-1.5 bg-gray-100 w-max px-2 py-1 rounded">
                             <span class="bg-gray-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] mr-1.5">1</span> เลือกผู้กระทำผิด
                         </label>
                         ${empsHtml}
                     </div>
-                    
+
                     <div class="border-t border-gray-100 pt-3">
                         <label class="flex items-center text-xs font-bold text-gray-700 mb-2 bg-gray-100 w-max px-2 py-1 rounded">
                             <span class="bg-gray-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] mr-1.5">2</span> ระบุรายละเอียด
@@ -3387,16 +3456,16 @@
             const html = `
                 <div class="task-entry bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative transition-all">
                     <button onclick="this.parentElement.remove()" aria-label="ลบแผนงานนี้" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"><i class="fa-solid fa-trash-can text-sm"></i></button>
-                    
+
                     <div class="mb-3 pr-8">
                         <input type="text" class="task-name w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50 font-medium placeholder-gray-400" placeholder="ตั้งชื่องาน / แผนงาน..." value="${safeName}">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wider">ผู้รับผิดชอบงาน</label>
                         ${empsHtml}
                     </div>
-                    
+
                     <div class="border-t border-gray-100 pt-3">
                         <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wider">อัปเดตสถานะ</label>
                         <div class="relative">
@@ -3425,7 +3494,7 @@
             endOfWeek.setDate(endOfWeek.getDate() + 6);
 
             const rawData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
-            
+
             startOfWeek.setHours(0,0,0,0);
             endOfWeek.setHours(23,59,59,999);
             let targetWeekData = rawData.filter(d => {
@@ -3434,7 +3503,7 @@
             });
             targetWeekData.sort((a,b) => new Date(a.date) - new Date(b.date));
 
-            let weeklyTasksMap = {}; 
+            let weeklyTasksMap = {};
             targetWeekData.forEach(day => {
                 if(day.tasks && Array.isArray(day.tasks)) {
                     day.tasks.forEach(t => {
@@ -3608,7 +3677,7 @@
             if (await AppVersionGuard.blockIfStale()) return;
             const btn = document.getElementById('btn-save');
             const date = document.getElementById('record-date').value;
-            
+
             let currentErrors = [];
             const entries = document.querySelectorAll('.error-entry');
             let hasIncompleteError = false;
@@ -3672,7 +3741,7 @@
             }
 
             const payload = {
-                branch: currentBranch, 
+                branch: currentBranch,
                 date: date,
                 errors: currentErrors,
                 tasks: currentTasks,
@@ -3683,13 +3752,13 @@
             if(LOG_APP_SCRIPT_URL) {
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2 text-xl"></i> กำลังบันทึกข้อมูล...';
                 btn.disabled = true;
-                
+
                 try {
                     await fetch(LOG_APP_SCRIPT_URL, {
                         method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-                    
+
                     let localData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
                     localData = localData.filter(d => d.date !== date);
                     localData.push(payload);
@@ -3700,7 +3769,7 @@
 
                     clearRecordDraft();
                     document.getElementById('error-entries-container').innerHTML = ''; addErrorEntryRow();
-                    loadTasksForSelectedDate(); 
+                    loadTasksForSelectedDate();
                     if (BRANCH_CONFIG[currentBranch].showZone2) {
                         ['vol-transfer','vol-pickup','vol-upcountry','vol-inmarket','vol-outmarket'].forEach(id => document.getElementById(id).value = '0');
                         ['note-pickup','note-upcountry','note-inmarket','note-outmarket'].forEach(id => document.getElementById(id).value = '');
@@ -3709,7 +3778,7 @@
                     console.warn("⚠️ แจ้งเตือน: ไม่สามารถอัปโหลดข้อมูลไปยัง Sheet ได้ ระบบจะบันทึกข้อมูลไว้ในเครื่อง (ออฟไลน์) เพื่อรอการซิงค์ในครั้งหน้า");
                     showToast("บันทึกโหมดออฟไลน์ (เชื่อมต่อเซิร์ฟเวอร์ไม่ได้)", false);
                 } finally {
-                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2 text-xl"></i> บันทึกข้อมูลส่งเข้าระบบ'; 
+                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2 text-xl"></i> บันทึกข้อมูลส่งเข้าระบบ';
                     btn.disabled = false;
                 }
             }
