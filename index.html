@@ -420,6 +420,15 @@
                 <button onclick="changeWeek(1)" aria-label="ดูสัปดาห์ถัดไป" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400" id="btn-next-week" disabled><i class="fa-solid fa-chevron-right"></i></button>
             </div>
 
+            <!-- Smart Summary / Auto Analysis -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 relative overflow-hidden">
+                <h3 class="font-semibold text-slate-900 mb-2 text-sm relative z-10">สรุปประจำสัปดาห์</h3>
+                <div id="dash-smart-summary" class="text-xs text-gray-700 space-y-1.5 leading-relaxed relative z-10 font-medium"></div>
+            </div>
+
+            <!-- Team KPI Card (secondary context) -->
+            <div id="dash-team-kpi" class="mb-1"></div>
+
             <!-- Overview Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 md-colspan-2">
                 <div class="bg-white p-3 rounded-xl shadow-sm border-b-4 border-red-500 col-span-2 border border-gray-100 flex flex-col justify-center" id="dash-err-card">
@@ -456,42 +465,6 @@
                 <div id="dash-eos-list" class="space-y-3"></div>
             </section>
 
-            <!-- Smart Summary / Auto Analysis -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 relative overflow-hidden">
-                <h3 class="font-semibold text-slate-900 mb-2 text-sm relative z-10">สรุปประจำสัปดาห์</h3>
-                <div id="dash-smart-summary" class="text-xs text-gray-700 space-y-1.5 leading-relaxed relative z-10 font-medium"></div>
-            </div>
-
-            <!-- Team KPI Card (secondary context) -->
-            <div id="dash-team-kpi" class="mb-1"></div>
-
-            <!-- Gamification / Employee Evaluation -->
-            <div class="secondary-team-section bg-white p-4 rounded-xl shadow-sm border md-colspan-2">
-                <h3 class="font-bold text-yellow-800 mb-2 text-sm flex items-center justify-between">
-                    <span class="flex items-center">สถานะทีม (HP)</span>
-                    <span class="text-[9px] font-bold text-yellow-700 bg-yellow-200 px-1.5 py-0.5 rounded-md border border-yellow-300 shadow-sm">เริ่ม 100 HP</span>
-                </h3>
-                <div id="dash-gamification" class="space-y-2"></div>
-            </div>
-
-            <!-- Weekly Tasks -->
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>สถานะแผนงานสัปดาห์นี้</h3>
-                <div id="dash-weekly-tasks" class="space-y-1.5"></div>
-            </div>
-
-            <!-- Employee Breakdown -->
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                <div class="flex justify-between items-center border-b border-gray-50 pb-2 mb-2">
-                    <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-chart-bar text-blue-500 mr-2"></i>แยกตามบุคคล</h3>
-                    <!-- Dropdown Filter สำหรับ TRD จะแสดงขึ้นมาอัตโนมัติ -->
-                    <select id="dash-dept-filter" class="hidden text-[10px] border border-blue-200 rounded-md p-1 outline-none text-blue-700 bg-blue-50 focus:ring-1 focus:ring-blue-500 font-bold shadow-sm cursor-pointer" onchange="renderEmpBreakdown()">
-                        <option value="ALL">ดูรวมทุกแผนก</option>
-                    </select>
-                </div>
-                <div id="dash-emp-breakdown" class="space-y-2.5"></div>
-            </div>
-
             <!-- AKRA Workload Dashboard Card -->
             <div id="dash-workload-container" class="hidden bg-white p-3 rounded-xl shadow-sm border border-gray-100 md-colspan-2">
                 <h3 class="font-bold text-gray-800 mb-3 text-sm border-b border-gray-50 pb-2 flex justify-between items-center">
@@ -524,6 +497,33 @@
                     <span id="dash-customer-notes-count" class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-md text-[9px] font-bold border border-blue-200">0 รายการ</span>
                 </h3>
                 <div id="dash-customer-notes" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+            </div>
+
+            <!-- Weekly Tasks -->
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>สถานะแผนงานสัปดาห์นี้</h3>
+                <div id="dash-weekly-tasks" class="space-y-1.5"></div>
+            </div>
+
+            <!-- Employee Breakdown -->
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center border-b border-gray-50 pb-2 mb-2">
+                    <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-chart-bar text-blue-500 mr-2"></i>แยกตามบุคคล</h3>
+                    <!-- Dropdown Filter สำหรับ TRD จะแสดงขึ้นมาอัตโนมัติ -->
+                    <select id="dash-dept-filter" class="hidden text-[10px] border border-blue-200 rounded-md p-1 outline-none text-blue-700 bg-blue-50 focus:ring-1 focus:ring-blue-500 font-bold shadow-sm cursor-pointer" onchange="renderEmpBreakdown()">
+                        <option value="ALL">ดูรวมทุกแผนก</option>
+                    </select>
+                </div>
+                <div id="dash-emp-breakdown" class="space-y-2.5"></div>
+            </div>
+
+            <!-- Gamification / Employee Evaluation -->
+            <div class="secondary-team-section bg-white p-4 rounded-xl shadow-sm border md-colspan-2">
+                <h3 class="font-bold text-yellow-800 mb-2 text-sm flex items-center justify-between">
+                    <span class="flex items-center">สถานะทีม (HP)</span>
+                    <span class="text-[9px] font-bold text-yellow-700 bg-yellow-200 px-1.5 py-0.5 rounded-md border border-yellow-300 shadow-sm">เริ่ม 100 HP</span>
+                </h3>
+                <div id="dash-gamification" class="space-y-2"></div>
             </div>
             <div class="h-4"></div>
         </div>
@@ -733,7 +733,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260711.03";
+        const CURRENT_VERSION = "20260711.04";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -2455,7 +2455,7 @@
             }
             
             container.innerHTML = onDuty.map(emp => {
-                const val = currentValues[emp] || { capacity: 10, outbound: 0, inbound: 0, transfer: 0, shared: 0, note: "" };
+                const val = currentValues[emp] || { capacity: 0, outbound: 0, inbound: 0, transfer: 0, shared: 0, note: "" };
                 const total = val.outbound + val.inbound + val.transfer + val.shared;
                 let totalClass = "text-gray-500";
                 if (total > val.capacity) totalClass = "text-red-600 font-bold";
@@ -4418,7 +4418,7 @@
                 if (Object.values(cores).some(list => Array.isArray(list) && list.length > 0)) return true;
             }
             if (draft.akraWorkload && Array.isArray(draft.akraWorkload) && draft.akraWorkload.length > 0) {
-                if (draft.akraWorkload.some(w => w.capacity !== 10 || w.outbound > 0 || w.inbound > 0 || w.transfer > 0 || w.shared > 0 || (w.note || '').trim() !== '')) return true;
+                if (draft.akraWorkload.some(w => w.capacity !== 0 || w.outbound > 0 || w.inbound > 0 || w.transfer > 0 || w.shared > 0 || (w.note || '').trim() !== '')) return true;
             }
             return false;
         }
