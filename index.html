@@ -9,7 +9,19 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Prompt', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        :root {
+            --app-bg: #f6f7f9;
+            --app-surface: #ffffff;
+            --app-surface-muted: #f8fafc;
+            --app-border: #e2e8f0;
+            --app-text: #0f172a;
+            --app-muted: #64748b;
+            --app-primary: #1d4ed8;
+            --app-primary-dark: #1e40af;
+            --app-radius: 0.625rem;
+            --app-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+        body { font-family: 'Prompt', sans-serif; background-color: var(--app-bg); color: var(--app-text); -webkit-tap-highlight-color: rgba(29, 78, 216, 0.12); touch-action: manipulation; }
         .enterprise-card { border: 1px solid #dbe3ee; border-radius: 0.875rem; background: #ffffff; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
         .executive-metric { position: relative; overflow: hidden; border: 1px solid #dbe3ee; border-radius: 0.75rem; background: #ffffff; padding: 0.875rem; }
         .executive-metric::before { content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 0.25rem; background: var(--metric-accent, #2563eb); }
@@ -145,6 +157,46 @@
             .md-grid-2:not(.hidden) > * + * { margin-top: 0 !important; }
             .md-grid-2:not(.hidden) > .md-colspan-2 { grid-column: span 2 / span 2; }
         }
+        /* Minimal operations visual layer. Keeps existing DOM and behavior contracts intact. */
+        .app-header { background: rgba(255,255,255,0.96); color: var(--app-text); border-color: var(--app-border); box-shadow: 0 1px 0 rgba(15,23,42,0.05); backdrop-filter: blur(12px); }
+        .app-header .app-brand-mark { color: var(--app-primary); }
+        .app-header .app-branch { color: #334155; }
+        .app-header .app-user-row { color: var(--app-muted); }
+        .app-header #showUserName { color: #334155; }
+        .app-header #btn-sync, .app-header #btn-switch-branch { min-height: 2.5rem; background: #fff; color: #334155; border: 1px solid var(--app-border); box-shadow: none; }
+        .app-header #btn-sync:hover, .app-header #btn-switch-branch:hover { background: var(--app-surface-muted); border-color: #cbd5e1; }
+        .branch-selector { background: #f8fafc; color: var(--app-text); }
+        .branch-selector .selector-icon { color: var(--app-primary); }
+        .branch-selector #selector-user-name, .branch-selector .selector-caption { color: var(--app-muted); }
+        .branch-selector #btn-branch-akra, .branch-selector #btn-branch-trd { min-height: 3.25rem; border: 1px solid var(--app-border); border-radius: var(--app-radius); background: #fff; color: #1e293b; box-shadow: var(--app-shadow); }
+        .branch-selector #btn-branch-akra:hover, .branch-selector #btn-branch-trd:hover { border-color: #94a3b8; background: var(--app-surface-muted); }
+        #app-content { width: 100%; }
+        #app-content :where(h1,h2,h3,h4) { color: var(--app-text); letter-spacing: 0; text-wrap: balance; }
+        #app-content :where(.font-black,.font-extrabold) { font-weight: 700; }
+        #app-content :where(.text-gray-400,.text-gray-500,.text-slate-500) { color: var(--app-muted); }
+        #app-content :where(.bg-white.rounded-xl, .enterprise-card, .team-live-scene, .team-scene) { border: 1px solid var(--app-border); border-radius: var(--app-radius); box-shadow: var(--app-shadow); }
+        #app-content :where(.border-l-4,.border-b-4) { border-left-width: 1px; border-bottom-width: 1px; }
+        #app-content :where(input,select,textarea) { border-color: #cbd5e1; border-radius: 0.5rem; background: #fff; color: var(--app-text); }
+        #app-content :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea) { min-height: 2.75rem; }
+        #app-content :where(input,select,textarea)::placeholder { color: #94a3b8; }
+        #app-content .workload-row :where(.wl-outbound,.wl-inbound,.wl-transfer,.wl-shared) { min-height: 0; border-color: transparent; border-radius: 0; background: transparent; }
+        #app-content .workload-row .wl-note { min-height: 2rem; border-color: transparent; border-radius: 0; background: transparent; }
+        #app-content :where(button) { border-radius: 0.5rem; box-shadow: none; }
+        #app-content :where(.bg-gradient-to-r,.bg-gradient-to-br) { background-image: none; }
+        #btn-save, #btn-save-admin { background: var(--app-primary); border-color: var(--app-primary-dark); box-shadow: 0 4px 12px rgba(29,78,216,0.18); }
+        #btn-save:hover, #btn-save-admin:hover { background: var(--app-primary-dark); }
+        #dash-smart-summary { color: #334155; }
+        .secondary-team-section { background: #fff; border-color: var(--app-border); }
+        .app-nav { background: rgba(255,255,255,0.97); border-color: var(--app-border); box-shadow: 0 -1px 0 rgba(15,23,42,0.05); backdrop-filter: blur(12px); }
+        .app-nav button { min-height: 3.5rem; color: var(--app-muted); }
+        .app-nav .tab-active { color: var(--app-primary); border-bottom-color: var(--app-primary); }
+        .app-nav .tab-inactive { color: var(--app-muted); }
+        .app-nav span { font-size: 0.75rem; font-weight: 500; letter-spacing: 0; }
+        @media (min-width: 768px) {
+            .app-header { padding-inline: max(1.5rem, calc((100vw - 64rem) / 2)); }
+            #app-content { max-width: 64rem; }
+            .app-nav > div { max-width: 40rem; margin-inline: auto; }
+        }
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
@@ -164,9 +216,9 @@
     </div>
 
     <!-- ================= VIEW: BRANCH SELECTOR ================= -->
-    <div id="view-selector" class="hidden fixed inset-0 bg-blue-600 z-50 flex flex-col items-center justify-center p-6 text-white">
+    <div id="view-selector" class="branch-selector hidden fixed inset-0 z-50 flex flex-col items-center justify-center p-6">
         <div class="text-center mb-8">
-            <i class="fa-solid fa-warehouse text-6xl mb-4"></i>
+            <i class="selector-icon fa-solid fa-warehouse text-5xl mb-5"></i>
             <h1 class="text-2xl font-bold">กรุณาเลือกสาขาที่ต้องการเข้า</h1>
             <p class="text-blue-100 text-sm mt-2" id="selector-user-name">ยินดีต้อนรับ</p>
         </div>
@@ -178,25 +230,25 @@
                 <i class="fa-solid fa-store-alt mr-2"></i> สาขา TRD (หน้าร้าน)
             </button>
         </div>
-        <p class="mt-10 text-[10px] text-blue-300">Warehouse Management System</p>
+        <p class="selector-caption mt-10 text-xs">ระบบติดตามผลการปฏิบัติงาน</p>
     </div>
 
     <!-- Header -->
-    <header class="bg-slate-900 text-white p-4 shadow-md sticky top-0 z-10 flex flex-col space-y-2 border-b border-slate-700">
+    <header class="app-header p-4 sticky top-0 z-10 flex flex-col space-y-2 border-b">
         <div class="flex justify-between items-center">
-            <h1 class="text-xl font-bold"><i class="fa-solid fa-clipboard-check mr-2"></i> KPI <span id="header-branch-name" class="text-yellow-300">AKRA</span></h1>
+            <h1 class="text-xl font-semibold"><i class="app-brand-mark fa-solid fa-chart-simple mr-2"></i>KPI Tracker <span class="text-slate-300 mx-1">/</span> <span id="header-branch-name" class="app-branch">AKRA</span></h1>
             <button onclick="syncDataFromSheet()" id="btn-sync" aria-label="ซิงค์ข้อมูลล่าสุด" class="text-white bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow active:bg-slate-600 transition-colors border border-slate-600">
                 <i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล
             </button>
         </div>
-        <div class="flex justify-between items-center text-xs text-slate-300">
+        <div class="app-user-row flex justify-between items-center text-xs">
             <div><i class="fa-solid fa-user mr-1"></i> ผู้ใช้งาน: <span id="showUserName" class="font-semibold text-white">กำลังตรวจสอบ...</span></div>
             <button id="btn-switch-branch" onclick="safeSessionStorage.removeItem('active_branch'); location.reload();" aria-label="สลับสาขา" class="hidden bg-blue-800 px-2 py-0.5 rounded text-white active:bg-blue-900"><i class="fa-solid fa-right-left mr-1"></i> สลับสาขา</button>
         </div>
     </header>
 
     <!-- Main Content Area -->
-    <main id="app-content" class="p-4 max-w-md mx-auto hidden md:max-w-3xl lg:max-w-5xl md:p-6">
+    <main id="app-content" class="p-4 max-w-md mx-auto hidden md:max-w-3xl lg:max-w-5xl md:p-6" tabindex="-1">
 
         <!-- ================= VIEW: RECORD ================= -->
         <div id="view-record" class="space-y-6 md-grid-2">
@@ -324,10 +376,10 @@
                 <div class="border-b border-slate-100 pb-3 mb-4">
                     <div class="flex items-start justify-between gap-3">
                         <div>
-                            <h2 id="eos-title" class="text-lg font-bold text-slate-900"><i class="fa-solid fa-briefcase text-slate-600 mr-2"></i>Daily — End of Shift</h2>
+                            <h2 id="eos-title" class="text-lg font-semibold text-slate-900">สรุปปลายกะ</h2>
                             <p class="text-[11px] text-slate-500 mt-1">สรุปปลายกะสำหรับผู้บริหาร เน้นผลลัพธ์ ประเด็น และสิ่งที่ต้องติดตาม</p>
                         </div>
-                        <span class="shrink-0 text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-1 rounded-md">EVENING BRIEF</span>
+                        <span class="shrink-0 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 px-2 py-1 rounded-md">รายงานประจำวัน</span>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -368,11 +420,8 @@
                 <button onclick="changeWeek(1)" aria-label="ดูสัปดาห์ถัดไป" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400" id="btn-next-week" disabled><i class="fa-solid fa-chevron-right"></i></button>
             </div>
 
-            <!-- Team KPI Card -->
-            <div id="dash-team-kpi" class="mb-1"></div>
-
             <!-- Overview Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 md-colspan-2">
                 <div class="bg-white p-3 rounded-xl shadow-sm border-b-4 border-red-500 col-span-2 border border-gray-100 flex flex-col justify-center" id="dash-err-card">
                     <p class="text-[11px] text-gray-500 font-bold mb-1 uppercase tracking-wider">ยอดความผิดพลาดรวม</p>
                     <div class="flex items-end justify-between">
@@ -398,8 +447,8 @@
             <section class="enterprise-card p-4 md-colspan-2" aria-labelledby="dash-eos-title">
                 <div class="flex flex-wrap justify-between items-start gap-3 border-b border-slate-100 pb-3 mb-3">
                     <div>
-                        <p class="text-[10px] font-bold tracking-[0.16em] text-slate-500">EXECUTIVE OPERATIONS BRIEF</p>
-                        <h3 id="dash-eos-title" class="font-bold text-slate-900 text-base mt-1"><i class="fa-solid fa-briefcase text-slate-600 mr-2"></i>Daily — End of Shift</h3>
+                        <p class="text-xs font-medium text-slate-500">สรุปการปฏิบัติงาน</p>
+                        <h3 id="dash-eos-title" class="font-semibold text-slate-900 text-base mt-1">รายงานปลายกะประจำวัน</h3>
                     </div>
                     <span id="dash-eos-status" class="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md">ยังไม่มีรายงาน</span>
                 </div>
@@ -408,16 +457,18 @@
             </section>
 
             <!-- Smart Summary / Auto Analysis -->
-            <div class="bg-gradient-to-br from-[#eef2ff] to-[#f5f3ff] p-3 rounded-xl shadow-sm border border-indigo-100 relative overflow-hidden">
-                <div class="absolute top-0 right-0 -mt-2 -mr-2 text-indigo-100 opacity-40"><i class="fa-solid fa-wand-magic-sparkles text-5xl"></i></div>
-                <h3 class="font-bold text-indigo-800 mb-2 text-sm flex items-center relative z-10"><i class="fa-solid fa-lightbulb mr-2 text-indigo-500"></i>บทวิเคราะห์อัจฉริยะ</h3>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 relative overflow-hidden">
+                <h3 class="font-semibold text-slate-900 mb-2 text-sm relative z-10">สรุปประจำสัปดาห์</h3>
                 <div id="dash-smart-summary" class="text-xs text-gray-700 space-y-1.5 leading-relaxed relative z-10 font-medium"></div>
             </div>
 
+            <!-- Team KPI Card (secondary context) -->
+            <div id="dash-team-kpi" class="mb-1"></div>
+
             <!-- Gamification / Employee Evaluation -->
-            <div class="bg-gradient-to-br from-[#fffbeb] to-[#fff7ed] p-3 rounded-xl shadow-sm border border-yellow-200 md-colspan-2">
+            <div class="secondary-team-section bg-white p-4 rounded-xl shadow-sm border md-colspan-2">
                 <h3 class="font-bold text-yellow-800 mb-2 text-sm flex items-center justify-between">
-                    <span class="flex items-center"><i class="fa-solid fa-trophy mr-2 text-yellow-500"></i>จัดอันดับทีม (HP)</span>
+                    <span class="flex items-center">สถานะทีม (HP)</span>
                     <span class="text-[9px] font-bold text-yellow-700 bg-yellow-200 px-1.5 py-0.5 rounded-md border border-yellow-300 shadow-sm">เริ่ม 100 HP</span>
                 </h3>
                 <div id="dash-gamification" class="space-y-2"></div>
@@ -479,11 +530,11 @@
 
         <!-- ================= VIEW: ADMIN DASHBOARD (ภาพรวมผู้บริหาร) ================= -->
         <div id="view-admin-dash" class="hidden space-y-4 pb-6 md-grid-2">
-            <div class="bg-gradient-to-br from-indigo-600 to-blue-700 p-4 rounded-xl shadow-md text-white md-colspan-2">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 md-colspan-2">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <h2 class="text-lg font-bold mb-1"><i class="fa-solid fa-chart-line text-blue-200 mr-2"></i>ภาพรวมผู้บริหาร</h2>
-                        <p class="text-[11px] text-blue-100 opacity-90">ข้อมูลความผิดพลาดเชิงลึกแบบรายเดือน</p>
+                        <h2 class="text-lg font-semibold mb-1 text-slate-900">ภาพรวมผู้บริหาร</h2>
+                        <p class="text-sm text-slate-500">ข้อมูลความผิดพลาดเชิงลึกแบบรายเดือน</p>
                     </div>
                     <!-- ปุ่ม Export CSV -->
                     <button onclick="exportAdminDataCSV()" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 transition-all text-white px-3 py-2 rounded-lg text-xs font-bold shadow-md flex items-center border border-emerald-400">
@@ -631,7 +682,7 @@
     </main>
 
     <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 p-1.5 pb-safe z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+    <nav class="app-nav fixed bottom-0 w-full border-t p-1.5 pb-safe z-40" aria-label="เมนูหลัก">
         <div class="flex justify-around w-full max-w-md mx-auto">
         <button onclick="switchTab('record')" id="tab-record" class="flex flex-col items-center p-2 flex-1 tab-active transition-colors rounded-xl mx-0.5 hover:bg-blue-50">
             <i class="fa-solid fa-pen-to-square text-xl mb-1 mt-0.5"></i>
@@ -682,7 +733,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260711.02";
+        const CURRENT_VERSION = "20260711.03";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -3032,7 +3083,7 @@
             `;
 
             if (reports.length === 0) {
-                list.innerHTML = '<div class="text-center text-slate-500 text-sm py-6 bg-slate-50 rounded-lg border border-dashed border-slate-300">ยังไม่มี Daily End-of-Shift ในสัปดาห์นี้</div>';
+                list.innerHTML = '<div class="text-center text-slate-500 text-sm py-6 bg-slate-50 rounded-lg border border-dashed border-slate-300">ยังไม่มีรายงานปลายกะในสัปดาห์นี้</div>';
                 return;
             }
 
@@ -4251,9 +4302,9 @@
                         <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wider">อัปเดตสถานะ</label>
                         <div class="relative">
                             <select class="task-status w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50 font-bold appearance-none cursor-pointer">
-                                <option value="ยังไม่เริ่ม" ${status === 'ยังไม่เริ่ม' ? 'selected' : ''} class="text-gray-500">⚪ ยังไม่เริ่ม</option>
-                                <option value="กำลังทำ" ${status === 'กำลังทำ' ? 'selected' : ''} class="text-blue-500">🔵 กำลังดำเนินการ</option>
-                                <option value="เสร็จแล้ว" ${status === 'เสร็จแล้ว' ? 'selected' : ''} class="text-green-500">🟢 เสร็จสมบูรณ์</option>
+                                <option value="ยังไม่เริ่ม" ${status === 'ยังไม่เริ่ม' ? 'selected' : ''}>ยังไม่เริ่ม</option>
+                                <option value="กำลังทำ" ${status === 'กำลังทำ' ? 'selected' : ''}>กำลังดำเนินการ</option>
+                                <option value="เสร็จแล้ว" ${status === 'เสร็จแล้ว' ? 'selected' : ''}>เสร็จสมบูรณ์</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
                                 <i class="fa-solid fa-chevron-down text-xs"></i>
