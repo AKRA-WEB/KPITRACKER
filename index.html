@@ -9,7 +9,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        body { font-family: 'Prompt', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        .enterprise-card { border: 1px solid #dbe3ee; border-radius: 0.875rem; background: #ffffff; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
+        .executive-metric { position: relative; overflow: hidden; border: 1px solid #dbe3ee; border-radius: 0.75rem; background: #ffffff; padding: 0.875rem; }
+        .executive-metric::before { content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 0.25rem; background: var(--metric-accent, #2563eb); }
         .tab-active { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
         .tab-inactive { color: #9ca3af; }
         .toast { transition: opacity 0.3s, transform 0.3s; transform: translateY(100%); opacity: 0; }
@@ -179,14 +182,14 @@
     </div>
 
     <!-- Header -->
-    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex flex-col space-y-2">
+    <header class="bg-slate-900 text-white p-4 shadow-md sticky top-0 z-10 flex flex-col space-y-2 border-b border-slate-700">
         <div class="flex justify-between items-center">
             <h1 class="text-xl font-bold"><i class="fa-solid fa-clipboard-check mr-2"></i> KPI <span id="header-branch-name" class="text-yellow-300">AKRA</span></h1>
-            <button onclick="syncDataFromSheet()" id="btn-sync" aria-label="ซิงค์ข้อมูลล่าสุด" class="text-white bg-blue-700 px-3 py-1 rounded-full text-xs font-semibold shadow active:bg-blue-800 transition-colors">
+            <button onclick="syncDataFromSheet()" id="btn-sync" aria-label="ซิงค์ข้อมูลล่าสุด" class="text-white bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow active:bg-slate-600 transition-colors border border-slate-600">
                 <i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล
             </button>
         </div>
-        <div class="flex justify-between items-center text-xs text-blue-200">
+        <div class="flex justify-between items-center text-xs text-slate-300">
             <div><i class="fa-solid fa-user mr-1"></i> ผู้ใช้งาน: <span id="showUserName" class="font-semibold text-white">กำลังตรวจสอบ...</span></div>
             <button id="btn-switch-branch" onclick="safeSessionStorage.removeItem('active_branch'); location.reload();" aria-label="สลับสาขา" class="hidden bg-blue-800 px-2 py-0.5 rounded text-white active:bg-blue-900"><i class="fa-solid fa-right-left mr-1"></i> สลับสาขา</button>
         </div>
@@ -316,6 +319,37 @@
                 </button>
             </div>
 
+            <!-- Daily End-of-Shift Executive Brief -->
+            <section class="enterprise-card p-4 md-colspan-2 border-l-4 border-l-slate-700" aria-labelledby="eos-title">
+                <div class="border-b border-slate-100 pb-3 mb-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <h2 id="eos-title" class="text-lg font-bold text-slate-900"><i class="fa-solid fa-briefcase text-slate-600 mr-2"></i>Daily — End of Shift</h2>
+                            <p class="text-[11px] text-slate-500 mt-1">สรุปปลายกะสำหรับผู้บริหาร เน้นผลลัพธ์ ประเด็น และสิ่งที่ต้องติดตาม</p>
+                        </div>
+                        <span class="shrink-0 text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-1 rounded-md">EVENING BRIEF</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="eos-summary" class="block text-sm font-bold text-slate-700 mb-1.5">ผลงานและสิ่งที่เสร็จวันนี้</label>
+                        <textarea id="eos-summary" name="endOfShiftSummary" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="สรุปผลลัพธ์สำคัญ ปริมาณงาน หรือ milestone ที่เสร็จ..."></textarea>
+                    </div>
+                    <div>
+                        <label for="eos-issues" class="block text-sm font-bold text-slate-700 mb-1.5">ปัญหา / อุปสรรคที่พบ</label>
+                        <textarea id="eos-issues" name="endOfShiftIssues" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="ระบุผลกระทบและสาเหตุที่ทราบ หากไม่มีให้เว้นว่าง..."></textarea>
+                    </div>
+                    <div>
+                        <label for="eos-actions" class="block text-sm font-bold text-slate-700 mb-1.5">แนวทางแก้ไข / การตอบสนอง</label>
+                        <textarea id="eos-actions" name="endOfShiftActions" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="สิ่งที่ดำเนินการแล้ว หรือแนวทางแก้ในขั้นถัดไป..."></textarea>
+                    </div>
+                    <div>
+                        <label for="eos-followups" class="block text-sm font-bold text-slate-700 mb-1.5">ระบบงาน / เรื่องที่ต้องติดตาม</label>
+                        <textarea id="eos-followups" name="endOfShiftFollowUps" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="ระบุระบบ งานค้าง ผู้รับช่วงต่อ หรือประเด็นที่ต้องติดตามพรุ่งนี้..."></textarea>
+                    </div>
+                </div>
+            </section>
+
             <button onclick="saveDailyRecord()" id="btn-save" class="sticky-save-button md-colspan-2 w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-lg py-4 rounded-xl shadow-lg active:scale-[0.98] transition-transform flex justify-center items-center border border-blue-800">
                 <i class="fa-solid fa-cloud-arrow-up mr-2 text-xl"></i> บันทึกข้อมูลส่งเข้าระบบ
             </button>
@@ -338,7 +372,7 @@
             <div id="dash-team-kpi" class="mb-1"></div>
 
             <!-- Overview Cards -->
-            <div class="grid grid-cols-2 gap-2.5 mt-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                 <div class="bg-white p-3 rounded-xl shadow-sm border-b-4 border-red-500 col-span-2 border border-gray-100 flex flex-col justify-center" id="dash-err-card">
                     <p class="text-[11px] text-gray-500 font-bold mb-1 uppercase tracking-wider">ยอดความผิดพลาดรวม</p>
                     <div class="flex items-end justify-between">
@@ -359,6 +393,19 @@
                      <p class="text-[9px] text-gray-500 font-medium mt-2 pt-1.5 border-t border-gray-50">อัตราผิด: <span id="dash-err-percent" class="font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">0%</span></p>
                 </div>
             </div>
+
+            <!-- Executive End-of-Shift Snapshot -->
+            <section class="enterprise-card p-4 md-colspan-2" aria-labelledby="dash-eos-title">
+                <div class="flex flex-wrap justify-between items-start gap-3 border-b border-slate-100 pb-3 mb-3">
+                    <div>
+                        <p class="text-[10px] font-bold tracking-[0.16em] text-slate-500">EXECUTIVE OPERATIONS BRIEF</p>
+                        <h3 id="dash-eos-title" class="font-bold text-slate-900 text-base mt-1"><i class="fa-solid fa-briefcase text-slate-600 mr-2"></i>Daily — End of Shift</h3>
+                    </div>
+                    <span id="dash-eos-status" class="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md">ยังไม่มีรายงาน</span>
+                </div>
+                <div id="dash-eos-metrics" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-4"></div>
+                <div id="dash-eos-list" class="space-y-3"></div>
+            </section>
 
             <!-- Smart Summary / Auto Analysis -->
             <div class="bg-gradient-to-br from-[#eef2ff] to-[#f5f3ff] p-3 rounded-xl shadow-sm border border-indigo-100 relative overflow-hidden">
@@ -635,7 +682,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260711.01";
+        const CURRENT_VERSION = "20260711.02";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -2918,6 +2965,92 @@
             document.getElementById('dash-emp-breakdown').innerHTML = empHtml;
         }
 
+        function getEndOfShiftFormValue(id) {
+            const el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        }
+
+        function collectEndOfShiftBrief() {
+            return {
+                summary: getEndOfShiftFormValue('eos-summary'),
+                issues: getEndOfShiftFormValue('eos-issues'),
+                actions: getEndOfShiftFormValue('eos-actions'),
+                followUps: getEndOfShiftFormValue('eos-followups')
+            };
+        }
+
+        function normalizeEndOfShiftBrief(brief) {
+            const source = brief && typeof brief === 'object' && !Array.isArray(brief) ? brief : {};
+            return {
+                summary: typeof source.summary === 'string' ? source.summary : '',
+                issues: typeof source.issues === 'string' ? source.issues : '',
+                actions: typeof source.actions === 'string' ? source.actions : '',
+                followUps: typeof source.followUps === 'string' ? source.followUps : ''
+            };
+        }
+
+        function hasEndOfShiftContent(brief) {
+            const normalized = normalizeEndOfShiftBrief(brief);
+            return ['summary', 'issues', 'actions', 'followUps'].some(key => normalized[key].trim() !== '');
+        }
+
+        function clearEndOfShiftForm() {
+            ['eos-summary', 'eos-issues', 'eos-actions', 'eos-followups'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+        }
+
+        function renderEndOfShiftDashboard(targetWeekData) {
+            const reports = targetWeekData
+                .filter(day => hasEndOfShiftContent(day.endOfShift))
+                .map(day => ({ ...day, endOfShift: normalizeEndOfShiftBrief(day.endOfShift) }))
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+            const issueDays = reports.filter(day => (day.endOfShift.issues || '').trim() !== '').length;
+            const followUpDays = reports.filter(day => (day.endOfShift.followUps || '').trim() !== '').length;
+            const completedTasks = targetWeekData.reduce((sum, day) => sum + (day.tasks || []).filter(task => task.status === 'เสร็จแล้ว').length, 0);
+            const status = document.getElementById('dash-eos-status');
+            const metrics = document.getElementById('dash-eos-metrics');
+            const list = document.getElementById('dash-eos-list');
+
+            status.className = reports.length === 0
+                ? 'text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md'
+                : (issueDays || followUpDays
+                    ? 'text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md'
+                    : 'text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md');
+            status.innerHTML = reports.length === 0
+                ? '<i class="fa-regular fa-circle mr-1"></i>ยังไม่มีรายงาน'
+                : (issueDays || followUpDays
+                    ? '<i class="fa-solid fa-triangle-exclamation mr-1"></i>มีประเด็นต้องติดตาม'
+                    : '<i class="fa-solid fa-circle-check mr-1"></i>สถานการณ์ปกติ');
+
+            metrics.innerHTML = `
+                <div class="executive-metric" style="--metric-accent:#2563eb"><p class="text-[10px] font-bold text-slate-500">รายงานปลายกะ</p><p class="text-2xl font-black text-slate-900 mt-1">${reports.length}<span class="text-xs font-semibold text-slate-400 ml-1">วัน</span></p></div>
+                <div class="executive-metric" style="--metric-accent:#16a34a"><p class="text-[10px] font-bold text-slate-500">งานเสร็จแล้ว</p><p class="text-2xl font-black text-slate-900 mt-1">${completedTasks}<span class="text-xs font-semibold text-slate-400 ml-1">งาน</span></p></div>
+                <div class="executive-metric" style="--metric-accent:#dc2626"><p class="text-[10px] font-bold text-slate-500">วันที่พบปัญหา</p><p class="text-2xl font-black text-slate-900 mt-1">${issueDays}<span class="text-xs font-semibold text-slate-400 ml-1">วัน</span></p></div>
+                <div class="executive-metric" style="--metric-accent:#d97706"><p class="text-[10px] font-bold text-slate-500">วันที่มี Follow-up</p><p class="text-2xl font-black text-slate-900 mt-1">${followUpDays}<span class="text-xs font-semibold text-slate-400 ml-1">วัน</span></p></div>
+            `;
+
+            if (reports.length === 0) {
+                list.innerHTML = '<div class="text-center text-slate-500 text-sm py-6 bg-slate-50 rounded-lg border border-dashed border-slate-300">ยังไม่มี Daily End-of-Shift ในสัปดาห์นี้</div>';
+                return;
+            }
+
+            const fields = [
+                ['summary', 'ผลลัพธ์วันนี้', 'fa-circle-check', 'text-emerald-700', 'bg-emerald-50 border-emerald-100'],
+                ['issues', 'ปัญหาที่พบ', 'fa-triangle-exclamation', 'text-red-700', 'bg-red-50 border-red-100'],
+                ['actions', 'แนวทางแก้ไข', 'fa-screwdriver-wrench', 'text-blue-700', 'bg-blue-50 border-blue-100'],
+                ['followUps', 'เรื่องที่ต้องติดตาม', 'fa-flag', 'text-amber-800', 'bg-amber-50 border-amber-100']
+            ];
+            list.innerHTML = reports.map(day => {
+                const fieldHtml = fields
+                    .filter(([key]) => (day.endOfShift[key] || '').trim() !== '')
+                    .map(([key, label, icon, color, surface]) => `<div class="p-3 rounded-lg border ${surface}"><p class="text-[11px] font-bold ${color} mb-1"><i class="fa-solid ${icon} mr-1.5"></i>${label}</p><p class="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">${esc(day.endOfShift[key])}</p></div>`)
+                    .join('');
+                return `<article class="border border-slate-200 rounded-xl overflow-hidden bg-white"><header class="flex justify-between items-center gap-3 px-3 py-2.5 bg-slate-50 border-b border-slate-200"><h4 class="text-sm font-bold text-slate-800">สรุปวันที่ ${formatDisplayDate(day.date)}</h4><span class="text-[10px] font-semibold text-slate-500">${currentBranch}</span></header><div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 p-3">${fieldHtml}</div></article>`;
+            }).join('');
+        }
+
         function loadDashboardData() {
             const rawData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
 
@@ -2938,6 +3071,7 @@
                 return itemDate >= startOfCurrentWeek && itemDate <= endOfWeek;
             });
             targetWeekData.sort((a,b) => new Date(a.date) - new Date(b.date));
+            renderEndOfShiftDashboard(targetWeekData);
 
             let totalVol = 0; let totalErr = 0;
             let empErrCount = {};
@@ -4188,7 +4322,7 @@
         }
 
         function collectRecordDraft() {
-            const draft = { date: document.getElementById('record-date').value, errors: [], tasks: [], volume: {}, notes: {} };
+            const draft = { date: document.getElementById('record-date').value, errors: [], tasks: [], volume: {}, notes: {}, endOfShift: collectEndOfShiftBrief() };
             if (currentBranch === 'AKRA') {
                 draft.akraRoster = { onDuty: getAkraOnDutyEmployees(), cores: getAkraCoreRoster() };
                 draft.akraWorkload = getAkraWorkloadValues();
@@ -4224,6 +4358,7 @@
             if ((draft.errors || []).some(e => (e.emps || []).length > 0 || (e.note || '').trim() !== '')) return true;
             if (Object.values(draft.volume || {}).some(v => (parseInt(v) || 0) > 0)) return true;
             if (Object.values(draft.notes || {}).some(v => (v || '').trim() !== '')) return true;
+            if (hasEndOfShiftContent(draft.endOfShift)) return true;
             if (draft.akraRoster) {
                 const onDuty = draft.akraRoster.onDuty || [];
                 const allAkra = (BRANCH_CONFIG.AKRA && BRANCH_CONFIG.AKRA.employees) || [];
@@ -4311,6 +4446,12 @@
                     Object.entries(draft.volume || {}).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
                     Object.entries(draft.notes || {}).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
                 }
+                const endOfShift = normalizeEndOfShiftBrief(draft.endOfShift);
+                const endOfShiftFields = { 'eos-summary': 'summary', 'eos-issues': 'issues', 'eos-actions': 'actions', 'eos-followups': 'followUps' };
+                Object.entries(endOfShiftFields).forEach(([id, key]) => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = endOfShift[key] || '';
+                });
                 applyDraftTasks(draft);
                 showToast('กู้คืนข้อมูลที่กรอกค้างไว้ (ยังไม่ได้บันทึก)');
             } finally {
@@ -4457,7 +4598,8 @@
                 errors: currentErrors,
                 tasks: currentTasks,
                 customerNotes: combinedNotes.join('\n'),
-                volume: volumeData
+                volume: volumeData,
+                endOfShift: collectEndOfShiftBrief()
             };
 
             if (currentBranch === 'AKRA') {
@@ -4490,6 +4632,7 @@
                     sendAppLog("บันทึกข้อมูล", `บันทึกข้อมูลสาขา ${currentBranch} (วันที่ ${date})`);
 
                     clearRecordDraft();
+                    clearEndOfShiftForm();
                     if (currentBranch === 'AKRA') {
                         renderAkraWorkloadEditor(null, true);
                     }
