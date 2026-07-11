@@ -216,6 +216,15 @@
                 </div>
             </div>
 
+            <!-- AKRA Workload Editor -->
+            <div id="akra-workload-card" class="hidden bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500 border-y border-r border-gray-100 md-colspan-2">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center"><i class="fa-solid fa-business-time text-amber-500 mr-2"></i>บันทึก Workload รายบุคคล</h2>
+                    <span class="text-xs text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">วันละ 10 คะแนน</span>
+                </div>
+                <div id="akra-workload-container" class="space-y-4"></div>
+            </div>
+
             <!-- Errors -->
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500 border-y border-r border-gray-100">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
@@ -383,6 +392,25 @@
                     </select>
                 </div>
                 <div id="dash-emp-breakdown" class="space-y-2.5"></div>
+            </div>
+
+            <!-- AKRA Workload Dashboard Card -->
+            <div id="dash-workload-container" class="hidden bg-white p-3 rounded-xl shadow-sm border border-gray-100 md-colspan-2">
+                <h3 class="font-bold text-gray-800 mb-3 text-sm border-b border-gray-50 pb-2 flex justify-between items-center">
+                    <span><i class="fa-solid fa-business-time text-amber-500 mr-2"></i>สรุปปริมานเวลาทำงาน (Workload) ของทีม</span>
+                    <span id="dash-workload-count" class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">0 คน (0 วัน)</span>
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div id="dash-workload-team" class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex flex-col justify-center">
+                        <!-- Team stacked chart will be rendered here -->
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <div class="text-xs font-bold text-gray-700 mb-2">สัดส่วนเวลาทำงานรายบุคคล</div>
+                        <div id="dash-workload-individuals" class="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                            <!-- Individual workload bars will be rendered here -->
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Details Note -->
@@ -607,7 +635,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtNza_4rEaSdLJlEjeJtu9ezPOSNjUwNttIbFOY7KCWPX8dceQ4ZaP7kzU8Fp761Y/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260704.06";
+        const CURRENT_VERSION = "20260711.01";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -2230,6 +2258,7 @@
             card.classList.remove('hidden');
             document.getElementById('akra-duty-roster').innerHTML = emps.map((emp, i) => akraRosterChipHtml(emp, `akra-duty-${i}`, 'akra-duty-cb', true)).join('');
             updateAkraDutyCount();
+            renderAkraWorkloadEditor();
         }
 
         function getCheckedValues(selector) {
@@ -2256,7 +2285,240 @@
         function handleAkraRosterChange() {
             updateAkraDutyCount();
             syncAkraSharedEntries();
+            renderAkraWorkloadEditor();
             saveRecordDraftDebounced();
+        }
+
+        // ================= AKRA WORKLOAD EDITOR =================
+        function getAkraWorkloadValues() {
+            if (currentBranch !== 'AKRA') return [];
+            const container = document.getElementById('akra-workload-container');
+            if (!container) return [];
+            
+            const rows = [];
+            container.querySelectorAll('.workload-row').forEach(row => {
+                const emp = row.dataset.employee;
+                const capacity = parseInt(row.querySelector('.wl-capacity').value) || 0;
+                const outbound = parseInt(row.querySelector('.wl-outbound').value) || 0;
+                const inbound = parseInt(row.querySelector('.wl-inbound').value) || 0;
+                const transfer = parseInt(row.querySelector('.wl-transfer').value) || 0;
+                const shared = parseInt(row.querySelector('.wl-shared').value) || 0;
+                const note = row.querySelector('.wl-note').value || "";
+                rows.push({ employee: emp, capacity, outbound, inbound, transfer, shared, note });
+            });
+            return rows;
+        }
+
+        function renderAkraWorkloadEditor(savedData = null, forceReset = false) {
+            if (currentBranch !== 'AKRA') {
+                const card = document.getElementById('akra-workload-card');
+                if (card) card.classList.add('hidden');
+                return;
+            }
+            
+            const card = document.getElementById('akra-workload-card');
+            if (card) card.classList.remove('hidden');
+            
+            const onDuty = getAkraOnDutyEmployees();
+            const container = document.getElementById('akra-workload-container');
+            if (!container) return;
+            
+            const currentValues = {};
+            if (!forceReset) {
+                container.querySelectorAll('.workload-row').forEach(row => {
+                    const emp = row.dataset.employee;
+                    currentValues[emp] = {
+                        capacity: parseInt(row.querySelector('.wl-capacity').value) || 0,
+                        outbound: parseInt(row.querySelector('.wl-outbound').value) || 0,
+                        inbound: parseInt(row.querySelector('.wl-inbound').value) || 0,
+                        transfer: parseInt(row.querySelector('.wl-transfer').value) || 0,
+                        shared: parseInt(row.querySelector('.wl-shared').value) || 0,
+                        note: row.querySelector('.wl-note').value || ""
+                    };
+                });
+            }
+            
+            if (savedData && Array.isArray(savedData)) {
+                savedData.forEach(item => {
+                    currentValues[item.employee] = {
+                        capacity: item.capacity !== undefined ? item.capacity : 10,
+                        outbound: item.outbound || 0,
+                        inbound: item.inbound || 0,
+                        transfer: item.transfer || 0,
+                        shared: item.shared || 0,
+                        note: item.note || ""
+                    };
+                });
+            }
+            
+            if (onDuty.length === 0) {
+                container.innerHTML = `<div class="text-xs text-gray-400 py-2 text-center">ไม่มีพนักงานเข้ากะสำหรับการระบุ Workload</div>`;
+                return;
+            }
+            
+            container.innerHTML = onDuty.map(emp => {
+                const val = currentValues[emp] || { capacity: 10, outbound: 0, inbound: 0, transfer: 0, shared: 0, note: "" };
+                const total = val.outbound + val.inbound + val.transfer + val.shared;
+                let totalClass = "text-gray-500";
+                if (total > val.capacity) totalClass = "text-red-600 font-bold";
+                else if (total === val.capacity) totalClass = "text-green-600 font-bold";
+                
+                return `
+                    <div class="workload-row bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col space-y-3" data-employee="${esc(emp)}">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-bold text-gray-700">${esc(emp)}</span>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-gray-500">ความสามารถ:</span>
+                                <select class="wl-capacity bg-white border border-gray-200 rounded px-1.5 py-0.5 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="validateRowTotal(this.closest('.workload-row'))">
+                                    ${[...Array(11).keys()].map(i => `<option value="${i}" ${val.capacity === i ? 'selected' : ''}>${i}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3 text-center">
+                            <div class="bg-white p-2 rounded-lg border border-gray-100 flex flex-col items-center">
+                                <div class="text-[10px] text-gray-500 mb-1 font-semibold">ขาออก</div>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">-</button>
+                                    <input type="number" readonly class="wl-outbound w-8 text-center text-xs font-bold text-gray-800 bg-transparent focus:outline-none" value="${val.outbound}">
+                                    <button type="button" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">+</button>
+                                </div>
+                            </div>
+                            <div class="bg-white p-2 rounded-lg border border-gray-100 flex flex-col items-center">
+                                <div class="text-[10px] text-gray-500 mb-1 font-semibold">ขาเข้า</div>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">-</button>
+                                    <input type="number" readonly class="wl-inbound w-8 text-center text-xs font-bold text-gray-800 bg-transparent focus:outline-none" value="${val.inbound}">
+                                    <button type="button" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">+</button>
+                                </div>
+                            </div>
+                            <div class="bg-white p-2 rounded-lg border border-gray-100 flex flex-col items-center">
+                                <div class="text-[10px] text-gray-500 mb-1 font-semibold">ขาย้าย</div>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">-</button>
+                                    <input type="number" readonly class="wl-transfer w-8 text-center text-xs font-bold text-gray-800 bg-transparent focus:outline-none" value="${val.transfer}">
+                                    <button type="button" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">+</button>
+                                </div>
+                            </div>
+                            <div class="bg-white p-2 rounded-lg border border-gray-100 flex flex-col items-center">
+                                <div class="text-[10px] text-gray-500 mb-1 font-semibold">อื่น ๆ</div>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">-</button>
+                                    <input type="number" readonly class="wl-shared w-8 text-center text-xs font-bold text-gray-800 bg-transparent focus:outline-none" value="${val.shared}">
+                                    <button type="button" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">+</button>
+                                </div>
+                            </div>
+                        </div>
+        
+                        <div class="flex justify-between items-center pt-2 border-t border-gray-150/50">
+                            <input type="text" placeholder="หมายเหตุ (ถ้ามี)" class="wl-note w-2/3 bg-transparent text-[11px] text-gray-500 placeholder-gray-300 outline-none border-b border-transparent focus:border-gray-200 pb-0.5" value="${esc(val.note)}" oninput="saveRecordDraftDebounced()">
+                            <span class="text-xs ${totalClass} wl-total-indicator">รวม ${total}/${val.capacity}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function adjWorkload(btn, delta) {
+            const parent = btn.closest('div');
+            const input = parent.querySelector('input');
+            let currentVal = parseInt(input.value) || 0;
+            
+            const row = btn.closest('.workload-row');
+            const capacity = parseInt(row.querySelector('.wl-capacity').value) || 0;
+            
+            const outboundVal = parseInt(row.querySelector('.wl-outbound').value) || 0;
+            const inboundVal = parseInt(row.querySelector('.wl-inbound').value) || 0;
+            const transferVal = parseInt(row.querySelector('.wl-transfer').value) || 0;
+            const sharedVal = parseInt(row.querySelector('.wl-shared').value) || 0;
+            const currentTotal = outboundVal + inboundVal + transferVal + sharedVal;
+            
+            let newVal = currentVal + delta;
+            if (newVal < 0) newVal = 0;
+            
+            const diff = newVal - currentVal;
+            if (diff > 0 && currentTotal + diff > capacity) {
+                return;
+            }
+            
+            input.value = newVal;
+            validateRowTotal(row);
+            saveRecordDraftDebounced();
+        }
+
+        function validateRowTotal(row) {
+            const capacity = parseInt(row.querySelector('.wl-capacity').value) || 0;
+            const outbound = parseInt(row.querySelector('.wl-outbound').value) || 0;
+            const inbound = parseInt(row.querySelector('.wl-inbound').value) || 0;
+            const transfer = parseInt(row.querySelector('.wl-transfer').value) || 0;
+            const shared = parseInt(row.querySelector('.wl-shared').value) || 0;
+            
+            let total = outbound + inbound + transfer + shared;
+            
+            if (total > capacity) {
+                let overage = total - capacity;
+                
+                let wlShared = row.querySelector('.wl-shared');
+                let sharedVal = parseInt(wlShared.value) || 0;
+                if (sharedVal > 0) {
+                    let reduce = Math.min(sharedVal, overage);
+                    wlShared.value = sharedVal - reduce;
+                    overage -= reduce;
+                }
+                
+                if (overage > 0) {
+                    let wlTransfer = row.querySelector('.wl-transfer');
+                    let transferVal = parseInt(wlTransfer.value) || 0;
+                    if (transferVal > 0) {
+                        let reduce = Math.min(transferVal, overage);
+                        wlTransfer.value = transferVal - reduce;
+                        overage -= reduce;
+                    }
+                }
+                
+                if (overage > 0) {
+                    let wlInbound = row.querySelector('.wl-inbound');
+                    let inboundVal = parseInt(wlInbound.value) || 0;
+                    if (inboundVal > 0) {
+                        let reduce = Math.min(inboundVal, overage);
+                        wlInbound.value = inboundVal - reduce;
+                        overage -= reduce;
+                    }
+                }
+                
+                if (overage > 0) {
+                    let wlOutbound = row.querySelector('.wl-outbound');
+                    let outboundVal = parseInt(wlOutbound.value) || 0;
+                    if (outboundVal > 0) {
+                        let reduce = Math.min(outboundVal, overage);
+                        wlOutbound.value = outboundVal - reduce;
+                        overage -= reduce;
+                    }
+                }
+                
+                const adjustedOutbound = parseInt(row.querySelector('.wl-outbound').value) || 0;
+                const adjustedInbound = parseInt(row.querySelector('.wl-inbound').value) || 0;
+                const adjustedTransfer = parseInt(row.querySelector('.wl-transfer').value) || 0;
+                const adjustedShared = parseInt(row.querySelector('.wl-shared').value) || 0;
+                total = adjustedOutbound + adjustedInbound + adjustedTransfer + adjustedShared;
+            }
+            
+            const indicator = row.querySelector('.wl-total-indicator');
+            let totalClass = "text-gray-500";
+            if (total > capacity) {
+                totalClass = "text-red-600 font-bold";
+            } else if (total === capacity) {
+                totalClass = "text-green-600 font-bold";
+            }
+            
+            indicator.className = `text-xs ${totalClass} wl-total-indicator`;
+            indicator.innerText = `รวม ${total}/${capacity}`;
+            
+            saveRecordDraftDebounced();
+        }
+
+        function applyAkraWorkloadDraft(workload) {
+            renderAkraWorkloadEditor(workload, false);
         }
 
         async function loadConfig() {
@@ -2523,6 +2785,18 @@
                 document.getElementById('dash-err-card').classList.add('col-span-2');
             }
 
+            if (branch === 'AKRA') {
+                const wlCard = document.getElementById('akra-workload-card');
+                if (wlCard) wlCard.classList.remove('hidden');
+                const wlDash = document.getElementById('dash-workload-container');
+                if (wlDash) wlDash.classList.remove('hidden');
+            } else {
+                const wlCard = document.getElementById('akra-workload-card');
+                if (wlCard) wlCard.classList.add('hidden');
+                const wlDash = document.getElementById('dash-workload-container');
+                if (wlDash) wlDash.classList.add('hidden');
+            }
+
             document.getElementById('error-entries-container').innerHTML = '';
             document.getElementById('task-entries-container').innerHTML = '';
 
@@ -2670,10 +2944,19 @@
             let empHP = {};
             let categorizedNotes = {};
 
+            let hasWorkloadData = false;
+            let teamWorkload = { outbound: 0, inbound: 0, transfer: 0, shared: 0, totalCapacity: 0, employeeCount: 0, recordedDays: 0 };
+            let individualWorkload = {};
+            let workloadDates = new Set();
+            let workloadEmployees = new Set();
+
             BRANCH_CONFIG[currentBranch].employees.forEach(emp => {
                 empErrCount[emp] = 0;
                 empHP[emp] = 100;
                 categorizedNotes[emp] = {};
+                if (currentBranch === 'AKRA') {
+                    individualWorkload[emp] = { outbound: 0, inbound: 0, transfer: 0, shared: 0, capacity: 0, notes: [] };
+                }
             });
 
             let allCustomerNotesHtml = '';
@@ -2759,6 +3042,32 @@
                     day.tasks.forEach(t => {
                         let assignees = (t.assignee || "").split(',').map(a => normalizeEmpName(a)).filter(a => a).join(', ');
                         weeklyTasksMap[t.taskName] = { status: t.status, assignee: assignees };
+                    });
+                }
+
+                if (currentBranch === 'AKRA' && day.workload && Array.isArray(day.workload) && day.workload.length > 0) {
+                    hasWorkloadData = true;
+                    workloadDates.add(day.date);
+                    day.workload.forEach(wl => {
+                        const empName = normalizeEmpName(wl.employee);
+                        if (individualWorkload[empName] !== undefined) {
+                            workloadEmployees.add(empName);
+                            individualWorkload[empName].outbound += wl.outbound || 0;
+                            individualWorkload[empName].inbound += wl.inbound || 0;
+                            individualWorkload[empName].transfer += wl.transfer || 0;
+                            individualWorkload[empName].shared += wl.shared || 0;
+                            individualWorkload[empName].capacity += wl.capacity !== undefined ? wl.capacity : 10;
+                            if (wl.note && wl.note.trim() !== '') {
+                                const dayObj = new Date(day.date);
+                                const dayStr = `${String(dayObj.getDate()).padStart(2, '0')}/${String(dayObj.getMonth()+1).padStart(2, '0')}`;
+                                individualWorkload[empName].notes.push(`[${dayStr}] ${wl.note}`);
+                            }
+                            teamWorkload.outbound += wl.outbound || 0;
+                            teamWorkload.inbound += wl.inbound || 0;
+                            teamWorkload.transfer += wl.transfer || 0;
+                            teamWorkload.shared += wl.shared || 0;
+                            teamWorkload.totalCapacity += wl.capacity !== undefined ? wl.capacity : 10;
+                        }
                     });
                 }
             });
@@ -2893,6 +3202,91 @@
                     smartSummaryHtml += `<div class="mt-3 pt-3 border-t border-indigo-200/50"><i class="fa-solid fa-magnifying-glass text-indigo-500 mr-1.5"></i><b>Insight จากหมายเหตุ:</b><ul class="list-disc pl-6 mt-1.5 text-xs text-indigo-900 font-medium">${displayInsights}</ul></div>`;
                 }
             }
+            // Render Workload Summary on Dashboard
+            if (currentBranch === 'AKRA') {
+                const workloadContainer = document.getElementById('dash-workload-container');
+                if (workloadContainer) {
+                    workloadContainer.classList.remove('hidden');
+                    teamWorkload.employeeCount = workloadEmployees.size;
+                    teamWorkload.recordedDays = workloadDates.size;
+                    document.getElementById('dash-workload-count').innerText = `${teamWorkload.employeeCount} คน (${teamWorkload.recordedDays} วัน)`;
+                    
+                    if (!hasWorkloadData || teamWorkload.totalCapacity === 0) {
+                        document.getElementById('dash-workload-team').innerHTML = `<div class="text-center text-gray-400 text-xs py-4">ยังไม่มีข้อมูล Workload ในสัปดาห์นี้</div>`;
+                        document.getElementById('dash-workload-individuals').innerHTML = `<div class="text-center text-gray-400 text-xs py-4">ยังไม่มีข้อมูล Workload ในสัปดาห์นี้</div>`;
+                    } else {
+                        const teamTotal = teamWorkload.outbound + teamWorkload.inbound + teamWorkload.transfer + teamWorkload.shared;
+                        const pctOutbound = teamTotal > 0 ? Math.round((teamWorkload.outbound / teamTotal) * 100) : 0;
+                        const pctInbound = teamTotal > 0 ? Math.round((teamWorkload.inbound / teamTotal) * 100) : 0;
+                        const pctTransfer = teamTotal > 0 ? Math.round((teamWorkload.transfer / teamTotal) * 100) : 0;
+                        const pctShared = teamTotal > 0 ? Math.round((teamWorkload.shared / teamTotal) * 100) : 0;
+
+                        document.getElementById('dash-workload-team').innerHTML = `
+                            <div class="text-xs font-bold text-gray-700 mb-2">เวลาทำงานรวมของทีมทั้งหมด (${teamTotal} คะแนน)</div>
+                            <div class="w-full h-4 rounded-full overflow-hidden flex border border-gray-200 bg-gray-100 shadow-inner">
+                                <div class="bg-blue-500 h-full" style="width: ${pctOutbound}%"></div>
+                                <div class="bg-emerald-500 h-full" style="width: ${pctInbound}%"></div>
+                                <div class="bg-amber-500 h-full" style="width: ${pctTransfer}%"></div>
+                                <div class="bg-purple-500 h-full" style="width: ${pctShared}%"></div>
+                            </div>
+                            <div class="grid grid-cols-4 gap-1 text-[10px] text-gray-600 mt-2 font-semibold">
+                                <div class="flex items-center justify-center"><span class="w-2 h-2 bg-blue-500 rounded-full mr-1"></span>ขาออก ${pctOutbound}%</div>
+                                <div class="flex items-center justify-center"><span class="w-2 h-2 bg-emerald-500 rounded-full mr-1"></span>ขาเข้า ${pctInbound}%</div>
+                                <div class="flex items-center justify-center"><span class="w-2 h-2 bg-amber-500 rounded-full mr-1"></span>ย้าย ${pctTransfer}%</div>
+                                <div class="flex items-center justify-center"><span class="w-2 h-2 bg-purple-500 rounded-full mr-1"></span>อื่น ๆ ${pctShared}%</div>
+                            </div>
+                        `;
+
+                        let indHtml = '';
+                        BRANCH_CONFIG.AKRA.employees.forEach(emp => {
+                            const wl = individualWorkload[emp];
+                            const total = wl.outbound + wl.inbound + wl.transfer + wl.shared;
+                            
+                            if (wl.capacity === 0) {
+                                indHtml += `
+                                    <div class="border-b border-gray-100/50 pb-2.5 last:border-0 last:pb-0">
+                                        <div class="flex justify-between items-center text-xs mb-1">
+                                            <span class="font-bold text-gray-700">${esc(emp)}</span>
+                                            <span class="text-gray-400 font-medium">ไม่มีการบันทึก Workload (0/0)</span>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                const pctOut = wl.capacity > 0 ? (wl.outbound / wl.capacity) * 100 : 0;
+                                const pctIn = wl.capacity > 0 ? (wl.inbound / wl.capacity) * 100 : 0;
+                                const pctTr = wl.capacity > 0 ? (wl.transfer / wl.capacity) * 100 : 0;
+                                const pctSh = wl.capacity > 0 ? (wl.shared / wl.capacity) * 100 : 0;
+                                
+                                let noteHtml = '';
+                                if (wl.notes.length > 0) {
+                                    noteHtml = `<div class="text-[9px] text-gray-400 mt-1 pl-1 italic">หมายเหตุ: ${esc(wl.notes.join(', '))}</div>`;
+                                }
+
+                                indHtml += `
+                                    <div class="border-b border-gray-100/50 pb-2.5 last:border-0 last:pb-0">
+                                        <div class="flex justify-between items-center text-xs mb-1">
+                                            <span class="font-bold text-gray-700">${esc(emp)}</span>
+                                            <span class="text-[10px] text-gray-500 font-bold bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 shadow-sm">ขาออก ${wl.outbound} | ขาเข้า ${wl.inbound} | ย้าย ${wl.transfer} | อื่น ๆ ${wl.shared} (รวม ${total}/${wl.capacity})</span>
+                                        </div>
+                                        <div class="w-full h-2.5 rounded-full overflow-hidden flex border border-gray-100 bg-gray-50 shadow-inner">
+                                            <div class="bg-blue-500 h-full" style="width: ${pctOut}%"></div>
+                                            <div class="bg-emerald-500 h-full" style="width: ${pctIn}%"></div>
+                                            <div class="bg-amber-500 h-full" style="width: ${pctTr}%"></div>
+                                            <div class="bg-purple-500 h-full" style="width: ${pctSh}%"></div>
+                                        </div>
+                                        ${noteHtml}
+                                    </div>
+                                `;
+                            }
+                        });
+                        document.getElementById('dash-workload-individuals').innerHTML = indHtml;
+                    }
+                }
+            } else {
+                const workloadContainer = document.getElementById('dash-workload-container');
+                if (workloadContainer) workloadContainer.classList.add('hidden');
+            }
+
             document.getElementById('dash-smart-summary').innerHTML = smartSummaryHtml;
 
             // Gamification — แสดงเฉพาะพนักงานตาม config ปัจจุบัน (ชื่อเก่าใน error records เดิมไม่ต้องโผล่ในฉาก)
@@ -3797,6 +4191,7 @@
             const draft = { date: document.getElementById('record-date').value, errors: [], tasks: [], volume: {}, notes: {} };
             if (currentBranch === 'AKRA') {
                 draft.akraRoster = { onDuty: getAkraOnDutyEmployees(), cores: getAkraCoreRoster() };
+                draft.akraWorkload = getAkraWorkloadValues();
             }
             document.querySelectorAll('.error-entry').forEach(entry => {
                 const stageSel = entry.querySelector('.err-stage');
@@ -3835,6 +4230,9 @@
                 const cores = draft.akraRoster.cores || {};
                 if (onDuty.length !== allAkra.length) return true;
                 if (Object.values(cores).some(list => Array.isArray(list) && list.length > 0)) return true;
+            }
+            if (draft.akraWorkload && Array.isArray(draft.akraWorkload) && draft.akraWorkload.length > 0) {
+                if (draft.akraWorkload.some(w => w.capacity !== 10 || w.outbound > 0 || w.inbound > 0 || w.transfer > 0 || w.shared > 0 || (w.note || '').trim() !== '')) return true;
             }
             return false;
         }
@@ -3878,6 +4276,7 @@
             setCheckedValues('.akra-core-internal-cb', cores.internal || []);
             updateAkraDutyCount();
             syncAkraSharedEntries();
+            renderAkraWorkloadEditor();
         }
 
         function restoreRecordDraft() {
@@ -3890,6 +4289,9 @@
                     loadTasksForSelectedDate();
                 }
                 applyAkraRosterDraft(draft.akraRoster);
+                if (currentBranch === 'AKRA' && draft.akraWorkload) {
+                    applyAkraWorkloadDraft(draft.akraWorkload);
+                }
                 const container = document.getElementById('error-entries-container');
                 container.innerHTML = '';
                 (draft.errors && draft.errors.length ? draft.errors : [null]).forEach(errDraft => {
@@ -4058,6 +4460,17 @@
                 volume: volumeData
             };
 
+            if (currentBranch === 'AKRA') {
+                const workload = getAkraWorkloadValues();
+                for (const w of workload) {
+                    const total = w.outbound + w.inbound + w.transfer + w.shared;
+                    if (total !== w.capacity) {
+                        return showToast(`\u0e01\u0e23\u0e38\u0e13\u0e32\u0e23\u0e30\u0e1a\u0e38\u0e20\u0e32\u0e23\u0e30\u0e07\u0e32\u0e19\u0e02\u0e2d\u0e07 ${w.employee} \u0e43\u0e2b\u0e49\u0e04\u0e23\u0e1a (${total}/${w.capacity} \u0e04\u0e30\u0e41\u0e19\u0e19)`, true);
+                    }
+                }
+                payload.workload = workload;
+            }
+
             if(LOG_APP_SCRIPT_URL) {
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2 text-xl"></i> กำลังบันทึกข้อมูล...';
                 btn.disabled = true;
@@ -4077,6 +4490,9 @@
                     sendAppLog("บันทึกข้อมูล", `บันทึกข้อมูลสาขา ${currentBranch} (วันที่ ${date})`);
 
                     clearRecordDraft();
+                    if (currentBranch === 'AKRA') {
+                        renderAkraWorkloadEditor(null, true);
+                    }
                     document.getElementById('error-entries-container').innerHTML = ''; addErrorEntryRow();
                     loadTasksForSelectedDate();
                     if (BRANCH_CONFIG[currentBranch].showZone2) {
