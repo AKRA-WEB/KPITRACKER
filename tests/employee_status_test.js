@@ -197,6 +197,8 @@ async function runTests() {
 
         // Verify Legacy blank status employee ( Sompong )
         assert.ok(BRANCH_CONFIG["AKRA"].employees.includes("Sompong"), "Blank status employee must default to Active and be in AKRA");
+        assert.ok(BRANCH_CONFIG["TRD"].employees.includes("Sompong"), "Blank status employee must default to Active and be in TRD");
+        assert.ok(TRD_DEPARTMENTS["หน้าร้าน/ในร้าน"].includes("Sompong"), "Blank status TRD employee must remain in the configured department");
         console.log("-> Test 2 Passed!");
     }
 
