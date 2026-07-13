@@ -1268,7 +1268,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9PPa9VJneImacmwnRrMhi8jK79acmY6CzDhoS9epNZWyLQCREBUCF67JuZJfsk2I/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260713.03";
+        const CURRENT_VERSION = "20260713.04";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -3543,7 +3543,7 @@
 
         // ตรวจ SSO token จาก URL (?sso=) — แยกออกมาเพื่อให้รันขนานกับ loadConfig ได้
         async function resolveSsoAuth() {
-            const result = { attempted: false, userData: null };
+            const result = { attempted: false, userData: null, expired: false };
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 let ssoToken = urlParams.get('sso');
@@ -3583,33 +3583,50 @@
                             sessionToken = ssoToken;
                             safeStorage.setItem('akra_sso_token', ssoToken);
                             safeStorage.setItem('akra_sso_user_data', JSON.stringify(result.userData));
+                        } else {
+                            // โทเค็นหมดอายุหรือถูกปฏิเสธโดยตรงจากเซิร์ฟเวอร์ -> ล้างค่าเซสชันและไม่ทำ fallback
+                            console.warn("SSO token was rejected by server:", verifyData && verifyData.reason);
+                            safeStorage.removeItem('akra_sso_token');
+                            safeStorage.removeItem('akra_sso_user_data');
+                            sessionToken = null;
+                            result.userData = null;
+                            result.expired = true;
                         }
+                    } else {
+                        // verifyRes is not ok (e.g. 500 server error) -> throw to trigger catch and local decode fallback
+                        throw new Error(`HTTP status ${verifyRes.status}`);
                     }
                 } catch (e) {
                     console.warn("API token verification failed, trying local decode as fallback...", e);
-                }
-
-                // หากยืนยันผ่าน API ไม่ได้ (เช่น ออฟไลน์/เน็ตช้า) ให้ทำ Local Decode เป็น Fallback
-                if (!result.userData) {
+                    // ทำ Local Decode เป็น Fallback เฉพาะในกรณีที่เรียก API ไม่สำเร็จจริง ๆ (เน็ตเสีย/Timeout)
                     const decodedUser = decodeJwtPayload(ssoToken);
                     if (decodedUser && decodedUser.id) {
-                        const normalizedUid = String(decodedUser.id).toLowerCase();
+                        // ตรวจสอบวันหมดอายุของ JWT ในระดับ local ด้วย เพื่อความปลอดภัย
+                        const currentTime = new Date().getTime();
+                        if (decodedUser.exp && decodedUser.exp <= currentTime) {
+                            console.warn("SSO token is locally expired, clearing session");
+                            safeStorage.removeItem('akra_sso_token');
+                            safeStorage.removeItem('akra_sso_user_data');
+                            sessionToken = null;
+                            result.userData = null;
+                            result.expired = true;
+                        } else {
+                            const normalizedUid = String(decodedUser.id).toLowerCase();
+                            const ssoRoles = decodedUser.roles || [];
+                            if ((ssoRoles.includes('ADMIN') || ssoRoles.includes('admin')) && !ssoRoles.includes('Admin')) {
+                                ssoRoles.push('Admin');
+                            }
 
-                        // ดึง Roles ทั้งหมดจาก JWT Payload
-                        const ssoRoles = decodedUser.roles || [];
-                        if ((ssoRoles.includes('ADMIN') || ssoRoles.includes('admin')) && !ssoRoles.includes('Admin')) {
-                            ssoRoles.push('Admin');
+                            result.userData = {
+                                username: normalizedUid,
+                                name: decodedUser.name || normalizedUid,
+                                roles: ssoRoles,
+                                perms: decodedUser.perms || {}
+                            };
+                            sessionToken = ssoToken;
+                            safeStorage.setItem('akra_sso_token', ssoToken);
+                            safeStorage.setItem('akra_sso_user_data', JSON.stringify(result.userData));
                         }
-
-                        result.userData = {
-                            username: normalizedUid,
-                            name: decodedUser.name || normalizedUid,
-                            roles: ssoRoles,
-                            perms: decodedUser.perms || {}
-                        };
-                        sessionToken = ssoToken;
-                        safeStorage.setItem('akra_sso_token', ssoToken);
-                        safeStorage.setItem('akra_sso_user_data', JSON.stringify(result.userData));
                     }
                 }
             } catch(e) { console.error("SSO auth check failed", e); }
@@ -3622,6 +3639,11 @@
             // 1. ดึงจาก URL Query Parameters ก่อน (เช่น ?sso=JWT_TOKEN หรือ ?uid=250013)
             const sso = preSso || await resolveSsoAuth();
             userData = sso.userData;
+
+            if (sso.expired) {
+                userData = null;
+                safeStorage.removeItem('akra_sso_user_data');
+            }
 
             if (!userData && !sso.attempted) {
                 try {
