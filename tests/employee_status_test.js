@@ -139,6 +139,20 @@ function resetMocks() {
 async function runTests() {
     console.log("=== Running Employee Inactive Filter Regression Tests ===");
 
+    // Test 0: Settings must be a sibling view so hiding Executive Dashboard does not hide Settings.
+    {
+        console.log("Test 0: checking Settings is not nested inside Executive Dashboard...");
+        const adminDashStart = htmlContent.indexOf('<div id="view-admin-dash"');
+        const adminViewStart = htmlContent.indexOf('<div id="view-admin"');
+        assert.ok(adminDashStart >= 0 && adminViewStart > adminDashStart, "Admin views must exist in document order");
+
+        const adminDashMarkup = htmlContent.slice(adminDashStart, adminViewStart);
+        const openedDivs = (adminDashMarkup.match(/<div\b/gi) || []).length;
+        const closedDivs = (adminDashMarkup.match(/<\/div>/gi) || []).length;
+        assert.strictEqual(openedDivs, closedDivs, "Settings view must not be nested inside the hidden Executive Dashboard view");
+        console.log("-> Test 0 Passed!");
+    }
+
     // Test 1: isEmployeeActive check
     {
         console.log("Test 1: checking isEmployeeActive with active, inactive, and blank status...");
