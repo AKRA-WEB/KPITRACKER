@@ -71,11 +71,15 @@ const document = {
 
 // Evaluate helper functions from index.html
 const isEmployeeActiveCode = extractFunction(htmlContent, 'isEmployeeActive');
+const renderHistoricalEmployeeBadgeCode = extractFunction(htmlContent, 'renderHistoricalEmployeeBadge');
+const normalizeEmpNameCode = extractFunction(htmlContent, 'normalizeEmpName');
 const processConfigListCode = extractFunction(htmlContent, 'processConfigList');
 const dedupeConfigListCode = extractFunction(htmlContent, 'dedupeConfigList');
 
 eval(dedupeConfigListCode);
 eval(isEmployeeActiveCode);
+eval(renderHistoricalEmployeeBadgeCode);
+eval(normalizeEmpNameCode);
 eval(processConfigListCode);
 
 // Add required mocks to run loadDashboardData
@@ -92,7 +96,6 @@ function getStartOfWeek(d) {
     return ws;
 }
 
-function normalizeEmpName(n) { return String(n || '').trim(); }
 function esc(v) { return v || ''; }
 function formatDisplayDate(d) { return d; }
 function renderEndOfShiftDashboard() {}
@@ -160,7 +163,8 @@ async function runTests() {
         GLOBAL_CONFIG_LIST = [
             { uid: "emp1", name: "Somchai", branches: "AKRA", dept: "", gender: "M", status: "Active" },
             { uid: "emp2", name: "Somsri", branches: "TRD", dept: "แคชเชียร์", gender: "F", status: "Inactive" },
-            { uid: "emp3", name: "Sompong", branches: "AKRA,TRD", dept: "หน้าร้าน/ในร้าน", gender: "M", status: "" }
+            { uid: "emp3", name: "Sompong", branches: "AKRA,TRD", dept: "หน้าร้าน/ในร้าน", gender: "M", status: "" },
+            { uid: "emp4", name: "หมูหยอง", branches: "AKRA", dept: "", gender: "M", status: "Active" }
         ];
 
         // Explicitly normalize status for test list
@@ -172,6 +176,11 @@ async function runTests() {
         assert.strictEqual(isEmployeeActive("Somsri"), false, "Inactive employee should NOT be active");
         assert.strictEqual(isEmployeeActive("Sompong"), true, "Missing status should default to active");
         assert.strictEqual(isEmployeeActive("Unknown"), false, "Unconfigured/Unknown employee should default to inactive");
+        assert.strictEqual(renderHistoricalEmployeeBadge("Somchai"), "", "Active employee must not receive a historical badge");
+        assert.ok(renderHistoricalEmployeeBadge("Somsri").includes("อดีตพนักงาน"), "Inactive employee must receive a historical badge");
+        assert.strictEqual(normalizeEmpName("หยอง"), "หมูหยอง", "Known historical alias must resolve to the current employee name");
+        assert.strictEqual(renderHistoricalEmployeeBadge(normalizeEmpName("หยอง")), "", "Known alias of an active employee must not receive a historical badge");
+        assert.ok(renderHistoricalEmployeeBadge("Unknown").includes("อดีตพนักงาน"), "Unconfigured historical employee must receive a former-employee badge");
         console.log("-> Test 1 Passed!");
     }
 

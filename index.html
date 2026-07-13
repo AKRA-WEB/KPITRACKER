@@ -1282,7 +1282,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260713.14";
+        const CURRENT_VERSION = "20260713.15";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -1778,6 +1778,7 @@
         function normalizeEmpName(name) {
             let n = (name || "").trim();
             if (n === "บันเลง") return "บรรเลง";
+            if (n === "หยอง") return "หมูหยอง";
             return n;
         }
 
@@ -3148,6 +3149,11 @@
             const emp = GLOBAL_CONFIG_LIST.find(e => String(e.name).trim() === normalized);
             if (!emp) return false;
             return emp.status === 'Active';
+        }
+
+        function renderHistoricalEmployeeBadge(name) {
+            if (isEmployeeActive(name)) return '';
+            return '<span class="inline-flex ml-1 mt-1 px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-[9px] font-bold text-amber-700 whitespace-nowrap">อดีตพนักงาน</span>';
         }
 
         function dedupeConfigList(configList) {
@@ -5602,7 +5608,7 @@
                                 <span class="font-bold text-xs px-1.5 py-0.5 rounded border shadow-sm ${branchBadge}">${day.sourceBranch}</span>
                             </div>
                             <div class="flex items-start mt-0.5">
-                                <div class="font-black text-red-600 w-[28%] break-words leading-tight"><i class="fa-solid fa-user text-gray-400 mr-1.5"></i>${esc(empName)}</div>
+                                <div class="font-black text-red-600 w-[28%] break-words leading-tight"><i class="fa-solid fa-user text-gray-400 mr-1.5"></i>${esc(empName)}${renderHistoricalEmployeeBadge(empName)}</div>
                                 <div class="w-[72%] pl-2 border-l border-gray-200">
                                     <div class="font-bold text-gray-800 mb-0.5 text-xs leading-tight">${esc(displayType)}</div>
                                     <div class="text-gray-500 text-xs leading-relaxed break-words">${penaltyBadge}${coreBadge}${esc(detail.cleanNote)}</div>
