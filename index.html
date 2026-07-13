@@ -1268,7 +1268,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9PPa9VJneImacmwnRrMhi8jK79acmY6CzDhoS9epNZWyLQCREBUCF67JuZJfsk2I/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260713.08";
+        const CURRENT_VERSION = "20260713.09";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -4407,21 +4407,14 @@
         }
 
         function applyEndOfShiftPermissionsUI() {
-            const hasAdmin = can('adminDashboard');
             const promo = document.getElementById('eos-promotion-card');
             const legacyCont = document.getElementById('eos-legacy-textarea-container');
             const textarea = document.getElementById('eos-followups');
 
             if (promo && legacyCont && textarea) {
-                if (hasAdmin) {
-                    promo.classList.remove('hidden');
-                    legacyCont.classList.add('hidden');
-                    textarea.classList.add('hidden');
-                } else {
-                    promo.classList.add('hidden');
-                    legacyCont.classList.remove('hidden');
-                    textarea.classList.remove('hidden');
-                }
+                promo.classList.remove('hidden');
+                legacyCont.classList.add('hidden');
+                textarea.classList.add('hidden');
             }
         }
 

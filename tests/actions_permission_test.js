@@ -18,6 +18,10 @@ assert.doesNotMatch(html, /\$\{can\('adminDashboard'\) \? `[\s\S]*?openActionMod
     'Dashboard Action edit control must be visible to every signed-in user');
 assert.doesNotMatch(html, /บัญชีนี้ไม่มีสิทธิ์ adminDashboard สำหรับดูและจัดการ Action Items/,
     'Action loading must not present an obsolete adminDashboard restriction');
+assert.doesNotMatch(html, /function applyEndOfShiftPermissionsUI\(\)\s*\{[\s\S]*?can\('adminDashboard'\)[\s\S]*?\n\s*\}/,
+    'Daily Brief Action promotion must be visible to every signed-in user');
+assert.match(html, /function applyEndOfShiftPermissionsUI\(\)\s*\{[\s\S]*?promo\.classList\.remove\('hidden'\)[\s\S]*?legacyCont\.classList\.add\('hidden'\)[\s\S]*?textarea\.classList\.add\('hidden'\)/,
+    'Daily Brief must use Action promotion while retaining hidden legacy compatibility data');
 assert.match(html, /รหัสวินิจฉัย: no_token/,
     'Action loading must distinguish a missing token');
 assert.match(html, /รหัสวินิจฉัย: invalid_or_expired_token/,
