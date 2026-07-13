@@ -1281,7 +1281,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260713.11";
+        const CURRENT_VERSION = "20260713.12";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -3146,7 +3146,7 @@
             if (!normalized) return false;
             const emp = GLOBAL_CONFIG_LIST.find(e => String(e.name).trim() === normalized);
             if (!emp) return false;
-            return (emp.status || 'Active').toLowerCase() !== 'inactive';
+            return emp.status === 'Active';
         }
 
         function dedupeConfigList(configList) {
@@ -3171,12 +3171,17 @@
 
             configList.forEach(user => {
                 if (!user.uid) return;
+
+                // Normalize status at source (case-insensitive conversion to standard Active / Inactive)
+                const rawStatus = String(user.status || '').trim().toLowerCase();
+                user.status = (rawStatus === 'inactive') ? 'Inactive' : 'Active';
+
                 const uidStr = String(user.uid).toLowerCase();
                 const branches = user.branches.split(',').map(b => b.trim().toUpperCase()).filter(b => b);
 
                 USER_DB[uidStr] = branches;
                 const isSystemAdmin = user.dept && user.dept.toLowerCase() === 'admin';
-                const isActive = (user.status || 'Active').toLowerCase() !== 'inactive';
+                const isActive = user.status === 'Active';
 
                 // กรองเฉพาะพนักงานที่ไม่ใช่ Admin เพื่อแสดงในหน้าบันทึก KPI และ Dashboard
                 if (user.name && !isSystemAdmin && isActive) {
@@ -4668,6 +4673,9 @@
                         allNotesHtml += `</div>`; cIdx++;
                     }
                     allNotesHtml += `</div></div>`;
+                }
+                if (!allNotesHtml) {
+                    allNotesHtml = '<div class="text-center text-gray-400 text-sm py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200"><i class="fa-regular fa-face-smile-beam text-2xl mb-2 block text-green-400"></i>ไม่มีข้อผิดพลาดในสัปดาห์นี้ 🎉</div>';
                 }
             }
 
