@@ -18,5 +18,11 @@ assert.doesNotMatch(html, /\$\{can\('adminDashboard'\) \? `[\s\S]*?openActionMod
     'Dashboard Action edit control must be visible to every signed-in user');
 assert.doesNotMatch(html, /บัญชีนี้ไม่มีสิทธิ์ adminDashboard สำหรับดูและจัดการ Action Items/,
     'Action loading must not present an obsolete adminDashboard restriction');
+assert.match(html, /รหัสวินิจฉัย: no_token/,
+    'Action loading must distinguish a missing token');
+assert.match(html, /รหัสวินิจฉัย: invalid_or_expired_token/,
+    'Action loading must distinguish a rejected token');
+assert.match(html, /รหัสวินิจฉัย: verify_failed/,
+    'Action loading must distinguish a backend verification failure');
 
 console.log('Action permission regression checks passed.');

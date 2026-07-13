@@ -1268,7 +1268,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9PPa9VJneImacmwnRrMhi8jK79acmY6CzDhoS9epNZWyLQCREBUCF67JuZJfsk2I/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260713.07";
+        const CURRENT_VERSION = "20260713.08";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -5793,8 +5793,12 @@
             } catch(e) {
                 console.error("Failed to fetch actions", e);
                 ALL_ACTIONS = [];
-                if (e.reason === 'no_token' || e.reason === 'invalid_or_expired_token' || e.reason === 'verify_failed') {
-                    _actionsLoadError = 'ไม่สามารถโหลด Action Items ได้ กรุณาเข้าใช้งาน KPITracker ผ่านระบบ Main SSO ใหม่อีกครั้ง';
+                if (e.reason === 'no_token') {
+                    _actionsLoadError = 'ระบบไม่ได้รับ SSO token สำหรับ Action Items (รหัสวินิจฉัย: no_token)';
+                } else if (e.reason === 'invalid_or_expired_token') {
+                    _actionsLoadError = 'SSO token ถูกปฏิเสธหรือหมดอายุ (รหัสวินิจฉัย: invalid_or_expired_token)';
+                } else if (e.reason === 'verify_failed') {
+                    _actionsLoadError = 'GAS ไม่สามารถตรวจสอบ SSO token กับ Main ได้ (รหัสวินิจฉัย: verify_failed)';
                 } else if (e.message === 'Action API schema mismatch') {
                     _actionsLoadError = 'ไม่สามารถโหลด Action Items ได้ เนื่องจาก GAS backend และ frontend ใช้ schema คนละเวอร์ชัน';
                 } else {
