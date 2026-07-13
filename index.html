@@ -1268,7 +1268,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9PPa9VJneImacmwnRrMhi8jK79acmY6CzDhoS9epNZWyLQCREBUCF67JuZJfsk2I/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260713.05";
+        const CURRENT_VERSION = "20260713.06";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -3593,18 +3593,18 @@
                             result.expired = true;
                         }
                     } else {
-                        // verifyRes is not ok (e.g. 401, 403, 500, etc.)
-                        if (verifyRes.status === 401 || verifyRes.status === 403 || verifyRes.status === 400) {
-                            // เป็นการปฏิเสธสิทธิ์โดยตรงจากเซิร์ฟเวอร์ -> ล้างค่าเซสชันและไม่ทำ fallback
-                            console.warn("SSO token was explicitly rejected by server with status:", verifyRes.status);
+                        // verifyRes is not ok (e.g. 4xx, 5xx)
+                        if (verifyRes.status >= 500) {
+                            // ปัญหาเซิร์ฟเวอร์ขัดข้องชั่วคราว (5xx) -> โยนความผิดพลาดเพื่อเข้า local decode fallback
+                            throw new Error(`HTTP status ${verifyRes.status}`);
+                        } else {
+                            // ปัญหาฝั่งไคลเอนต์/การสิทธิ์ถูกปฏิเสธโดยตรง (4xx) -> ล้างค่าเซสชันและไม่ทำ fallback
+                            console.warn("SSO token verification failed with client error status:", verifyRes.status);
                             safeStorage.removeItem('akra_sso_token');
                             safeStorage.removeItem('akra_sso_user_data');
                             sessionToken = null;
                             result.userData = null;
                             result.expired = true;
-                        } else {
-                            // ปัญหาเซิร์ฟเวอร์ขัดข้อง (เช่น 5xx) -> ให้โยนความผิดพลาดเพื่อให้วิ่งเข้า local decode fallback
-                            throw new Error(`HTTP status ${verifyRes.status}`);
                         }
                     }
                 } catch (e) {
