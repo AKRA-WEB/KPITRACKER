@@ -1268,7 +1268,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9PPa9VJneImacmwnRrMhi8jK79acmY6CzDhoS9epNZWyLQCREBUCF67JuZJfsk2I/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260713.06";
+        const CURRENT_VERSION = "20260713.07";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -4215,9 +4215,9 @@
                     dashActionsCount.innerText = '-';
                     dashActionsList.innerHTML = `
                         <div class="p-3.5 rounded-lg border border-amber-200 bg-amber-50/50 flex items-start gap-2.5 text-xs text-amber-800">
-                            <i class="fa-solid fa-lock text-sm mt-0.5 shrink-0"></i>
+                            <i class="fa-solid fa-triangle-exclamation text-sm mt-0.5 shrink-0"></i>
                             <div class="min-w-0">
-                                <div class="font-bold">จำกัดสิทธิ์การเข้าถึง</div>
+                                <div class="font-bold">ไม่สามารถโหลดข้อมูลได้</div>
                                 <div class="mt-0.5 text-amber-700 leading-normal">${esc(_actionsLoadError)}</div>
                             </div>
                         </div>
@@ -4255,9 +4255,7 @@
                                     </div>
                                     <div class="flex flex-col items-end gap-1.5 shrink-0">
                                         <span class="px-1.5 py-0.5 rounded text-[9px] font-semibold border ${statusColor}">${act.status}</span>
-                                        ${can('adminDashboard') ? `
-                                            <button type="button" onclick="openActionModalForEdit('${act.actionId}')" class="text-purple-600 hover:underline text-[10px] font-bold">จัดการ</button>
-                                        ` : ''}
+                                        <button type="button" onclick="openActionModalForEdit('${act.actionId}')" class="text-purple-600 hover:underline text-[10px] font-bold">จัดการ</button>
                                     </div>
                                 </div>
                             `;
@@ -5797,8 +5795,6 @@
                 ALL_ACTIONS = [];
                 if (e.reason === 'no_token' || e.reason === 'invalid_or_expired_token' || e.reason === 'verify_failed') {
                     _actionsLoadError = 'ไม่สามารถโหลด Action Items ได้ กรุณาเข้าใช้งาน KPITracker ผ่านระบบ Main SSO ใหม่อีกครั้ง';
-                } else if (e.reason === 'permission_denied') {
-                    _actionsLoadError = 'บัญชีนี้ไม่มีสิทธิ์ adminDashboard สำหรับดูและจัดการ Action Items';
                 } else if (e.message === 'Action API schema mismatch') {
                     _actionsLoadError = 'ไม่สามารถโหลด Action Items ได้ เนื่องจาก GAS backend และ frontend ใช้ schema คนละเวอร์ชัน';
                 } else {
