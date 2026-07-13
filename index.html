@@ -1281,7 +1281,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260713.12";
+        const CURRENT_VERSION = "20260713.13";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -4675,7 +4675,7 @@
                     allNotesHtml += `</div></div>`;
                 }
                 if (!allNotesHtml) {
-                    allNotesHtml = '<div class="text-center text-gray-400 text-sm py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200"><i class="fa-regular fa-face-smile-beam text-2xl mb-2 block text-green-400"></i>ไม่มีข้อผิดพลาดในสัปดาห์นี้ 🎉</div>';
+                    allNotesHtml = '<div class="text-center text-gray-500 text-xs py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200"><i class="fa-solid fa-clock-rotate-left text-xl mb-2 block text-blue-400"></i>มีบันทึกข้อผิดพลาดของอดีตพนักงาน (สามารถดูรายละเอียดได้จากการส่งออกข้อมูลประวัติ)</div>';
                 }
             }
 

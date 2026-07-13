@@ -161,15 +161,16 @@ async function runTests() {
         console.log("-> Test 1 Passed!");
     }
 
-    // Test 2: processConfigList behavior
+    // Test 2: processConfigList behavior and TRD department compatibility
     {
-        console.log("Test 2: checking processConfigList handles status and normalization correctly...");
+        console.log("Test 2: checking processConfigList handles status, normalization and TRD department compatibility...");
         resetMocks();
         const configList = [
             { uid: "250013", name: "เฉิน", branches: "AKRA,TRD", dept: "Admin", gender: "", status: "ACTIVE" }, // Upper active
             { uid: "emp1", name: "Somchai", branches: "AKRA", dept: "", gender: "M", status: "Active" },
             { uid: "emp2", name: "Somsri", branches: "TRD", dept: "แคชเชียร์", gender: "F", status: "inactive" }, // Lower inactive
-            { uid: "emp3", name: "Sompong", branches: "AKRA,TRD", dept: "หน้าร้าน/ในร้าน", gender: "M", status: "" } // Blank
+            { uid: "emp3", name: "Sompong", branches: "AKRA,TRD", dept: "หน้าร้าน/ในร้าน", gender: "M", status: "" }, // Blank
+            { uid: "emp4", name: "Sompis", branches: "TRD", dept: "แคชเชียร์", gender: "F", status: "Active" } // TRD Active
         ];
 
         processConfigList(configList);
@@ -189,14 +190,19 @@ async function runTests() {
         // Verify Inactive employee ( Somsri )
         assert.ok(!BRANCH_CONFIG["TRD"].employees.includes("Somsri"), "Inactive employee must not be in TRD employees list");
 
+        // Verify TRD department mapping compatibility
+        assert.ok(TRD_DEPARTMENTS["แคชเชียร์"], "TRD department 'แคชเชียร์' must be initialized");
+        assert.ok(TRD_DEPARTMENTS["แคชเชียร์"].includes("Sompis"), "Active TRD employee must be present in TRD_DEPARTMENTS");
+        assert.ok(!TRD_DEPARTMENTS["แคชเชียร์"].includes("Somsri"), "Inactive TRD employee must NOT be present in TRD_DEPARTMENTS");
+
         // Verify Legacy blank status employee ( Sompong )
         assert.ok(BRANCH_CONFIG["AKRA"].employees.includes("Sompong"), "Blank status employee must default to Active and be in AKRA");
         console.log("-> Test 2 Passed!");
     }
 
-    // Test 3: loadDashboardData with historical errors and workloads
+    // Test 3: loadDashboardData with historical errors, workloads and HP penalty preservation
     {
-        console.log("Test 3: checking loadDashboardData handles historical data and hides inactive names...");
+        console.log("Test 3: checking loadDashboardData handles historical data, hides inactive names and preserves HP penalties...");
         resetMocks();
         
         // Setup configuration
@@ -208,6 +214,14 @@ async function runTests() {
 
         // Mock historical data (one week containing errors and workloads for both Somchai and Somsri)
         const dateStr = getStartOfWeek(new Date()).toISOString().slice(0, 10);
+        
+        // Mathematically prove workload totals include inactive employee Somsri:
+        // Somchai (Active): outbound: 4, inbound: 0, transfer: 0, shared: 0 (100% outbound if alone)
+        // Somsri (Inactive): outbound: 0, inbound: 6, transfer: 0, shared: 0 (100% inbound if alone)
+        // Combined total: outbound: 4, inbound: 6. Total = 10.
+        // Outbound percentage = 4 / 10 = 40%. Inbound percentage = 6 / 10 = 60%.
+        // If the code only counted active employees, team workload would be 100% outbound.
+        // Since we assert 40% outbound and 60% inbound, Somsri must be included in the calculation.
         const mockKpiData = [
             {
                 date: dateStr,
@@ -218,8 +232,8 @@ async function runTests() {
                     { emp: "Somsri", type: "หยิบผิด ถึงลูกค้าแล้ว", penalty: 20, note: "Somsri error note" }
                 ],
                 workload: [
-                    { employee: "Somchai", outbound: 2, inbound: 2, transfer: 2, shared: 2, capacity: 10, note: "Somchai wl note" },
-                    { employee: "Somsri", outbound: 3, inbound: 3, transfer: 3, shared: 3, capacity: 10, note: "Somsri wl note" }
+                    { employee: "Somchai", outbound: 4, inbound: 0, transfer: 0, shared: 0, capacity: 10, note: "Somchai wl note" },
+                    { employee: "Somsri", outbound: 0, inbound: 6, transfer: 0, shared: 0, capacity: 10, note: "Somsri wl note" }
                 ]
             }
         ];
@@ -230,22 +244,28 @@ async function runTests() {
         // Execute loadDashboardData
         loadDashboardData();
 
-        // 1. Verify totals are preserved: both errors count towards totalErr and teamLostHP
+        // 1. Verify totals are preserved: both errors count towards totalErr
         const totalErrorsElement = document.getElementById('dash-total-errors');
         assert.strictEqual(totalErrorsElement.innerText, 2, "Historical error count must include inactive employee errors");
 
-        // 2. Verify notes display: only Somchai (Active) notes are rendered, Somsri (Inactive) notes are hidden
+        // 2. Verify HP penalty preservation:
+        // Total penalty: 20 (Somchai) + 20 (Somsri) = 40. HP remaining = 100 - 40 = 60%.
+        // Let's assert that the HP bar contains width: 60%.
+        const dashTeamKpiElement = document.getElementById('dash-team-kpi');
+        assert.ok(dashTeamKpiElement.innerHTML.includes("style=\"width: 60%\"") || dashTeamKpiElement.innerHTML.includes("width: 60%"), "Branch HP bar width must reflect inactive employee penalties (60% remaining)");
+
+        // 3. Verify notes display: only Somchai (Active) notes are rendered, Somsri (Inactive) notes are hidden
         const errorNotesHTML = document.getElementById('dash-error-notes').innerHTML;
         assert.ok(errorNotesHTML.includes("Somchai"), "Active employee errors must be in note history");
         assert.ok(!errorNotesHTML.includes("Somsri"), "Inactive employee errors must NOT be in note history");
 
-        // 3. Verify workload totals are preserved: team totalCapacity and outbound/inbound are summed
-        // Outbound = 2 + 3 = 5, Inbound = 2 + 3 = 5, Transfer = 2 + 3 = 5, Shared = 2 + 3 = 5
-        // Capacity = 10 + 10 = 20
+        // 4. Verify workload totals are preserved and mathematically proven:
+        // Outbound = 4, Inbound = 6. Total = 10. Outbound pct = 40%, Inbound pct = 60%.
         const dashWorkloadTeamHTML = document.getElementById('dash-workload-team').innerHTML;
-        assert.ok(dashWorkloadTeamHTML.includes("ขาออก 25%"), "Team workload total must include inactive employee workloads");
+        assert.ok(dashWorkloadTeamHTML.includes("ขาออก 40%"), "Team workload total must include inactive employee workloads (proven 40% outbound)");
+        assert.ok(dashWorkloadTeamHTML.includes("ขาเข้า 60%"), "Team workload total must include inactive employee workloads (proven 60% inbound)");
 
-        // 4. Verify workload individuals display: only Somchai is listed, Somsri is hidden
+        // 5. Verify workload individuals display: only Somchai is listed, Somsri is hidden
         const dashWorkloadIndHTML = document.getElementById('dash-workload-individuals').innerHTML;
         assert.ok(dashWorkloadIndHTML.includes("Somchai"), "Active employee must be in workload individuals list");
         assert.ok(!dashWorkloadIndHTML.includes("Somsri"), "Inactive employee must NOT be in workload individuals list");
@@ -290,7 +310,7 @@ async function runTests() {
 
         // 2. Verify error note history displays the fallback placeholder instead of an empty white space
         const errorNotesHTML = document.getElementById('dash-error-notes').innerHTML;
-        assert.ok(errorNotesHTML.includes("ไม่มีข้อผิดพลาดในสัปดาห์นี้"), "Error note history must show placeholder when only inactive errors exist");
+        assert.ok(errorNotesHTML.includes("มีบันทึกข้อผิดพลาดของอดีตพนักงาน"), "Error note history must show inactive employees placeholder when only inactive errors exist");
         assert.ok(!errorNotesHTML.includes("Somsri"), "Inactive name Somsri must not be in error note history");
 
         console.log("-> Test 4 Passed!");
