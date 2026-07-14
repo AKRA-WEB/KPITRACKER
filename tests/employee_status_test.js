@@ -107,6 +107,7 @@ function renderTeamScene() { return ''; }
 function renderEmpBreakdown() {}
 function getSmartSuggestion() { return ''; }
 function analyzeKeywordInsights() { return []; }
+function getRealErrorEntries(errors) { return errors || []; }
 
 function getErrorDetail(e, branch) {
     return {

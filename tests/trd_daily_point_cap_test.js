@@ -26,6 +26,7 @@ eval(extractFunction(html, 'accumulateDailyEmployeePenalty'));
 function getErrorDetail(error) { return error.detail; }
 function getErrorProcess(branch, detail) { return `${branch}:${detail.type}`; }
 function getErrorImpact() { return 'ไม่ระบุผลกระทบ'; }
+function getRealErrorEntries(errors) { return errors || []; }
 eval(extractFunction(html, 'buildParetoAnalysis'));
 
 function dailyLoss(sourceBranch, errors) {

@@ -1360,7 +1360,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260714.11";
+        const CURRENT_VERSION = "20260714.12";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -1764,6 +1764,7 @@
         };
 
         const AKRA_CASE_MARKER = '[AKRA_CASE:';
+        const TRD_CASE_MARKER = '[TRD_CASE:';
         const AKRA_CORE_CATALOG = [
             { core: 'inbound', coreLabel: 'รับเข้า', type: 'ลงรับสินค้าในแอปผิด', penalty: 5 },
             { core: 'inbound', coreLabel: 'รับเข้า', type: 'วางสินค้าไม่เรียบร้อย/ผิดตำแหน่ง', penalty: 3 },
@@ -1886,6 +1887,42 @@
             }
         }
 
+        function encodeTrdCaseMeta(meta) {
+            return `${TRD_CASE_MARKER}${encodeURIComponent(JSON.stringify(meta))}]`;
+        }
+
+        function parseTrdCaseNote(note) {
+            const raw = String(note || '');
+            const trimmed = raw.trimEnd();
+            const start = trimmed.lastIndexOf(TRD_CASE_MARKER);
+            if (start === -1) return { meta: null, note: raw };
+            const end = trimmed.indexOf(']', start);
+            if (end !== trimmed.length - 1) return { meta: null, note: raw };
+            try {
+                const encoded = trimmed.slice(start + TRD_CASE_MARKER.length, end);
+                const meta = JSON.parse(decodeURIComponent(encoded));
+                if (!meta || meta.v !== 1 || typeof meta.caseId !== 'string' || !meta.caseId.trim()) {
+                    return { meta: null, note: raw };
+                }
+                return { meta, note: trimmed.slice(0, start).trimEnd() };
+            } catch (e) {
+                return { meta: null, note: raw };
+            }
+        }
+
+        function isNoErrorsConfirmation(error, sourceBranch) {
+            if (!error) return false;
+            if (error.type === 'ไม่มีความผิดพลาด') return true;
+            const parsed = sourceBranch === 'TRD'
+                ? parseTrdCaseNote(error.note)
+                : parseAkraCaseNote(error.note);
+            return !!(parsed.meta && parsed.meta.caseId === 'NO_ERRORS');
+        }
+
+        function getRealErrorEntries(errors, sourceBranch) {
+            return (errors || []).filter(error => !isNoErrorsConfirmation(error, sourceBranch));
+        }
+
         function getLegacyPenaltyDetail(error) {
             let penalty = 0;
             let cleanNote = error.note || '';
@@ -1936,6 +1973,28 @@
                     };
                 }
             }
+            if (sourceBranch === 'TRD') {
+                const parsed = parseTrdCaseNote(error.note);
+                if (parsed.meta && parsed.meta.caseId === 'NO_ERRORS') {
+                    return {
+                        penalty: 0,
+                        cleanNote: parsed.note,
+                        isReachedCustomer: false,
+                        isFixedBefore: false,
+                        type: error.type,
+                        caseId: 'NO_ERRORS',
+                        meta: parsed.meta,
+                        isAkraCase: false,
+                        isNoErrors: true
+                    };
+                }
+                const detail = getLegacyPenaltyDetail({ ...error, note: parsed.note });
+                if (parsed.meta && parsed.meta.v === 1) {
+                    detail.caseId = parsed.meta.caseId || '';
+                    detail.meta = parsed.meta;
+                }
+                return detail;
+            }
             return getLegacyPenaltyDetail(error);
         }
 
@@ -1954,7 +2013,9 @@
         }
 
         function stripErrorNoteForExport(note, sourceBranch) {
-            let detail = sourceBranch === 'AKRA' ? parseAkraCaseNote(note) : { note };
+            let detail = sourceBranch === 'AKRA'
+                ? parseAkraCaseNote(note)
+                : (sourceBranch === 'TRD' ? parseTrdCaseNote(note) : { note });
             return detail.note || '';
         }
 
@@ -3970,10 +4031,10 @@
             if (vendorBillsCard) vendorBillsCard.classList.toggle('hidden', branch !== 'AKRA');
 
             const btnSave = document.getElementById('btn-save');
-            if (btnSave) btnSave.classList.toggle('hidden', branch === 'AKRA');
+            if (btnSave) btnSave.classList.add('hidden');
 
             const btnSaveErrors = document.getElementById('btn-save-errors');
-            if (btnSaveErrors) btnSaveErrors.classList.toggle('hidden', branch !== 'AKRA');
+            if (btnSaveErrors) btnSaveErrors.classList.remove('hidden');
             const vendorBillsDashboard = document.getElementById('dash-vendor-bills-container');
             if (vendorBillsDashboard) vendorBillsDashboard.classList.toggle('hidden', branch !== 'AKRA');
             const customerVendorGrid = document.getElementById('dash-customer-vendor-grid');
@@ -4641,7 +4702,8 @@
                 if (day.volume) {
                     totalVol += (day.volume.transfer + day.volume.pickup + day.volume.upcountry + day.volume.inmarket + day.volume.outmarket);
                 }
-                totalErr += (day.errors || []).length;
+                const realErrors = getRealErrorEntries(day.errors, currentBranch);
+                totalErr += realErrors.length;
 
                 if (BRANCH_CONFIG[currentBranch].showZone2 && day.customerNotes && day.customerNotes.trim() !== '') {
                     let notesLines = day.customerNotes.split('\n').filter(line => line.trim() !== '');
@@ -4657,7 +4719,7 @@
                     `;
                 }
 
-                (day.errors || []).forEach(e => {
+                realErrors.forEach(e => {
                     let empName = normalizeEmpName(e.emp);
 
                     if(empErrCount[empName] === undefined) {
@@ -4826,8 +4888,9 @@
             rawData.forEach(d => {
                 const itemD = new Date(d.date); itemD.setHours(0,0,0,0);
                 if(itemD >= lastWeekStart && itemD <= lastWeekEnd) {
-                    lastWeekErrTotal += (d.errors || []).length;
-                    (d.errors || []).forEach(e => {
+                    const realErrors = getRealErrorEntries(d.errors, currentBranch);
+                    lastWeekErrTotal += realErrors.length;
+                    realErrors.forEach(e => {
                         let empName = normalizeEmpName(e.emp);
                         if(lastWeekEmpErrCount[empName] === undefined) lastWeekEmpErrCount[empName] = 0;
                         lastWeekEmpErrCount[empName]++;
@@ -5189,7 +5252,7 @@
                     hasVolumeData = true;
                     volume += (day.volume.transfer || 0) + (day.volume.pickup || 0) + (day.volume.upcountry || 0) + (day.volume.inmarket || 0) + (day.volume.outmarket || 0);
                 }
-                errors += Array.isArray(day.errors) ? day.errors.length : 0;
+                errors += getRealErrorEntries(day.errors, day.sourceBranch).length;
                 (day.tasks || []).forEach(task => {
                     totalTasks++;
                     if (task.status === 'เสร็จแล้ว') completedTasks++;
@@ -5502,7 +5565,7 @@
             data.forEach(day => {
                 const branch = day.sourceBranch || '';
                 if (branchFilter !== 'ALL' && branch !== branchFilter) return;
-                (day.errors || []).forEach(error => {
+                getRealErrorEntries(day.errors, branch).forEach(error => {
                     const employee = normalizeEmpName(error.emp);
                     if (empFilter !== 'ALL' && employee !== empFilter) return;
                     const detail = getErrorDetail(error, branch);
@@ -5703,7 +5766,7 @@
 
                 let akraDailyCaps = {};
 
-                (day.errors || []).forEach(err => {
+                getRealErrorEntries(day.errors, day.sourceBranch).forEach(err => {
                     let empName = normalizeEmpName(err.emp);
                     if (empFilter !== 'ALL' && empName !== empFilter) return;
 
@@ -6438,7 +6501,7 @@
             filteredData.forEach(day => {
                 let safeDate = (day.date || "").split('T')[0];
 
-                (day.errors || []).forEach(err => {
+                getRealErrorEntries(day.errors, day.sourceBranch).forEach(err => {
                     let empName = normalizeEmpName(err.emp);
                     if (empFilter !== 'ALL' && empName !== empFilter) return;
 
@@ -7833,6 +7896,8 @@
                             updatedAt: new Date().toISOString()
                         };
                         note = `${encodeAkraCaseMeta(meta)} ${note}`;
+                    } else {
+                        note = `${note} ${encodeTrdCaseMeta({ v: 1, caseId: caseId })}`.trim();
                     }
                     participantNames.forEach(emp => {
                         currentErrors.push({ emp, type, note, caseId });
@@ -7855,17 +7920,21 @@
                 const meta = {
                     v: 1,
                     caseId: 'NO_ERRORS',
-                    core: 'none',
-                    coreLabel: 'ไม่มี',
                     type: 'ไม่มีความผิดพลาด',
                     penalty: 0,
                     participants: ['SYSTEM'],
-                    onDuty: getAkraOnDutyEmployees(),
-                    coreRoster: getAkraCoreRoster(),
                     updatedBy: currentUser,
                     updatedAt: new Date().toISOString()
                 };
-                const note = `${encodeAkraCaseMeta(meta)} ยืนยันไม่มีความผิดพลาดในวันนี้`;
+                if (currentBranch === 'AKRA') {
+                    meta.core = 'none';
+                    meta.coreLabel = 'ไม่มี';
+                    meta.onDuty = getAkraOnDutyEmployees();
+                    meta.coreRoster = getAkraCoreRoster();
+                }
+                const note = currentBranch === 'AKRA'
+                    ? `${encodeAkraCaseMeta(meta)} ยืนยันไม่มีความผิดพลาดในวันนี้`
+                    : `ยืนยันไม่มีความผิดพลาดในวันนี้ ${encodeTrdCaseMeta(meta)}`;
                 currentErrors.push({
                     emp: 'SYSTEM',
                     type: 'ไม่มีความผิดพลาด',
@@ -8076,15 +8145,8 @@
             const errorsDetailsEl = document.getElementById('daily-errors-details');
             const errorsTimeEl = document.getElementById('daily-errors-time');
 
-            const hasNoErrorsMarker = errorsArr.some(e => {
-                const metaObj = parseAkraCaseNote(e.note);
-                return metaObj && metaObj.meta && metaObj.meta.caseId === 'NO_ERRORS';
-            });
-
-            const normalErrors = errorsArr.filter(e => {
-                const metaObj = parseAkraCaseNote(e.note);
-                return !metaObj || !metaObj.meta || metaObj.meta.caseId !== 'NO_ERRORS';
-            });
+            const hasNoErrorsMarker = errorsArr.some(e => isNoErrorsConfirmation(e, currentBranch));
+            const normalErrors = getRealErrorEntries(errorsArr, currentBranch);
 
             let isErrorsConfirmed = false;
             if (normalErrors.length > 0) {
@@ -8097,7 +8159,7 @@
                 const caseIds = new Set();
                 const affectedEmps = new Set();
                 normalErrors.forEach(e => {
-                    const parsed = parseAkraCaseNote(e.note);
+                    const parsed = currentBranch === 'TRD' ? parseTrdCaseNote(e.note) : parseAkraCaseNote(e.note);
                     if (parsed && parsed.meta && parsed.meta.caseId) {
                         caseIds.add(parsed.meta.caseId);
                     } else {
@@ -8113,7 +8175,7 @@
 
                 let latestTime = "";
                 normalErrors.forEach(e => {
-                    const parsed = parseAkraCaseNote(e.note);
+                    const parsed = currentBranch === 'TRD' ? parseTrdCaseNote(e.note) : parseAkraCaseNote(e.note);
                     if (parsed && parsed.meta && parsed.meta.updatedAt && parsed.meta.updatedAt > latestTime) {
                         latestTime = parsed.meta.updatedAt;
                     }
@@ -8130,11 +8192,10 @@
                 if (errorsSummaryEl) errorsSummaryEl.innerText = "ไม่มีความผิดพลาด";
                 if (errorsDetailsEl) errorsDetailsEl.innerText = "ยืนยันไม่มีความผิดพลาดวันนี้";
                 if (errorsTimeEl) {
-                    const noErrorItem = errorsArr.find(e => {
-                        const metaObj = parseAkraCaseNote(e.note);
-                        return metaObj && metaObj.meta && metaObj.meta.caseId === 'NO_ERRORS';
-                    });
-                    const parsed = noErrorItem ? parseAkraCaseNote(noErrorItem.note) : null;
+                    const noErrorItem = errorsArr.find(e => isNoErrorsConfirmation(e, currentBranch));
+                    const parsed = noErrorItem
+                        ? (currentBranch === 'TRD' ? parseTrdCaseNote(noErrorItem.note) : parseAkraCaseNote(noErrorItem.note))
+                        : null;
                     const updatedAt = (parsed && parsed.meta) ? parsed.meta.updatedAt : null;
                     errorsTimeEl.innerText = "บันทึกเมื่อ: " + (updatedAt ? updatedAt.substring(11, 16) + " น." : "-");
                 }
