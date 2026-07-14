@@ -75,12 +75,14 @@ const renderHistoricalEmployeeBadgeCode = extractFunction(htmlContent, 'renderHi
 const normalizeEmpNameCode = extractFunction(htmlContent, 'normalizeEmpName');
 const processConfigListCode = extractFunction(htmlContent, 'processConfigList');
 const dedupeConfigListCode = extractFunction(htmlContent, 'dedupeConfigList');
+const accumulateDailyEmployeePenaltyCode = extractFunction(htmlContent, 'accumulateDailyEmployeePenalty');
 
 eval(dedupeConfigListCode);
 eval(isEmployeeActiveCode);
 eval(renderHistoricalEmployeeBadgeCode);
 eval(normalizeEmpNameCode);
 eval(processConfigListCode);
+eval(accumulateDailyEmployeePenaltyCode);
 
 // Add required mocks to run loadDashboardData
 let viewOffsetWeek = 0;

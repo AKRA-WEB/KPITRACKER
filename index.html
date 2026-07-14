@@ -1360,7 +1360,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260714.10";
+        const CURRENT_VERSION = "20260714.11";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -1937,6 +1937,20 @@
                 }
             }
             return getLegacyPenaltyDetail(error);
+        }
+
+        function accumulateDailyEmployeePenalty(penalties, empName, dateKey, sourceBranch, detail) {
+            const key = `${dateKey}\u0000${empName}`;
+            const state = penalties[key] || { additive: 0, capped: 0 };
+            const previousLoss = state.additive + state.capped;
+            const penalty = Number(detail.penalty) || 0;
+            if (sourceBranch === 'TRD' || detail.isAkraCase) {
+                state.capped = Math.max(state.capped, penalty);
+            } else {
+                state.additive += penalty;
+            }
+            penalties[key] = state;
+            return state.additive + state.capped - previousLoss;
         }
 
         function stripErrorNoteForExport(note, sourceBranch) {
@@ -4621,6 +4635,7 @@
             let errorTypeCounts = {};
             let errorNotesList = {};
             let teamLostHP = 0;
+            let dailyEmployeePenalties = {};
 
             targetWeekData.forEach(day => {
                 if (day.volume) {
@@ -4641,8 +4656,6 @@
                         </div>
                     `;
                 }
-
-                let akraDailyCaps = {};
 
                 (day.errors || []).forEach(e => {
                     let empName = normalizeEmpName(e.emp);
@@ -4679,18 +4692,11 @@
                     hasAnyNotes = true;
 
                     if (empHP[empName] !== undefined) {
-                        if (detail.isAkraCase) {
-                            akraDailyCaps[empName] = Math.max(akraDailyCaps[empName] || 0, penaltyToApply);
-                        } else {
-                            teamLostHP += penaltyToApply;
-                            empHP[empName] -= penaltyToApply;
-                        }
+                        const dateKey = String(day.date || '').slice(0, 10);
+                        const penaltyDelta = accumulateDailyEmployeePenalty(dailyEmployeePenalties, empName, dateKey, currentBranch, detail);
+                        teamLostHP += penaltyDelta;
+                        empHP[empName] -= penaltyDelta;
                     }
-                });
-
-                Object.entries(akraDailyCaps).forEach(([empName, penalty]) => {
-                    teamLostHP += penalty;
-                    empHP[empName] -= penalty;
                 });
 
                 if(day.tasks && Array.isArray(day.tasks)) {
