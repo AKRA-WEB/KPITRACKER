@@ -1360,7 +1360,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260714.09";
+        const CURRENT_VERSION = "20260714.10";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -6200,7 +6200,7 @@
             };
             const res = await fetch(LOG_APP_SCRIPT_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
                 body: JSON.stringify(requestBody)
             });
             if (!res.ok) {
