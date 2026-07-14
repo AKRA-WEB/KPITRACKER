@@ -1360,7 +1360,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260714.12";
+        const CURRENT_VERSION = "20260714.13";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -7835,13 +7835,30 @@
             }
         }
 
+        function prepareTrdErrorEntriesForNextSave(date, entries, branch) {
+            if ((branch || currentBranch) !== 'TRD') return;
+            const submittedEntries = entries || document.querySelectorAll('.error-entry');
+            submittedEntries.forEach((entry, entryIndex) => {
+                entry.dataset.caseId = `ERR-${date}-${Date.now()}-${entryIndex}-${Math.floor(Math.random() * 1000)}`;
+            });
+        }
+
         async function saveErrorsCard() {
-            if (await AppVersionGuard.blockIfStale()) return;
-            const date = document.getElementById('record-date').value;
+            const btn = document.getElementById('btn-save-errors');
+            if (btn.disabled) return;
+            const dateControl = document.getElementById('record-date');
+            const dateControlWasDisabled = dateControl.disabled;
+            btn.disabled = true;
+            dateControl.disabled = true;
+
+            try {
+            const date = dateControl.value;
             if (!date) return showToast("กรุณาเลือกวันที่บันทึก", true);
+            const branch = currentBranch;
+            const entries = document.querySelectorAll('.error-entry');
+            if (await AppVersionGuard.blockIfStale()) return;
 
             let currentErrors = [];
-            const entries = document.querySelectorAll('.error-entry');
             let hasIncompleteError = false;
 
             entries.forEach((entry, entryIndex) => {
@@ -7853,11 +7870,11 @@
                 let stageSelect = entry.querySelector('.err-stage');
                 let stage = stageSelect ? stageSelect.value : '';
 
-                if (currentBranch === 'AKRA' && isAkraSharedType(type)) {
+                if (branch === 'AKRA' && isAkraSharedType(type)) {
                     participantNames = getAkraOnDutyEmployees();
                 }
 
-                if (currentBranch !== 'AKRA' && type === 'ความผิดอื่น ๆ') {
+                if (branch !== 'AKRA' && type === 'ความผิดอื่น ๆ') {
                     const penalty = entry.querySelector('.err-penalty').value;
                     note = `[หัก ${penalty} HP] ${note}`;
                 }
@@ -7877,7 +7894,7 @@
                 }
 
                 if (hasParticipants && (!requiresNote || hasNote)) {
-                    if (currentBranch === 'AKRA') {
+                    if (branch === 'AKRA') {
                         const catalogItem = getAkraCatalogItem(type);
                         const penalty = type === 'ความผิดอื่น ๆ'
                             ? (parseInt(entry.querySelector('.err-penalty').value, 10) || 10)
@@ -7926,13 +7943,13 @@
                     updatedBy: currentUser,
                     updatedAt: new Date().toISOString()
                 };
-                if (currentBranch === 'AKRA') {
+                if (branch === 'AKRA') {
                     meta.core = 'none';
                     meta.coreLabel = 'ไม่มี';
                     meta.onDuty = getAkraOnDutyEmployees();
                     meta.coreRoster = getAkraCoreRoster();
                 }
-                const note = currentBranch === 'AKRA'
+                const note = branch === 'AKRA'
                     ? `${encodeAkraCaseMeta(meta)} ยืนยันไม่มีความผิดพลาดในวันนี้`
                     : `ยืนยันไม่มีความผิดพลาดในวันนี้ ${encodeTrdCaseMeta(meta)}`;
                 currentErrors.push({
@@ -7943,23 +7960,22 @@
                 });
             }
 
-            const btn = document.getElementById('btn-save-errors');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
-            btn.disabled = true;
 
             try {
                 const res = await postToAppScript({
                     action: 'saveSection',
-                    branch: currentBranch,
+                    branch: branch,
                     date: date,
                     section: 'errors',
                     errors: currentErrors
                 });
 
                 if (res && res.status === 'success') {
+                    prepareTrdErrorEntriesForNextSave(date, entries, branch);
                     showToast("บันทึกข้อมูลความผิดพลาดสำเร็จ!");
-                    sendAppLog("บันทึกความผิดพลาด", `บันทึกความผิดพลาด สาขา ${currentBranch} (วันที่ ${date})`);
-                    safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_errors`);
+                    sendAppLog("บันทึกความผิดพลาด", `บันทึกความผิดพลาด สาขา ${branch} (วันที่ ${date})`);
+                    safeStorage.removeItem(`kpiDraft_${currentUser}_${branch}_${date}_errors`);
                     await syncDataFromSheet();
                     loadDashboardData();
                     updateDailyDashboard();
@@ -7969,9 +7985,11 @@
             } catch(e) {
                 console.error(e);
                 showModal("บันทึกไม่สำเร็จ", e.message || "เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้", "error");
+            }
             } finally {
                 btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> บันทึกความผิดพลาด';
                 btn.disabled = false;
+                dateControl.disabled = dateControlWasDisabled;
             }
         }
 

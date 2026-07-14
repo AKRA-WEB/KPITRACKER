@@ -198,14 +198,60 @@ eval(extractFunction(html, 'aggregateDescriptivePeriod'));
 
 const initAppSource = extractFunction(html, 'initApp');
 const saveErrorsSource = extractFunction(html, 'saveErrorsCard');
+let currentBranch = 'TRD';
+eval(extractFunction(html, 'prepareTrdErrorEntriesForNextSave'));
+
+{
+    const entries = [
+        { dataset: { caseId: 'TRD-SAVED-1' } },
+        { dataset: { caseId: 'TRD-SAVED-2' } }
+    ];
+    const originalDocument = global.document;
+    const originalNow = Date.now;
+    const originalRandom = Math.random;
+    global.document = {
+        querySelectorAll(selector) {
+            assert.strictEqual(selector, '.error-entry');
+            return entries;
+        }
+    };
+    Date.now = () => 1720951200000;
+    let randomIndex = 0;
+    const randomValues = [0.111, 0.222];
+    Math.random = () => randomValues[randomIndex++];
+
+    try {
+        prepareTrdErrorEntriesForNextSave('2026-07-14');
+        assert.notStrictEqual(entries[0].dataset.caseId, 'TRD-SAVED-1',
+            'a confirmed TRD save must prepare the same visible entry as a new incident');
+        assert.notStrictEqual(entries[1].dataset.caseId, 'TRD-SAVED-2',
+            'every visible TRD entry must receive a fresh identity after confirmed success');
+        assert.notStrictEqual(entries[0].dataset.caseId, entries[1].dataset.caseId,
+            'separate visible entries must receive separate fresh identities');
+
+        const trdIds = entries.map(entry => entry.dataset.caseId);
+        currentBranch = 'AKRA';
+        prepareTrdErrorEntriesForNextSave('2026-07-14');
+        assert.deepStrictEqual(entries.map(entry => entry.dataset.caseId), trdIds,
+            'TRD append-on-save behavior must not change AKRA case identity');
+    } finally {
+        currentBranch = 'TRD';
+        global.document = originalDocument;
+        Date.now = originalNow;
+        Math.random = originalRandom;
+    }
+}
+
 assert.match(initAppSource, /btnSave\.classList\.add\('hidden'\)/,
     'legacy full-row save must remain hidden after TRD gets scoped Errors persistence');
 assert.match(initAppSource, /btnSaveErrors\.classList\.remove\('hidden'\)/,
     'scoped Errors save must be available to TRD and AKRA');
 assert.match(saveErrorsSource, /encodeTrdCaseMeta\(\{ v: 1, caseId: caseId \}\)/,
     'TRD saves must persist the stable UI case ID inside the existing Errors note contract');
-assert.match(saveErrorsSource, /currentBranch === 'AKRA'[\s\S]*encodeAkraCaseMeta\(meta\)[\s\S]*encodeTrdCaseMeta\(meta\)/,
+assert.match(saveErrorsSource, /branch === 'AKRA'[\s\S]*encodeAkraCaseMeta\(meta\)[\s\S]*encodeTrdCaseMeta\(meta\)/,
     'confirmed-zero notes must use branch-correct metadata');
+assert.match(saveErrorsSource, /prepareTrdErrorEntriesForNextSave\(date, entries, branch\)/,
+    'confirmed success must rotate TRD case identity before the next intentional save');
 for (const consumer of ['loadDashboardData', 'aggregateDescriptivePeriod', 'buildParetoAnalysis', 'renderAdminDashboard', 'exportAdminDataCSV']) {
     assert.match(extractFunction(html, consumer), /getRealErrorEntries\(/,
         `${consumer} must exclude confirmed-zero markers from real error counts and evidence`);
