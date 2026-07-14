@@ -399,7 +399,7 @@
             </div>
 
             <!-- General Data (Hidden for TRD) -->
-            <div id="zone-2-container" class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 border-y border-r border-gray-100">
+            <div id="zone-2-container" data-scoped-save-card class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 border-y border-r border-gray-100">
                 <h2 class="text-lg font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2"><i class="fa-solid fa-boxes-stacked text-blue-500 mr-2"></i>ข้อมูลงานประจำวัน</h2>
 
                 <div class="space-y-4">
@@ -460,10 +460,13 @@
                         <input type="text" id="note-outmarket" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500" placeholder="ระบุชื่อลูกค้า หรือ สถานที่ส่ง (นอกตลาด)...">
                     </div>
                 </div>
+                <button type="button" id="btn-save-operations" data-skip-draft-autosave onclick="saveOperationsCard()" class="mt-4 min-h-12 w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white font-bold px-4 py-3 rounded-xl text-sm shadow-md flex justify-center items-center border border-blue-800">
+                    <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึกข้อมูลงานประจำวัน
+                </button>
             </div>
 
             <!-- Weekly Tasks -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500 border-y border-r border-gray-100">
+            <div id="weekly-tasks-card" data-scoped-save-card class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500 border-y border-r border-gray-100">
                 <div class="border-b border-gray-100 pb-2 mb-4">
                     <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>แผนงาน (สัปดาห์นี้)</h2>
                     <p class="text-[11px] text-gray-500 mt-1">อัปเดตความคืบหน้างาน โปรดระบุผู้รับผิดชอบ</p>
@@ -474,10 +477,13 @@
                 <button onclick="addTaskEntryRow()" class="mt-4 w-full bg-purple-50 text-purple-600 border border-purple-200 font-bold py-3 rounded-xl text-sm active:bg-purple-100 shadow-sm transition-all hover:bg-purple-100 flex justify-center items-center">
                     <i class="fa-solid fa-plus-circle mr-2 text-lg"></i> เพิ่มแผนงานใหม่
                 </button>
+                <button type="button" id="btn-save-tasks" data-skip-draft-autosave onclick="saveTasksCard()" class="mt-2.5 min-h-12 w-full bg-purple-600 hover:bg-purple-700 active:scale-95 transition-all text-white font-bold px-4 py-3 rounded-xl text-sm shadow-md flex justify-center items-center border border-purple-800">
+                    <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึกแผนงานสัปดาห์นี้
+                </button>
             </div>
 
             <!-- Daily End-of-Shift Executive Brief -->
-            <section class="enterprise-card p-4 md-colspan-2 border-l-4 border-l-slate-700" aria-labelledby="eos-title">
+            <section id="daily-eos-card" data-scoped-save-card class="enterprise-card p-4 md-colspan-2 border-l-4 border-l-slate-700" aria-labelledby="eos-title">
                 <div class="border-b border-slate-100 pb-3 mb-4">
                     <div class="flex items-start justify-between gap-3">
                         <div>
@@ -521,6 +527,10 @@
                         <textarea id="eos-followups" name="endOfShiftFollowUps" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="ระบุระบบ งานค้าง ผู้รับช่วงต่อ หรือประเด็นที่ต้องติดตามพรุ่งนี้..."></textarea>
                     </div>
                 </div>
+
+                <button type="button" id="btn-save-end-of-shift" data-skip-draft-autosave onclick="saveEndOfShiftCard()" class="mt-4 min-h-12 w-full bg-slate-700 hover:bg-slate-800 active:scale-95 transition-all text-white font-bold px-4 py-3 rounded-xl text-sm shadow-md flex justify-center items-center border border-slate-900">
+                    <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึกสรุปรายงานประจำวัน
+                </button>
 
             </section>
 
@@ -1350,7 +1360,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260714.08";
+        const CURRENT_VERSION = "20260714.09";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -3835,7 +3845,10 @@
             if(userNameDisplay) userNameDisplay.innerText = displayUserName;
 
             const recordDate = document.getElementById('record-date');
-            if(recordDate) recordDate.valueAsDate = new Date();
+            if(recordDate) {
+                recordDate.valueAsDate = new Date();
+                _lastRecordDate = recordDate.value;
+            }
 
             IS_ADMIN = currentRoles.includes('Admin') || currentRoles.includes('admin') ||
                        ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase());
@@ -4002,6 +4015,7 @@
                         renderAdminDashboard();
                     } else {
                         loadTasksForSelectedDate();
+                        hydrateSelectedDayRecord(document.getElementById('record-date').value);
                     }
                     showToast("ซิงค์ข้อมูลล่าสุดเรียบร้อย");
                 }
@@ -4171,13 +4185,17 @@
             return true;
         }
 
-        function collectEndOfShiftBrief() {
-            const brief = {
+        function collectEndOfShiftTextFields() {
+            return {
                 summary: getEndOfShiftFormValue('eos-summary'),
                 issues: getEndOfShiftFormValue('eos-issues'),
                 actions: getEndOfShiftFormValue('eos-actions'),
                 followUps: getEndOfShiftFormValue('eos-followups')
             };
+        }
+
+        function collectEndOfShiftBrief() {
+            const brief = collectEndOfShiftTextFields();
             if (currentBranch === 'AKRA') brief.vendorBills = collectVendorBills();
             return brief;
         }
@@ -4495,9 +4513,7 @@
         function drillDownToRecord(dateStr) {
             switchTab('record');
             document.getElementById('record-date').value = dateStr;
-            loadTasksForSelectedDate();
-            loadRecordActionsForSelectedDate();
-            syncLegacyFollowUpsDisplay();
+            handleRecordDateChange();
         }
 
         function createActionFromDailyBrief() {
@@ -6276,13 +6292,16 @@
         }
 
         function deepLinkToActionSource(dateStr, branchVal) {
-            currentBranch = branchVal;
-            document.getElementById('branch-indicator').innerText = currentBranch;
+            const previousDate = _lastRecordDate || document.getElementById('record-date').value;
+            clearTimeout(_draftTimer);
+            _draftTimer = null;
+            if (currentBranch && previousDate) saveRecordDraft(previousDate);
+            if (branchVal !== currentBranch) selectBranch(branchVal);
             switchTab('record');
             document.getElementById('record-date').value = dateStr;
+            _lastRecordDate = dateStr;
             loadTasksForSelectedDate();
-            loadRecordActionsForSelectedDate();
-            syncLegacyFollowUpsDisplay();
+            restoreRecordDraft();
         }
 
         function loadRecordActionsForSelectedDate() {
@@ -6614,10 +6633,10 @@
         async function doSyncAdminConfig() {
             if (await AppVersionGuard.blockIfStale()) return false;
             try {
-                await fetch(LOG_APP_SCRIPT_URL, {
-                    method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: "saveConfig", configData: GLOBAL_CONFIG_LIST })
-                });
+                const res = await postToAppScript({ action: "saveConfig", configData: GLOBAL_CONFIG_LIST });
+                if (!res || res.status !== 'success') {
+                    throw new Error((res && res.message) || 'บันทึกการตั้งค่าพนักงานไม่สำเร็จ');
+                }
                 processConfigList(GLOBAL_CONFIG_LIST);
                 refreshConfigDependentUI();
                 return true;
@@ -7052,21 +7071,151 @@
             loadRecordActionsForSelectedDate();
         }
 
-        document.getElementById('record-date').addEventListener('change', () => {
+        function handleRecordDateChange() {
+            const nextDate = document.getElementById('record-date').value;
+            const previousDate = _lastRecordDate;
+            clearTimeout(_draftTimer);
+            _draftTimer = null;
+            if (previousDate && previousDate !== nextDate) saveRecordDraft(previousDate);
+            _lastRecordDate = nextDate;
             loadTasksForSelectedDate();
             restoreRecordDraft();
             updateDailyDashboard();
             updateDailyDashboard();
-        });
+        }
+        document.getElementById('record-date').addEventListener('change', handleRecordDateChange);
 
         // ================= RECORD DRAFT AUTOSAVE (C2) =================
         // เก็บฟอร์มบันทึกที่กรอกค้างไว้ลง localStorage กันข้อมูลหายเมื่อรีโหลด/หลุดหน้า
         let _draftTimer = null;
         let _restoringDraft = false;
+        let _lastRecordDate = '';
         function draftKey() { return 'kpiDraft_' + currentBranch; }
 
         function readRecordDraft() {
             try { return JSON.parse(safeStorage.getItem(draftKey()) || 'null'); } catch (e) { return null; }
+        }
+
+        function parseCustomerNotesForForm(customerNotes) {
+            const fields = {
+                'note-pickup': [],
+                'note-upcountry': [],
+                'note-inmarket': [],
+                'note-outmarket': []
+            };
+            const prefixes = [
+                ['- รับที่ร้าน: ', 'note-pickup'],
+                ['- ส่งตจว.: ', 'note-upcountry'],
+                ['- ส่งในตลาด: ', 'note-inmarket'],
+                ['- ส่งนอกตลาด: ', 'note-outmarket']
+            ];
+            String(customerNotes || '').split('\n').forEach(line => {
+                const match = prefixes.find(([prefix]) => line.startsWith(prefix));
+                if (match) fields[match[1]].push(line.slice(match[0].length));
+            });
+            return Object.fromEntries(Object.entries(fields).map(([id, values]) => [id, values.join(' / ')]));
+        }
+
+        function getSelectedServerDay(date) {
+            const rawData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
+            const selectedKey = normalizeClientDateKey(date);
+            if (!selectedKey) return null;
+            let selectedDay = null;
+            rawData.forEach(day => {
+                if (day && normalizeClientDateKey(day.date) === selectedKey) selectedDay = day;
+            });
+            return selectedDay;
+        }
+
+        function normalizeClientDateKey(value) {
+            if (value == null || value === '') return null;
+            if (value instanceof Date) return isNaN(value.getTime()) ? null : formatDateKeyLocal(value);
+            const text = String(value).trim();
+            const isoDate = parseDateKeyLocal(text);
+            if (isoDate && /^\d{4}-\d{2}-\d{2}/.test(text)) return formatDateKeyLocal(isoDate);
+            const parsed = new Date(text);
+            return isNaN(parsed.getTime()) ? null : formatDateKeyLocal(parsed);
+        }
+
+        function hydrateSelectedDayRecord(date) {
+            if (!date || !currentUser || !currentBranch) return { main: false, vendorBills: false };
+            const selectedDay = getSelectedServerDay(date);
+            const hasPendingDraft = _draftTimer !== null;
+            const mainKey = `kpiDraft_${currentUser}_${currentBranch}_${date}_main`;
+            const vendorKey = `kpiDraft_${currentUser}_${currentBranch}_${date}_vendorBills`;
+            let mainDraft = null;
+            try { mainDraft = JSON.parse(safeStorage.getItem(mainKey) || 'null'); } catch (e) {}
+            const hydrateOperations = !hasPendingDraft && (!mainDraft || !Object.prototype.hasOwnProperty.call(mainDraft, 'volume') || !Object.prototype.hasOwnProperty.call(mainDraft, 'notes'));
+            const hydrateEndOfShift = !hasPendingDraft && (!mainDraft || !Object.prototype.hasOwnProperty.call(mainDraft, 'endOfShift'));
+            let mainHydrated = false;
+            let vendorHydrated = false;
+
+            if (hydrateOperations && BRANCH_CONFIG[currentBranch] && BRANCH_CONFIG[currentBranch].showZone2) {
+                    const volume = (selectedDay && selectedDay.volume) || {};
+                    const volumeFields = {
+                        'vol-transfer': 'transfer',
+                        'vol-pickup': 'pickup',
+                        'vol-upcountry': 'upcountry',
+                        'vol-inmarket': 'inmarket',
+                        'vol-outmarket': 'outmarket'
+                    };
+                    Object.entries(volumeFields).forEach(([id, key]) => {
+                        const el = document.getElementById(id);
+                        if (el) el.value = String(Number.isFinite(Number(volume[key])) ? Number(volume[key]) : 0);
+                    });
+                    const notes = parseCustomerNotesForForm(selectedDay && selectedDay.customerNotes);
+                    Object.entries(notes).forEach(([id, value]) => {
+                        const el = document.getElementById(id);
+                        if (el) el.value = value;
+                    });
+                mainHydrated = true;
+            }
+
+            if (hydrateEndOfShift) {
+                const endOfShift = normalizeEndOfShiftBrief(selectedDay && selectedDay.endOfShift);
+                const endOfShiftFields = { 'eos-summary': 'summary', 'eos-issues': 'issues', 'eos-actions': 'actions', 'eos-followups': 'followUps' };
+                Object.entries(endOfShiftFields).forEach(([id, key]) => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = endOfShift[key];
+                });
+                syncLegacyFollowUpsDisplay();
+                mainHydrated = true;
+            }
+
+            if (currentBranch === 'AKRA' && !hasPendingDraft && !safeStorage.getItem(vendorKey)) {
+                const endOfShift = normalizeEndOfShiftBrief(selectedDay && selectedDay.endOfShift);
+                setVendorBillsForm(endOfShift.vendorBills);
+                vendorHydrated = true;
+            }
+
+            return { main: mainHydrated, vendorBills: vendorHydrated };
+        }
+
+        function reconcileSavedMainDraft(date, section) {
+            const mainKey = `kpiDraft_${currentUser}_${currentBranch}_${date}_main`;
+            let draft = null;
+            try { draft = JSON.parse(safeStorage.getItem(mainKey) || 'null'); } catch (e) {}
+            if (!draft || typeof draft !== 'object') return;
+
+            if (section === 'operations') {
+                delete draft.volume;
+                delete draft.notes;
+            } else if (section === 'tasks') {
+                delete draft.tasks;
+            } else if (section === 'endOfShift') {
+                delete draft.endOfShift;
+            }
+
+            const hasTasks = Array.isArray(draft.tasks) && draft.tasks.some(task => (task.name || '').trim() || (task.assignees || []).length > 0);
+            const hasOperations = Object.values(draft.volume || {}).some(value => value !== '0' && value !== '') ||
+                Object.values(draft.notes || {}).some(value => (value || '').trim());
+            const hasEndOfShift = Object.values(draft.endOfShift || {}).some(value => (value || '').trim());
+            const hasActions = Array.isArray(draft.actions) && draft.actions.length > 0;
+            if (hasTasks || hasOperations || hasEndOfShift || hasActions) {
+                safeStorage.setItem(mainKey, JSON.stringify(draft));
+            } else {
+                safeStorage.removeItem(mainKey);
+            }
         }
 
         function collectRecordDraft() {
@@ -7122,9 +7271,9 @@
             return false;
         }
 
-        function saveRecordDraft() {
+        function saveRecordDraft(dateOverride) {
             if (_restoringDraft || !currentBranch) return;
-            const date = document.getElementById('record-date').value || formatDateKeyLocal(new Date());
+            const date = dateOverride || document.getElementById('record-date').value || formatDateKeyLocal(new Date());
 
             // Workload draft
             if (currentBranch === 'AKRA') {
@@ -7172,7 +7321,13 @@
                 }
             }
 
-            // Main draft (Tasks, volume, notes, actions, and non-Vendor EoS fields)
+            saveMainRecordDraft(date);
+        }
+
+        // Main draft (Tasks, volume, notes, actions, and non-Vendor EoS fields)
+        function saveMainRecordDraft(dateOverride) {
+            if (_restoringDraft || !currentBranch) return;
+            const date = dateOverride || document.getElementById('record-date').value || formatDateKeyLocal(new Date());
             const mainDraft = {
                 tasks: [],
                 volume: {},
@@ -7221,11 +7376,15 @@
         function saveRecordDraftDebounced() {
             if (_restoringDraft || !currentBranch) return;
             clearTimeout(_draftTimer);
-            _draftTimer = setTimeout(saveRecordDraft, 400);
+            _draftTimer = setTimeout(() => {
+                _draftTimer = null;
+                saveRecordDraft();
+            }, 400);
         }
 
         function clearRecordDraft() {
             clearTimeout(_draftTimer);
+            _draftTimer = null;
             const date = document.getElementById('record-date').value || formatDateKeyLocal(new Date());
             safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_workload`);
             safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_errors`);
@@ -7265,6 +7424,7 @@
             _restoringDraft = true;
 
             try {
+                hydrateSelectedDayRecord(date);
                 // A. Restore Workload
                 if (currentBranch === 'AKRA') {
                     const wlKey = `kpiDraft_${currentUser}_${currentBranch}_${date}_workload`;
@@ -7326,8 +7486,6 @@
                             const vbDraft = JSON.parse(vbRaw);
                             setVendorBillsForm(vbDraft);
                         } catch(e) { console.error("Error parsing vendor bills draft", e); }
-                    } else {
-                        setVendorBillsForm(null);
                     }
                 }
 
@@ -7339,7 +7497,7 @@
                         const mainDraft = JSON.parse(mainRaw);
 
                         // Restore Tasks
-                        applyDraftTasks(mainDraft);
+                        if (Object.prototype.hasOwnProperty.call(mainDraft, 'tasks')) applyDraftTasks(mainDraft);
 
                         // Restore Volume & Notes
                         if (BRANCH_CONFIG[currentBranch].showZone2) {
@@ -7352,35 +7510,25 @@
                         renderRecordActionsTable();
 
                         // Restore EoS text fields
-                        const endOfShift = mainDraft.endOfShift || {};
-                        const endOfShiftFields = { 'eos-summary': 'summary', 'eos-issues': 'issues', 'eos-actions': 'actions', 'eos-followups': 'followUps' };
-                        Object.entries(endOfShiftFields).forEach(([id, key]) => {
-                            const el = document.getElementById(id);
-                            if (el) el.value = endOfShift[key] || '';
-                        });
-                        syncLegacyFollowUpsDisplay();
+                        if (Object.prototype.hasOwnProperty.call(mainDraft, 'endOfShift')) {
+                            const endOfShift = mainDraft.endOfShift || {};
+                            const endOfShiftFields = { 'eos-summary': 'summary', 'eos-issues': 'issues', 'eos-actions': 'actions', 'eos-followups': 'followUps' };
+                            Object.entries(endOfShiftFields).forEach(([id, key]) => {
+                                const el = document.getElementById(id);
+                                if (el) el.value = endOfShift[key] || '';
+                            });
+                            syncLegacyFollowUpsDisplay();
+                        }
 
                     } catch(e) { console.error("Error parsing main draft", e); }
                 } else {
-                    // Clear fields to defaults
+                    // Use the selected server day when there is no active local draft.
                     const taskContainer = document.getElementById('task-entries-container');
                     if (taskContainer) taskContainer.innerHTML = '';
                     loadTasksForSelectedDate(); // default tasks load
 
-                    if (BRANCH_CONFIG[currentBranch].showZone2) {
-                        ['vol-transfer','vol-pickup','vol-upcountry','vol-inmarket','vol-outmarket'].forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
-                        ['note-pickup','note-upcountry','note-inmarket','note-outmarket'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-                    }
-
                     localActionsDraft = ALL_ACTIONS.filter(act => act.branch === currentBranch && act.sourceDate === date);
                     renderRecordActionsTable();
-
-                    const endOfShiftFields = { 'eos-summary': 'summary', 'eos-issues': 'issues', 'eos-actions': 'actions', 'eos-followups': 'followUps' };
-                    Object.keys(endOfShiftFields).forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) el.value = '';
-                    });
-                    syncLegacyFollowUpsDisplay();
                 }
             } finally {
                 _restoringDraft = false;
@@ -7391,8 +7539,12 @@
         (function wireDraftAutosave() {
             const recView = document.getElementById('view-record');
             recView.addEventListener('input', saveRecordDraftDebounced);
-            recView.addEventListener('change', saveRecordDraftDebounced);
-            recView.addEventListener('click', saveRecordDraftDebounced);
+            recView.addEventListener('change', event => {
+                if (event.target.id !== 'record-date') saveRecordDraftDebounced();
+            });
+            recView.addEventListener('click', event => {
+                if (!event.target.closest('[data-skip-draft-autosave]')) saveRecordDraftDebounced();
+            });
         })();
 
         // ================= VOLUME STEPPER LONG-PRESS (C3) =================
@@ -7426,6 +7578,140 @@
         }, true);
 
         // ================= NEW FOCUSED DAILY CARD SAVE HANDLERS & DAILY DASHBOARD =================
+
+        function collectOperationsSection() {
+            const volumeFields = {
+                transfer: ['vol-transfer', 'บิลย้ายคลัง'],
+                pickup: ['vol-pickup', 'ลูกค้ามารับที่ร้าน'],
+                upcountry: ['vol-upcountry', 'ส่งต่างจังหวัด'],
+                inmarket: ['vol-inmarket', 'ส่งในตลาด'],
+                outmarket: ['vol-outmarket', 'ส่งนอกตลาด']
+            };
+            const volume = {};
+            for (const [key, [id, label]] of Object.entries(volumeFields)) {
+                const input = document.getElementById(id);
+                const rawValue = input.value.trim();
+                if (!/^\d+$/.test(rawValue)) {
+                    showToast(`กรุณาระบุจำนวน ${label} เป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป`, true);
+                    input.focus();
+                    return null;
+                }
+                volume[key] = Number(rawValue);
+            }
+
+            const notes = [
+                ['note-pickup', '- รับที่ร้าน: '],
+                ['note-upcountry', '- ส่งตจว.: '],
+                ['note-inmarket', '- ส่งในตลาด: '],
+                ['note-outmarket', '- ส่งนอกตลาด: ']
+            ].map(([id, prefix]) => {
+                const value = document.getElementById(id).value.trim();
+                return value ? prefix + value : '';
+            }).filter(Boolean);
+
+            return { volume, customerNotes: notes.join('\n') };
+        }
+
+        function collectTasksSection() {
+            const tasks = [];
+            const entries = document.querySelectorAll('.task-entry');
+            for (const entry of entries) {
+                const nameInput = entry.querySelector('.task-name');
+                const taskName = nameInput.value.trim();
+                const assignees = Array.from(entry.querySelectorAll('.task-emp-cb:checked')).map(cb => cb.value);
+                if (!taskName && assignees.length === 0) continue;
+                if (!taskName) {
+                    showToast('กรุณาระบุชื่อแผนงาน', true);
+                    nameInput.focus();
+                    return null;
+                }
+                if (assignees.length === 0) {
+                    showToast(`กรุณาระบุผู้รับผิดชอบแผนงาน “${taskName}”`, true);
+                    entry.querySelector('.task-emp-cb')?.focus();
+                    return null;
+                }
+                tasks.push({
+                    taskName,
+                    status: entry.querySelector('.task-status').value,
+                    assignee: assignees.join(', ')
+                });
+            }
+            return tasks;
+        }
+
+        function lockScopedSaveControls(button) {
+            const card = button.closest('[data-scoped-save-card]');
+            if (!card) return () => {};
+            const states = Array.from(card.querySelectorAll('button, input, textarea, select')).map(control => ({
+                control,
+                disabled: control.disabled
+            }));
+            states.forEach(({ control }) => { control.disabled = true; });
+            return () => {
+                states.forEach(({ control, disabled }) => { control.disabled = disabled; });
+            };
+        }
+
+        async function submitDailySection(buttonId, idleLabel, request, successMessage, logAction) {
+            const btn = document.getElementById(buttonId);
+            const restoreScopedControls = lockScopedSaveControls(btn);
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
+            try {
+                const res = await postToAppScript(request);
+                if (!res || res.status !== 'success') {
+                    showModal('บันทึกไม่สำเร็จ', (res && res.message) || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์', 'error');
+                    return false;
+                }
+                clearTimeout(_draftTimer);
+                _draftTimer = null;
+                saveMainRecordDraft(request.date);
+                reconcileSavedMainDraft(request.date, request.section);
+                showToast(successMessage);
+                sendAppLog(logAction, `${logAction} สาขา ${currentBranch} (วันที่ ${request.date})`);
+                await syncDataFromSheet();
+                loadDashboardData();
+                updateDailyDashboard();
+                return true;
+            } catch (e) {
+                console.error(e);
+                showModal('บันทึกไม่สำเร็จ', e.message || 'เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้', 'error');
+                return false;
+            } finally {
+                btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> ${idleLabel}`;
+                restoreScopedControls();
+            }
+        }
+
+        async function saveOperationsCard() {
+            if (await AppVersionGuard.blockIfStale()) return;
+            const date = document.getElementById('record-date').value;
+            if (!date) return showToast('กรุณาเลือกวันที่บันทึก', true);
+            const operations = collectOperationsSection();
+            if (!operations) return;
+            await submitDailySection('btn-save-operations', 'บันทึกข้อมูลงานประจำวัน', {
+                action: 'saveSection', branch: currentBranch, date, section: 'operations', ...operations
+            }, 'บันทึกข้อมูลงานประจำวันสำเร็จ!', 'บันทึกข้อมูลงานประจำวัน');
+        }
+
+        async function saveTasksCard() {
+            if (await AppVersionGuard.blockIfStale()) return;
+            const date = document.getElementById('record-date').value;
+            if (!date) return showToast('กรุณาเลือกวันที่บันทึก', true);
+            const tasks = collectTasksSection();
+            if (!tasks) return;
+            await submitDailySection('btn-save-tasks', 'บันทึกแผนงานสัปดาห์นี้', {
+                action: 'saveSection', branch: currentBranch, date, section: 'tasks', tasks
+            }, 'บันทึกแผนงานสัปดาห์นี้สำเร็จ!', 'บันทึกแผนงานสัปดาห์นี้');
+        }
+
+        async function saveEndOfShiftCard() {
+            if (await AppVersionGuard.blockIfStale()) return;
+            const date = document.getElementById('record-date').value;
+            if (!date) return showToast('กรุณาเลือกวันที่บันทึก', true);
+            await submitDailySection('btn-save-end-of-shift', 'บันทึกสรุปรายงานประจำวัน', {
+                action: 'saveSection', branch: currentBranch, date, section: 'endOfShift', endOfShift: collectEndOfShiftTextFields()
+            }, 'บันทึกสรุปรายงานประจำวันสำเร็จ!', 'บันทึกสรุปรายงานประจำวัน');
+        }
 
         async function saveWorkloadCard() {
             if (await AppVersionGuard.blockIfStale()) return;
