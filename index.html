@@ -183,7 +183,7 @@
         #view-admin-dash :where(button, select, input) { min-height: 2.75rem; }
         #view-admin-dash :where(table, .executive-metric, [id^="exec-metric-"]) { font-variant-numeric: tabular-nums; }
         #app-content :where(input,select,textarea)::placeholder { color: #94a3b8; }
-        #app-content .workload-row :where(.wl-outbound,.wl-inbound,.wl-transfer,.wl-shared) { min-height: 0; border-color: transparent; border-radius: 0; background: transparent; }
+        #app-content .workload-row :where(.wl-outbound,.wl-inbound,.wl-transfer,.wl-shared) { min-height: 3rem; border-color: #fcd34d; border-radius: 0.5rem; background: #fffbeb; }
         #app-content .workload-row .wl-note { min-height: 2rem; border-color: transparent; border-radius: 0; background: transparent; }
         #app-content :where(button) { border-radius: 0.5rem; box-shadow: none; }
         #app-content :where(.bg-gradient-to-r,.bg-gradient-to-br) { background-image: none; }
@@ -330,13 +330,13 @@
             </div>
 
             <!-- AKRA Workload Editor -->
-            <div id="akra-workload-card" class="hidden bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500 border-y border-r border-gray-100 md-colspan-2">
-                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+            <div id="akra-workload-card" class="hidden bg-white p-3 rounded-xl shadow-sm border-l-4 border-amber-500 border-y border-r border-gray-100 md-colspan-2 sm:p-4">
+                <div class="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
                     <h2 class="text-lg font-bold text-gray-800 flex items-center"><i class="fa-solid fa-business-time text-amber-500 mr-2"></i>บันทึก Workload รายบุคคล</h2>
                     <span class="text-xs text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">วันละ 10 คะแนน</span>
                 </div>
-                <div id="akra-workload-container" class="space-y-4"></div>
-                <button type="button" id="btn-save-workload" onclick="saveWorkloadCard()" class="mt-4 w-full bg-amber-600 hover:bg-amber-700 active:scale-95 transition-all text-white font-bold py-3.5 rounded-xl text-sm shadow-md flex justify-center items-center border border-amber-850">
+                <div id="akra-workload-container" class="space-y-2"></div>
+                <button type="button" id="btn-save-workload" onclick="saveWorkloadCard()" class="mt-3 w-full bg-amber-600 hover:bg-amber-700 active:scale-95 transition-all text-white font-bold py-3 rounded-xl text-sm shadow-md flex justify-center items-center border border-amber-850">
                     <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึก Workload
                 </button>
             </div>
@@ -1350,7 +1350,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260714.06";
+        const CURRENT_VERSION = "20260714.08";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -3428,12 +3428,17 @@
                 });
             }
 
-            if (onDuty.length === 0) {
+            const isUserAdmin = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin'));
+            const visibleEmployees = isUserAdmin
+                ? onDuty
+                : onDuty.filter(emp => normalizeEmpName(emp) === normalizeEmpName(displayUserName));
+
+            if (visibleEmployees.length === 0) {
                 container.innerHTML = `<div class="text-xs text-gray-400 py-2 text-center">ไม่มีพนักงานเข้ากะสำหรับการระบุ Workload</div>`;
                 return;
             }
 
-            container.innerHTML = onDuty.map(emp => {
+            container.innerHTML = visibleEmployees.map(emp => {
                 const normKey = normalizeEmpName(emp);
                 const val = currentValues[normKey] || { capacity: 0, outbound: 0, inbound: 0, transfer: 0, shared: 0, note: "" };
                 const total = val.outbound + val.inbound + val.transfer + val.shared;
@@ -3441,59 +3446,59 @@
                 if (total > val.capacity) totalClass = "text-red-600 font-bold";
                 else if (total === val.capacity) totalClass = "text-green-600 font-bold";
 
-                const isUserAdmin = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin'));
                 const canEditRow = isUserAdmin || normalizeEmpName(emp) === normalizeEmpName(displayUserName);
                 const disabledAttr = canEditRow ? '' : 'disabled';
                 const readonlyAttr = canEditRow ? '' : 'readonly';
 
                 return `
-                    <div class="workload-row bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col space-y-3" data-employee="${esc(emp)}">
+                    <div class="workload-row bg-gray-50 p-2.5 rounded-lg border border-gray-100 flex flex-col space-y-2" data-employee="${esc(emp)}">
                         <div class="flex justify-between items-center">
                             <span class="text-sm font-bold text-gray-700">${esc(emp)}</span>
-                            <div class="flex items-center space-x-2">
+                            <div class="flex items-center space-x-1.5">
                                 <span class="text-xs text-gray-500">ความสามารถ:</span>
                                 <select ${disabledAttr} class="wl-capacity bg-white border border-gray-200 rounded px-1.5 py-0.5 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="validateRowTotal(this.closest('.workload-row'))">
                                     ${[...Array(11).keys()].map(i => `<option value="${i}" ${val.capacity === i ? 'selected' : ''}>${i}</option>`).join('')}
                                 </select>
+                                <button type="button" ${disabledAttr} onclick="setWorkloadCapacity(this.closest('.workload-row'), 10)" class="h-12 px-2 rounded-lg border border-amber-300 bg-amber-50 text-[11px] font-bold text-amber-800 active:bg-amber-100 ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">เต็มวัน 10</button>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3 text-center">
-                            <div class="bg-white p-2 rounded-lg border border-gray-100 flex flex-col items-center">
-                                <div class="text-[10px] text-gray-500 mb-1 font-semibold">ขาออก</div>
-                                <div class="flex items-center space-x-2">
-                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">-</button>
-                                    <input type="number" readonly class="wl-outbound w-8 text-center text-xs font-bold text-gray-800 bg-transparent focus:outline-none" value="${val.outbound}">
-                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
+                            <div class="bg-white p-1.5 rounded-lg border border-gray-100 flex flex-col items-center">
+                                <div class="text-[10px] text-gray-500 mb-0.5 font-semibold">ขาออก</div>
+                                <div class="flex items-center space-x-1">
+                                    <button type="button" ${disabledAttr} aria-label="ลดคะแนนขาออกของ ${esc(emp)}" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">−</button>
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" enterkeyhint="done" aria-label="คะแนนขาออกของ ${esc(emp)}" class="wl-outbound w-8 text-center text-base font-bold text-gray-800 border focus:outline-none focus:ring-2 focus:ring-amber-400" value="${val.outbound}" onfocus="this.select()" onchange="setWorkloadDirectValue(this)">
+                                    <button type="button" ${disabledAttr} aria-label="เพิ่มคะแนนขาออกของ ${esc(emp)}" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
                                 </div>
                             </div>
-                            <div class="bg-white p-2 rounded-lg border border-gray-100 flex flex-col items-center">
-                                <div class="text-[10px] text-gray-500 mb-1 font-semibold">ขาเข้า</div>
-                                <div class="flex items-center space-x-2">
-                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">-</button>
-                                    <input type="number" readonly class="wl-inbound w-8 text-center text-xs font-bold text-gray-800 bg-transparent focus:outline-none" value="${val.inbound}">
-                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
+                            <div class="bg-white p-1.5 rounded-lg border border-gray-100 flex flex-col items-center">
+                                <div class="text-[10px] text-gray-500 mb-0.5 font-semibold">ขาเข้า</div>
+                                <div class="flex items-center space-x-1">
+                                    <button type="button" ${disabledAttr} aria-label="ลดคะแนนขาเข้าของ ${esc(emp)}" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">−</button>
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" enterkeyhint="done" aria-label="คะแนนขาเข้าของ ${esc(emp)}" class="wl-inbound w-8 text-center text-base font-bold text-gray-800 border focus:outline-none focus:ring-2 focus:ring-amber-400" value="${val.inbound}" onfocus="this.select()" onchange="setWorkloadDirectValue(this)">
+                                    <button type="button" ${disabledAttr} aria-label="เพิ่มคะแนนขาเข้าของ ${esc(emp)}" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
                                 </div>
                             </div>
-                            <div class="bg-white p-2 rounded-lg border border-gray-100 flex flex-col items-center">
-                                <div class="text-[10px] text-gray-500 mb-1 font-semibold">ขาย้าย</div>
-                                <div class="flex items-center space-x-2">
-                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">-</button>
-                                    <input type="number" readonly class="wl-transfer w-8 text-center text-xs font-bold text-gray-800 bg-transparent focus:outline-none" value="${val.transfer}">
-                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
+                            <div class="bg-white p-1.5 rounded-lg border border-gray-100 flex flex-col items-center">
+                                <div class="text-[10px] text-gray-500 mb-0.5 font-semibold">ขาย้าย</div>
+                                <div class="flex items-center space-x-1">
+                                    <button type="button" ${disabledAttr} aria-label="ลดคะแนนขาย้ายของ ${esc(emp)}" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">−</button>
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" enterkeyhint="done" aria-label="คะแนนขาย้ายของ ${esc(emp)}" class="wl-transfer w-8 text-center text-base font-bold text-gray-800 border focus:outline-none focus:ring-2 focus:ring-amber-400" value="${val.transfer}" onfocus="this.select()" onchange="setWorkloadDirectValue(this)">
+                                    <button type="button" ${disabledAttr} aria-label="เพิ่มคะแนนขาย้ายของ ${esc(emp)}" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
                                 </div>
                             </div>
-                            <div class="bg-white p-2 rounded-lg border border-gray-100 flex flex-col items-center">
-                                <div class="text-[10px] text-gray-500 mb-1 font-semibold">อื่น ๆ</div>
-                                <div class="flex items-center space-x-2">
-                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">-</button>
-                                    <input type="number" readonly class="wl-shared w-8 text-center text-xs font-bold text-gray-800 bg-transparent focus:outline-none" value="${val.shared}">
-                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
+                            <div class="bg-white p-1.5 rounded-lg border border-gray-100 flex flex-col items-center">
+                                <div class="text-[10px] text-gray-500 mb-0.5 font-semibold">อื่น ๆ</div>
+                                <div class="flex items-center space-x-1">
+                                    <button type="button" ${disabledAttr} aria-label="ลดคะแนนอื่น ๆ ของ ${esc(emp)}" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">−</button>
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" enterkeyhint="done" aria-label="คะแนนอื่น ๆ ของ ${esc(emp)}" class="wl-shared w-8 text-center text-base font-bold text-gray-800 border focus:outline-none focus:ring-2 focus:ring-amber-400" value="${val.shared}" onfocus="this.select()" onchange="setWorkloadDirectValue(this)">
+                                    <button type="button" ${disabledAttr} aria-label="เพิ่มคะแนนอื่น ๆ ของ ${esc(emp)}" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="flex justify-between items-center pt-2 border-t border-gray-150/50">
+                        <div class="flex justify-between items-center pt-1.5 border-t border-gray-150/50">
                             <input type="text" ${readonlyAttr} placeholder="หมายเหตุ (ถ้ามี)" class="wl-note w-2/3 bg-transparent text-[11px] text-gray-500 placeholder-gray-300 outline-none border-b border-transparent focus:border-gray-200 pb-0.5" value="${esc(val.note)}" oninput="saveRecordDraftDebounced()">
                             <span class="text-xs ${totalClass} wl-total-indicator">รวม ${total}/${val.capacity}</span>
                         </div>
@@ -3527,6 +3532,19 @@
             input.value = newVal;
             validateRowTotal(row);
             saveRecordDraftDebounced();
+        }
+
+        function setWorkloadCapacity(row, capacity) {
+            const select = row.querySelector('.wl-capacity');
+            if (!select || select.disabled) return;
+            select.value = String(capacity);
+            validateRowTotal(row);
+        }
+
+        function setWorkloadDirectValue(input) {
+            const parsed = parseInt(input.value, 10);
+            input.value = String(Math.min(10, Math.max(0, Number.isFinite(parsed) ? parsed : 0)));
+            validateRowTotal(input.closest('.workload-row'));
         }
 
         function validateRowTotal(row) {
