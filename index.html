@@ -263,6 +263,59 @@
                 <label class="block text-sm font-bold text-gray-700 mb-2"><i class="fa-regular fa-calendar text-blue-500 mr-1.5"></i>วันที่บันทึก</label>
                 <input type="date" id="record-date" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 font-medium">
             </div>
+            <!-- Daily Dashboard Card (AKRA only) -->
+            <div id="daily-dashboard-card" class="hidden bg-gradient-to-br from-slate-900 to-slate-950 text-white p-5 rounded-2xl shadow-xl border border-slate-800 md-colspan-2 space-y-4">
+                <div class="flex justify-between items-center border-slate-800 border-b pb-3">
+                    <h2 class="text-base font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-cyan-400"></i>
+                        <span>สรุปผลการบันทึกประจำวัน (Daily Dashboard)</span>
+                    </h2>
+                    <span id="daily-status-badge" class="text-xs font-black px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        ยังไม่ครบ
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Workload Column -->
+                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80 flex flex-col justify-between min-h-[140px]">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5"><i class="fa-solid fa-business-time text-amber-400"></i> Workload</span>
+                                <span id="daily-workload-status" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/25">ยังขาด</span>
+                            </div>
+                            <div class="text-xl font-black text-slate-100" id="daily-workload-summary">-</div>
+                            <div class="text-[10px] text-slate-400 mt-1 line-clamp-2" id="daily-workload-details">-</div>
+                        </div>
+                        <div class="text-[9px] text-slate-500 mt-2 font-mono" id="daily-workload-time">-</div>
+                    </div>
+
+                    <!-- Errors Column -->
+                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80 flex flex-col justify-between min-h-[140px]">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-red-400"></i> บันทึกความผิดพลาด</span>
+                                <span id="daily-errors-status" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/25">ยังขาด</span>
+                            </div>
+                            <div class="text-xl font-black text-slate-100" id="daily-errors-summary">-</div>
+                            <div class="text-[10px] text-slate-400 mt-1 line-clamp-2" id="daily-errors-details">-</div>
+                        </div>
+                        <div class="text-[9px] text-slate-500 mt-2 font-mono" id="daily-errors-time">-</div>
+                    </div>
+
+                    <!-- Vendor Bills Column -->
+                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80 flex flex-col justify-between min-h-[140px]">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5"><i class="fa-solid fa-file-invoice-dollar text-blue-400"></i> Vendor Bills</span>
+                                <span id="daily-vendor-status" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/25">ยังขาด</span>
+                            </div>
+                            <div class="text-xl font-black text-slate-100" id="daily-vendor-summary">-</div>
+                            <div class="text-[10px] text-slate-400 mt-1 line-clamp-2" id="daily-vendor-details">-</div>
+                        </div>
+                        <div class="text-[9px] text-slate-500 mt-2 font-mono" id="daily-vendor-time">-</div>
+                    </div>
+                </div>
+            </div>
 
             <!-- AKRA Core Roster -->
             <div id="akra-core-roster-card" class="hidden bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500 border-y border-r border-gray-100 md-colspan-2">
@@ -283,6 +336,9 @@
                     <span class="text-xs text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">วันละ 10 คะแนน</span>
                 </div>
                 <div id="akra-workload-container" class="space-y-4"></div>
+                <button type="button" id="btn-save-workload" onclick="saveWorkloadCard()" class="mt-4 w-full bg-amber-600 hover:bg-amber-700 active:scale-95 transition-all text-white font-bold py-3.5 rounded-xl text-sm shadow-md flex justify-center items-center border border-amber-850">
+                    <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึก Workload
+                </button>
             </div>
 
             <!-- Errors -->
@@ -293,8 +349,52 @@
 
                 <div id="error-entries-container" class="space-y-4"></div>
 
-                <button onclick="addErrorEntryRow()" class="mt-4 w-full bg-red-50 text-red-600 border border-red-200 font-bold py-3 rounded-xl text-sm active:bg-red-100 shadow-sm transition-all hover:bg-red-100 flex justify-center items-center">
+                <button type="button" onclick="addErrorEntryRow()" class="mt-4 w-full bg-red-50 text-red-600 border border-red-200 font-bold py-3.5 rounded-xl text-sm active:bg-red-100 shadow-sm transition-all hover:bg-red-100 flex justify-center items-center">
                     <i class="fa-solid fa-plus-circle mr-2 text-lg"></i> เพิ่มรายการความผิดพลาด
+                </button>
+                <button type="button" id="btn-save-errors" onclick="saveErrorsCard()" class="hidden mt-2.5 w-full bg-red-600 hover:bg-red-700 active:scale-95 transition-all text-white font-bold py-3.5 rounded-xl text-sm shadow-md flex justify-center items-center border border-red-850">
+                    <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึกความผิดพลาด
+                </button>
+            </div>
+
+            <!-- Vendor Bills Card (AKRA only) -->
+            <div id="vendor-bills-card" class="hidden bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 border-y border-r border-gray-100 md-colspan-2">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                    <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-file-invoice-dollar text-blue-500 mr-2"></i>งานเอกสาร &amp; ระบบ (Vendor Bills)</h2>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1 mb-4">บันทึกจำนวนบิล Vendor และสถานะการคีย์เข้าระบบประจำวัน</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="vendor-bills-total" class="block text-sm font-bold text-slate-700 mb-1.5">จำนวนบิล Vendor ทั้งหมดวันนี้ <span aria-hidden="true">*</span></label>
+                        <input type="number" id="vendor-bills-total" name="vendorBillsTotal" min="0" step="1" inputmode="numeric" class="w-full min-h-12 p-3 border border-slate-300 rounded-lg text-base bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                    </div>
+                    <fieldset>
+                        <legend class="block text-sm font-bold text-slate-700 mb-1.5">สถานะการคีย์ระบบ <span aria-hidden="true">*</span></legend>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="min-h-12 flex items-center gap-2 px-3 border border-slate-300 rounded-lg bg-slate-50 cursor-pointer">
+                                <input type="radio" name="vendorBillsStatus" value="completed" class="w-4 h-4 accent-blue-600" aria-controls="vendor-bills-pending" aria-expanded="false" onchange="toggleVendorBillsPending()">
+                                <span class="text-sm font-semibold text-slate-700">เรียบร้อย</span>
+                            </label>
+                            <label class="min-h-12 flex items-center gap-2 px-3 border border-slate-300 rounded-lg bg-slate-50 cursor-pointer">
+                                <input type="radio" name="vendorBillsStatus" value="pending" class="w-4 h-4 accent-blue-600" aria-controls="vendor-bills-pending" aria-expanded="false" onchange="toggleVendorBillsPending()">
+                                <span class="text-sm font-semibold text-slate-700">ค้าง</span>
+                            </label>
+                        </div>
+                    </fieldset>
+                </div>
+                <div id="vendor-bills-pending" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label for="vendor-bills-pending-count" class="block text-sm font-bold text-slate-700 mb-1.5">จำนวนบิลที่ค้างสะสม <span aria-hidden="true">*</span></label>
+                        <input type="number" id="vendor-bills-pending-count" name="vendorBillsPendingAccumulated" min="0" step="1" inputmode="numeric" class="w-full min-h-12 p-3 border border-slate-300 rounded-lg text-base bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                    </div>
+                    <div>
+                        <label for="vendor-bills-pending-note" class="block text-sm font-bold text-slate-700 mb-1.5">รายละเอียดงานที่ค้าง <span aria-hidden="true">*</span></label>
+                        <textarea id="vendor-bills-pending-note" name="vendorBillsPendingNote" rows="3" maxlength="1200" class="w-full min-h-24 resize-y p-3 border border-slate-300 rounded-lg text-base bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="ระบุรายการ สาเหตุ หรือสิ่งที่ต้องติดตาม..."></textarea>
+                    </div>
+                </div>
+                <!-- Save Button for Vendor Bills Card -->
+                <button type="button" id="btn-save-vendor-bills" onclick="saveVendorBillsCard()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white font-bold py-3.5 rounded-xl text-sm shadow-md flex justify-center items-center border border-blue-800">
+                    <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึก Vendor Bills
                 </button>
             </div>
 
@@ -421,39 +521,7 @@
                         <textarea id="eos-followups" name="endOfShiftFollowUps" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="ระบุระบบ งานค้าง ผู้รับช่วงต่อ หรือประเด็นที่ต้องติดตามพรุ่งนี้..."></textarea>
                     </div>
                 </div>
-                <fieldset id="vendor-bills-section" class="hidden mt-5 border-t border-slate-200 pt-4" aria-labelledby="vendor-bills-title">
-                    <legend id="vendor-bills-title" class="text-base font-semibold text-slate-900">งานเอกสาร &amp; ระบบ (Vendor Bills)</legend>
-                    <p class="text-[11px] text-slate-500 mt-1 mb-4">บันทึกจำนวนบิล Vendor และสถานะการคีย์เข้าระบบประจำวัน</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="vendor-bills-total" class="block text-sm font-bold text-slate-700 mb-1.5">จำนวนบิล Vendor ทั้งหมดวันนี้ <span aria-hidden="true">*</span></label>
-                            <input type="number" id="vendor-bills-total" name="vendorBillsTotal" min="0" step="1" inputmode="numeric" class="w-full min-h-12 p-3 border border-slate-300 rounded-lg text-base bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
-                        </div>
-                        <fieldset>
-                            <legend class="block text-sm font-bold text-slate-700 mb-1.5">สถานะคีย์เข้าระบบ <span aria-hidden="true">*</span></legend>
-                            <div class="grid grid-cols-2 gap-2">
-                                <label class="min-h-12 flex items-center gap-2 px-3 border border-slate-300 rounded-lg bg-slate-50 cursor-pointer">
-                                    <input type="radio" name="vendorBillsStatus" value="completed" class="w-4 h-4 accent-blue-600" aria-controls="vendor-bills-pending" aria-expanded="false">
-                                    <span class="text-sm font-semibold text-slate-700">เรียบร้อย</span>
-                                </label>
-                                <label class="min-h-12 flex items-center gap-2 px-3 border border-slate-300 rounded-lg bg-slate-50 cursor-pointer">
-                                    <input type="radio" name="vendorBillsStatus" value="pending" class="w-4 h-4 accent-blue-600" aria-controls="vendor-bills-pending" aria-expanded="false">
-                                    <span class="text-sm font-semibold text-slate-700">ค้าง</span>
-                                </label>
-                            </div>
-                        </fieldset>
-                    </div>
-                    <div id="vendor-bills-pending" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div>
-                            <label for="vendor-bills-pending-count" class="block text-sm font-bold text-slate-700 mb-1.5">จำนวนบิลที่ค้างสะสม <span aria-hidden="true">*</span></label>
-                            <input type="number" id="vendor-bills-pending-count" name="vendorBillsPendingAccumulated" min="0" step="1" inputmode="numeric" class="w-full min-h-12 p-3 border border-slate-300 rounded-lg text-base bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
-                        </div>
-                        <div>
-                            <label for="vendor-bills-pending-note" class="block text-sm font-bold text-slate-700 mb-1.5">รายละเอียดงานที่ค้าง <span aria-hidden="true">*</span></label>
-                            <textarea id="vendor-bills-pending-note" name="vendorBillsPendingNote" rows="3" maxlength="1200" class="w-full min-h-24 resize-y p-3 border border-slate-300 rounded-lg text-base bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="ระบุรายการ สาเหตุ หรือสิ่งที่ต้องติดตาม..."></textarea>
-                        </div>
-                    </div>
-                </fieldset>
+
             </section>
 
                         <!-- Structured Action Items Section -->
@@ -1282,7 +1350,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260713.15";
+        const CURRENT_VERSION = "20260714.06";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -3144,9 +3212,9 @@
         // ================= STARTUP LOGIC =================
         // ตัดรายชื่อซ้ำ (เกิดจาก race ตอนบันทึก config ซ้อนกันใน backend รุ่นก่อน) — เก็บแถวหลังสุดของแต่ละ uid
         function isEmployeeActive(name) {
-            const normalized = String(name || '').trim();
+            const normalized = normalizeEmpName(name);
             if (!normalized) return false;
-            const emp = GLOBAL_CONFIG_LIST.find(e => String(e.name).trim() === normalized);
+            const emp = GLOBAL_CONFIG_LIST.find(e => normalizeEmpName(e.name) === normalized);
             if (!emp) return false;
             return emp.status === 'Active';
         }
@@ -3293,6 +3361,7 @@
             syncAkraSharedEntries();
             renderAkraWorkloadEditor();
             saveRecordDraftDebounced();
+            updateDailyDashboard();
         }
 
         // ================= AKRA WORKLOAD EDITOR =================
@@ -3333,7 +3402,8 @@
             if (!forceReset) {
                 container.querySelectorAll('.workload-row').forEach(row => {
                     const emp = row.dataset.employee;
-                    currentValues[emp] = {
+                    const normKey = normalizeEmpName(emp);
+                    currentValues[normKey] = {
                         capacity: parseInt(row.querySelector('.wl-capacity').value) || 0,
                         outbound: parseInt(row.querySelector('.wl-outbound').value) || 0,
                         inbound: parseInt(row.querySelector('.wl-inbound').value) || 0,
@@ -3346,7 +3416,8 @@
 
             if (savedData && Array.isArray(savedData)) {
                 savedData.forEach(item => {
-                    currentValues[item.employee] = {
+                    const normKey = normalizeEmpName(item.employee);
+                    currentValues[normKey] = {
                         capacity: item.capacity !== undefined ? item.capacity : 10,
                         outbound: item.outbound || 0,
                         inbound: item.inbound || 0,
@@ -3363,11 +3434,17 @@
             }
 
             container.innerHTML = onDuty.map(emp => {
-                const val = currentValues[emp] || { capacity: 0, outbound: 0, inbound: 0, transfer: 0, shared: 0, note: "" };
+                const normKey = normalizeEmpName(emp);
+                const val = currentValues[normKey] || { capacity: 0, outbound: 0, inbound: 0, transfer: 0, shared: 0, note: "" };
                 const total = val.outbound + val.inbound + val.transfer + val.shared;
                 let totalClass = "text-gray-500";
                 if (total > val.capacity) totalClass = "text-red-600 font-bold";
                 else if (total === val.capacity) totalClass = "text-green-600 font-bold";
+
+                const isUserAdmin = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin'));
+                const canEditRow = isUserAdmin || normalizeEmpName(emp) === normalizeEmpName(displayUserName);
+                const disabledAttr = canEditRow ? '' : 'disabled';
+                const readonlyAttr = canEditRow ? '' : 'readonly';
 
                 return `
                     <div class="workload-row bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col space-y-3" data-employee="${esc(emp)}">
@@ -3375,7 +3452,7 @@
                             <span class="text-sm font-bold text-gray-700">${esc(emp)}</span>
                             <div class="flex items-center space-x-2">
                                 <span class="text-xs text-gray-500">ความสามารถ:</span>
-                                <select class="wl-capacity bg-white border border-gray-200 rounded px-1.5 py-0.5 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="validateRowTotal(this.closest('.workload-row'))">
+                                <select ${disabledAttr} class="wl-capacity bg-white border border-gray-200 rounded px-1.5 py-0.5 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="validateRowTotal(this.closest('.workload-row'))">
                                     ${[...Array(11).keys()].map(i => `<option value="${i}" ${val.capacity === i ? 'selected' : ''}>${i}</option>`).join('')}
                                 </select>
                             </div>
@@ -3385,39 +3462,39 @@
                             <div class="bg-white p-2 rounded-lg border border-gray-100 flex flex-col items-center">
                                 <div class="text-[10px] text-gray-500 mb-1 font-semibold">ขาออก</div>
                                 <div class="flex items-center space-x-2">
-                                    <button type="button" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">-</button>
+                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">-</button>
                                     <input type="number" readonly class="wl-outbound w-8 text-center text-xs font-bold text-gray-800 bg-transparent focus:outline-none" value="${val.outbound}">
-                                    <button type="button" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">+</button>
+                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
                                 </div>
                             </div>
                             <div class="bg-white p-2 rounded-lg border border-gray-100 flex flex-col items-center">
                                 <div class="text-[10px] text-gray-500 mb-1 font-semibold">ขาเข้า</div>
                                 <div class="flex items-center space-x-2">
-                                    <button type="button" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">-</button>
+                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">-</button>
                                     <input type="number" readonly class="wl-inbound w-8 text-center text-xs font-bold text-gray-800 bg-transparent focus:outline-none" value="${val.inbound}">
-                                    <button type="button" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">+</button>
+                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
                                 </div>
                             </div>
                             <div class="bg-white p-2 rounded-lg border border-gray-100 flex flex-col items-center">
                                 <div class="text-[10px] text-gray-500 mb-1 font-semibold">ขาย้าย</div>
                                 <div class="flex items-center space-x-2">
-                                    <button type="button" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">-</button>
+                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">-</button>
                                     <input type="number" readonly class="wl-transfer w-8 text-center text-xs font-bold text-gray-800 bg-transparent focus:outline-none" value="${val.transfer}">
-                                    <button type="button" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">+</button>
+                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
                                 </div>
                             </div>
                             <div class="bg-white p-2 rounded-lg border border-gray-100 flex flex-col items-center">
                                 <div class="text-[10px] text-gray-500 mb-1 font-semibold">อื่น ๆ</div>
                                 <div class="flex items-center space-x-2">
-                                    <button type="button" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">-</button>
+                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">-</button>
                                     <input type="number" readonly class="wl-shared w-8 text-center text-xs font-bold text-gray-800 bg-transparent focus:outline-none" value="${val.shared}">
-                                    <button type="button" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center">+</button>
+                                    <button type="button" ${disabledAttr} onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-sm font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
                                 </div>
                             </div>
                         </div>
 
                         <div class="flex justify-between items-center pt-2 border-t border-gray-150/50">
-                            <input type="text" placeholder="หมายเหตุ (ถ้ามี)" class="wl-note w-2/3 bg-transparent text-[11px] text-gray-500 placeholder-gray-300 outline-none border-b border-transparent focus:border-gray-200 pb-0.5" value="${esc(val.note)}" oninput="saveRecordDraftDebounced()">
+                            <input type="text" ${readonlyAttr} placeholder="หมายเหตุ (ถ้ามี)" class="wl-note w-2/3 bg-transparent text-[11px] text-gray-500 placeholder-gray-300 outline-none border-b border-transparent focus:border-gray-200 pb-0.5" value="${esc(val.note)}" oninput="saveRecordDraftDebounced()">
                             <span class="text-xs ${totalClass} wl-total-indicator">รวม ${total}/${val.capacity}</span>
                         </div>
                     </div>
@@ -3844,8 +3921,14 @@
                 const wlDash = document.getElementById('dash-workload-container');
                 if (wlDash) wlDash.classList.add('hidden');
             }
-            const vendorBillsSection = document.getElementById('vendor-bills-section');
-            if (vendorBillsSection) vendorBillsSection.classList.toggle('hidden', branch !== 'AKRA');
+            const vendorBillsCard = document.getElementById('vendor-bills-card');
+            if (vendorBillsCard) vendorBillsCard.classList.toggle('hidden', branch !== 'AKRA');
+
+            const btnSave = document.getElementById('btn-save');
+            if (btnSave) btnSave.classList.toggle('hidden', branch === 'AKRA');
+
+            const btnSaveErrors = document.getElementById('btn-save-errors');
+            if (btnSaveErrors) btnSaveErrors.classList.toggle('hidden', branch !== 'AKRA');
             const vendorBillsDashboard = document.getElementById('dash-vendor-bills-container');
             if (vendorBillsDashboard) vendorBillsDashboard.classList.toggle('hidden', branch !== 'AKRA');
             const customerVendorGrid = document.getElementById('dash-customer-vendor-grid');
@@ -3863,6 +3946,7 @@
             loadTasksForSelectedDate();
             applyEndOfShiftPermissionsUI();
             restoreRecordDraft();
+            updateDailyDashboard();
             // Cached-first: แสดงข้อมูลจาก cache ทันที แล้วค่อย sync เบื้องหลังเมื่อ cache เก่า
             if (isKpiCacheStale(currentBranch)) syncDataFromSheet();
         }
@@ -3895,6 +3979,7 @@
                     _adminFullLoaded = false; // cache สาขานี้เหลือ 3 เดือน — เดือนเก่าต้องดึงเต็มใหม่
                     if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
                         loadDashboardData();
+                        updateDailyDashboard();
                     } else if (!document.getElementById('view-admin-dash').classList.contains('hidden')) {
                         renderAdminDashboard();
                     } else {
@@ -6429,14 +6514,14 @@
 
             document.getElementById('admin-input-dept').value = emp.dept || '';
             setAdminGenderValue(emp.gender ? String(emp.gender).trim().toUpperCase() : '');
-            
+
             const statusVal = emp.status ? String(emp.status).trim() : 'Active';
             if (statusVal === 'Inactive') {
                 document.getElementById('admin-input-status-inactive').checked = true;
             } else {
                 document.getElementById('admin-input-status-active').checked = true;
             }
-            
+
             toggleAdminDept();
 
             const btnSubmit = document.getElementById('btn-submit-emp');
@@ -6719,6 +6804,7 @@
             if (!currentBranch || !BRANCH_CONFIG[currentBranch]) return;
             const container = document.getElementById('error-entries-container');
             const rowId = Date.now() + Math.floor(Math.random() * 1000);
+            const caseId = 'ERR-' + formatDateKeyLocal(new Date()) + '-' + Date.now() + '-' + Math.floor(1000 + Math.random() * 9000);
             const typeOptionsHtml = getErrorTypeOptionsHtml(currentBranch);
 
             const quickTypes = getTopErrorTypes();
@@ -6771,7 +6857,7 @@
             }
 
             const html = `
-                <div class="error-entry bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative transition-all">
+                <div class="error-entry bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative transition-all" data-case-id="${caseId}">
                     <button onclick="this.parentElement.remove()" aria-label="ลบรายการความผิดพลาดนี้" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"><i class="fa-solid fa-trash-can text-sm"></i></button>
 
                     <div class="mb-4 pr-8">
@@ -6948,7 +7034,12 @@
             loadRecordActionsForSelectedDate();
         }
 
-        document.getElementById('record-date').addEventListener('change', loadTasksForSelectedDate);
+        document.getElementById('record-date').addEventListener('change', () => {
+            loadTasksForSelectedDate();
+            restoreRecordDraft();
+            updateDailyDashboard();
+            updateDailyDashboard();
+        });
 
         // ================= RECORD DRAFT AUTOSAVE (C2) =================
         // เก็บฟอร์มบันทึกที่กรอกค้างไว้ลง localStorage กันข้อมูลหายเมื่อรีโหลด/หลุดหน้า
@@ -7015,9 +7106,98 @@
 
         function saveRecordDraft() {
             if (_restoringDraft || !currentBranch) return;
-            const draft = collectRecordDraft();
-            if (draftHasContent(draft)) safeStorage.setItem(draftKey(), JSON.stringify(draft));
-            else safeStorage.removeItem(draftKey());
+            const date = document.getElementById('record-date').value || formatDateKeyLocal(new Date());
+
+            // Workload draft
+            if (currentBranch === 'AKRA') {
+                const workloadDraft = {
+                    akraRoster: { onDuty: getAkraOnDutyEmployees(), cores: getAkraCoreRoster() },
+                    akraWorkload: getAkraWorkloadValues()
+                };
+                const hasWorkload = workloadDraft.akraWorkload.some(w => w.capacity !== 0 || w.outbound > 0 || w.inbound > 0 || w.transfer > 0 || w.shared > 0 || (w.note || '').trim() !== '');
+                if (hasWorkload) {
+                    safeStorage.setItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_workload`, JSON.stringify(workloadDraft));
+                } else {
+                    safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_workload`);
+                }
+            }
+
+            // Errors draft
+            const errorsDraft = [];
+            document.querySelectorAll('.error-entry').forEach(entry => {
+                const stageSel = entry.querySelector('.err-stage');
+                const caseId = entry.dataset.caseId || '';
+                errorsDraft.push({
+                    caseId: caseId,
+                    emps: Array.from(entry.querySelectorAll('.err-emp-cb:checked')).map(cb => cb.value),
+                    type: entry.querySelector('.err-type').value,
+                    stage: stageSel ? stageSel.value : '',
+                    penalty: entry.querySelector('.err-penalty').value,
+                    note: entry.querySelector('.err-note').value
+                });
+            });
+            const hasErrors = errorsDraft.some(e => (e.emps || []).length > 0 || (e.note || '').trim() !== '');
+            if (hasErrors) {
+                safeStorage.setItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_errors`, JSON.stringify(errorsDraft));
+            } else {
+                safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_errors`);
+            }
+
+            // Vendor Bills draft
+            if (currentBranch === 'AKRA') {
+                const vendorBills = collectVendorBills();
+                const hasVendor = vendorBills.totalToday !== '' || vendorBills.entryStatus || vendorBills.pendingAccumulated !== 0 || vendorBills.pendingNote.trim();
+                if (hasVendor) {
+                    safeStorage.setItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_vendorBills`, JSON.stringify(vendorBills));
+                } else {
+                    safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_vendorBills`);
+                }
+            }
+
+            // Main draft (Tasks, volume, notes, actions, and non-Vendor EoS fields)
+            const mainDraft = {
+                tasks: [],
+                volume: {},
+                notes: {},
+                actions: localActionsDraft,
+                endOfShift: {
+                    summary: document.getElementById('eos-summary') ? document.getElementById('eos-summary').value : '',
+                    issues: document.getElementById('eos-issues') ? document.getElementById('eos-issues').value : '',
+                    actions: document.getElementById('eos-actions') ? document.getElementById('eos-actions').value : '',
+                    followUps: document.getElementById('eos-followups') ? document.getElementById('eos-followups').value : ''
+                }
+            };
+
+            document.querySelectorAll('.task-entry').forEach(entry => {
+                mainDraft.tasks.push({
+                    name: entry.querySelector('.task-name').value,
+                    status: entry.querySelector('.task-status').value,
+                    assignees: Array.from(entry.querySelectorAll('.task-emp-cb:checked')).map(cb => cb.value)
+                });
+            });
+
+            if (BRANCH_CONFIG[currentBranch] && BRANCH_CONFIG[currentBranch].showZone2) {
+                ['vol-transfer','vol-pickup','vol-upcountry','vol-inmarket','vol-outmarket'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) mainDraft.volume[id] = el.value;
+                });
+                ['note-pickup','note-upcountry','note-inmarket','note-outmarket'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) mainDraft.notes[id] = el.value;
+                });
+            }
+
+            const hasTasks = mainDraft.tasks.some(t => (t.name || '').trim() !== '' || (t.assignees || []).length > 0);
+            const hasVol = Object.values(mainDraft.volume).some(v => v !== '0' && v !== '');
+            const hasNotes = Object.values(mainDraft.notes).some(v => (v || '').trim() !== '');
+            const hasEos = Object.values(mainDraft.endOfShift).some(v => (v || '').trim() !== '');
+            const hasActions = (mainDraft.actions || []).length > 0;
+
+            if (hasTasks || hasVol || hasNotes || hasEos || hasActions) {
+                safeStorage.setItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_main`, JSON.stringify(mainDraft));
+            } else {
+                safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_main`);
+            }
         }
 
         function saveRecordDraftDebounced() {
@@ -7028,7 +7208,11 @@
 
         function clearRecordDraft() {
             clearTimeout(_draftTimer);
-            safeStorage.removeItem(draftKey());
+            const date = document.getElementById('record-date').value || formatDateKeyLocal(new Date());
+            safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_workload`);
+            safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_errors`);
+            safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_vendorBills`);
+            safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_main`);
             localActionsDraft = [];
             renderRecordActionsTable();
         }
@@ -7058,49 +7242,128 @@
         }
 
         function restoreRecordDraft() {
-            const draft = readRecordDraft();
-            if (!draftHasContent(draft)) return;
+            if (!currentUser || !currentBranch) return;
+            const date = document.getElementById('record-date').value || formatDateKeyLocal(new Date());
             _restoringDraft = true;
+
             try {
-                if (draft.date) {
-                    document.getElementById('record-date').value = draft.date;
-                    loadTasksForSelectedDate();
+                // A. Restore Workload
+                if (currentBranch === 'AKRA') {
+                    const wlKey = `kpiDraft_${currentUser}_${currentBranch}_${date}_workload`;
+                    const wlRaw = safeStorage.getItem(wlKey);
+                    if (wlRaw) {
+                        try {
+                            const wlDraft = JSON.parse(wlRaw);
+                            applyAkraRosterDraft(wlDraft.akraRoster);
+                            if (wlDraft.akraWorkload) {
+                                applyAkraWorkloadDraft(wlDraft.akraWorkload);
+                            }
+                        } catch(e) { console.error("Error parsing workload draft", e); }
+                    } else {
+                        renderAkraWorkloadEditor(null, true);
+                    }
                 }
-                applyAkraRosterDraft(draft.akraRoster);
-                if (currentBranch === 'AKRA' && draft.akraWorkload) {
-                    applyAkraWorkloadDraft(draft.akraWorkload);
-                }
+
+                // B. Restore Errors
+                const errKey = `kpiDraft_${currentUser}_${currentBranch}_${date}_errors`;
+                const errRaw = safeStorage.getItem(errKey);
                 const container = document.getElementById('error-entries-container');
                 container.innerHTML = '';
-                (draft.errors && draft.errors.length ? draft.errors : [null]).forEach(errDraft => {
+                if (errRaw) {
+                    try {
+                        const errorsDraft = JSON.parse(errRaw);
+                        if (errorsDraft && errorsDraft.length) {
+                            errorsDraft.forEach(errDraft => {
+                                addErrorEntryRow();
+                                const entry = container.lastElementChild;
+                                if (errDraft.caseId) {
+                                    entry.dataset.caseId = errDraft.caseId;
+                                }
+                                entry.querySelectorAll('.err-emp-cb').forEach(cb => { cb.checked = (errDraft.emps || []).includes(cb.value); });
+                                const typeSel = entry.querySelector('.err-type');
+                                if (errDraft.type) { typeSel.value = errDraft.type; togglePenalty(typeSel); }
+                                const stageSel = entry.querySelector('.err-stage');
+                                if (stageSel && errDraft.stage) stageSel.value = errDraft.stage;
+                                if (errDraft.penalty) entry.querySelector('.err-penalty').value = errDraft.penalty;
+                                entry.querySelector('.err-note').value = errDraft.note || '';
+                                syncAkraSharedEntry(entry);
+                            });
+                        } else {
+                            addErrorEntryRow();
+                        }
+                    } catch(e) {
+                        console.error("Error parsing errors draft", e);
+                        addErrorEntryRow();
+                    }
+                } else {
                     addErrorEntryRow();
-                    if (!errDraft) return;
-                    const entry = container.lastElementChild;
-                    entry.querySelectorAll('.err-emp-cb').forEach(cb => { cb.checked = (errDraft.emps || []).includes(cb.value); });
-                    const typeSel = entry.querySelector('.err-type');
-                    if (errDraft.type) { typeSel.value = errDraft.type; togglePenalty(typeSel); }
-                    const stageSel = entry.querySelector('.err-stage');
-                    if (stageSel && errDraft.stage) stageSel.value = errDraft.stage;
-                    if (errDraft.penalty) entry.querySelector('.err-penalty').value = errDraft.penalty;
-                    entry.querySelector('.err-note').value = errDraft.note || '';
-                    syncAkraSharedEntry(entry);
-                });
-                if (BRANCH_CONFIG[currentBranch].showZone2) {
-                    Object.entries(draft.volume || {}).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
-                    Object.entries(draft.notes || {}).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
                 }
-                const endOfShift = normalizeEndOfShiftBrief(draft.endOfShift);
-                localActionsDraft = draft.actions || [];
-                renderRecordActionsTable();
-                const endOfShiftFields = { 'eos-summary': 'summary', 'eos-issues': 'issues', 'eos-actions': 'actions', 'eos-followups': 'followUps' };
-                Object.entries(endOfShiftFields).forEach(([id, key]) => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = endOfShift[key] || '';
-                });
-                if (currentBranch === 'AKRA') setVendorBillsForm(endOfShift.vendorBills);
-                syncLegacyFollowUpsDisplay();
-                applyDraftTasks(draft);
-                showToast('กู้คืนข้อมูลที่กรอกค้างไว้ (ยังไม่ได้บันทึก)');
+
+                // C. Restore Vendor Bills
+                if (currentBranch === 'AKRA') {
+                    const vbKey = `kpiDraft_${currentUser}_${currentBranch}_${date}_vendorBills`;
+                    const vbRaw = safeStorage.getItem(vbKey);
+                    if (vbRaw) {
+                        try {
+                            const vbDraft = JSON.parse(vbRaw);
+                            setVendorBillsForm(vbDraft);
+                        } catch(e) { console.error("Error parsing vendor bills draft", e); }
+                    } else {
+                        setVendorBillsForm(null);
+                    }
+                }
+
+                // D. Restore Main draft (Tasks, volume, notes, actions, and non-Vendor EoS fields)
+                const mainKey = `kpiDraft_${currentUser}_${currentBranch}_${date}_main`;
+                const mainRaw = safeStorage.getItem(mainKey);
+                if (mainRaw) {
+                    try {
+                        const mainDraft = JSON.parse(mainRaw);
+
+                        // Restore Tasks
+                        applyDraftTasks(mainDraft);
+
+                        // Restore Volume & Notes
+                        if (BRANCH_CONFIG[currentBranch].showZone2) {
+                            Object.entries(mainDraft.volume || {}).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
+                            Object.entries(mainDraft.notes || {}).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
+                        }
+
+                        // Restore Actions
+                        localActionsDraft = mainDraft.actions || [];
+                        renderRecordActionsTable();
+
+                        // Restore EoS text fields
+                        const endOfShift = mainDraft.endOfShift || {};
+                        const endOfShiftFields = { 'eos-summary': 'summary', 'eos-issues': 'issues', 'eos-actions': 'actions', 'eos-followups': 'followUps' };
+                        Object.entries(endOfShiftFields).forEach(([id, key]) => {
+                            const el = document.getElementById(id);
+                            if (el) el.value = endOfShift[key] || '';
+                        });
+                        syncLegacyFollowUpsDisplay();
+
+                    } catch(e) { console.error("Error parsing main draft", e); }
+                } else {
+                    // Clear fields to defaults
+                    const taskContainer = document.getElementById('task-entries-container');
+                    if (taskContainer) taskContainer.innerHTML = '';
+                    loadTasksForSelectedDate(); // default tasks load
+
+                    if (BRANCH_CONFIG[currentBranch].showZone2) {
+                        ['vol-transfer','vol-pickup','vol-upcountry','vol-inmarket','vol-outmarket'].forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
+                        ['note-pickup','note-upcountry','note-inmarket','note-outmarket'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+                    }
+
+                    localActionsDraft = ALL_ACTIONS.filter(act => act.branch === currentBranch && act.sourceDate === date);
+                    renderRecordActionsTable();
+
+                    const endOfShiftFields = { 'eos-summary': 'summary', 'eos-issues': 'issues', 'eos-actions': 'actions', 'eos-followups': 'followUps' };
+                    Object.keys(endOfShiftFields).forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.value = '';
+                    });
+                    syncLegacyFollowUpsDisplay();
+                }
             } finally {
                 _restoringDraft = false;
             }
@@ -7143,6 +7406,491 @@
                 e.preventDefault();
             }
         }, true);
+
+        // ================= NEW FOCUSED DAILY CARD SAVE HANDLERS & DAILY DASHBOARD =================
+
+        async function saveWorkloadCard() {
+            if (await AppVersionGuard.blockIfStale()) return;
+            const date = document.getElementById('record-date').value;
+            if (!date) return showToast("กรุณาเลือกวันที่บันทึก", true);
+
+            const isUserAdmin = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin'));
+            let workload = getAkraWorkloadValues();
+            if (!isUserAdmin) {
+                workload = workload.filter(w => normalizeEmpName(w.employee) === normalizeEmpName(displayUserName));
+                if (workload.length === 0) {
+                    return showToast("ไม่พบข้อมูล Workload ของคุณ หรือคุณไม่ได้เข้ากะในวันนี้", true);
+                }
+            }
+
+            for (const w of workload) {
+                const total = w.outbound + w.inbound + w.transfer + w.shared;
+                if (total !== w.capacity) {
+                    return showToast(`กรุณาระบุภาระงานของ ${w.employee} ให้ครบ (${total}/${w.capacity} คะแนน)`, true);
+                }
+            }
+
+            const btn = document.getElementById('btn-save-workload');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
+            btn.disabled = true;
+
+            try {
+                const res = await postToAppScript({
+                    action: 'saveSection',
+                    branch: currentBranch,
+                    date: date,
+                    section: 'workload',
+                    workload: workload
+                });
+
+                if (res && res.status === 'success') {
+                    showToast("บันทึก Workload สำเร็จ!");
+                    sendAppLog("บันทึก Workload", `บันทึก Workload สาขา ${currentBranch} (วันที่ ${date})`);
+                    safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_workload`);
+                    await syncDataFromSheet();
+                    loadDashboardData();
+                    updateDailyDashboard();
+                } else {
+                    showModal("บันทึกไม่สำเร็จ", res.message || "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์", "error");
+                }
+            } catch(e) {
+                console.error(e);
+                showModal("บันทึกไม่สำเร็จ", e.message || "เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้", "error");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> บันทึก Workload';
+                btn.disabled = false;
+            }
+        }
+
+        async function saveErrorsCard() {
+            if (await AppVersionGuard.blockIfStale()) return;
+            const date = document.getElementById('record-date').value;
+            if (!date) return showToast("กรุณาเลือกวันที่บันทึก", true);
+
+            let currentErrors = [];
+            const entries = document.querySelectorAll('.error-entry');
+            let hasIncompleteError = false;
+
+            entries.forEach((entry, entryIndex) => {
+                const type = entry.querySelector('.err-type').value;
+                const rawNote = entry.querySelector('.err-note').value;
+                let note = rawNote;
+                let participantNames = Array.from(entry.querySelectorAll('.err-emp-cb:checked')).map(cb => cb.value);
+
+                let stageSelect = entry.querySelector('.err-stage');
+                let stage = stageSelect ? stageSelect.value : '';
+
+                if (currentBranch === 'AKRA' && isAkraSharedType(type)) {
+                    participantNames = getAkraOnDutyEmployees();
+                }
+
+                if (currentBranch !== 'AKRA' && type === 'ความผิดอื่น ๆ') {
+                    const penalty = entry.querySelector('.err-penalty').value;
+                    note = `[หัก ${penalty} HP] ${note}`;
+                }
+
+                if (stage) {
+                    note = `[${stage}] ${note}`;
+                }
+
+                const hasParticipants = participantNames.length > 0;
+                const hasNote = rawNote.trim() !== "";
+                const requiresNote = type === 'ความผิดอื่น ๆ';
+
+                let caseId = entry.dataset.caseId;
+                if (!caseId) {
+                    caseId = `ERR-${date}-${Date.now()}-${entryIndex}-${Math.floor(Math.random()*1000)}`;
+                    entry.dataset.caseId = caseId;
+                }
+
+                if (hasParticipants && (!requiresNote || hasNote)) {
+                    if (currentBranch === 'AKRA') {
+                        const catalogItem = getAkraCatalogItem(type);
+                        const penalty = type === 'ความผิดอื่น ๆ'
+                            ? (parseInt(entry.querySelector('.err-penalty').value, 10) || 10)
+                            : (catalogItem ? catalogItem.penalty : 10);
+                        const meta = {
+                            v: 1,
+                            caseId: caseId,
+                            core: catalogItem ? catalogItem.core : 'other',
+                            coreLabel: catalogItem ? catalogItem.coreLabel : 'อื่น ๆ',
+                            type,
+                            penalty,
+                            participants: participantNames,
+                            onDuty: getAkraOnDutyEmployees(),
+                            coreRoster: getAkraCoreRoster(),
+                            updatedBy: currentUser,
+                            updatedAt: new Date().toISOString()
+                        };
+                        note = `${encodeAkraCaseMeta(meta)} ${note}`;
+                    }
+                    participantNames.forEach(emp => {
+                        currentErrors.push({ emp, type, note, caseId });
+                    });
+                } else if (hasParticipants || hasNote) {
+                    hasIncompleteError = true;
+                }
+            });
+
+            if (hasIncompleteError) return showToast("กรุณาเลือกรายชื่อให้ครบถ้วน และใส่หมายเหตุเมื่อเลือกความผิดอื่น ๆ", true);
+
+            // Persist case IDs to local draft storage synchronously before sending to server
+            saveRecordDraft();
+
+            if (currentErrors.length === 0) {
+                const confirmSave = confirm("ไม่มีรายการความผิดพลาดที่ระบุ คุณต้องการบันทึกยืนยันว่า 'ไม่มีความผิดพลาดในวันนี้' หรือไม่?");
+                if (!confirmSave) return;
+
+                const caseId = `NO_ERRORS-${date}-${Date.now()}`;
+                const meta = {
+                    v: 1,
+                    caseId: 'NO_ERRORS',
+                    core: 'none',
+                    coreLabel: 'ไม่มี',
+                    type: 'ไม่มีความผิดพลาด',
+                    penalty: 0,
+                    participants: ['SYSTEM'],
+                    onDuty: getAkraOnDutyEmployees(),
+                    coreRoster: getAkraCoreRoster(),
+                    updatedBy: currentUser,
+                    updatedAt: new Date().toISOString()
+                };
+                const note = `${encodeAkraCaseMeta(meta)} ยืนยันไม่มีความผิดพลาดในวันนี้`;
+                currentErrors.push({
+                    emp: 'SYSTEM',
+                    type: 'ไม่มีความผิดพลาด',
+                    note: note,
+                    caseId: 'NO_ERRORS'
+                });
+            }
+
+            const btn = document.getElementById('btn-save-errors');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
+            btn.disabled = true;
+
+            try {
+                const res = await postToAppScript({
+                    action: 'saveSection',
+                    branch: currentBranch,
+                    date: date,
+                    section: 'errors',
+                    errors: currentErrors
+                });
+
+                if (res && res.status === 'success') {
+                    showToast("บันทึกข้อมูลความผิดพลาดสำเร็จ!");
+                    sendAppLog("บันทึกความผิดพลาด", `บันทึกความผิดพลาด สาขา ${currentBranch} (วันที่ ${date})`);
+                    safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_errors`);
+                    await syncDataFromSheet();
+                    loadDashboardData();
+                    updateDailyDashboard();
+                } else {
+                    showModal("บันทึกไม่สำเร็จ", res.message || "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์", "error");
+                }
+            } catch(e) {
+                console.error(e);
+                showModal("บันทึกไม่สำเร็จ", e.message || "เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้", "error");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> บันทึกความผิดพลาด';
+                btn.disabled = false;
+            }
+        }
+
+        async function saveVendorBillsCard() {
+            if (await AppVersionGuard.blockIfStale()) return;
+            const date = document.getElementById('record-date').value;
+            if (!date) return showToast("กรุณาเลือกวันที่บันทึก", true);
+
+            if (!validateVendorBills()) return;
+
+            const btn = document.getElementById('btn-save-vendor-bills');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
+            btn.disabled = true;
+
+            const vendorBillsVal = collectVendorBills();
+
+            try {
+                const res = await postToAppScript({
+                    action: 'saveSection',
+                    branch: currentBranch,
+                    date: date,
+                    section: 'vendorBills',
+                    vendorBills: vendorBillsVal
+                });
+
+                if (res && res.status === 'success') {
+                    showToast("บันทึก Vendor Bills สำเร็จ!");
+                    sendAppLog("บันทึก Vendor Bills", `บันทึก Vendor Bills สาขา ${currentBranch} (วันที่ ${date})`);
+                    safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_vendorBills`);
+                    await syncDataFromSheet();
+                    loadDashboardData();
+                    updateDailyDashboard();
+                } else {
+                    showModal("บันทึกไม่สำเร็จ", res.message || "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์", "error");
+                }
+            } catch(e) {
+                console.error(e);
+                showModal("บันทึกไม่สำเร็จ", e.message || "เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้", "error");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> บันทึก Vendor Bills';
+                btn.disabled = false;
+            }
+        }
+
+        function getAuthoritativeRoster(dayData) {
+            if (dayData && Array.isArray(dayData.errors)) {
+                let legacyFallback = null;
+                let latestRoster = null;
+                let latestTimestamp = -Infinity;
+                dayData.errors.forEach(err => {
+                    const parsed = parseAkraCaseNote(err.note);
+                    if (parsed && parsed.meta && Array.isArray(parsed.meta.onDuty) && parsed.meta.onDuty.length > 0) {
+                        legacyFallback = parsed.meta.onDuty;
+                        const timestamp = Date.parse(String(parsed.meta.updatedAt || '').replace(' ', 'T'));
+                        if (Number.isFinite(timestamp) && timestamp > latestTimestamp) {
+                            latestTimestamp = timestamp;
+                            latestRoster = parsed.meta.onDuty;
+                        }
+                    }
+                });
+                return latestRoster || legacyFallback;
+            }
+            return null;
+        }
+
+        function getDailyWorkloadState(workloadArr, expectedRoster) {
+            const rosterSet = new Set();
+            (expectedRoster || []).forEach(emp => {
+                const normalized = normalizeEmpName(emp);
+                if (isEmployeeActive(normalized)) rosterSet.add(normalized);
+            });
+
+            const workloadByEmployee = new Map();
+            (workloadArr || []).forEach(entry => {
+                const normalized = normalizeEmpName(entry.employee);
+                if (!rosterSet.has(normalized) || !isEmployeeActive(normalized)) return;
+                const previous = workloadByEmployee.get(normalized);
+                const previousTime = previous ? Date.parse(String(previous.updatedAt || '').replace(' ', 'T')) : NaN;
+                const entryTime = Date.parse(String(entry.updatedAt || '').replace(' ', 'T'));
+                if (!previous || !Number.isFinite(previousTime) || (Number.isFinite(entryTime) && entryTime >= previousTime)) {
+                    workloadByEmployee.set(normalized, entry);
+                }
+            });
+
+            const workload = Array.from(workloadByEmployee.values());
+            const expectedCount = rosterSet.size;
+            const recordedCount = workload.length;
+            return {
+                workload,
+                expectedCount,
+                recordedCount,
+                isComplete: expectedCount > 0 && recordedCount >= expectedCount
+            };
+        }
+
+        function updateDailyDashboard() {
+            if (currentBranch !== 'AKRA') {
+                const card = document.getElementById('daily-dashboard-card');
+                if (card) card.classList.add('hidden');
+                return;
+            }
+            const date = document.getElementById('record-date').value;
+            if (!date) return;
+
+            const card = document.getElementById('daily-dashboard-card');
+            if (card) card.classList.remove('hidden');
+
+            const rawData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
+            const dayData = rawData.find(d => d.date === date) || { workload: [], errors: [], endOfShift: {} };
+
+            const activeEmployees = BRANCH_CONFIG[currentBranch].employees || [];
+
+            // 1. Workload - count against Day's Roster expect count
+            const workloadArr = dayData.workload || [];
+
+            const authRoster = getAuthoritativeRoster(dayData);
+            let expectedRoster = [];
+            if (authRoster) {
+                expectedRoster = authRoster;
+            } else {
+                const onDutyList = getAkraOnDutyEmployees();
+                if (onDutyList.length > 0) {
+                    expectedRoster = onDutyList;
+                } else {
+                    expectedRoster = activeEmployees;
+                }
+            }
+            const workloadState = getDailyWorkloadState(workloadArr, expectedRoster);
+            const eligibleWorkload = workloadState.workload;
+            const recordedCount = workloadState.recordedCount;
+            const expectedCount = workloadState.expectedCount;
+
+            const workloadStatusEl = document.getElementById('daily-workload-status');
+            const workloadSummaryEl = document.getElementById('daily-workload-summary');
+            const workloadDetailsEl = document.getElementById('daily-workload-details');
+            const workloadTimeEl = document.getElementById('daily-workload-time');
+
+            const isWorkloadComplete = workloadState.isComplete;
+
+            if (workloadStatusEl) {
+                workloadStatusEl.innerText = isWorkloadComplete ? "ครบแล้ว" : "ยังขาด";
+                workloadStatusEl.className = `text-[10px] font-bold px-1.5 py-0.5 rounded ${isWorkloadComplete ? 'bg-green-500/10 text-green-400 border border-green-500/25' : 'bg-red-500/10 text-red-400 border border-red-500/25'}`;
+            }
+            if (workloadSummaryEl) workloadSummaryEl.innerText = `${recordedCount} / ${expectedCount} คน`;
+
+            if (recordedCount > 0) {
+                const latestUpdate = eligibleWorkload.reduce((latest, curr) => {
+                    if (!curr.updatedAt) return latest;
+                    if (!latest || curr.updatedAt > latest.updatedAt) return curr;
+                    return latest;
+                }, null);
+
+                const details = eligibleWorkload.map(w => `${w.employee} (${Number(w.outbound || 0) + Number(w.inbound || 0) + Number(w.transfer || 0) + Number(w.shared || 0)}pt)`).join(', ');
+                if (workloadDetailsEl) workloadDetailsEl.innerText = details;
+
+                if (latestUpdate && latestUpdate.updatedAt && workloadTimeEl) {
+                    const timeStr = latestUpdate.updatedAt.substring(11, 16);
+                    workloadTimeEl.innerText = `อัปเดตล่าสุด: ${timeStr} น. (${latestUpdate.updatedBy || 'ระบบ'})`;
+                } else if (workloadTimeEl) {
+                    workloadTimeEl.innerText = "บันทึกแล้ว";
+                }
+            } else {
+                if (workloadDetailsEl) workloadDetailsEl.innerText = "ยังไม่มีการบันทึกภาระงาน";
+                if (workloadTimeEl) workloadTimeEl.innerText = "-";
+            }
+
+            // 2. Errors
+            const errorsArr = dayData.errors || [];
+            const errorsStatusEl = document.getElementById('daily-errors-status');
+            const errorsSummaryEl = document.getElementById('daily-errors-summary');
+            const errorsDetailsEl = document.getElementById('daily-errors-details');
+            const errorsTimeEl = document.getElementById('daily-errors-time');
+
+            const hasNoErrorsMarker = errorsArr.some(e => {
+                const metaObj = parseAkraCaseNote(e.note);
+                return metaObj && metaObj.meta && metaObj.meta.caseId === 'NO_ERRORS';
+            });
+
+            const normalErrors = errorsArr.filter(e => {
+                const metaObj = parseAkraCaseNote(e.note);
+                return !metaObj || !metaObj.meta || metaObj.meta.caseId !== 'NO_ERRORS';
+            });
+
+            let isErrorsConfirmed = false;
+            if (normalErrors.length > 0) {
+                isErrorsConfirmed = true;
+                if (errorsStatusEl) {
+                    errorsStatusEl.innerText = "ครบแล้ว";
+                    errorsStatusEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/25";
+                }
+
+                const caseIds = new Set();
+                const affectedEmps = new Set();
+                normalErrors.forEach(e => {
+                    const parsed = parseAkraCaseNote(e.note);
+                    if (parsed && parsed.meta && parsed.meta.caseId) {
+                        caseIds.add(parsed.meta.caseId);
+                    } else {
+                        caseIds.add(e.type + e.note);
+                    }
+                    if (e.emp) affectedEmps.add(e.emp);
+                });
+
+                if (errorsSummaryEl) errorsSummaryEl.innerText = `${caseIds.size} เคส (${affectedEmps.size} คน)`;
+
+                const details = normalErrors.map(e => `${e.emp}: ${e.type}`).slice(0, 3).join(', ') + (normalErrors.length > 3 ? '...' : '');
+                if (errorsDetailsEl) errorsDetailsEl.innerText = details;
+
+                let latestTime = "";
+                normalErrors.forEach(e => {
+                    const parsed = parseAkraCaseNote(e.note);
+                    if (parsed && parsed.meta && parsed.meta.updatedAt && parsed.meta.updatedAt > latestTime) {
+                        latestTime = parsed.meta.updatedAt;
+                    }
+                });
+                if (errorsTimeEl) {
+                    errorsTimeEl.innerText = latestTime ? `อัปเดตล่าสุด: ${latestTime.substring(11, 16)} น.` : "บันทึกแล้ว";
+                }
+            } else if (hasNoErrorsMarker) {
+                isErrorsConfirmed = true;
+                if (errorsStatusEl) {
+                    errorsStatusEl.innerText = "ครบแล้ว";
+                    errorsStatusEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/25";
+                }
+                if (errorsSummaryEl) errorsSummaryEl.innerText = "ไม่มีความผิดพลาด";
+                if (errorsDetailsEl) errorsDetailsEl.innerText = "ยืนยันไม่มีความผิดพลาดวันนี้";
+                if (errorsTimeEl) {
+                    const noErrorItem = errorsArr.find(e => {
+                        const metaObj = parseAkraCaseNote(e.note);
+                        return metaObj && metaObj.meta && metaObj.meta.caseId === 'NO_ERRORS';
+                    });
+                    const parsed = noErrorItem ? parseAkraCaseNote(noErrorItem.note) : null;
+                    const updatedAt = (parsed && parsed.meta) ? parsed.meta.updatedAt : null;
+                    errorsTimeEl.innerText = "บันทึกเมื่อ: " + (updatedAt ? updatedAt.substring(11, 16) + " น." : "-");
+                }
+            } else {
+                isErrorsConfirmed = false;
+                if (errorsStatusEl) {
+                    errorsStatusEl.innerText = "ยังขาด";
+                    errorsStatusEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/25";
+                }
+                if (errorsSummaryEl) errorsSummaryEl.innerText = "ยังไม่ได้บันทึก";
+                if (errorsDetailsEl) errorsDetailsEl.innerText = "กรุณาระบุความผิดพลาดหรือบันทึกยืนยันเป็น 0";
+                if (errorsTimeEl) errorsTimeEl.innerText = "-";
+            }
+
+            // 3. Vendor Bills
+            const endOfShiftObj = dayData.endOfShift || {};
+            const vendorBills = endOfShiftObj.vendorBills || {};
+
+            const vendorStatusEl = document.getElementById('daily-vendor-status');
+            const vendorSummaryEl = document.getElementById('daily-vendor-summary');
+            const vendorDetailsEl = document.getElementById('daily-vendor-details');
+            const vendorTimeEl = document.getElementById('daily-vendor-time');
+
+            const hasVendorSaved = vendorBills.entryStatus === 'completed' || vendorBills.entryStatus === 'pending';
+
+            if (hasVendorSaved) {
+                const isCompleted = vendorBills.entryStatus === 'completed';
+                if (vendorStatusEl) {
+                    vendorStatusEl.innerText = "ครบแล้ว";
+                    vendorStatusEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/25";
+                }
+                if (vendorSummaryEl) vendorSummaryEl.innerText = `${vendorBills.totalToday || 0} บิล`;
+                if (vendorDetailsEl) {
+                    vendorDetailsEl.innerText = isCompleted ? "สถานะ: คีย์เรียบร้อยทั้งหมด" : `สถานะ: ค้างสะสม ${vendorBills.pendingAccumulated || 0} บิล`;
+                }
+                if (vendorTimeEl) {
+                    if (vendorBills.updatedAt) {
+                        const timeStr = vendorBills.updatedAt.substring(11, 16);
+                        vendorTimeEl.innerText = `อัปเดตล่าสุด: ${timeStr} น. (${vendorBills.updatedBy || 'ระบบ'})`;
+                    } else {
+                        vendorTimeEl.innerText = "บันทึกแล้ว";
+                    }
+                }
+            } else {
+                if (vendorStatusEl) {
+                    vendorStatusEl.innerText = "ยังขาด";
+                    vendorStatusEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/25";
+                }
+                if (vendorSummaryEl) vendorSummaryEl.innerText = "ยังไม่ได้บันทึก";
+                if (vendorDetailsEl) vendorDetailsEl.innerText = "กรุณาระบุจำนวนบิลและสถานะ";
+                if (vendorTimeEl) vendorTimeEl.innerText = "-";
+            }
+
+            // 4. Combined
+            const combinedStatusEl = document.getElementById('daily-status-badge');
+            const isAllComplete = isWorkloadComplete && isErrorsConfirmed && hasVendorSaved;
+            if (combinedStatusEl) {
+                if (isAllComplete) {
+                    combinedStatusEl.innerText = "ครบถ้วนเรียบร้อย";
+                    combinedStatusEl.className = "text-xs font-black px-2.5 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/30";
+                } else {
+                    combinedStatusEl.innerText = "ยังขาดข้อมูล";
+                    combinedStatusEl.className = "text-xs font-black px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30";
+                }
+            }
+        }
 
         async function saveDailyRecord() {
             if (await AppVersionGuard.blockIfStale()) return;
