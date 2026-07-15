@@ -1360,7 +1360,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260714.13";
+        const CURRENT_VERSION = "20260715.01";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -2202,12 +2202,7 @@
         function getStartOfWeek(d) {
             d = new Date(d);
             var day = d.getDay();
-            var diff;
-            if (currentBranch === 'TRD') {
-                diff = d.getDate() - ((day + 1) % 7);
-            } else {
-                diff = d.getDate() - day + (day === 0 ? -6 : 1);
-            }
+            var diff = d.getDate() - day + (day === 0 ? -6 : 1);
             return new Date(d.setDate(diff));
         }
 

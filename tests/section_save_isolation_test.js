@@ -31,6 +31,26 @@ eval(extractFunction(backend, 'getWeeklyTaskRowsToClear'));
 
 console.log('=== Running Section Save Isolation Tests ===');
 
+{
+    let currentBranch = 'AKRA';
+    const getStartOfWeek = eval(`(${extractFunction(html, 'getStartOfWeek')})`);
+    const formatLocalDate = date => [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0')
+    ].join('-');
+
+    for (const branch of ['AKRA', 'TRD']) {
+        currentBranch = branch;
+        assert.strictEqual(formatLocalDate(getStartOfWeek(new Date(2026, 6, 18, 12))), '2026-07-13',
+            `${branch} Saturday must stay in the Monday-start week`);
+        assert.strictEqual(formatLocalDate(getStartOfWeek(new Date(2026, 6, 19, 12))), '2026-07-13',
+            `${branch} Sunday must close the Monday-start week`);
+        assert.strictEqual(formatLocalDate(getStartOfWeek(new Date(2026, 6, 20, 12))), '2026-07-20',
+            `${branch} Monday must start a new week`);
+    }
+}
+
 const baseRow = [
     '2026-07-14',
     'เดิม | ผิด | หมายเหตุ',
@@ -116,9 +136,31 @@ assert.strictEqual(isKpiAdminUser({ id: '250005', roles: ['User'], perms: { 'app
 
     assert.deepStrictEqual(getWeeklyTaskRowsToClear(weeklyRows, -1, '2026-07-16', 'AKRA'), [2, 3],
         'a new selected-date row must clear every existing task cell in its week before append');
-    assert.strictEqual(getKpiWeekStartKey('2026-07-18', 'TRD'), '2026-07-18');
-    assert.strictEqual(getKpiWeekStartKey('2026-07-24', 'TRD'), '2026-07-18');
-    assert.strictEqual(getKpiWeekStartKey('2026-07-25', 'TRD'), '2026-07-25');
+    for (const branch of ['AKRA', 'TRD']) {
+        assert.strictEqual(getKpiWeekStartKey('2026-07-18', branch), '2026-07-13');
+        assert.strictEqual(getKpiWeekStartKey('2026-07-19', branch), '2026-07-13');
+        assert.strictEqual(getKpiWeekStartKey('2026-07-20', branch), '2026-07-20');
+    }
+}
+
+{
+    const trdRows = [
+        ['Date', 'Errors', 'Transfer', 'Pickup', 'Upcountry', 'InMarket', 'OutMarket', 'Customer Notes', 'Tasks', 'Workload', 'EndOfShift'],
+        ['2026-07-19', 'error-sunday', 1, 2, 3, 4, 5, 'note-sunday', 'งานสัปดาห์ก่อน', 'workload-sunday', 'eos-sunday'],
+        ['2026-07-20', 'error-monday', 6, 7, 8, 9, 10, 'note-monday', 'งานวันจันทร์', 'workload-monday', 'eos-monday'],
+        ['2026-07-25', 'error-saturday', 11, 12, 13, 14, 15, 'note-saturday', 'งานวันเสาร์', 'workload-saturday', 'eos-saturday']
+    ];
+    const original = trdRows.map(row => row.slice());
+    const rowsToClear = getWeeklyTaskRowsToClear(trdRows, 4, '2026-07-25', 'TRD');
+    assert.deepStrictEqual(rowsToClear, [3],
+        'TRD Saturday save must clear Monday Tasks in the same week without crossing into the preceding Sunday');
+    rowsToClear.forEach(rowNumber => { trdRows[rowNumber - 1][8] = ''; });
+    for (const rowIndex of [1, 2, 3]) {
+        trdRows[rowIndex].forEach((value, columnIndex) => {
+            if (columnIndex !== 8) assert.strictEqual(value, original[rowIndex][columnIndex],
+                `TRD weekly canonicalization must preserve row ${rowIndex + 1} column ${columnIndex + 1}`);
+        });
+    }
 }
 
 {
