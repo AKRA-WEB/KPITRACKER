@@ -187,6 +187,9 @@
         #app-content .workload-row .wl-note { min-height: 2rem; border-color: transparent; border-radius: 0; background: transparent; }
         #app-content :where(button) { border-radius: 0.5rem; box-shadow: none; }
         #app-content :where(.bg-gradient-to-r,.bg-gradient-to-br) { background-image: none; }
+        #daily-dashboard-card { background: #ffffff; color: #111827; }
+        #daily-dashboard-card :where(h2,h3,h4) { color: #111827; }
+        #daily-dashboard-card .daily-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr)); }
         #btn-save, #btn-save-admin { background: var(--app-primary); border-color: var(--app-primary-dark); box-shadow: 0 4px 12px rgba(29,78,216,0.18); }
         #btn-save:hover, #btn-save-admin:hover { background: var(--app-primary-dark); }
         #dash-smart-summary { color: #334155; }
@@ -263,59 +266,25 @@
                 <label class="block text-sm font-bold text-gray-700 mb-2"><i class="fa-regular fa-calendar text-blue-500 mr-1.5"></i>วันที่บันทึก</label>
                 <input type="date" id="record-date" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 font-medium">
             </div>
-            <!-- Daily Dashboard Card (AKRA only) -->
-            <div id="daily-dashboard-card" class="hidden bg-gradient-to-br from-slate-900 to-slate-950 text-white p-5 rounded-2xl shadow-xl border border-slate-800 md-colspan-2 space-y-4">
-                <div class="flex justify-between items-center border-slate-800 border-b pb-3">
-                    <h2 class="text-base font-bold flex items-center gap-2">
-                        <i class="fa-solid fa-chart-pie text-cyan-400"></i>
-                        <span>สรุปผลการบันทึกประจำวัน (Daily Dashboard)</span>
-                    </h2>
-                    <span id="daily-status-badge" class="text-xs font-black px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                        ยังไม่ครบ
-                    </span>
+            <!-- Detailed selected-day dashboard for AKRA and TRD -->
+            <section id="daily-dashboard-card" class="hidden bg-white text-slate-900 p-4 rounded-2xl shadow-lg border border-slate-200 md-colspan-2 space-y-4 sm:p-5" aria-labelledby="daily-dashboard-title">
+                <header class="border-slate-200 border-b pb-3 space-y-3 sm:flex sm:items-start sm:justify-between sm:gap-4 sm:space-y-0">
+                    <div class="min-w-0">
+                        <p id="daily-dashboard-branch-date" class="text-xs font-bold tracking-wide text-blue-700">-</p>
+                        <h2 id="daily-dashboard-title" class="mt-1 text-lg font-black leading-tight text-slate-900">
+                            สรุปผลการปฏิบัติงานประจำวัน
+                        </h2>
+                        <p id="daily-dashboard-freshness" class="mt-1 text-xs text-slate-600">ยังไม่มีเวลาซิงค์ข้อมูล</p>
+                    </div>
+                    <div class="shrink-0 sm:text-right">
+                        <span id="daily-status-badge" class="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-black text-amber-800">ยังไม่ครบ</span>
+                        <p id="daily-completeness-details" class="mt-1.5 max-w-sm text-xs leading-relaxed text-slate-600">กำลังตรวจสอบข้อมูล</p>
+                    </div>
+                </header>
+                <div id="daily-dashboard-content" class="space-y-4">
+                    <p class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">กำลังเตรียมสรุปวันที่เลือก...</p>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Workload Column -->
-                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80 flex flex-col justify-between min-h-[140px]">
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5"><i class="fa-solid fa-business-time text-amber-400"></i> Workload</span>
-                                <span id="daily-workload-status" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/25">ยังขาด</span>
-                            </div>
-                            <div class="text-xl font-black text-slate-100" id="daily-workload-summary">-</div>
-                            <div class="text-[10px] text-slate-400 mt-1 line-clamp-2" id="daily-workload-details">-</div>
-                        </div>
-                        <div class="text-[9px] text-slate-500 mt-2 font-mono" id="daily-workload-time">-</div>
-                    </div>
-
-                    <!-- Errors Column -->
-                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80 flex flex-col justify-between min-h-[140px]">
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-red-400"></i> บันทึกความผิดพลาด</span>
-                                <span id="daily-errors-status" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/25">ยังขาด</span>
-                            </div>
-                            <div class="text-xl font-black text-slate-100" id="daily-errors-summary">-</div>
-                            <div class="text-[10px] text-slate-400 mt-1 line-clamp-2" id="daily-errors-details">-</div>
-                        </div>
-                        <div class="text-[9px] text-slate-500 mt-2 font-mono" id="daily-errors-time">-</div>
-                    </div>
-
-                    <!-- Vendor Bills Column -->
-                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80 flex flex-col justify-between min-h-[140px]">
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5"><i class="fa-solid fa-file-invoice-dollar text-blue-400"></i> Vendor Bills</span>
-                                <span id="daily-vendor-status" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/25">ยังขาด</span>
-                            </div>
-                            <div class="text-xl font-black text-slate-100" id="daily-vendor-summary">-</div>
-                            <div class="text-[10px] text-slate-400 mt-1 line-clamp-2" id="daily-vendor-details">-</div>
-                        </div>
-                        <div class="text-[9px] text-slate-500 mt-2 font-mono" id="daily-vendor-time">-</div>
-                    </div>
-                </div>
-            </div>
+            </section>
 
             <!-- AKRA Core Roster -->
             <div id="akra-core-roster-card" class="hidden bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500 border-y border-r border-gray-100 md-colspan-2">
@@ -1360,7 +1329,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260715.01";
+        const CURRENT_VERSION = "20260718.04";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -1827,6 +1796,8 @@
         let dashboardSelectedDate = 'ALL';
         let IS_ADMIN = false;
         let _kpiPerms = [];
+        let _dailyDataLoading = false;
+        let _dailyDataLoadError = '';
         let sessionToken = safeStorage.getItem('akra_sso_token') || null;
         function can(perm) {
             if (_kpiPerms.length > 0) return _kpiPerms.includes(perm);
@@ -4063,6 +4034,9 @@
             if(!LOG_APP_SCRIPT_URL || !currentBranch) return;
             const btnSync = document.getElementById('btn-sync');
             if (btnSync) { btnSync.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1"></i> ซิงค์...'; btnSync.disabled = true; }
+            _dailyDataLoading = true;
+            _dailyDataLoadError = '';
+            updateDailyDashboard();
 
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 12000);
@@ -4075,23 +4049,29 @@
                 const data = await response.json();
 
                 if (Array.isArray(data)) {
+                    _dailyDataLoadError = '';
                     safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
                     safeStorage.setItem('kpiData_' + currentBranch + '_ts', String(Date.now()));
                     _adminFullLoaded = false; // cache สาขานี้เหลือ 3 เดือน — เดือนเก่าต้องดึงเต็มใหม่
                     if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
                         loadDashboardData();
-                        updateDailyDashboard();
                     } else if (!document.getElementById('view-admin-dash').classList.contains('hidden')) {
                         renderAdminDashboard();
                     } else {
                         loadTasksForSelectedDate();
                         hydrateSelectedDayRecord(document.getElementById('record-date').value);
                     }
+                    updateDailyDashboard();
                     showToast("ซิงค์ข้อมูลล่าสุดเรียบร้อย");
                 }
             } catch (error) {
+                _dailyDataLoadError = error && error.name === 'AbortError'
+                    ? 'หมดเวลารอข้อมูลล่าสุด'
+                    : 'เชื่อมต่อข้อมูลล่าสุดไม่สำเร็จ';
                 showToast("ทำงานโหมดออฟไลน์ (เชื่อมต่อข้อมูลไม่สำเร็จ)", true);
             } finally {
+                _dailyDataLoading = false;
+                updateDailyDashboard();
                 if (btnSync) { btnSync.innerHTML = '<i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล'; btnSync.disabled = false; }
             }
         }
@@ -5919,6 +5899,7 @@
         let ALL_ACTIONS = [];
         let localActionsDraft = [];
         let _fetchingActions = false;
+        let _actionsLoaded = false;
         let _actionsLoadError = '';
 
         function isValidClientActionTransition(prevStatus, nextStatus) {
@@ -5991,6 +5972,7 @@
         async function refreshActions() {
             if (_fetchingActions) return;
             _fetchingActions = true;
+            updateDailyDashboard();
             try {
                 const res = await fetch(LOG_APP_SCRIPT_URL + "?action=getActions&token=" + encodeURIComponent(sessionToken || ""));
                 const data = await res.json();
@@ -6021,9 +6003,11 @@
                 }
             } finally {
                 _fetchingActions = false;
+                _actionsLoaded = true;
             }
             renderExecutiveActionCenter();
             loadRecordActionsForSelectedDate();
+            updateDailyDashboard();
             // Refresh EoS and active actions rendering if on Dashboard
             if (document.getElementById('dash-eos-list')) {
                 const rawData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
@@ -8080,200 +8064,508 @@
             };
         }
 
+        function selectDailyDashboardActions(actions, branch, date) {
+            const selectedDate = normalizeClientDateKey(date);
+            const latestById = new Map();
+            (actions || []).forEach((action, index) => {
+                if (!action || action.branch !== branch || !action.actionId) return;
+                const timestamp = Date.parse(action.lastUpdated || action.resolutionDate || '');
+                const existing = latestById.get(action.actionId);
+                if (!existing || (Number.isFinite(timestamp) && (!Number.isFinite(existing.timestamp) || timestamp >= existing.timestamp))) {
+                    latestById.set(action.actionId, { action, timestamp, index });
+                } else if (!Number.isFinite(timestamp) && !Number.isFinite(existing.timestamp) && index > existing.index) {
+                    latestById.set(action.actionId, { action, timestamp, index });
+                }
+            });
+
+            const uniqueActions = Array.from(latestById.values()).map(item => item.action);
+            const activeStatuses = new Set(['Open', 'In Progress', 'Blocked']);
+            const active = uniqueActions.filter(action => {
+                if (!activeStatuses.has(action.status)) return false;
+                return normalizeClientDateKey(action.sourceDate) === selectedDate
+                    || normalizeClientDateKey(action.dueDate) === selectedDate;
+            });
+            const resolved = uniqueActions.filter(action => action.status === 'Resolved'
+                && normalizeClientDateKey(action.resolutionDate) === selectedDate);
+
+            active.sort((a, b) => String(a.dueDate || '9999-12-31').localeCompare(String(b.dueDate || '9999-12-31'))
+                || String(a.actionId).localeCompare(String(b.actionId)));
+            resolved.sort((a, b) => String(a.resolutionDate || '').localeCompare(String(b.resolutionDate || ''))
+                || String(a.actionId).localeCompare(String(b.actionId)));
+            return { active, resolved };
+        }
+
+        function buildDailyDashboardErrorState(errors, branch) {
+            const source = Array.isArray(errors) ? errors : [];
+            const confirmation = source.find(error => isNoErrorsConfirmation(error, branch));
+            const realErrors = getRealErrorEntries(source, branch);
+            if (realErrors.length === 0) {
+                if (!confirmation) {
+                    return { state: 'missing', cases: [], dailyHpImpact: {}, updatedBy: '', updatedAt: '' };
+                }
+                const parsed = branch === 'TRD'
+                    ? parseTrdCaseNote(confirmation.note)
+                    : parseAkraCaseNote(confirmation.note);
+                return {
+                    state: 'zero',
+                    cases: [],
+                    dailyHpImpact: {},
+                    updatedBy: parsed.meta?.updatedBy || confirmation.updatedBy || '',
+                    updatedAt: parsed.meta?.updatedAt || confirmation.updatedAt || ''
+                };
+            }
+
+            const cases = new Map();
+            const dailyHpImpact = {};
+            realErrors.forEach((error, index) => {
+                const detail = getErrorDetail(error, branch);
+                const caseId = detail.caseId || error.caseId || `LEGACY-${index}`;
+                const meta = detail.meta || {};
+                const employees = Array.isArray(meta.participants) && meta.participants.length
+                    ? meta.participants
+                    : [error.emp];
+                if (!cases.has(caseId)) {
+                    let stage = detail.coreLabel || '';
+                    if (detail.isReachedCustomer) stage = 'ถึงลูกค้า';
+                    else if (detail.isFixedBefore) stage = 'แก้ก่อนส่ง';
+                    cases.set(caseId, {
+                        caseId,
+                        employees: [],
+                        departments: [],
+                        type: detail.type || error.type || 'ไม่ระบุประเภท',
+                        process: getErrorProcess(branch, detail, error.type),
+                        stage,
+                        penalty: Number(detail.penalty) || 0,
+                        note: detail.cleanNote || '',
+                        reporter: meta.updatedBy || error.updatedBy || '',
+                        recordedAt: meta.updatedAt || error.updatedAt || ''
+                    });
+                }
+                const item = cases.get(caseId);
+                employees.forEach(employee => {
+                    const normalized = normalizeEmpName(employee);
+                    if (!normalized || normalized === 'SYSTEM') return;
+                    if (!item.employees.includes(normalized)) item.employees.push(normalized);
+                    if (branch === 'TRD') {
+                        const department = getTRDDept(normalized) || 'ไม่ระบุแผนก';
+                        if (!item.departments.includes(department)) item.departments.push(department);
+                        dailyHpImpact[normalized] = Math.max(dailyHpImpact[normalized] || 0, Number(detail.penalty) || 0);
+                    }
+                });
+            });
+            return { state: 'recorded', cases: Array.from(cases.values()), dailyHpImpact, updatedBy: '', updatedAt: '' };
+        }
+
+        function buildDailyDashboardViewModel(options) {
+            const branch = options.branch;
+            const date = normalizeClientDateKey(options.date) || '';
+            const dayData = options.dayData && typeof options.dayData === 'object' ? options.dayData : null;
+            const activeEmployees = Array.isArray(options.activeEmployees) ? options.activeEmployees : [];
+            const fallbackRoster = Array.isArray(options.fallbackRoster) ? options.fallbackRoster : [];
+            const missing = [];
+            const normalizedErrors = buildDailyDashboardErrorState(dayData?.errors, branch);
+            const errors = dayData && normalizedErrors.state === 'missing'
+                ? { ...normalizedErrors, state: 'zero', assumedZero: true }
+                : { ...normalizedErrors, assumedZero: false };
+            const briefFields = normalizeEndOfShiftBrief(dayData?.endOfShift);
+            const briefCount = ['summary', 'issues', 'actions', 'followUps']
+                .filter(key => briefFields[key].trim() !== '').length;
+            const brief = {
+                state: dayData ? 'complete' : 'missing',
+                completedCount: briefCount,
+                fields: {
+                    summary: briefFields.summary,
+                    issues: briefFields.issues,
+                    actions: briefFields.actions,
+                    followUps: briefFields.followUps
+                }
+            };
+
+            let actionState = 'ready';
+            if (options.actionsLoading || !options.actionsLoaded) actionState = 'loading';
+            else if (options.actionsError) actionState = 'error';
+            const selectedActions = actionState === 'ready'
+                ? selectDailyDashboardActions(options.actions, branch, date)
+                : { active: [], resolved: [] };
+            const actions = {
+                state: actionState,
+                error: options.actionsError || '',
+                active: selectedActions.active,
+                resolved: selectedActions.resolved
+            };
+
+            let operations;
+            let roster = null;
+            let workload = null;
+            let vendorBills = null;
+
+            if (branch === 'AKRA') {
+                const hasOperationsObject = !!dayData
+                    && Object.prototype.hasOwnProperty.call(dayData, 'volume')
+                    && dayData.volume && typeof dayData.volume === 'object';
+                const volume = hasOperationsObject ? dayData.volume : {};
+                const operationFields = [
+                    ['transfer', 'โอนสินค้า'],
+                    ['pickup', 'รับที่ร้าน'],
+                    ['upcountry', 'ส่งต่างจังหวัด'],
+                    ['inmarket', 'ส่งในตลาด'],
+                    ['outmarket', 'ส่งนอกตลาด']
+                ];
+                const operationItems = operationFields.map(([key, label]) => {
+                    const hasValue = Object.prototype.hasOwnProperty.call(volume, key)
+                        && volume[key] !== '' && volume[key] !== null && volume[key] !== undefined;
+                    const value = Number(volume[key]);
+                    return {
+                        key,
+                        label,
+                        value: hasOperationsObject && hasValue && Number.isFinite(value) && value >= 0 ? value : null
+                    };
+                });
+                operations = {
+                    state: !hasOperationsObject ? 'missing' : (operationItems.every(item => item.value !== null) ? 'confirmed' : 'partial'),
+                    items: operationItems
+                };
+
+                const authoritativeRoster = getAuthoritativeRoster(dayData);
+                const rosterNames = authoritativeRoster || fallbackRoster;
+                roster = {
+                    state: rosterNames.length > 0 ? 'confirmed' : 'missing',
+                    names: rosterNames.map(normalizeEmpName).filter((name, index, list) => name && list.indexOf(name) === index),
+                    source: authoritativeRoster ? 'บันทึกทีมเข้ากะของวันที่เลือก' : (fallbackRoster.length ? 'แบบฟอร์มทีมเข้ากะของวันที่เลือก' : '')
+                };
+
+                const expectedRoster = roster.names.length ? roster.names : activeEmployees;
+                const workloadState = getDailyWorkloadState(dayData?.workload || [], expectedRoster);
+                workload = {
+                    state: workloadState.recordedCount === 0 ? 'missing' : (workloadState.isComplete ? 'complete' : 'partial'),
+                    expectedCount: workloadState.expectedCount,
+                    recordedCount: workloadState.recordedCount,
+                    entries: workloadState.workload.map(entry => {
+                        const outbound = Number(entry.outbound) || 0;
+                        const inbound = Number(entry.inbound) || 0;
+                        const transfer = Number(entry.transfer) || 0;
+                        const shared = Number(entry.shared) || 0;
+                        return {
+                            employee: normalizeEmpName(entry.employee),
+                            capacity: entry.capacity !== undefined ? Number(entry.capacity) || 0 : 10,
+                            outbound,
+                            inbound,
+                            transfer,
+                            shared,
+                            total: outbound + inbound + transfer + shared,
+                            note: entry.note || '',
+                            updatedBy: entry.updatedBy || '',
+                            updatedAt: entry.updatedAt || ''
+                        };
+                    })
+                };
+
+                const rawVendorBills = dayData?.endOfShift?.vendorBills || {};
+                const normalizedVendorBills = normalizeVendorBills(rawVendorBills);
+                const hasVendorTotalAndStatus = normalizedVendorBills.totalToday !== '' && !!normalizedVendorBills.entryStatus;
+                const hasCompletePendingDetail = normalizedVendorBills.entryStatus !== 'pending'
+                    || (normalizedVendorBills.pendingAccumulated !== '' && normalizedVendorBills.pendingNote.trim() !== '');
+                const hasAnyVendorValue = Object.keys(rawVendorBills).length > 0;
+                const vendorState = hasVendorTotalAndStatus && hasCompletePendingDetail
+                    ? normalizedVendorBills.entryStatus
+                    : (hasAnyVendorValue ? 'partial' : 'missing');
+                vendorBills = {
+                    state: vendorState,
+                    totalToday: normalizedVendorBills.totalToday,
+                    pendingAccumulated: normalizedVendorBills.pendingAccumulated,
+                    pendingNote: normalizedVendorBills.pendingNote,
+                    updatedBy: rawVendorBills.updatedBy || '',
+                    updatedAt: rawVendorBills.updatedAt || ''
+                };
+
+                if (operations.state !== 'confirmed') missing.push('จำนวนงานประจำวัน');
+                if (roster.state === 'missing') missing.push('ทีมเข้ากะ');
+                if (!workloadState.isComplete) missing.push('Workload');
+                if (errors.state === 'missing') missing.push('Errors');
+                if (vendorBills.state !== 'completed' && vendorBills.state !== 'pending') missing.push('Vendor Bills');
+                if (brief.state !== 'complete') missing.push('Daily Brief');
+            } else {
+                operations = {
+                    state: dayData ? 'confirmed' : 'missing',
+                    contract: 'trd-summary',
+                    items: [
+                        { key: 'errors', label: 'เหตุการณ์ผิดพลาด', value: errors.state === 'missing' ? null : errors.cases.length },
+                        { key: 'brief', label: 'หัวข้อ Daily Brief', value: brief.state === 'missing' ? null : brief.completedCount },
+                        { key: 'actions', label: 'Actions ของวัน', value: actions.state === 'ready' ? actions.active.length + actions.resolved.length : null }
+                    ]
+                };
+                if (!dayData) missing.push('ข้อมูลประจำวัน');
+                if (errors.state === 'missing') missing.push('Errors');
+                if (brief.state !== 'complete') missing.push('Daily Brief');
+            }
+            if (actions.state !== 'ready') missing.push('Actions');
+            const dailyDataState = options.dailyDataLoading
+                ? 'loading'
+                : (options.dailyDataError ? 'error' : 'ready');
+            if (dailyDataState !== 'ready') missing.push('การซิงค์ข้อมูลล่าสุด');
+
+            return {
+                branch,
+                date,
+                cacheTimestamp: Number(options.cacheTimestamp) || 0,
+                dataState: {
+                    state: dailyDataState,
+                    error: options.dailyDataError || '',
+                    hasCachedDay: !!dayData
+                },
+                completeness: { isComplete: missing.length === 0, missing },
+                operations,
+                roster,
+                workload,
+                errors,
+                vendorBills,
+                brief,
+                actions
+            };
+        }
+
+        function formatDailyDashboardTimestamp(value) {
+            if (!value) return '';
+            const date = new Date(value);
+            if (isNaN(date.getTime())) return '';
+            return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getFullYear()).slice(-2)} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')} น.`;
+        }
+
+        function renderDailyDashboardStatus(state, completeText, missingText) {
+            if (state === 'complete' || state === 'completed' || state === 'confirmed' || state === 'recorded' || state === 'ready' || state === 'zero') {
+                return `<span class="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800"><i class="fa-solid fa-circle-check mr-1" aria-hidden="true"></i>${esc(completeText)}</span>`;
+            }
+            if (state === 'pending') {
+                return `<span class="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800"><i class="fa-solid fa-circle-exclamation mr-1" aria-hidden="true"></i>${esc(completeText)}</span>`;
+            }
+            if (state === 'not-applicable') {
+                return `<span class="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">ไม่ใช้กับสาขานี้</span>`;
+            }
+            return `<span class="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800"><i class="fa-solid fa-circle-exclamation mr-1" aria-hidden="true"></i>${esc(missingText || 'ยังไม่ได้สรุป')}</span>`;
+        }
+
+        function renderDailyDashboardSection(title, icon, statusHtml, bodyHtml) {
+            return `
+                <section class="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4">
+                    <header class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
+                        <h3 class="text-sm font-black text-slate-900"><i class="fa-solid ${icon} mr-2 text-blue-700" aria-hidden="true"></i>${esc(title)}</h3>
+                        ${statusHtml}
+                    </header>
+                    ${bodyHtml}
+                </section>
+            `;
+        }
+
+        function renderDetailedDailyDashboard(model) {
+            const content = document.getElementById('daily-dashboard-content');
+            if (!content) return;
+            const branchDate = document.getElementById('daily-dashboard-branch-date');
+            const freshness = document.getElementById('daily-dashboard-freshness');
+            const combinedStatus = document.getElementById('daily-status-badge');
+            const completenessDetails = document.getElementById('daily-completeness-details');
+
+            if (branchDate) branchDate.innerText = `${model.branch} · ${formatDisplayDate(model.date)}`;
+            if (freshness) {
+                const syncText = formatDailyDashboardTimestamp(model.cacheTimestamp);
+                freshness.innerText = syncText ? `ข้อมูลที่โหลดล่าสุด: ${syncText}` : 'ยังไม่มีเวลาซิงค์ข้อมูล';
+            }
+            if (combinedStatus) {
+                if (model.dataState.state === 'loading') {
+                    combinedStatus.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1.5" aria-hidden="true"></i>กำลังซิงค์ข้อมูล';
+                    combinedStatus.className = 'inline-flex items-center rounded-full border border-blue-300 bg-blue-50 px-2.5 py-1 text-xs font-black text-blue-800';
+                } else if (model.dataState.state === 'error') {
+                    combinedStatus.innerHTML = model.dataState.hasCachedDay
+                        ? '<i class="fa-solid fa-cloud-arrow-down mr-1.5" aria-hidden="true"></i>ใช้ข้อมูลในเครื่อง'
+                        : '<i class="fa-solid fa-triangle-exclamation mr-1.5" aria-hidden="true"></i>โหลดข้อมูลไม่สำเร็จ';
+                    combinedStatus.className = 'inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-black text-amber-800';
+                } else {
+                    combinedStatus.innerHTML = model.completeness.isComplete
+                        ? '<i class="fa-solid fa-circle-check mr-1.5" aria-hidden="true"></i>ข้อมูลครบถ้วน'
+                        : '<i class="fa-solid fa-circle-exclamation mr-1.5" aria-hidden="true"></i>ข้อมูลยังไม่ครบ';
+                    combinedStatus.className = model.completeness.isComplete
+                        ? 'inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-800'
+                        : 'inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-black text-amber-800';
+                }
+            }
+            if (completenessDetails) {
+                completenessDetails.innerText = model.completeness.isComplete
+                    ? 'ยืนยันข้อมูลส่วนสำคัญของวันที่เลือกแล้ว'
+                    : `ยังไม่ได้สรุป: ${model.completeness.missing.join(', ')}`;
+            }
+
+            const overviewBody = `
+                <div class="daily-metric-grid gap-2">
+                    ${model.operations.items.map(item => `
+                        <div class="min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            <p class="text-[11px] font-bold leading-snug text-slate-700">${esc(item.label)}</p>
+                            <p class="mt-1 text-2xl font-black text-slate-900">${item.value === null ? '<span class="text-sm text-amber-800">ยังไม่ได้สรุป</span>' : `${Number(item.value).toLocaleString('th-TH')}<span class="ml-1 text-xs font-semibold text-slate-500">รายการ</span>`}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            const dataStateHtml = model.dataState.state === 'loading'
+                ? '<p class="rounded-xl border border-blue-300 bg-blue-50 p-3 text-sm text-blue-800"><i class="fa-solid fa-rotate fa-spin mr-2" aria-hidden="true"></i>กำลังตรวจสอบข้อมูลล่าสุด โดยยังแสดงข้อมูลในเครื่องระหว่างรอ</p>'
+                : (model.dataState.state === 'error'
+                    ? `<p class="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm leading-relaxed text-amber-900"><i class="fa-solid fa-triangle-exclamation mr-2" aria-hidden="true"></i>${esc(model.dataState.error || 'โหลดข้อมูลล่าสุดไม่สำเร็จ')}${model.dataState.hasCachedDay ? ' — ข้อมูลด้านล่างมาจาก cache ในเครื่อง' : ' — ยังไม่มีข้อมูลของวันที่เลือกในเครื่อง'}</p>`
+                    : '');
+            let html = dataStateHtml + renderDailyDashboardSection(
+                'ภาพรวมการปฏิบัติงาน',
+                'fa-chart-column',
+                renderDailyDashboardStatus(model.operations.state, model.branch === 'TRD' ? 'ข้อมูลตามสาขา' : 'บันทึกแล้ว', model.operations.state === 'partial' ? 'ข้อมูลไม่ครบ' : 'ยังไม่ได้สรุป'),
+                overviewBody
+            );
+
+            if (model.workload) {
+                const rosterSummary = model.roster?.state === 'confirmed'
+                    ? `<div class="mb-2 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-slate-200 pb-2 text-xs"><span class="shrink-0 font-black text-slate-900">ทีมเข้ากะ ${model.roster.names.length} คน</span><span class="min-w-0 break-words text-slate-600">${model.roster.names.map(esc).join(', ')}</span></div>`
+                    : '<p class="mb-2 border-b border-amber-200 pb-2 text-xs text-amber-800">ยังไม่มี roster ที่ยืนยันสำหรับวันที่เลือก</p>';
+                const workloadDetails = model.workload.entries.length
+                    ? `<div class="grid grid-cols-1 gap-1.5 md:grid-cols-2 xl:grid-cols-3">${model.workload.entries.map(entry => `
+                        <article class="min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                            <header class="flex flex-wrap items-baseline justify-between gap-2">
+                                <h4 class="font-black text-slate-900">${esc(entry.employee)}</h4>
+                                <span class="text-xs font-bold text-blue-700">${entry.total.toLocaleString('th-TH')} / ${entry.capacity.toLocaleString('th-TH')} คะแนน</span>
+                            </header>
+                            <dl class="mt-1.5 grid grid-cols-4 gap-2 text-[11px]">
+                                <div><dt class="text-slate-500">จ่ายออก</dt><dd class="font-bold text-slate-900">${entry.outbound}</dd></div>
+                                <div><dt class="text-slate-500">รับเข้า</dt><dd class="font-bold text-slate-900">${entry.inbound}</dd></div>
+                                <div><dt class="text-slate-500">ย้าย</dt><dd class="font-bold text-slate-900">${entry.transfer}</dd></div>
+                                <div><dt class="text-slate-500">ร่วม</dt><dd class="font-bold text-slate-900">${entry.shared}</dd></div>
+                            </dl>
+                            ${entry.note ? `<p class="mt-1.5 whitespace-pre-wrap break-words border-t border-slate-200 pt-1.5 text-xs leading-relaxed text-slate-800">${esc(entry.note)}</p>` : ''}
+                        </article>
+                    `).join('')}</div>`
+                    : '<p class="text-sm text-amber-800">ยังไม่มีการบันทึก Workload ของวันที่เลือก</p>';
+                const workloadState = model.roster?.state === 'confirmed' ? model.workload.state : 'partial';
+                const workloadMissingText = model.roster?.state === 'confirmed' ? 'Workload ยังไม่ครบ' : 'ยังไม่มีทีมเข้ากะ';
+                html += renderDailyDashboardSection(
+                    `ทีมเข้ากะ & Workload (${model.workload.recordedCount}/${model.workload.expectedCount} คน)`,
+                    'fa-users-gear',
+                    renderDailyDashboardStatus(workloadState, 'ครบตามทีมเข้ากะ', workloadMissingText),
+                    rosterSummary + workloadDetails
+                );
+            }
+
+            let errorsBody;
+            if (model.errors.state === 'recorded') {
+                const impactHtml = model.branch === 'TRD'
+                    ? `<div class="mb-3 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-800"><strong>ผลหักรายวันแบบ worst case:</strong> ${Object.entries(model.errors.dailyHpImpact).map(([name, value]) => `${esc(name)} -${value} HP`).join(' · ')}</div>`
+                    : '';
+                errorsBody = impactHtml + `<ol class="space-y-2">${model.errors.cases.map((item, index) => `
+                    <li class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-red-700">เคส ${index + 1} · ${esc(item.process)}</p>
+                                <h4 class="mt-0.5 font-black leading-snug text-slate-900">${esc(item.type)}</h4>
+                            </div>
+                            <span class="shrink-0 rounded border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-black text-red-800">-${item.penalty} HP</span>
+                        </div>
+                        <p class="mt-2 text-xs text-slate-700"><strong class="text-slate-900">พนักงาน:</strong> ${item.employees.length ? item.employees.map(esc).join(', ') : 'ไม่ระบุ'}${item.departments.length ? ` · <strong class="text-slate-900">แผนก:</strong> ${item.departments.map(esc).join(', ')}` : ''}</p>
+                        ${item.stage ? `<p class="mt-1 text-xs text-slate-700"><strong class="text-slate-900">ขั้นตอน/ผลกระทบ:</strong> ${esc(item.stage)}</p>` : ''}
+                        <p class="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-900">${item.note ? esc(item.note) : '<span class="text-slate-500">ไม่มีหมายเหตุ</span>'}</p>
+                    </li>
+                `).join('')}</ol>`;
+            } else if (model.errors.state === 'zero') {
+                errorsBody = `<div class="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"><i class="fa-solid fa-circle-check mr-2" aria-hidden="true"></i>${model.errors.assumedZero ? 'ไม่พบการบันทึกความผิดพลาดในวันที่เลือก' : 'ยืนยันว่าไม่มีความผิดพลาดในวันที่เลือก'}</div>`;
+            } else {
+                errorsBody = '<p class="text-sm text-amber-800">ยังไม่ได้สรุป — ต้องบันทึกเหตุการณ์ หรือยืนยันว่าไม่มีความผิดพลาด</p>';
+            }
+            html += renderDailyDashboardSection(
+                `ความผิดพลาด (${model.errors.cases.length} เคส)`,
+                'fa-triangle-exclamation',
+                renderDailyDashboardStatus(model.errors.state, model.errors.state === 'zero' ? (model.errors.assumedZero ? 'ไม่พบความผิดพลาด' : 'ยืนยัน 0 เคส') : 'บันทึกแล้ว', 'ยังไม่ได้สรุป'),
+                errorsBody
+            );
+
+            if (model.vendorBills) {
+                let vendorBody = '<p class="text-sm text-amber-800">ยังไม่ได้สรุปจำนวนและสถานะ Vendor Bills</p>';
+                if (model.vendorBills.state === 'completed' || model.vendorBills.state === 'pending') {
+                    const isPending = model.vendorBills.state === 'pending';
+                    vendorBody = `
+                        <div class="daily-metric-grid gap-2">
+                            <div class="rounded-lg border border-slate-200 bg-slate-50 p-3"><p class="text-[11px] font-bold text-slate-500">บิลวันนี้</p><p class="mt-1 text-2xl font-black text-slate-900">${model.vendorBills.totalToday}<span class="ml-1 text-xs text-slate-500">บิล</span></p></div>
+                            <div class="rounded-lg border ${isPending ? 'border-amber-300 bg-amber-50' : 'border-emerald-200 bg-emerald-50'} p-3"><p class="text-[11px] font-bold text-slate-700">สถานะ</p><p class="mt-1 font-black ${isPending ? 'text-amber-800' : 'text-emerald-800'}">${isPending ? 'ค้าง' : 'คีย์เรียบร้อย'}</p></div>
+                            ${isPending ? `<div class="rounded-lg border border-amber-300 bg-amber-50 p-3"><p class="text-[11px] font-bold text-slate-700">ค้างสะสม</p><p class="mt-1 text-2xl font-black text-amber-800">${model.vendorBills.pendingAccumulated}<span class="ml-1 text-xs">บิล</span></p></div>` : ''}
+                        </div>
+                        ${isPending && model.vendorBills.pendingNote ? `<p class="mt-3 whitespace-pre-wrap break-words rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm leading-relaxed text-amber-900">${esc(model.vendorBills.pendingNote)}</p>` : ''}
+                    `;
+                } else if (model.vendorBills.state === 'partial') {
+                    vendorBody = '<p class="text-sm text-amber-800">ข้อมูล Vendor Bills ยังไม่ครบ — กรุณาตรวจจำนวนบิล สถานะ และรายละเอียดงานค้าง</p>';
+                }
+                html += renderDailyDashboardSection('Vendor Bills', 'fa-file-invoice-dollar', renderDailyDashboardStatus(model.vendorBills.state, model.vendorBills.state === 'pending' ? 'บันทึกแล้ว · มีงานค้าง' : 'เรียบร้อย', model.vendorBills.state === 'partial' ? 'ข้อมูลไม่ครบ' : 'ยังไม่ได้สรุป'), vendorBody);
+            }
+
+            const briefLabels = [
+                ['summary', 'ผลงานและผลลัพธ์วันนี้', 'fa-circle-check', 'ไม่มีข้อมูลเพิ่มเติม'],
+                ['issues', 'ปัญหาที่พบ', 'fa-triangle-exclamation', 'ไม่มีปัญหา'],
+                ['actions', 'การแก้ไข / สิ่งที่ดำเนินการ', 'fa-screwdriver-wrench', 'ไม่ต้องดำเนินการเพิ่มเติม'],
+                ['followUps', 'เรื่องที่ต้องติดตาม', 'fa-flag', 'ไม่มีเรื่องต้องติดตาม']
+            ];
+            const briefBody = model.brief.state === 'missing'
+                ? '<p class="text-sm text-amber-800">ยังไม่มีข้อมูลของวันที่เลือก</p>'
+                : `<div class="grid grid-cols-1 gap-2 lg:grid-cols-2">${briefLabels.map(([key, label, icon, emptyText]) => `
+                    <article class="min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <h4 class="text-xs font-black text-blue-700"><i class="fa-solid ${icon} mr-1.5" aria-hidden="true"></i>${esc(label)}</h4>
+                        <p class="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed ${model.brief.fields[key] ? 'text-slate-900' : 'text-slate-700'}">${model.brief.fields[key] ? esc(model.brief.fields[key]) : emptyText}</p>
+                    </article>
+                `).join('')}</div>`;
+            html += renderDailyDashboardSection('Daily Brief', 'fa-clipboard-list', renderDailyDashboardStatus(model.brief.state, 'สรุปแล้ว', 'ยังไม่มีข้อมูล'), briefBody);
+
+            let actionsBody;
+            if (model.actions.state === 'loading') {
+                actionsBody = '<p class="text-sm text-slate-700"><i class="fa-solid fa-rotate fa-spin mr-2" aria-hidden="true"></i>กำลังโหลด Actions...</p>';
+            } else if (model.actions.state === 'error') {
+                actionsBody = `<p class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm leading-relaxed text-amber-900">ไม่สามารถโหลด Actions ได้: ${esc(model.actions.error)}</p>`;
+            } else if (model.actions.active.length === 0 && model.actions.resolved.length === 0) {
+                actionsBody = '<p class="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">ไม่มี Action ที่วางแผน/ครบกำหนด หรือปิดเสร็จในวันที่เลือก</p>';
+            } else {
+                const renderActionList = (items, resolved) => items.length ? `
+                    <div>
+                        <h4 class="mb-2 text-xs font-black ${resolved ? 'text-emerald-800' : 'text-purple-800'}">${resolved ? 'Resolved ในวันนี้' : 'กำลังดำเนินการ / ครบกำหนดวันนี้'} (${items.length})</h4>
+                        <ul class="space-y-2">${items.map(action => `
+                            <li class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                <div class="flex flex-wrap items-start justify-between gap-2">
+                                    <p class="font-black leading-snug text-slate-900">${esc(action.title || 'ไม่ระบุชื่อ Action')}</p>
+                                    <span class="rounded border ${resolved ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-purple-200 bg-purple-50 text-purple-800'} px-2 py-0.5 text-[10px] font-bold">${esc(action.status)}</span>
+                                </div>
+                                ${action.detail ? `<p class="mt-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-800">${esc(action.detail)}</p>` : ''}
+                                <p class="mt-2 text-xs text-slate-500">ผู้รับผิดชอบ: ${esc(action.owner || 'ยังไม่ระบุ')}${resolved ? ` · ปิดเมื่อ ${esc(formatDisplayDate(action.resolutionDate))}` : ` · กำหนด ${action.dueDate ? esc(formatDisplayDate(action.dueDate)) : 'ยังไม่ระบุ'}`}</p>
+                                ${resolved && action.resolutionNote ? `<p class="mt-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-emerald-800">ผลการปิดงาน: ${esc(action.resolutionNote)}</p>` : ''}
+                            </li>
+                        `).join('')}</ul>
+                    </div>
+                ` : '';
+                actionsBody = `<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">${renderActionList(model.actions.active, false)}${renderActionList(model.actions.resolved, true)}</div>`;
+            }
+            html += renderDailyDashboardSection('Actions ของวันที่เลือก', 'fa-list-check', renderDailyDashboardStatus(model.actions.state, 'โหลดแล้ว', model.actions.state === 'error' ? 'โหลดไม่สำเร็จ' : 'กำลังโหลด'), actionsBody);
+            content.innerHTML = html;
+        }
+
         function updateDailyDashboard() {
-            if (currentBranch !== 'AKRA') {
-                const card = document.getElementById('daily-dashboard-card');
+            const date = document.getElementById('record-date').value;
+            const card = document.getElementById('daily-dashboard-card');
+            if (!date || !currentBranch) {
                 if (card) card.classList.add('hidden');
                 return;
             }
-            const date = document.getElementById('record-date').value;
-            if (!date) return;
-
-            const card = document.getElementById('daily-dashboard-card');
             if (card) card.classList.remove('hidden');
 
-            const rawData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
-            const dayData = rawData.find(d => d.date === date) || { workload: [], errors: [], endOfShift: {} };
-
-            const activeEmployees = BRANCH_CONFIG[currentBranch].employees || [];
-
-            // 1. Workload - count against Day's Roster expect count
-            const workloadArr = dayData.workload || [];
-
-            const authRoster = getAuthoritativeRoster(dayData);
-            let expectedRoster = [];
-            if (authRoster) {
-                expectedRoster = authRoster;
-            } else {
-                const onDutyList = getAkraOnDutyEmployees();
-                if (onDutyList.length > 0) {
-                    expectedRoster = onDutyList;
-                } else {
-                    expectedRoster = activeEmployees;
-                }
-            }
-            const workloadState = getDailyWorkloadState(workloadArr, expectedRoster);
-            const eligibleWorkload = workloadState.workload;
-            const recordedCount = workloadState.recordedCount;
-            const expectedCount = workloadState.expectedCount;
-
-            const workloadStatusEl = document.getElementById('daily-workload-status');
-            const workloadSummaryEl = document.getElementById('daily-workload-summary');
-            const workloadDetailsEl = document.getElementById('daily-workload-details');
-            const workloadTimeEl = document.getElementById('daily-workload-time');
-
-            const isWorkloadComplete = workloadState.isComplete;
-
-            if (workloadStatusEl) {
-                workloadStatusEl.innerText = isWorkloadComplete ? "ครบแล้ว" : "ยังขาด";
-                workloadStatusEl.className = `text-[10px] font-bold px-1.5 py-0.5 rounded ${isWorkloadComplete ? 'bg-green-500/10 text-green-400 border border-green-500/25' : 'bg-red-500/10 text-red-400 border border-red-500/25'}`;
-            }
-            if (workloadSummaryEl) workloadSummaryEl.innerText = `${recordedCount} / ${expectedCount} คน`;
-
-            if (recordedCount > 0) {
-                const latestUpdate = eligibleWorkload.reduce((latest, curr) => {
-                    if (!curr.updatedAt) return latest;
-                    if (!latest || curr.updatedAt > latest.updatedAt) return curr;
-                    return latest;
-                }, null);
-
-                const details = eligibleWorkload.map(w => `${w.employee} (${Number(w.outbound || 0) + Number(w.inbound || 0) + Number(w.transfer || 0) + Number(w.shared || 0)}pt)`).join(', ');
-                if (workloadDetailsEl) workloadDetailsEl.innerText = details;
-
-                if (latestUpdate && latestUpdate.updatedAt && workloadTimeEl) {
-                    const timeStr = latestUpdate.updatedAt.substring(11, 16);
-                    workloadTimeEl.innerText = `อัปเดตล่าสุด: ${timeStr} น. (${latestUpdate.updatedBy || 'ระบบ'})`;
-                } else if (workloadTimeEl) {
-                    workloadTimeEl.innerText = "บันทึกแล้ว";
-                }
-            } else {
-                if (workloadDetailsEl) workloadDetailsEl.innerText = "ยังไม่มีการบันทึกภาระงาน";
-                if (workloadTimeEl) workloadTimeEl.innerText = "-";
-            }
-
-            // 2. Errors
-            const errorsArr = dayData.errors || [];
-            const errorsStatusEl = document.getElementById('daily-errors-status');
-            const errorsSummaryEl = document.getElementById('daily-errors-summary');
-            const errorsDetailsEl = document.getElementById('daily-errors-details');
-            const errorsTimeEl = document.getElementById('daily-errors-time');
-
-            const hasNoErrorsMarker = errorsArr.some(e => isNoErrorsConfirmation(e, currentBranch));
-            const normalErrors = getRealErrorEntries(errorsArr, currentBranch);
-
-            let isErrorsConfirmed = false;
-            if (normalErrors.length > 0) {
-                isErrorsConfirmed = true;
-                if (errorsStatusEl) {
-                    errorsStatusEl.innerText = "ครบแล้ว";
-                    errorsStatusEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/25";
-                }
-
-                const caseIds = new Set();
-                const affectedEmps = new Set();
-                normalErrors.forEach(e => {
-                    const parsed = currentBranch === 'TRD' ? parseTrdCaseNote(e.note) : parseAkraCaseNote(e.note);
-                    if (parsed && parsed.meta && parsed.meta.caseId) {
-                        caseIds.add(parsed.meta.caseId);
-                    } else {
-                        caseIds.add(e.type + e.note);
-                    }
-                    if (e.emp) affectedEmps.add(e.emp);
-                });
-
-                if (errorsSummaryEl) errorsSummaryEl.innerText = `${caseIds.size} เคส (${affectedEmps.size} คน)`;
-
-                const details = normalErrors.map(e => `${e.emp}: ${e.type}`).slice(0, 3).join(', ') + (normalErrors.length > 3 ? '...' : '');
-                if (errorsDetailsEl) errorsDetailsEl.innerText = details;
-
-                let latestTime = "";
-                normalErrors.forEach(e => {
-                    const parsed = currentBranch === 'TRD' ? parseTrdCaseNote(e.note) : parseAkraCaseNote(e.note);
-                    if (parsed && parsed.meta && parsed.meta.updatedAt && parsed.meta.updatedAt > latestTime) {
-                        latestTime = parsed.meta.updatedAt;
-                    }
-                });
-                if (errorsTimeEl) {
-                    errorsTimeEl.innerText = latestTime ? `อัปเดตล่าสุด: ${latestTime.substring(11, 16)} น.` : "บันทึกแล้ว";
-                }
-            } else if (hasNoErrorsMarker) {
-                isErrorsConfirmed = true;
-                if (errorsStatusEl) {
-                    errorsStatusEl.innerText = "ครบแล้ว";
-                    errorsStatusEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/25";
-                }
-                if (errorsSummaryEl) errorsSummaryEl.innerText = "ไม่มีความผิดพลาด";
-                if (errorsDetailsEl) errorsDetailsEl.innerText = "ยืนยันไม่มีความผิดพลาดวันนี้";
-                if (errorsTimeEl) {
-                    const noErrorItem = errorsArr.find(e => isNoErrorsConfirmation(e, currentBranch));
-                    const parsed = noErrorItem
-                        ? (currentBranch === 'TRD' ? parseTrdCaseNote(noErrorItem.note) : parseAkraCaseNote(noErrorItem.note))
-                        : null;
-                    const updatedAt = (parsed && parsed.meta) ? parsed.meta.updatedAt : null;
-                    errorsTimeEl.innerText = "บันทึกเมื่อ: " + (updatedAt ? updatedAt.substring(11, 16) + " น." : "-");
-                }
-            } else {
-                isErrorsConfirmed = false;
-                if (errorsStatusEl) {
-                    errorsStatusEl.innerText = "ยังขาด";
-                    errorsStatusEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/25";
-                }
-                if (errorsSummaryEl) errorsSummaryEl.innerText = "ยังไม่ได้บันทึก";
-                if (errorsDetailsEl) errorsDetailsEl.innerText = "กรุณาระบุความผิดพลาดหรือบันทึกยืนยันเป็น 0";
-                if (errorsTimeEl) errorsTimeEl.innerText = "-";
-            }
-
-            // 3. Vendor Bills
-            const endOfShiftObj = dayData.endOfShift || {};
-            const vendorBills = endOfShiftObj.vendorBills || {};
-
-            const vendorStatusEl = document.getElementById('daily-vendor-status');
-            const vendorSummaryEl = document.getElementById('daily-vendor-summary');
-            const vendorDetailsEl = document.getElementById('daily-vendor-details');
-            const vendorTimeEl = document.getElementById('daily-vendor-time');
-
-            const hasVendorSaved = vendorBills.entryStatus === 'completed' || vendorBills.entryStatus === 'pending';
-
-            if (hasVendorSaved) {
-                const isCompleted = vendorBills.entryStatus === 'completed';
-                if (vendorStatusEl) {
-                    vendorStatusEl.innerText = "ครบแล้ว";
-                    vendorStatusEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/25";
-                }
-                if (vendorSummaryEl) vendorSummaryEl.innerText = `${vendorBills.totalToday || 0} บิล`;
-                if (vendorDetailsEl) {
-                    vendorDetailsEl.innerText = isCompleted ? "สถานะ: คีย์เรียบร้อยทั้งหมด" : `สถานะ: ค้างสะสม ${vendorBills.pendingAccumulated || 0} บิล`;
-                }
-                if (vendorTimeEl) {
-                    if (vendorBills.updatedAt) {
-                        const timeStr = vendorBills.updatedAt.substring(11, 16);
-                        vendorTimeEl.innerText = `อัปเดตล่าสุด: ${timeStr} น. (${vendorBills.updatedBy || 'ระบบ'})`;
-                    } else {
-                        vendorTimeEl.innerText = "บันทึกแล้ว";
-                    }
-                }
-            } else {
-                if (vendorStatusEl) {
-                    vendorStatusEl.innerText = "ยังขาด";
-                    vendorStatusEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/25";
-                }
-                if (vendorSummaryEl) vendorSummaryEl.innerText = "ยังไม่ได้บันทึก";
-                if (vendorDetailsEl) vendorDetailsEl.innerText = "กรุณาระบุจำนวนบิลและสถานะ";
-                if (vendorTimeEl) vendorTimeEl.innerText = "-";
-            }
-
-            // 4. Combined
-            const combinedStatusEl = document.getElementById('daily-status-badge');
-            const isAllComplete = isWorkloadComplete && isErrorsConfirmed && hasVendorSaved;
-            if (combinedStatusEl) {
-                if (isAllComplete) {
-                    combinedStatusEl.innerText = "ครบถ้วนเรียบร้อย";
-                    combinedStatusEl.className = "text-xs font-black px-2.5 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/30";
-                } else {
-                    combinedStatusEl.innerText = "ยังขาดข้อมูล";
-                    combinedStatusEl.className = "text-xs font-black px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30";
-                }
-            }
+            const dayData = getSelectedServerDay(date);
+            const model = buildDailyDashboardViewModel({
+                branch: currentBranch,
+                date,
+                dayData,
+                actions: ALL_ACTIONS,
+                actionsLoaded: _actionsLoaded,
+                actionsLoading: _fetchingActions,
+                actionsError: _actionsLoadError,
+                dailyDataLoading: _dailyDataLoading,
+                dailyDataError: _dailyDataLoadError,
+                activeEmployees: BRANCH_CONFIG[currentBranch]?.employees || [],
+                fallbackRoster: [],
+                cacheTimestamp: safeStorage.getItem('kpiData_' + currentBranch + '_ts')
+            });
+            renderDetailedDailyDashboard(model);
         }
 
         async function saveDailyRecord() {
