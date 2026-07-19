@@ -368,4 +368,25 @@ assert.ok(extractFunction(html, 'renderDetailedDailyDashboard').includes('xl:gri
 assert.strictEqual(extractFunction(html, 'renderDetailedDailyDashboard').includes("renderDailyDashboardSection('ทีมเข้ากะ'"), false,
     'the dashboard must not render a separate roster section');
 
+const recordViewStart = html.indexOf('<div id="view-record"');
+const dashboardViewStart = html.indexOf('<div id="view-dashboard"');
+const adminDashboardViewStart = html.indexOf('<div id="view-admin-dash"');
+const dailyDashboardStart = html.indexOf('<section id="daily-dashboard-card"');
+const dashboardWeekSelectorStart = html.indexOf('id="dash-week-label"', dashboardViewStart);
+const dailyReportStart = html.indexOf('aria-labelledby="dash-eos-title"', dashboardViewStart);
+assert.ok(dailyDashboardStart > dashboardViewStart && dailyDashboardStart < adminDashboardViewStart,
+    'the detailed daily summary must live inside the Dashboard view');
+assert.strictEqual(dailyDashboardStart > recordViewStart && dailyDashboardStart < dashboardViewStart, false,
+    'the detailed daily summary must no longer live inside the Record view');
+assert.ok(dashboardWeekSelectorStart < dailyReportStart && dailyReportStart < dailyDashboardStart,
+    'the Daily Report must be the first Dashboard report section after the week selector');
+assert.ok(extractFunction(html, 'updateDailyDashboard').includes("dashboardSelectedDate !== 'ALL'"),
+    'an explicitly selected Dashboard day must drive the detailed daily summary');
+assert.ok(extractFunction(html, 'switchTab').includes('updateDailyDashboard()'),
+    'opening Dashboard must refresh the detailed daily summary');
+assert.ok(extractFunction(html, 'setDashboardSelectedDate').includes('updateDailyDashboard()'),
+    'selecting a Dashboard day must refresh the detailed daily summary');
+assert.ok(extractFunction(html, 'changeWeek').includes('updateDailyDashboard()'),
+    'changing the Dashboard week must clear any stale selected-day summary');
+
 console.log('Detailed Daily Dashboard checks passed.');
