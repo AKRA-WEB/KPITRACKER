@@ -245,9 +245,14 @@
     <header class="app-header p-4 sticky top-0 z-10 flex flex-col space-y-2 border-b">
         <div class="flex justify-between items-center">
             <h1 class="text-xl font-semibold"><i class="app-brand-mark fa-solid fa-chart-simple mr-2"></i>KPI Tracker <span class="text-slate-300 mx-1">/</span> <span id="header-branch-name" class="app-branch">AKRA</span></h1>
-            <button onclick="syncDataFromSheet()" id="btn-sync" aria-label="ซิงค์ข้อมูลล่าสุด" class="text-white bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow active:bg-slate-600 transition-colors border border-slate-600">
-                <i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล
-            </button>
+            <div class="flex items-center space-x-2">
+                <button onclick="forceCleanCacheAndReload()" title="ล้างแคชและอัปเดต" class="text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow transition-colors border border-slate-700">
+                    <i class="fa-solid fa-broom mr-1"></i> ล้างแคช
+                </button>
+                <button onclick="syncDataFromSheet()" id="btn-sync" aria-label="ซิงค์ข้อมูลล่าสุด" class="text-white bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow active:bg-slate-600 transition-colors border border-slate-600">
+                    <i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล
+                </button>
+            </div>
         </div>
         <div class="app-user-row flex justify-between items-center text-xs">
             <div><i class="fa-solid fa-user mr-1"></i> ผู้ใช้งาน: <span id="showUserName" class="font-semibold text-white">กำลังตรวจสอบ...</span></div>
@@ -1330,7 +1335,26 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260820.04";
+        const CURRENT_VERSION = "20260820.05";
+
+        function forceCleanCacheAndReload() {
+            if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
+                try {
+                    sessionStorage.clear();
+                    const keysToRemove = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const k = localStorage.key(i);
+                        if (k && (k.startsWith('kpi') || k.includes('sso') || k.includes('version'))) {
+                            keysToRemove.push(k);
+                        }
+                    }
+                    keysToRemove.forEach(k => localStorage.removeItem(k));
+                } catch (e) {}
+                const url = new URL(window.location.href);
+                url.searchParams.set('update', Date.now());
+                window.location.replace(url.toString());
+            }
+        }
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -3701,25 +3725,25 @@
                     console.warn("ใช้รายชื่อพนักงานตั้งต้น (Fallback)", e);
                     processConfigList(GLOBAL_CONFIG_LIST);
                 }
-            } finally {
-                // Ensure hardcoded admin fallbacks are always in USER_DB to prevent permission rejection
-                const admins = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'];
-                admins.forEach(adminId => {
-                    if (!USER_DB[adminId]) {
-                        USER_DB[adminId] = ["AKRA", "TRD"];
-                    }
-                });
-
-                const deptFilter = document.getElementById('dash-dept-filter');
-                if (deptFilter) {
-                    deptFilter.innerHTML = '<option value="ALL">ดูรวมทุกแผนก</option>';
-                    Object.keys(TRD_DEPARTMENTS).forEach(dept => {
-                        deptFilter.innerHTML += `<option value="${dept}">🏷️ ${dept}</option>`;
-                    });
-                }
-
-                populateAdminEmpFilter();
             }
+
+            // Ensure hardcoded admin fallbacks are always in USER_DB to prevent permission rejection
+            const admins = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'];
+            admins.forEach(adminId => {
+                if (!USER_DB[adminId]) {
+                    USER_DB[adminId] = ["AKRA", "TRD"];
+                }
+            });
+
+            const deptFilter = document.getElementById('dash-dept-filter');
+            if (deptFilter) {
+                deptFilter.innerHTML = '<option value="ALL">ดูรวมทุกแผนก</option>';
+                Object.keys(TRD_DEPARTMENTS).forEach(dept => {
+                    deptFilter.innerHTML += `<option value="${dept}">🏷️ ${dept}</option>`;
+                });
+            }
+
+            populateAdminEmpFilter();
         }
 
         async function initSystem() {
@@ -4063,47 +4087,49 @@
             _dailyDataLoadError = '';
             updateDailyDashboard();
 
-            let data = null;
-            if (typeof window !== "undefined" && window.AkraSupabaseKPI) {
-                try {
-                    data = await AkraSupabaseKPI.fetchBranchData(currentBranch, 3);
-                } catch (supaErr) {
-                    console.warn('[Supabase KPI] syncDataFromSheet fallback to GAS:', supaErr);
+            try {
+                let data = null;
+                if (typeof window !== "undefined" && window.AkraSupabaseKPI) {
+                    try {
+                        data = await AkraSupabaseKPI.fetchBranchData(currentBranch, 3);
+                    } catch (supaErr) {
+                        console.warn('[Supabase KPI] syncDataFromSheet fallback to GAS:', supaErr);
+                    }
                 }
-            }
 
-            if (!data) {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 12000);
-                try {
-                    const fetchUrl = LOG_APP_SCRIPT_URL + "?action=getData&branch=" + currentBranch + "&months=3";
-                    const response = await fetch(fetchUrl, { signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    data = await response.json();
-                } catch (error) {
-                    clearTimeout(timeoutId);
-                    console.error('GAS sync error:', error);
+                if (!data) {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 12000);
+                    try {
+                        const fetchUrl = LOG_APP_SCRIPT_URL + "?action=getData&branch=" + currentBranch + "&months=3";
+                        const response = await fetch(fetchUrl, { signal: controller.signal });
+                        clearTimeout(timeoutId);
+                        data = await response.json();
+                    } catch (error) {
+                        clearTimeout(timeoutId);
+                        console.error('GAS sync error:', error);
+                    }
                 }
-            }
 
-            if (Array.isArray(data)) {
-                _dailyDataLoadError = '';
-                safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
-                safeStorage.setItem('kpiData_' + currentBranch + '_ts', String(Date.now()));
-                _adminFullLoaded = false;
-                if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
-                    loadDashboardData();
-                } else if (!document.getElementById('view-admin-dash').classList.contains('hidden')) {
-                    renderAdminDashboard();
+                if (Array.isArray(data)) {
+                    _dailyDataLoadError = '';
+                    safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
+                    safeStorage.setItem('kpiData_' + currentBranch + '_ts', String(Date.now()));
+                    _adminFullLoaded = false;
+                    if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
+                        loadDashboardData();
+                    } else if (!document.getElementById('view-admin-dash').classList.contains('hidden')) {
+                        renderAdminDashboard();
+                    } else {
+                        loadTasksForSelectedDate();
+                        hydrateSelectedDayRecord(document.getElementById('record-date').value);
+                    }
+                    updateDailyDashboard();
+                    showToast("ซิงค์ข้อมูลล่าสุดเรียบร้อย");
                 } else {
-                    loadTasksForSelectedDate();
-                    hydrateSelectedDayRecord(document.getElementById('record-date').value);
+                    _dailyDataLoadError = 'เชื่อมต่อข้อมูลล่าสุดไม่สำเร็จ';
+                    showToast("ทำงานโหมดออฟไลน์ (เชื่อมต่อข้อมูลไม่สำเร็จ)", true);
                 }
-                updateDailyDashboard();
-                showToast("ซิงค์ข้อมูลล่าสุดเรียบร้อย");
-            } else {
-                _dailyDataLoadError = 'เชื่อมต่อข้อมูลล่าสุดไม่สำเร็จ';
-                showToast("ทำงานโหมดออฟไลน์ (เชื่อมต่อข้อมูลไม่สำเร็จ)", true);
             } finally {
                 _dailyDataLoading = false;
                 updateDailyDashboard();
@@ -8859,7 +8885,6 @@
                     btn.disabled = false;
                 }
             }
-        }
     </script>
 </body>
 </html>

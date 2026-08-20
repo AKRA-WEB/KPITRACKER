@@ -7,9 +7,9 @@ console.log('=== VERIFYING KPITRACKER SUPABASE WIRING & VERSION PARITY ===\n');
 const indexContent = fs.readFileSync('KPITRACKER/index.html', 'utf8');
 const versionJson = JSON.parse(fs.readFileSync('KPITRACKER/version.json', 'utf8'));
 
-assert(indexContent.includes('const CURRENT_VERSION = "20260820.04";'), 'CURRENT_VERSION in index.html must be 20260820.04');
-assert.strictEqual(versionJson.version, '20260820.04', 'version.json must be 20260820.04');
-console.log('  [PASS] Version parity verified: 20260820.04');
+assert(indexContent.includes('const CURRENT_VERSION = "20260820.05";'), 'CURRENT_VERSION in index.html must be 20260820.05');
+assert.strictEqual(versionJson.version, '20260820.05', 'version.json must be 20260820.05');
+console.log('  [PASS] Version parity verified: 20260820.05');
 
 // 2. Direct Supabase Wiring
 const kpiMatches = indexContent.match(/AkraSupabaseKPI/g) || [];
@@ -19,5 +19,12 @@ console.log(`  [PASS] Direct Supabase wiring verified: ${kpiMatches.length} Akra
 // 3. Fallback to GAS Preservation
 assert(indexContent.includes('LOG_APP_SCRIPT_URL'), 'Must preserve LOG_APP_SCRIPT_URL fallback');
 console.log('  [PASS] GAS fallback contract preserved');
+
+// 4. JS Syntax Validation
+const scriptStart = indexContent.indexOf('<script>');
+const scriptEnd = indexContent.lastIndexOf('</script>');
+const scriptContent = indexContent.substring(scriptStart + 8, scriptEnd);
+new Function(scriptContent);
+console.log('  [PASS] JS Syntax completely valid');
 
 console.log('\n🌟 KPITRACKER WIRING VERIFICATION PASSED 100%! 🌟');
