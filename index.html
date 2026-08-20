@@ -1329,13 +1329,11 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-
-    <script src="js/supabase-kpi-client.js"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260820.06";
+        const CURRENT_VERSION = "20260820.07";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3245,7 +3243,7 @@
             const actionsEl = document.getElementById('custom-modal-actions');
 
             titleEl.innerText = title;
-            textEl.innerHTML = message;
+            textEl.textContent = message;
 
             const closeModal = () => {
                 document.getElementById('custom-modal-content').classList.replace('scale-100', 'scale-95');
