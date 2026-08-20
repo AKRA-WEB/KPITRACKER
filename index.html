@@ -1335,7 +1335,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260820.05";
+        const CURRENT_VERSION = "20260820.06";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3785,38 +3785,69 @@
                 if (!ssoToken) return result;
                 result.attempted = true;
 
+                // 1. INSTANT LOCAL JWT DECODE (0ms) - Never blocks on external network fetch
+                const decodedUser = decodeJwtPayload(ssoToken);
+                if (decodedUser && decodedUser.id) {
+                    const currentTime = new Date().getTime();
+                    const expMs = decodedUser.exp ? (decodedUser.exp > 1e11 ? decodedUser.exp : decodedUser.exp * 1000) : 0;
+                    if (expMs && expMs <= currentTime) {
+                        console.warn("SSO token is locally expired, clearing session");
+                        safeStorage.removeItem('akra_sso_token');
+                        safeStorage.removeItem('akra_sso_user_data');
+                        sessionToken = null;
+                        result.userData = null;
+                        result.expired = true;
+                        return result;
+                    }
+
+                    const normalizedUid = String(decodedUser.id).toLowerCase();
+                    const ssoRoles = decodedUser.roles || [];
+                    if ((ssoRoles.includes('ADMIN') || ssoRoles.includes('admin')) && !ssoRoles.includes('Admin')) {
+                        ssoRoles.push('Admin');
+                    }
+
+                    result.userData = {
+                        username: normalizedUid,
+                        name: decodedUser.name || normalizedUid,
+                        roles: ssoRoles,
+                        perms: decodedUser.perms || {}
+                    };
+                    sessionToken = ssoToken;
+                    safeStorage.setItem('akra_sso_token', ssoToken);
+                    safeStorage.setItem('akra_sso_user_data', JSON.stringify(result.userData));
+                    return result;
+                }
+
+                // 2. Fallback to API verify only if local decode could not parse token
                 const portalApiUrl = "https://script.google.com/macros/s/AKfycbyQJLwb5HTexG6gxqTehGWlAxfSXVT--CpWnnp2JTcP4xCcMA1vUjSY_eWqPjUKwzq7/exec";
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 1200);
 
                 try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 1200); // 1.2 วินาที max เพื่อไม่ให้ค้าง
-
                     const verifyRes = await fetch(`${portalApiUrl}?action=verifyToken&token=${encodeURIComponent(ssoToken)}`, { signal: controller.signal });
                     clearTimeout(timeoutId);
 
                     if (verifyRes.ok) {
                         const verifyData = await verifyRes.json();
                         if (verifyData && verifyData.valid && verifyData.user) {
-                            const decodedUser = verifyData.user;
-                            const normalizedUid = String(decodedUser.id).toLowerCase();
+                            const dUser = verifyData.user;
+                            const normalizedUid = String(dUser.id).toLowerCase();
 
-                            // ดึง Roles ทั้งหมดจาก SSO และทำการแมพ Admin ให้ตรงกับที่ระบบภายในใช้
-                            const ssoRoles = decodedUser.roles || [];
+                            const ssoRoles = dUser.roles || [];
                             if ((ssoRoles.includes('ADMIN') || ssoRoles.includes('admin')) && !ssoRoles.includes('Admin')) {
                                 ssoRoles.push('Admin');
                             }
 
                             result.userData = {
                                 username: normalizedUid,
-                                name: decodedUser.name,
+                                name: dUser.name,
                                 roles: ssoRoles,
-                                perms: decodedUser.perms || {}
+                                perms: dUser.perms || {}
                             };
                             sessionToken = ssoToken;
                             safeStorage.setItem('akra_sso_token', ssoToken);
                             safeStorage.setItem('akra_sso_user_data', JSON.stringify(result.userData));
                         } else {
-                            // โทเค็นหมดอายุหรือถูกปฏิเสธโดยตรงจากเซิร์ฟเวอร์ -> ล้างค่าเซสชันและไม่ทำ fallback
                             console.warn("SSO token was rejected by server:", verifyData && verifyData.reason);
                             safeStorage.removeItem('akra_sso_token');
                             safeStorage.removeItem('akra_sso_user_data');
@@ -3824,50 +3855,9 @@
                             result.userData = null;
                             result.expired = true;
                         }
-                    } else {
-                        // verifyRes is not ok (e.g. 4xx, 5xx)
-                        if (verifyRes.status >= 500) {
-                            throw new Error(`HTTP status ${verifyRes.status}`);
-                        } else {
-                            console.warn("SSO token verification failed with client error status:", verifyRes.status);
-                            safeStorage.removeItem('akra_sso_token');
-                            safeStorage.removeItem('akra_sso_user_data');
-                            sessionToken = null;
-                            result.userData = null;
-                            result.expired = true;
-                        }
                     }
-                } catch (e) {
-                    console.warn("API token verification failed, trying local decode as fallback...", e);
-                    // ทำ Local Decode เป็น Fallback เฉพาะในกรณีที่เรียก API ไม่สำเร็จจริง ๆ (เน็ตเสีย/Timeout)
-                    const decodedUser = decodeJwtPayload(ssoToken);
-                    if (decodedUser && decodedUser.id) {
-                        const currentTime = new Date().getTime();
-                        if (decodedUser.exp && decodedUser.exp * 1000 <= currentTime) {
-                            console.warn("SSO token is locally expired, clearing session");
-                            safeStorage.removeItem('akra_sso_token');
-                            safeStorage.removeItem('akra_sso_user_data');
-                            sessionToken = null;
-                            result.userData = null;
-                            result.expired = true;
-                        } else {
-                            const normalizedUid = String(decodedUser.id).toLowerCase();
-                            const ssoRoles = decodedUser.roles || [];
-                            if ((ssoRoles.includes('ADMIN') || ssoRoles.includes('admin')) && !ssoRoles.includes('Admin')) {
-                                ssoRoles.push('Admin');
-                            }
-
-                            result.userData = {
-                                username: normalizedUid,
-                                name: decodedUser.name || normalizedUid,
-                                roles: ssoRoles,
-                                perms: decodedUser.perms || {}
-                            };
-                            sessionToken = ssoToken;
-                            safeStorage.setItem('akra_sso_token', ssoToken);
-                            safeStorage.setItem('akra_sso_user_data', JSON.stringify(result.userData));
-                        }
-                    }
+                } catch (apiErr) {
+                    console.warn("API verify error:", apiErr);
                 }
             } catch(e) { console.error("SSO auth check failed", e); }
             return result;
