@@ -1330,7 +1330,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260820.02";
+        const CURRENT_VERSION = "20260820.03";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -3675,19 +3675,32 @@
         }
 
         async function loadConfig() {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            let loaded = false;
+            if (typeof window !== "undefined" && window.AkraSupabaseKPI) {
+                try {
+                    const configList = await AkraSupabaseKPI.getConfig();
+                    if (Array.isArray(configList) && configList.length > 0) {
+                        processConfigList(configList);
+                        loaded = true;
+                    }
+                } catch (supaErr) {
+                    console.warn('[Supabase KPI] loadConfig fallback to GAS:', supaErr);
+                }
+            }
 
-            try {
-                const response = await fetch(LOG_APP_SCRIPT_URL + "?action=getConfig", { signal: controller.signal });
-                clearTimeout(timeoutId);
-
-                if (!response.ok) throw new Error("Network response was not ok");
-                const configList = await response.json();
-                processConfigList(configList);
-            } catch(e) {
-                console.warn("ใช้รายชื่อพนักงานตั้งต้น (Fallback)", e);
-                processConfigList(GLOBAL_CONFIG_LIST);
+            if (!loaded) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                try {
+                    const response = await fetch(LOG_APP_SCRIPT_URL + "?action=getConfig", { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (!response.ok) throw new Error("Network response was not ok");
+                    const configList = await response.json();
+                    processConfigList(configList);
+                } catch(e) {
+                    console.warn("ใช้รายชื่อพนักงานตั้งต้น (Fallback)", e);
+                    processConfigList(GLOBAL_CONFIG_LIST);
+                }
             } finally {
                 // Ensure hardcoded admin fallbacks are always in USER_DB to prevent permission rejection
                 const admins = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'];
@@ -4032,43 +4045,53 @@
         }
 
         async function syncDataFromSheet() {
-            if(!LOG_APP_SCRIPT_URL || !currentBranch) return;
+            if(!currentBranch) return;
             const btnSync = document.getElementById('btn-sync');
             if (btnSync) { btnSync.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1"></i> ซิงค์...'; btnSync.disabled = true; }
             _dailyDataLoading = true;
             _dailyDataLoadError = '';
             updateDailyDashboard();
 
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000);
-
-            try {
-                // ดึงเฉพาะ 3 เดือนล่าสุด (backend เก่าไม่รู้จัก months จะส่งทั้งหมดตามเดิม ไม่พัง)
-                const fetchUrl = LOG_APP_SCRIPT_URL + "?action=getData&branch=" + currentBranch + "&months=3";
-                const response = await fetch(fetchUrl, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                const data = await response.json();
-
-                if (Array.isArray(data)) {
-                    _dailyDataLoadError = '';
-                    safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
-                    safeStorage.setItem('kpiData_' + currentBranch + '_ts', String(Date.now()));
-                    _adminFullLoaded = false; // cache สาขานี้เหลือ 3 เดือน — เดือนเก่าต้องดึงเต็มใหม่
-                    if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
-                        loadDashboardData();
-                    } else if (!document.getElementById('view-admin-dash').classList.contains('hidden')) {
-                        renderAdminDashboard();
-                    } else {
-                        loadTasksForSelectedDate();
-                        hydrateSelectedDayRecord(document.getElementById('record-date').value);
-                    }
-                    updateDailyDashboard();
-                    showToast("ซิงค์ข้อมูลล่าสุดเรียบร้อย");
+            let data = null;
+            if (typeof window !== "undefined" && window.AkraSupabaseKPI) {
+                try {
+                    data = await AkraSupabaseKPI.fetchBranchData(currentBranch, 3);
+                } catch (supaErr) {
+                    console.warn('[Supabase KPI] syncDataFromSheet fallback to GAS:', supaErr);
                 }
-            } catch (error) {
-                _dailyDataLoadError = error && error.name === 'AbortError'
-                    ? 'หมดเวลารอข้อมูลล่าสุด'
-                    : 'เชื่อมต่อข้อมูลล่าสุดไม่สำเร็จ';
+            }
+
+            if (!data) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000);
+                try {
+                    const fetchUrl = LOG_APP_SCRIPT_URL + "?action=getData&branch=" + currentBranch + "&months=3";
+                    const response = await fetch(fetchUrl, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    data = await response.json();
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    console.error('GAS sync error:', error);
+                }
+            }
+
+            if (Array.isArray(data)) {
+                _dailyDataLoadError = '';
+                safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
+                safeStorage.setItem('kpiData_' + currentBranch + '_ts', String(Date.now()));
+                _adminFullLoaded = false;
+                if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
+                    loadDashboardData();
+                } else if (!document.getElementById('view-admin-dash').classList.contains('hidden')) {
+                    renderAdminDashboard();
+                } else {
+                    loadTasksForSelectedDate();
+                    hydrateSelectedDayRecord(document.getElementById('record-date').value);
+                }
+                updateDailyDashboard();
+                showToast("ซิงค์ข้อมูลล่าสุดเรียบร้อย");
+            } else {
+                _dailyDataLoadError = 'เชื่อมต่อข้อมูลล่าสุดไม่สำเร็จ';
                 showToast("ทำงานโหมดออฟไลน์ (เชื่อมต่อข้อมูลไม่สำเร็จ)", true);
             } finally {
                 _dailyDataLoading = false;
@@ -5035,6 +5058,19 @@
         }
 
         async function fetchBranchData(branch, monthsQuery) {
+            if (typeof window !== "undefined" && window.AkraSupabaseKPI) {
+                try {
+                    const months = monthsQuery ? (monthsQuery.includes('months=') ? parseInt(monthsQuery.split('months=')[1], 10) : 3) : 3;
+                    const data = await AkraSupabaseKPI.fetchBranchData(branch, months);
+                    if (Array.isArray(data) && data.length > 0) {
+                        safeStorage.setItem('kpiData_' + branch, JSON.stringify(data));
+                        safeStorage.setItem('kpiData_' + branch + '_ts', String(Date.now()));
+                        return;
+                    }
+                } catch (supaErr) {
+                    console.warn(`[Supabase KPI] fetchBranchData(${branch}) fallback to GAS:`, supaErr);
+                }
+            }
             const res = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=" + branch + (monthsQuery || ""));
             if (!res.ok) throw new Error(`โหลดข้อมูล ${branch} ไม่สำเร็จ (HTTP ${res.status})`);
             const data = await res.json();
@@ -5976,6 +6012,23 @@
             if (_fetchingActions) return;
             _fetchingActions = true;
             updateDailyDashboard();
+
+            if (typeof window !== "undefined" && window.AkraSupabaseKPI) {
+                try {
+                    const data = await AkraSupabaseKPI.getActions(currentBranch);
+                    if (Array.isArray(data)) {
+                        ALL_ACTIONS = data;
+                        _actionsLoadError = '';
+                        _fetchingActions = false;
+                        _actionsLoaded = true;
+                        updateDailyDashboard();
+                        return;
+                    }
+                } catch (supaErr) {
+                    console.warn('[Supabase KPI] refreshActions fallback to GAS:', supaErr);
+                }
+            }
+
             try {
                 const res = await fetch(LOG_APP_SCRIPT_URL + "?action=getActions&token=" + encodeURIComponent(sessionToken || ""));
                 const data = await res.json();
@@ -6218,27 +6271,46 @@
 
             for (const act of localActionsDraft) {
                 const sendItem = { ...act };
-                const res = await postToAppScript({
-                    action: 'saveAction',
-                    actionItem: sendItem
-                });
+                let saved = false;
 
-                if (res && res.status === 'conflict') {
-                    showModal(
-                        "ข้อขัดแย้งในการบันทึก",
-                        `ข้อมูล "${esc(act.title)}" ถูกแก้ไขโดยผู้ใช้อื่นในระบบจริงเมื่อ ${res.serverAction.lastUpdated}<br><br>กรุณารีโหลดหน้าเว็บเพื่อดึงข้อมูลล่าสุดก่อนบันทึกใหม่`,
-                        "error"
-                    );
-                    throw new Error(`ข้อมูล "${act.title}" ถูกแก้ไขโดยผู้ใช้อื่น (Concurrency Conflict)`);
+                if (typeof window !== "undefined" && window.AkraSupabaseKPI) {
+                    try {
+                        const supaRes = await AkraSupabaseKPI.saveAction(sendItem);
+                        if (supaRes && supaRes.status === 'success') {
+                            if (supaRes.actionId) act.actionId = supaRes.actionId;
+                            if (supaRes.actionItem && supaRes.actionItem.lastUpdated) {
+                                act.lastUpdated = supaRes.actionItem.lastUpdated;
+                            }
+                            saved = true;
+                        }
+                    } catch (supaErr) {
+                        console.warn('[Supabase KPI] saveAction fallback to GAS:', supaErr);
+                    }
                 }
 
-                if (!res || res.status !== 'success') {
-                    throw new Error(res.message || 'บันทึก Action Item ไม่สำเร็จ');
-                }
+                if (!saved) {
+                    const res = await postToAppScript({
+                        action: 'saveAction',
+                        actionItem: sendItem
+                    });
 
-                if (res.actionId) act.actionId = res.actionId;
-                if (res.actionItem && res.actionItem.lastUpdated) {
-                    act.lastUpdated = res.actionItem.lastUpdated;
+                    if (res && res.status === 'conflict') {
+                        showModal(
+                            "ข้อขัดแย้งในการบันทึก",
+                            `ข้อมูล "${esc(act.title)}" ถูกแก้ไขโดยผู้ใช้อื่นในระบบจริงเมื่อ ${res.serverAction.lastUpdated}<br><br>กรุณารีโหลดหน้าเว็บเพื่อดึงข้อมูลล่าสุดก่อนบันทึกใหม่`,
+                            "error"
+                        );
+                        throw new Error(`ข้อมูล "${act.title}" ถูกแก้ไขโดยผู้ใช้อื่น (Concurrency Conflict)`);
+                    }
+
+                    if (!res || res.status !== 'success') {
+                        throw new Error(res.message || 'บันทึก Action Item ไม่สำเร็จ');
+                    }
+
+                    if (res.actionId) act.actionId = res.actionId;
+                    if (res.actionItem && res.actionItem.lastUpdated) {
+                        act.lastUpdated = res.actionItem.lastUpdated;
+                    }
                 }
             }
             await refreshActions();
@@ -8693,11 +8765,37 @@
                 payload.workload = workload;
             }
 
-            if(LOG_APP_SCRIPT_URL) {
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2 text-xl"></i> กำลังบันทึกข้อมูล...';
-                btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2 text-xl"></i> กำลังบันทึกข้อมูล...';
+            btn.disabled = true;
 
-                let dailyReportSaved = false;
+            let dailyReportSaved = false;
+
+            // 1. Direct Supabase instant write (<200ms)
+            if (typeof window !== "undefined" && window.AkraSupabaseKPI) {
+                try {
+                    const supaRes = await AkraSupabaseKPI.saveDailyRecord(payload);
+                    if (supaRes && supaRes.status === 'success') {
+                        let localData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
+                        localData = localData.filter(d => d.date !== date);
+                        localData.push(payload);
+                        safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(localData));
+                        dailyReportSaved = true;
+
+                        // Non-blocking background sync to Google Apps Script / Sheet
+                        if (LOG_APP_SCRIPT_URL) {
+                            fetch(LOG_APP_SCRIPT_URL, {
+                                method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            }).catch(err => console.warn('[GAS Sync] Background sync failed:', err));
+                        }
+                    }
+                } catch (supaErr) {
+                    console.warn('[Supabase KPI] Direct save failed, falling back to GAS:', supaErr);
+                }
+            }
+
+            // 2. Fallback to Google Apps Script if Supabase write failed or unavailable
+            if (!dailyReportSaved && LOG_APP_SCRIPT_URL) {
                 try {
                     await fetch(LOG_APP_SCRIPT_URL, {
                         method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
@@ -8711,9 +8809,10 @@
 
                     dailyReportSaved = true;
                 } catch(error) {
-                    console.warn("⚠️ แจ้งเตือน: ไม่สามารถอัปโหลดข้อมูลไปยัง Sheet ได้ ระบบจะบันทึกข้อมูลไว้ในเครื่อง (ออฟไลน์) เพื่อรอการซิงค์ในครั้งหน้า", error);
+                    console.warn("⚠️ แจ้งเตือน: ไม่สามารถอัปโหลดข้อมูลไปยังเซิร์ฟเวอร์ได้ บันทึกข้อมูลไว้ในเครื่อง (ออฟไลน์)", error);
                     showToast("บันทึกโหมดออฟไลน์ (เชื่อมต่อเซิร์ฟเวอร์ไม่ได้)", false);
                 }
+            }
 
                 if (dailyReportSaved) {
                     try {
