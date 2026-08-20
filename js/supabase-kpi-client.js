@@ -28,16 +28,42 @@
             'Prefer': options.prefer || 'return=representation',
             ...(options.headers || {})
         };
-        const res = await fetch(url, {
-            method: options.method || 'GET',
-            headers,
-            body: options.body ? JSON.stringify(options.body) : undefined
-        });
-        if (!res.ok) {
-            const errText = await res.text();
-            throw new Error(`Supabase REST HTTP ${res.status}: ${errText}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), options.timeout || 6000);
+
+        try {
+            const res = await fetch(url, {
+                method: options.method || 'GET',
+                headers,
+                body: options.body ? JSON.stringify(options.body) : undefined,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`Supabase REST HTTP ${res.status}: ${errText}`);
+            }
+            return res.json();
+        } catch (e) {
+            clearTimeout(timeoutId);
+            throw e;
         }
-        return res.json();
+    }
+
+    function normalizeWorkload(raw) {
+        if (Array.isArray(raw)) return raw;
+        if (raw && Array.isArray(raw.individuals)) {
+            return raw.individuals.map(i => ({
+                employee: i.employee || i.name,
+                capacity: i.capacity !== undefined ? i.capacity : 10,
+                outbound: i.outbound || 0,
+                inbound: i.inbound || 0,
+                transfer: i.transfer || 0,
+                shared: i.shared || 0,
+                notes: i.notes || ''
+            }));
+        }
+        return [];
     }
 
     /**
@@ -56,9 +82,9 @@
         return (records || []).map(r => ({
             date: r.record_date,
             branch: r.branch,
-            workload: r.workload_data || [],
-            errors: r.errors_data || [],
-            tasks: (r.end_of_shift_data && r.end_of_shift_data.tasks) || [],
+            workload: normalizeWorkload(r.workload_data),
+            errors: Array.isArray(r.errors_data) ? r.errors_data : [],
+            tasks: (r.end_of_shift_data && Array.isArray(r.end_of_shift_data.tasks)) ? r.end_of_shift_data.tasks : [],
             volume: (r.end_of_shift_data && r.end_of_shift_data.volume) || { transfer: 0, pickup: 0, upcountry: 0, inmarket: 0, outmarket: 0 },
             customerNotes: (r.end_of_shift_data && r.end_of_shift_data.customerNotes) || r.notes || '',
             endOfShift: r.end_of_shift_data || {},
@@ -117,9 +143,9 @@
             records: (records || []).map(r => ({
                 date: r.record_date,
                 branch: r.branch,
-                workload: r.workload_data || [],
-                errors: r.errors_data || [],
-                tasks: (r.end_of_shift_data && r.end_of_shift_data.tasks) || [],
+                workload: normalizeWorkload(r.workload_data),
+                errors: Array.isArray(r.errors_data) ? r.errors_data : [],
+                tasks: (r.end_of_shift_data && Array.isArray(r.end_of_shift_data.tasks)) ? r.end_of_shift_data.tasks : [],
                 volume: (r.end_of_shift_data && r.end_of_shift_data.volume) || { transfer: 0, pickup: 0, upcountry: 0, inmarket: 0, outmarket: 0 },
                 customerNotes: (r.end_of_shift_data && r.end_of_shift_data.customerNotes) || r.notes || '',
                 endOfShift: r.end_of_shift_data || {},

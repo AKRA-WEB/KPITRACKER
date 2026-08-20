@@ -1330,7 +1330,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260820.03";
+        const CURRENT_VERSION = "20260820.04";
 
         function esc(v) {
             if (v === null || v === undefined) return '';
@@ -3723,19 +3723,33 @@
         }
 
         async function initSystem() {
-            const isVersionOk = await checkAppVersion();
-            if (!isVersionOk) return;
-            AppVersionGuard.start({ current: CURRENT_VERSION, readActions: [] });
+            // Safety: ensure loading spinner is dismissed after at most 800ms
+            const dismissTimer = setTimeout(() => {
+                const loader = document.getElementById('system-loading');
+                if (loader) loader.classList.add('hidden');
+            }, 800);
 
-            // ตรวจสอบและย้ายไปเปิดเบราว์เซอร์ภายนอกเมื่อเปิดจาก LINE (ป้องกันบั๊กการกดปุ่มบน WebView ของ LINE)
-            if (handleLineBrowserRedirect()) return;
+            try {
+                const isVersionOk = await checkAppVersion();
+                if (!isVersionOk) return;
+                AppVersionGuard.start({ current: CURRENT_VERSION, readActions: [] });
 
-            // โหลด config พนักงาน และตรวจ SSO token พร้อมกัน (เดิมทำต่อคิวกัน ช้ากว่า)
-            const [, ssoResult] = await Promise.all([loadConfig(), resolveSsoAuth()]);
-            await checkAuth(ssoResult);
+                // ตรวจสอบและย้ายไปเปิดเบราว์เซอร์ภายนอกเมื่อเปิดจาก LINE (ป้องกันบั๊กการกดปุ่มบน WebView ของ LINE)
+                if (handleLineBrowserRedirect()) return;
+
+                // โหลด config พนักงาน และตรวจ SSO token พร้อมกัน
+                const [, ssoResult] = await Promise.all([loadConfig(), resolveSsoAuth()]);
+                await checkAuth(ssoResult);
+            } catch (err) {
+                console.error("InitSystem error:", err);
+            } finally {
+                clearTimeout(dismissTimer);
+                const loader = document.getElementById('system-loading');
+                if (loader) loader.classList.add('hidden');
+            }
         }
 
-        // ตรวจ SSO token จาก URL (?sso=) — แยกออกมาเพื่อให้รันขนานกับ loadConfig ได้
+        // ตรวจ SSO token จาก URL (?sso=) หรือ Storage
         async function resolveSsoAuth() {
             const result = { attempted: false, userData: null, expired: false };
             try {
@@ -3751,7 +3765,7 @@
 
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 วินาที
+                    const timeoutId = setTimeout(() => controller.abort(), 1200); // 1.2 วินาที max เพื่อไม่ให้ค้าง
 
                     const verifyRes = await fetch(`${portalApiUrl}?action=verifyToken&token=${encodeURIComponent(ssoToken)}`, { signal: controller.signal });
                     clearTimeout(timeoutId);
@@ -3789,10 +3803,8 @@
                     } else {
                         // verifyRes is not ok (e.g. 4xx, 5xx)
                         if (verifyRes.status >= 500) {
-                            // ปัญหาเซิร์ฟเวอร์ขัดข้องชั่วคราว (5xx) -> โยนความผิดพลาดเพื่อเข้า local decode fallback
                             throw new Error(`HTTP status ${verifyRes.status}`);
                         } else {
-                            // ปัญหาฝั่งไคลเอนต์/การสิทธิ์ถูกปฏิเสธโดยตรง (4xx) -> ล้างค่าเซสชันและไม่ทำ fallback
                             console.warn("SSO token verification failed with client error status:", verifyRes.status);
                             safeStorage.removeItem('akra_sso_token');
                             safeStorage.removeItem('akra_sso_user_data');
@@ -3806,7 +3818,6 @@
                     // ทำ Local Decode เป็น Fallback เฉพาะในกรณีที่เรียก API ไม่สำเร็จจริง ๆ (เน็ตเสีย/Timeout)
                     const decodedUser = decodeJwtPayload(ssoToken);
                     if (decodedUser && decodedUser.id) {
-                        // ตรวจสอบวันหมดอายุของ JWT ในระดับ local ด้วย เพื่อความปลอดภัย (exp เก็บในหน่วยวินาที ต้องคูณ 1000)
                         const currentTime = new Date().getTime();
                         if (decodedUser.exp && decodedUser.exp * 1000 <= currentTime) {
                             console.warn("SSO token is locally expired, clearing session");

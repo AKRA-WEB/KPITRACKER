@@ -7,9 +7,9 @@ console.log('=== VERIFYING KPITRACKER SUPABASE WIRING & VERSION PARITY ===\n');
 const indexContent = fs.readFileSync('KPITRACKER/index.html', 'utf8');
 const versionJson = JSON.parse(fs.readFileSync('KPITRACKER/version.json', 'utf8'));
 
-assert(indexContent.includes('const CURRENT_VERSION = "20260820.03";'), 'CURRENT_VERSION in index.html must be 20260820.03');
-assert.strictEqual(versionJson.version, '20260820.03', 'version.json must be 20260820.03');
-console.log('  [PASS] Version parity verified: 20260820.03');
+assert(indexContent.includes('const CURRENT_VERSION = "20260820.04";'), 'CURRENT_VERSION in index.html must be 20260820.04');
+assert.strictEqual(versionJson.version, '20260820.04', 'version.json must be 20260820.04');
+console.log('  [PASS] Version parity verified: 20260820.04');
 
 // 2. Direct Supabase Wiring
 const kpiMatches = indexContent.match(/AkraSupabaseKPI/g) || [];
