@@ -242,73 +242,127 @@
     </div>
 
     <!-- Header -->
-    <header class="app-header p-4 sticky top-0 z-10 flex flex-col space-y-2 border-b">
+    <!-- Header -->
+    <header class="app-header p-3 sm:p-4 sticky top-0 z-20 flex flex-col space-y-2 border-b bg-slate-900 text-white shadow-md">
         <div class="flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <button onclick="openDrawer()" id="btn-open-drawer" title="เปิดเมนูหลัก" class="text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 w-9 h-9 rounded-lg text-sm font-semibold shadow-sm transition-colors border border-slate-300 flex items-center justify-center">
+            <div class="flex items-center space-x-2.5">
+                <button onclick="openDrawer()" id="btn-open-drawer" title="เปิดเมนูหลัก" class="text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 w-9 h-9 rounded-xl text-sm font-semibold shadow transition-all border border-slate-700 flex items-center justify-center active:scale-95">
                     <i class="fa-solid fa-bars text-base"></i>
                 </button>
-                <h1 class="text-xl font-semibold"><i class="app-brand-mark fa-solid fa-chart-simple mr-2"></i>KPI Tracker <span class="text-slate-300 mx-1">/</span> <span id="header-branch-name" class="app-branch">AKRA</span></h1>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-base sm:text-lg font-bold tracking-wide flex items-center">
+                        <i class="fa-solid fa-chart-simple text-blue-400 mr-2"></i>KPI Tracker <span class="text-slate-500 mx-1.5 font-light">/</span> <span id="header-branch-name" class="text-white">AKRA</span>
+                    </h1>
+                    <span id="header-section-badge" class="text-[10px] bg-blue-950 text-blue-300 border border-blue-600/40 px-2 py-0.5 rounded font-bold">Workload</span>
+                </div>
             </div>
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-1.5">
                 <button onclick="forceCleanCacheAndReload()" title="ล้างแคชและอัปเดต" class="text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow transition-colors border border-slate-700">
                     <i class="fa-solid fa-broom mr-1"></i> ล้างแคช
                 </button>
-                <button onclick="syncDataFromSheet()" id="btn-sync" aria-label="ซิงค์ข้อมูลล่าสุด" class="text-white bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow active:bg-slate-600 transition-colors border border-slate-600">
-                    <i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล
+                <button onclick="syncDataFromSheet()" id="btn-sync" aria-label="ซิงค์ข้อมูลล่าสุด" class="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow active:bg-blue-800 transition-colors border border-blue-500">
+                    <i class="fa-solid fa-rotate mr-1"></i> ซิงค์
                 </button>
             </div>
         </div>
-        <div class="app-user-row flex justify-between items-center text-xs">
-            <div><i class="fa-solid fa-user mr-1"></i> ผู้ใช้งาน: <span id="showUserName" class="font-semibold text-white">กำลังตรวจสอบ...</span></div>
-            <button id="btn-switch-branch" onclick="safeSessionStorage.removeItem('active_branch'); location.reload();" aria-label="สลับสาขา" class="hidden bg-blue-800 px-2 py-0.5 rounded text-white active:bg-blue-900"><i class="fa-solid fa-right-left mr-1"></i> สลับสาขา</button>
+
+        <div class="app-user-row flex justify-between items-center text-xs text-slate-300">
+            <div class="flex items-center gap-1.5">
+                <i class="fa-solid fa-user-circle text-blue-400 text-sm"></i>
+                <span>ผู้ใช้งาน:</span>
+                <span id="showUserName" class="font-bold text-white">กำลังตรวจสอบ...</span>
+            </div>
+            <button id="btn-switch-branch" onclick="safeSessionStorage.removeItem('active_branch'); location.reload();" aria-label="สลับสาขา" class="hidden bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded text-slate-300 active:scale-95"><i class="fa-solid fa-right-left mr-1"></i> สลับสาขา</button>
+        </div>
+
+        <!-- Desktop Navigation Tabs (Visible on PC: md:flex) -->
+        <div class="hidden md:flex items-center justify-between pt-2.5 border-t border-slate-800">
+            <div class="flex items-center gap-1.5 overflow-x-auto">
+                <button type="button" onclick="switchTab('workload')" id="dtab-workload" class="desktop-tab desktop-tab-active px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-blue-600 text-white shadow">
+                    <i class="fa-solid fa-business-time"></i>
+                    <span>1. Workload (สัดส่วนเวลา)</span>
+                </button>
+                <button type="button" onclick="switchTab('error')" id="dtab-error" class="desktop-tab px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-clipboard-check text-red-400"></i>
+                    <span>2. ความผิดพลาด (QC)</span>
+                </button>
+                <button type="button" onclick="switchTab('billcount')" id="dtab-billcount" class="desktop-tab px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-file-invoice text-indigo-400"></i>
+                    <span>3. บิลเบิกย้าย (Live Sync)</span>
+                </button>
+                <button type="button" onclick="switchTab('dashboard')" id="dtab-dashboard" class="desktop-tab px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-chart-pie text-amber-400"></i>
+                    <span>4. แดชบอร์ด</span>
+                </button>
+                <button type="button" onclick="switchTab('admin-dash')" id="dtab-admin-dash" class="desktop-tab hidden px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-purple-300 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>ภาพรวมผู้บริหาร</span>
+                </button>
+                <button type="button" onclick="switchTab('admin')" id="dtab-admin" class="desktop-tab hidden px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>ตั้งค่า</span>
+                </button>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-xl">
+                <i class="fa-solid fa-warehouse text-blue-400 text-xs"></i>
+                <span class="text-xs font-bold text-white" id="desktop-branch-label">AKRA WAREHOUSE</span>
+            </div>
         </div>
     </header>
 
     <!-- Main Content Area -->
-    <main id="app-content" class="p-4 max-w-md mx-auto hidden md:max-w-3xl lg:max-w-5xl md:p-6" tabindex="-1">
+    <main id="app-content" class="p-3 sm:p-4 max-w-md mx-auto hidden md:max-w-4xl lg:max-w-6xl md:p-6 pb-24 md:pb-10" tabindex="-1">
 
-        <!-- ================= VIEW: RECORD ================= -->
-        <div id="view-record" class="space-y-6 md-grid-2">
-
+        <!-- ================= VIEW 1: WORKLOAD (สัดส่วนเวลา) ================= -->
+        <div id="view-workload" class="ops-view space-y-4 max-w-2xl mx-auto">
             <!-- Date Selection -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md-colspan-2">
-                <label class="block text-sm font-bold text-gray-700 mb-2"><i class="fa-regular fa-calendar text-blue-500 mr-1.5"></i>วันที่บันทึก</label>
-                <input type="date" id="record-date" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 font-medium">
+            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-regular fa-calendar text-blue-500"></i>วันที่บันทึก:</label>
+                <input type="date" id="record-date" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
             </div>
+
             <!-- AKRA Core Roster -->
-            <div id="akra-core-roster-card" class="hidden bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500 border-y border-r border-gray-100 md-colspan-2">
-                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
-                    <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-warehouse text-amber-500 mr-2"></i>ทีม AKRA วันนี้</h2>
+            <div id="akra-core-roster-card" class="hidden bg-white p-4 rounded-2xl shadow-sm border-l-4 border-amber-500 border-y border-r border-slate-200">
+                <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2">
+                    <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-warehouse text-amber-500"></i>ทีม AKRA ประจำกะ</h2>
                     <span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full" id="akra-duty-count">0 คน</span>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-2">พนักงานที่เข้ากะ</label>
+                    <label class="block text-xs font-bold text-slate-600 mb-2">พนักงานที่เข้ากะ</label>
                     <div id="akra-duty-roster" class="flex flex-wrap gap-2"></div>
                 </div>
             </div>
 
             <!-- AKRA Workload Editor v2 -->
-            <div id="akra-workload-card" class="hidden bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500 border-y border-r border-slate-200 md-colspan-2">
+            <div id="akra-workload-card" class="hidden bg-white p-4 rounded-2xl shadow-sm border-l-4 border-blue-600 border-y border-r border-slate-200">
                 <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2.5">
                     <div>
                         <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-business-time text-amber-500"></i> บันทึกสัดส่วนเวลาปฏิบัติงาน (Workload)
+                            <i class="fa-solid fa-business-time text-blue-600"></i> บันทึกสัดส่วนเวลาปฏิบัติงาน (Workload)
                         </h2>
                         <p class="text-[11px] text-slate-500 mt-0.5">ระบุหน้าที่หลักและงานช่วยเพื่อจัดสรรเวลา 10.0 ชม. อัตโนมัติ</p>
                     </div>
-                    <span class="text-xs text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 shadow-sm">
+                    <span class="text-xs text-blue-700 font-bold bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200 shadow-sm">
                         ฐาน 10.0 ชม. (100%)
                     </span>
                 </div>
                 <div id="akra-workload-container" class="space-y-4"></div>
-                <button type="button" id="btn-save-workload" onclick="saveWorkloadCard()" class="mt-4 w-full bg-amber-600 hover:bg-amber-700 active:scale-95 transition-all text-white font-bold py-3.5 rounded-xl text-sm shadow-md flex justify-center items-center border border-amber-700 gap-2">
+                <button type="button" id="btn-save-workload" onclick="saveWorkloadCard()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white font-bold py-3.5 rounded-xl text-sm shadow-md flex justify-center items-center border border-blue-700 gap-2">
                     <i class="fa-solid fa-cloud-arrow-up text-base"></i> บันทึก Workload ประจำวัน
                 </button>
             </div>
+        </div>
+
+        <!-- ================= VIEW 2: ERROR & QC (บันทึกความผิดพลาด) ================= -->
+        <div id="view-error" class="ops-view hidden space-y-4 max-w-2xl mx-auto">
+            <!-- Date Selection -->
+            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-regular fa-calendar text-red-500"></i>วันที่บันทึก QC:</label>
+                <input type="date" id="record-date-error" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-red-500">
+            </div>
 
             <!-- Errors / Incident Log -->
-            <div id="errors-card" class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500 border-y border-r border-slate-200 md-colspan-2">
+            <div id="errors-card" class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-red-500 border-y border-r border-slate-200">
                 <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2.5">
                     <div>
                         <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -335,18 +389,27 @@
                     <button type="button" onclick="addErrorEntryRow()" class="w-full bg-red-50 text-red-700 border border-red-200 font-bold py-3 rounded-xl text-xs active:bg-red-100 shadow-sm transition-all hover:bg-red-100 flex justify-center items-center gap-2">
                         <i class="fa-solid fa-plus-circle text-sm"></i> เพิ่มรายการความผิดพลาด
                     </button>
-                    <button type="button" id="btn-save-errors" onclick="saveErrorsCard()" class="hidden w-full bg-red-600 hover:bg-red-700 active:scale-95 transition-all text-white font-bold py-3 rounded-xl text-xs shadow-md justify-center items-center border border-red-700 gap-2">
+                    <button type="button" id="btn-save-errors" onclick="saveErrorsCard()" class="w-full bg-red-600 hover:bg-red-700 active:scale-95 transition-all text-white font-bold py-3 rounded-xl text-xs shadow-md flex justify-center items-center border border-red-700 gap-2">
                         <i class="fa-solid fa-cloud-arrow-up text-sm"></i> บันทึกความผิดพลาด
                     </button>
                 </div>
             </div>
+        </div>
+
+        <!-- ================= VIEW 3: BILL COUNT & LIVE SYNC (สรุปบิลเบิกย้าย) ================= -->
+        <div id="view-billcount" class="ops-view hidden space-y-4 max-w-2xl mx-auto">
+            <!-- Date Selection -->
+            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-regular fa-calendar text-indigo-500"></i>วันที่สรุปบิล:</label>
+                <input type="date" id="record-date-billcount" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
 
             <!-- Live Requisitions & Transfer Sync Card -->
-            <div id="live-requisitions-card" class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 border-y border-r border-slate-200 md-colspan-2">
+            <div id="live-requisitions-card" class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-indigo-600 border-y border-r border-slate-200">
                 <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2.5">
                     <div>
                         <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-boxes-stacked text-blue-500"></i> สรุปบิลเบิกย้าย &amp; จัดส่งวันนี้ (Live Sync)
+                            <i class="fa-solid fa-boxes-stacked text-indigo-600"></i> สรุปบิลเบิกย้าย &amp; จัดส่งวันนี้ (Live Sync)
                         </h2>
                         <p class="text-[11px] text-slate-500 mt-0.5">ดึงข้อมูลจริงจากระบบ Picking &amp; LINE อัตโนมัติ (ไม่ต้องนับมือ)</p>
                     </div>
@@ -397,9 +460,9 @@
             </div>
 
             <!-- Vendor Bills Card (AKRA only) -->
-            <div id="vendor-bills-card" class="hidden bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 border-y border-r border-gray-100 md-colspan-2">
+            <div id="vendor-bills-card" class="hidden bg-white p-4 rounded-2xl shadow-sm border-l-4 border-blue-500 border-y border-r border-slate-200">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
-                    <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-file-invoice-dollar text-blue-500 mr-2"></i>งานเอกสาร &amp; ระบบ (Vendor Bills)</h2>
+                    <h2 class="text-base font-bold text-gray-800"><i class="fa-solid fa-file-invoice-dollar text-blue-500 mr-2"></i>งานเอกสาร &amp; ระบบ (Vendor Bills)</h2>
                 </div>
                 <p class="text-[11px] text-slate-500 mt-1 mb-4">บันทึกจำนวนบิล Vendor และสถานะการคีย์เข้าระบบประจำวัน</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -438,8 +501,8 @@
             </div>
 
             <!-- General Data (Hidden for TRD) -->
-            <div id="zone-2-container" data-scoped-save-card class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 border-y border-r border-gray-100">
-                <h2 class="text-lg font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2"><i class="fa-solid fa-boxes-stacked text-blue-500 mr-2"></i>ข้อมูลงานประจำวัน</h2>
+            <div id="zone-2-container" data-scoped-save-card class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-blue-500 border-y border-r border-slate-200">
+                <h2 class="text-base font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2"><i class="fa-solid fa-boxes-stacked text-blue-500 mr-2"></i>ข้อมูลงานประจำวัน (Volume &amp; Shipping)</h2>
 
                 <div class="space-y-4">
                     <div class="flex justify-between items-center border-b border-gray-100 pb-3">
@@ -505,9 +568,9 @@
             </div>
 
             <!-- Weekly Tasks -->
-            <div id="weekly-tasks-card" data-scoped-save-card class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500 border-y border-r border-gray-100">
+            <div id="weekly-tasks-card" data-scoped-save-card class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-purple-500 border-y border-r border-slate-200">
                 <div class="border-b border-gray-100 pb-2 mb-4">
-                    <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>แผนงาน (สัปดาห์นี้)</h2>
+                    <h2 class="text-base font-bold text-gray-800"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>แผนงาน (สัปดาห์นี้)</h2>
                     <p class="text-[11px] text-gray-500 mt-1">อัปเดตความคืบหน้างาน โปรดระบุผู้รับผิดชอบ</p>
                 </div>
 
@@ -520,13 +583,17 @@
                     <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึกแผนงานสัปดาห์นี้
                 </button>
             </div>
+        </div>
+
+        <!-- ================= VIEW 4: DASHBOARD & EOS ================= -->
+        <div id="view-dashboard" class="ops-view hidden space-y-4 pb-6 md-grid-2">
 
             <!-- Daily End-of-Shift Executive Brief -->
             <section id="daily-eos-card" data-scoped-save-card class="enterprise-card p-4 md-colspan-2 border-l-4 border-l-slate-700" aria-labelledby="eos-title">
                 <div class="border-b border-slate-100 pb-3 mb-4">
                     <div class="flex items-start justify-between gap-3">
                         <div>
-                            <h2 id="eos-title" class="text-lg font-semibold text-slate-900">สรุปรายงานประจำวัน</h2>
+                            <h2 id="eos-title" class="text-lg font-semibold text-slate-900">สรุปรายงานประจำวัน (End of Shift)</h2>
                             <p class="text-[11px] text-slate-500 mt-1">สรุปรายงานประจำวัน เน้นผลลัพธ์ ประเด็น และสิ่งที่ต้องติดตาม</p>
                         </div>
                         <span class="shrink-0 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 px-2 py-1 rounded-md">รายงานประจำวัน</span>
@@ -570,10 +637,9 @@
                 <button type="button" id="btn-save-end-of-shift" data-skip-draft-autosave onclick="saveEndOfShiftCard()" class="mt-4 min-h-12 w-full bg-slate-700 hover:bg-slate-800 active:scale-95 transition-all text-white font-bold px-4 py-3 rounded-xl text-sm shadow-md flex justify-center items-center border border-slate-900">
                     <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึกสรุปรายงานประจำวัน
                 </button>
-
             </section>
 
-                        <!-- Structured Action Items Section -->
+            <!-- Structured Action Items Section -->
             <section id="record-actions-card" class="enterprise-card p-4 md-colspan-2 border-l-4 border-l-purple-700" aria-labelledby="record-actions-title">
                 <div class="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center">
                     <div>
@@ -603,15 +669,6 @@
                     </table>
                 </div>
             </section>
-
-            <button onclick="saveDailyRecord()" id="btn-save"  class="sticky-save-button md-colspan-2 w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-lg py-4 rounded-xl shadow-lg active:scale-[0.98] transition-transform flex justify-center items-center border border-blue-800">
-                <i class="fa-solid fa-cloud-arrow-up mr-2 text-xl"></i> บันทึกข้อมูลส่งเข้าระบบ
-            </button>
-            <div class="h-6 md-colspan-2"></div> <!-- Extra spacing at bottom -->
-        </div>
-
-        <!-- ================= VIEW: DASHBOARD ================= -->
-        <div id="view-dashboard" class="hidden space-y-3 pb-6 md-grid-2">
 
             <div class="flex justify-between items-center bg-white p-2 rounded-xl shadow-sm border border-gray-100 md-colspan-2">
                 <button onclick="changeWeek(-1)" aria-label="ดูสัปดาห์ก่อนหน้า" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors"><i class="fa-solid fa-chevron-left"></i></button>
@@ -1285,26 +1342,33 @@
 
     </main>
 
-    <!-- Bottom Navigation -->
-    <nav class="app-nav fixed bottom-0 w-full border-t p-1.5 pb-safe z-40" aria-label="เมนูหลัก">
+    <!-- Bottom Navigation (Mobile: md:hidden) -->
+    <nav id="bottom-nav" class="md:hidden app-nav fixed bottom-0 left-0 right-0 w-full border-t p-1.5 pb-safe z-40 bg-white/95 backdrop-blur-md shadow-lg" aria-label="เมนูหลัก">
         <div class="flex justify-around w-full max-w-md mx-auto">
-        <button onclick="switchTab('record')" id="tab-record" class="flex flex-col items-center p-2 flex-1 tab-active transition-colors rounded-xl mx-0.5 hover:bg-blue-50">
-            <i class="fa-solid fa-pen-to-square text-xl mb-1 mt-0.5"></i>
-            <span class="text-[10px] font-bold tracking-wide">บันทึก</span>
-        </button>
-        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50">
-            <i class="fa-solid fa-chart-pie text-xl mb-1 mt-0.5"></i>
-            <span class="text-[10px] font-bold tracking-wide">แดชบอร์ด</span>
-        </button>
-        <!-- เพิ่ม Tab Admin Dash (ซ่อนไว้สำหรับคนที่ไม่ใช่ Admin) -->
-        <button onclick="switchTab('admin-dash')" id="tab-admin-dash" class="hidden flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50">
-            <i class="fa-solid fa-chart-line text-xl mb-1 mt-0.5"></i>
-            <span class="text-[10px] font-bold tracking-wide">ภาพรวม</span>
-        </button>
-        <button onclick="switchTab('admin')" id="tab-admin" class="hidden flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50">
-            <i class="fa-solid fa-users-gear text-xl mb-1 mt-0.5"></i>
-            <span class="text-[10px] font-bold tracking-wide">ตั้งค่า</span>
-        </button>
+            <button onclick="switchTab('workload')" id="tab-workload" class="flex flex-col items-center p-2 flex-1 tab-active transition-colors rounded-xl mx-0.5 hover:bg-blue-50 bg-blue-50 text-blue-700">
+                <i class="fa-solid fa-business-time text-xl mb-1 mt-0.5"></i>
+                <span class="text-[10px] font-bold tracking-wide">Workload</span>
+            </button>
+            <button onclick="switchTab('error')" id="tab-error" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-red-50 text-slate-500">
+                <i class="fa-solid fa-triangle-exclamation text-xl mb-1 mt-0.5"></i>
+                <span class="text-[10px] font-bold tracking-wide">ความผิดพลาด</span>
+            </button>
+            <button onclick="switchTab('billcount')" id="tab-billcount" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-indigo-50 text-slate-500">
+                <i class="fa-solid fa-boxes-stacked text-xl mb-1 mt-0.5"></i>
+                <span class="text-[10px] font-bold tracking-wide">บิลเบิกย้าย</span>
+            </button>
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50 text-slate-500">
+                <i class="fa-solid fa-chart-pie text-xl mb-1 mt-0.5"></i>
+                <span class="text-[10px] font-bold tracking-wide">แดชบอร์ด</span>
+            </button>
+            <button onclick="switchTab('admin-dash')" id="tab-admin-dash" class="hidden flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-purple-50 text-purple-600">
+                <i class="fa-solid fa-chart-line text-xl mb-1 mt-0.5"></i>
+                <span class="text-[10px] font-bold tracking-wide">ภาพรวม</span>
+            </button>
+            <button onclick="switchTab('admin')" id="tab-admin" class="hidden flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50 text-slate-500">
+                <i class="fa-solid fa-gear text-xl mb-1 mt-0.5"></i>
+                <span class="text-[10px] font-bold tracking-wide">ตั้งค่า</span>
+            </button>
         </div>
     </nav>
 
@@ -1446,36 +1510,36 @@
             <div class="px-3 py-2 space-y-1">
                 <div class="px-3 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">เมนูการปฏิบัติงาน</div>
                 
-                <button onclick="drawerNavigate('workload')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
-                    <i class="fa-solid fa-business-time text-amber-400 w-4 text-center text-sm"></i>
+                <button onclick="drawerNavigate('workload')" id="drawer-nav-workload" class="drawer-nav-item w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-white bg-blue-600 shadow-md transition-all text-left">
+                    <i class="fa-solid fa-business-time text-blue-300 w-4 text-center text-sm"></i>
                     <span>1. บันทึก Workload (สัดส่วนเวลา)</span>
                 </button>
 
-                <button onclick="drawerNavigate('errors')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                <button onclick="drawerNavigate('error')" id="drawer-nav-error" class="drawer-nav-item w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
                     <i class="fa-solid fa-triangle-exclamation text-red-400 w-4 text-center text-sm"></i>
-                    <span>2. บันทึกความผิดพลาด (Quality)</span>
+                    <span>2. บันทึกความผิดพลาด (QC)</span>
                 </button>
 
-                <button onclick="drawerNavigate('bills')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
-                    <i class="fa-solid fa-boxes-stacked text-blue-400 w-4 text-center text-sm"></i>
+                <button onclick="drawerNavigate('billcount')" id="drawer-nav-billcount" class="drawer-nav-item w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-boxes-stacked text-indigo-400 w-4 text-center text-sm"></i>
                     <span>3. สรุปบิลเบิกย้าย (Live Sync)</span>
                 </button>
 
                 <div class="pt-3 px-3 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">การวิเคราะห์ &amp; สรุปผล</div>
 
-                <button onclick="drawerNavigate('dashboard')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
-                    <i class="fa-solid fa-chart-pie text-indigo-400 w-4 text-center text-sm"></i>
-                    <span>แดชบอร์ดรายวัน</span>
+                <button onclick="drawerNavigate('dashboard')" id="drawer-nav-dashboard" class="drawer-nav-item w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-chart-pie text-amber-400 w-4 text-center text-sm"></i>
+                    <span>4. แดชบอร์ดรายวัน</span>
                 </button>
 
-                <button id="drawer-admin-dash-btn" onclick="drawerNavigate('admin-dash')" class="hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
-                    <i class="fa-solid fa-gauge-high text-emerald-400 w-4 text-center text-sm"></i>
-                    <span>ภาพรวมผู้บริหาร (Cockpit)</span>
+                <button id="drawer-admin-dash-btn" onclick="drawerNavigate('admin-dash')" class="drawer-nav-item hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-purple-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-gauge-high text-purple-400 w-4 text-center text-sm"></i>
+                    <span>5. ภาพรวมผู้บริหาร (Cockpit)</span>
                 </button>
 
-                <button id="drawer-admin-btn" onclick="drawerNavigate('admin')" class="hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                <button id="drawer-admin-btn" onclick="drawerNavigate('admin')" class="drawer-nav-item hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all text-left">
                     <i class="fa-solid fa-gear text-slate-400 w-4 text-center text-sm"></i>
-                    <span>ตั้งค่าระบบ &amp; พนักงาน</span>
+                    <span>6. ตั้งค่าระบบ &amp; พนักงาน</span>
                 </button>
             </div>
         </div>
@@ -1486,7 +1550,7 @@
                 <i class="fa-solid fa-rotate text-blue-400"></i> ซิงค์ข้อมูลล่าสุด
             </button>
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span>KPI Suite v20260822.01</span>
+                <span>KPI Suite v20260822.03</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1502,7 +1566,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260822.02";
+        const CURRENT_VERSION = "20260822.03";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3641,37 +3705,7 @@
 
         function drawerNavigate(target) {
             closeDrawer();
-            if (target === 'workload') {
-                switchTab('record');
-                setTimeout(() => {
-                    const el = document.getElementById('akra-workload-card');
-                    if (el && !el.classList.contains('hidden')) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                }, 100);
-            } else if (target === 'errors') {
-                switchTab('record');
-                setTimeout(() => {
-                    const el = document.getElementById('errors-card') || document.getElementById('error-entries-container');
-                    if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                }, 100);
-            } else if (target === 'bills') {
-                switchTab('record');
-                setTimeout(() => {
-                    const el = document.getElementById('live-requisitions-card') || document.getElementById('vendor-bills-card');
-                    if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                }, 100);
-            } else if (target === 'dashboard') {
-                switchTab('dashboard');
-            } else if (target === 'admin-dash') {
-                switchTab('admin-dash');
-            } else if (target === 'admin') {
-                switchTab('admin');
-            }
+            switchTab(target);
         }
 
         function updateDrawerUserInfo() {
@@ -4318,11 +4352,11 @@
             const userNameDisplay = document.getElementById('showUserName');
             if(userNameDisplay) userNameDisplay.innerText = displayUserName;
 
+            const todayStr = typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().split('T')[0];
+            _lastRecordDate = todayStr;
+            document.querySelectorAll('.app-record-date').forEach(el => { el.value = todayStr; });
             const recordDate = document.getElementById('record-date');
-            if(recordDate) {
-                recordDate.valueAsDate = new Date();
-                _lastRecordDate = recordDate.value;
-            }
+            if(recordDate) recordDate.value = todayStr;
 
             IS_ADMIN = currentRoles.includes('Admin') || currentRoles.includes('admin') ||
                        ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase());
@@ -4331,11 +4365,23 @@
             if (_kpiPerms.length === 0 && IS_ADMIN) _kpiPerms = ["adminDashboard"];
 
             if(can("adminDashboard")) {
-                document.getElementById('tab-admin').classList.remove('hidden');
-                document.getElementById('tab-admin').classList.add('flex');
+                document.getElementById('tab-admin')?.classList.remove('hidden');
+                document.getElementById('tab-admin')?.classList.add('flex');
 
-                document.getElementById('tab-admin-dash').classList.remove('hidden');
-                document.getElementById('tab-admin-dash').classList.add('flex');
+                document.getElementById('tab-admin-dash')?.classList.remove('hidden');
+                document.getElementById('tab-admin-dash')?.classList.add('flex');
+
+                document.getElementById('dtab-admin')?.classList.remove('hidden');
+                document.getElementById('dtab-admin')?.classList.add('flex');
+
+                document.getElementById('dtab-admin-dash')?.classList.remove('hidden');
+                document.getElementById('dtab-admin-dash')?.classList.add('flex');
+
+                document.getElementById('drawer-admin-dash-btn')?.classList.remove('hidden');
+                document.getElementById('drawer-admin-dash-btn')?.classList.add('flex');
+
+                document.getElementById('drawer-admin-btn')?.classList.remove('hidden');
+                document.getElementById('drawer-admin-btn')?.classList.add('flex');
 
                 renderAdminPanel();
                 syncAllBranchesForAdmin();
@@ -4343,6 +4389,17 @@
 
             applyRolePermissions();
             refreshActions();
+        }
+
+        function syncAppRecordDate(val) {
+            if (!val) return;
+            _lastRecordDate = val;
+            document.querySelectorAll('.app-record-date').forEach(el => {
+                if (el.value !== val) el.value = val;
+            });
+            const mainDate = document.getElementById('record-date');
+            if (mainDate && mainDate.value !== val) mainDate.value = val;
+            handleDateChange();
         }
 
         function applyRolePermissions() {
@@ -4392,27 +4449,44 @@
         function initApp(branch, permissions) {
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('header-branch-name').innerText = branch;
+            const desktopBranchLabel = document.getElementById('desktop-branch-label');
+            if (desktopBranchLabel) desktopBranchLabel.innerText = branch + ' OPERATIONS';
+
             if(branch === 'TRD') {
                 document.getElementById('header-branch-name').className = 'text-orange-300';
-                document.getElementById('dash-dept-filter').classList.remove('hidden');
-                document.getElementById('dash-dept-filter').value = 'ALL';
+                document.getElementById('dash-dept-filter')?.classList.remove('hidden');
+                if (document.getElementById('dash-dept-filter')) document.getElementById('dash-dept-filter').value = 'ALL';
+
+                // Hide workload tabs for TRD
+                document.getElementById('tab-workload')?.classList.add('hidden');
+                document.getElementById('dtab-workload')?.classList.add('hidden');
+                document.getElementById('drawer-nav-workload')?.classList.add('hidden');
+
+                switchTab('error');
             } else {
                 document.getElementById('header-branch-name').className = 'text-yellow-300';
-                document.getElementById('dash-dept-filter').classList.add('hidden');
+                document.getElementById('dash-dept-filter')?.classList.add('hidden');
+
+                // Show workload tabs for AKRA
+                document.getElementById('tab-workload')?.classList.remove('hidden');
+                document.getElementById('dtab-workload')?.classList.remove('hidden');
+                document.getElementById('drawer-nav-workload')?.classList.remove('hidden');
+
+                switchTab('workload');
             }
 
             if(permissions.length > 1) document.getElementById('btn-switch-branch').classList.remove('hidden');
 
             if (BRANCH_CONFIG[branch].showZone2) {
-                document.getElementById('zone-2-container').classList.remove('hidden');
-                document.getElementById('dash-vol-card').classList.remove('hidden');
-                document.getElementById('dash-customer-notes-container').classList.remove('hidden');
-                document.getElementById('dash-err-card').classList.remove('col-span-2');
+                document.getElementById('zone-2-container')?.classList.remove('hidden');
+                document.getElementById('dash-vol-card')?.classList.remove('hidden');
+                document.getElementById('dash-customer-notes-container')?.classList.remove('hidden');
+                document.getElementById('dash-err-card')?.classList.remove('col-span-2');
             } else {
-                document.getElementById('zone-2-container').classList.add('hidden');
-                document.getElementById('dash-vol-card').classList.add('hidden');
-                document.getElementById('dash-customer-notes-container').classList.add('hidden');
-                document.getElementById('dash-err-card').classList.add('col-span-2');
+                document.getElementById('zone-2-container')?.classList.add('hidden');
+                document.getElementById('dash-vol-card')?.classList.add('hidden');
+                document.getElementById('dash-customer-notes-container')?.classList.add('hidden');
+                document.getElementById('dash-err-card')?.classList.add('col-span-2');
             }
 
             if (branch === 'AKRA') {
@@ -6913,7 +6987,7 @@
                 lastUpdated: existingAct ? existingAct.lastUpdated : ""
             };
 
-            const onRecordTab = !document.getElementById('view-record').classList.contains('hidden');
+            const onRecordTab = !document.getElementById('view-dashboard')?.classList.contains('hidden') || !document.getElementById('view-workload')?.classList.contains('hidden');
 
             if (onRecordTab) {
                 const idx = localActionsDraft.findIndex(a => a.actionId === actionItem.actionId);
@@ -7265,27 +7339,83 @@
 
         // ================= UI FUNCTIONS =================
         function switchTab(tab) {
-            const views = ['view-record', 'view-dashboard', 'view-admin-dash', 'view-admin'];
-            const tabs = ['tab-record', 'tab-dashboard', 'tab-admin-dash', 'tab-admin'];
+            // Map legacy aliases
+            if (tab === 'record') tab = (currentBranch === 'TRD' ? 'error' : 'workload');
+            if (tab === 'errors') tab = 'error';
+            if (tab === 'bills') tab = 'billcount';
+
+            const views = ['view-workload', 'view-error', 'view-billcount', 'view-dashboard', 'view-admin-dash', 'view-admin', 'view-record'];
+            const mobileTabs = ['tab-workload', 'tab-error', 'tab-billcount', 'tab-dashboard', 'tab-admin-dash', 'tab-admin', 'tab-record'];
+            const desktopTabs = ['dtab-workload', 'dtab-error', 'dtab-billcount', 'dtab-dashboard', 'dtab-admin-dash', 'dtab-admin'];
+            const drawerItems = ['drawer-nav-workload', 'drawer-nav-error', 'drawer-nav-billcount', 'drawer-nav-dashboard', 'drawer-admin-dash-btn', 'drawer-admin-btn'];
 
             views.forEach(v => {
                 const el = document.getElementById(v);
-                if(el) el.classList.add('hidden');
+                if (el) el.classList.add('hidden');
             });
-            tabs.forEach(t => {
+
+            mobileTabs.forEach(t => {
                 const el = document.getElementById(t);
-                if(el) {
-                    el.classList.replace('tab-active', 'tab-inactive');
-                    el.classList.remove('bg-blue-50');
+                if (el) {
+                    el.classList.remove('tab-active', 'bg-blue-50', 'text-blue-700', 'bg-red-50', 'text-red-700', 'bg-indigo-50', 'text-indigo-700');
+                    el.classList.add('tab-inactive', 'text-slate-500');
                 }
             });
 
-            document.getElementById('view-' + tab).classList.remove('hidden');
-            const activeTab = document.getElementById('tab-' + tab);
-            activeTab.classList.replace('tab-inactive', 'tab-active');
-            activeTab.classList.add('bg-blue-50');
+            desktopTabs.forEach(t => {
+                const el = document.getElementById(t);
+                if (el) {
+                    el.classList.remove('desktop-tab-active', 'bg-blue-600', 'text-white', 'shadow');
+                    el.classList.add('text-slate-300');
+                }
+            });
 
-            if(tab === 'dashboard') {
+            drawerItems.forEach(t => {
+                const el = document.getElementById(t);
+                if (el) {
+                    el.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+                    el.classList.add('text-slate-300');
+                }
+            });
+
+            const activeView = document.getElementById('view-' + tab);
+            if (activeView) activeView.classList.remove('hidden');
+
+            const activeMobileTab = document.getElementById('tab-' + tab);
+            if (activeMobileTab) {
+                activeMobileTab.classList.remove('tab-inactive', 'text-slate-500');
+                activeMobileTab.classList.add('tab-active', 'bg-blue-50', 'text-blue-700');
+            }
+
+            const activeDesktopTab = document.getElementById('dtab-' + tab);
+            if (activeDesktopTab) {
+                activeDesktopTab.classList.remove('text-slate-300');
+                activeDesktopTab.classList.add('desktop-tab-active', 'bg-blue-600', 'text-white', 'shadow');
+            }
+
+            const activeDrawerItem = document.getElementById('drawer-nav-' + tab) || (tab === 'admin-dash' ? document.getElementById('drawer-admin-dash-btn') : (tab === 'admin' ? document.getElementById('drawer-admin-btn') : null));
+            if (activeDrawerItem) {
+                activeDrawerItem.classList.remove('text-slate-300');
+                activeDrawerItem.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+            }
+
+            // Update Header Badge
+            const badgeTitles = {
+                'workload': 'Workload',
+                'error': 'Incident QC',
+                'billcount': 'Live Sync',
+                'dashboard': 'Dashboard',
+                'admin-dash': 'Executive Cockpit',
+                'admin': 'Settings'
+            };
+            const badgeEl = document.getElementById('header-section-badge');
+            if (badgeEl && badgeTitles[tab]) {
+                badgeEl.textContent = badgeTitles[tab];
+            }
+
+            window.scrollTo({ top: 0, behavior: 'instant' });
+
+            if (tab === 'dashboard') {
                 loadDashboardData();
                 updateDailyDashboard();
             } else if (tab === 'admin-dash') {
@@ -8082,12 +8212,12 @@
 
         // จับทุกการแก้ไขในหน้าบันทึก (input/change/click ครอบปุ่ม +/- และปุ่มลบแถวด้วย)
         (function wireDraftAutosave() {
-            const recView = document.getElementById('view-record');
-            recView.addEventListener('input', saveRecordDraftDebounced);
-            recView.addEventListener('change', event => {
-                if (event.target.id !== 'record-date') saveRecordDraftDebounced();
+            const appContent = document.getElementById('app-content') || document.body;
+            appContent.addEventListener('input', saveRecordDraftDebounced);
+            appContent.addEventListener('change', event => {
+                if (!event.target.classList.contains('app-record-date') && event.target.id !== 'record-date') saveRecordDraftDebounced();
             });
-            recView.addEventListener('click', event => {
+            appContent.addEventListener('click', event => {
                 if (!event.target.closest('[data-skip-draft-autosave]')) saveRecordDraftDebounced();
             });
         })();
