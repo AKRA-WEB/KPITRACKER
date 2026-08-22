@@ -1801,7 +1801,7 @@
                 <i class="fa-solid fa-rotate text-blue-400"></i> ซิงค์ข้อมูลล่าสุด
             </button>
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260822.17</span>
+                <span id="drawer-version-text">KPI Suite v20260822.18</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1817,7 +1817,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260822.17";
+        const CURRENT_VERSION = "20260822.18";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -4141,20 +4141,52 @@
             outbound: [
                 { name: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5, desc: 'ตรวจพบที่จุดเช็คก่อนขึ้นรถ', dot: 'bg-emerald-500' },
                 { name: 'หยิบผิด ถึงหน้าร้านแล้ว', penalty: 10, desc: 'ของหลุดไปหน้าร้าน TRD แล้วแจ้งกลับ', dot: 'bg-amber-500' },
-                { name: 'หยิบผิด ถึงลูกค้าแล้ว', penalty: 20, desc: 'ของส่งถึงลูกค้าแล้ว ลูกค้าแจ้งเคลม', dot: 'bg-red-600' }
+                { name: 'หยิบผิด ถึงลูกค้าแล้ว', penalty: 20, desc: 'ของส่งถึงลูกค้าแล้ว ลูกค้าแจ้งเคลม', dot: 'bg-red-600' },
+                { name: 'จำนวนไม่ครบ / ขาดเกิน', penalty: 5, desc: 'ยอดสินค้าในบิลไม่ตรงกับที่จัด', dot: 'bg-amber-500' }
             ],
             store_stock: [
                 { name: 'ตกเบิกสต๊อก / ของหมดไม่แจ้ง', penalty: 5, desc: 'สินค้าหมดไม่ส่งสัญญาณเตือนเติมของ', dot: 'bg-amber-500' },
-                { name: 'ปล่อยชั้นวางว่าง / เติมของช้า', penalty: 5, desc: 'หน้าร้านชั้นวางโล่ง ลูกค้ารอสินค้านาน', dot: 'bg-amber-500' }
+                { name: 'ปล่อยชั้นวางว่าง / เติมของช้า', penalty: 5, desc: 'หน้าร้านชั้นวางโล่ง ลูกค้ารอสินค้านาน', dot: 'bg-amber-500' },
+                { name: 'สต๊อกสินค้าไม่พอใช้ / สั่งของช้า', penalty: 10, desc: 'สต๊อกขาดช่วง ไม่สั่งของล่วงหน้า', dot: 'bg-red-500' }
             ],
             inbound: [
-                { name: 'วางสินค้าไม่เรียบร้อย/ผิดตำแหน่ง', penalty: 3, desc: 'ขารับเข้าจัดวางของผิดช่อง', dot: 'bg-blue-500' }
+                { name: 'วางสินค้าไม่เรียบร้อย/ผิดตำแหน่ง', penalty: 3, desc: 'ขารับเข้าจัดวางของผิดช่อง', dot: 'bg-blue-500' },
+                { name: 'ลงรับสินค้าในแอปผิด', penalty: 5, desc: 'คีย์ยอดรับสินค้าในระบบผิดพลาด', dot: 'bg-amber-500' },
+                { name: 'รับสินค้าชำรุดเข้ามาไม่แจ้ง', penalty: 5, desc: 'รับของเสียหายเข้าคลังโดยไม่ตรวจเช็ค', dot: 'bg-red-500' }
             ],
             transfer: [
-                { name: 'โอน W2→W1 จำนวนไม่ตรง', penalty: 5, desc: 'ย้ายของข้ามคลังยอดไม่ตรงกับใบเบิก', dot: 'bg-amber-500' }
+                { name: 'โอน W2→W1 จำนวนไม่ตรง', penalty: 5, desc: 'ย้ายของข้ามคลังยอดไม่ตรงกับใบเบิก', dot: 'bg-amber-500' },
+                { name: 'สินค้าหมด ต้องเบิกด่วน', penalty: 5, desc: 'ไม่ได้วางแผนเบิกตามรอบ', dot: 'bg-amber-500' }
             ],
             shared: [
                 { name: 'ร่วมรับผิดชอบทั้งกะ (ความผิดพลาดรวม)', penalty: 5, desc: 'หักคะแนน HP เฉลี่ยทุกคนในกะ', dot: 'bg-purple-500' }
+            ],
+            trd_store: [
+                { name: 'จัดบิลผิด', penalty: 5, desc: 'จัดสินค้าไม่ตรงตามบิลขาย', dot: 'bg-amber-500' },
+                { name: 'หยิบของผิด', penalty: 5, desc: 'หยิบสินค้าผิดรุ่น/ผิดขนาด', dot: 'bg-amber-500' },
+                { name: 'จำนวนไม่ครบ', penalty: 5, desc: 'นับจำนวนสินค้าขาดหรือเกิน', dot: 'bg-amber-500' },
+                { name: 'ลูกค้ารอสินค้านานเกิน 15 นาที', penalty: 10, desc: 'จัดของช้า ส่งผลให้ลูกค้ารอนาน', dot: 'bg-amber-500' },
+                { name: 'ปล่อยของผิดถึงลูกค้า (Checker)', penalty: 30, desc: 'สินค้าผิดหลุดถึงมือลูกค้า', dot: 'bg-red-600' },
+                { name: 'ไม่ช่วยใส่ถุง', penalty: 5, desc: 'ไม่บริการบรรจุสินค้าให้ลูกค้า', dot: 'bg-blue-500' },
+                { name: 'ไม่แนะนำสินค้า', penalty: 5, desc: 'ไม่แนะนำโปรโมชั่นหรือสินค้าขายดี', dot: 'bg-blue-500' },
+                { name: 'ไม่เดินดูแลลูกค้าเดินช้อป', penalty: 5, desc: 'ไม่ดูแลและอำนวยความสะดวกให้ลูกค้า', dot: 'bg-blue-500' },
+                { name: 'บริการไม่สุภาพ', penalty: 20, desc: 'กิริยาหรือวาจาไม่เหมาะสมกับลูกค้า', dot: 'bg-red-500' },
+                { name: 'ปล่อยชั้นวางว่าง (เรียงของเติม)', penalty: 10, desc: 'ไม่เติมสินค้าบนชั้นวางให้เต็ม', dot: 'bg-amber-500' }
+            ],
+            trd_cashier: [
+                { name: 'คิดเงินทอนเงินผิด', penalty: 15, desc: 'ยอดเงินไม่ตรง ทอนเงินผิดพลาด', dot: 'bg-red-500' },
+                { name: 'ตอบแชทช้า', penalty: 10, desc: 'ไม่ตอบคำถามลูกค้าตามเวลาที่กำหนด', dot: 'bg-amber-500' },
+                { name: 'ให้ข้อมูลสินค้าผิด', penalty: 5, desc: 'แจ้งราคาหรือรายละเอียดสินค้าผิด', dot: 'bg-amber-500' },
+                { name: 'เปิดบิลผิด', penalty: 10, desc: 'ออกใบเสร็จ/ใบกำกับภาษีผิดรายการ', dot: 'bg-amber-500' },
+                { name: 'คิดเงินพลาด', penalty: 15, desc: 'ยิงบาร์โค้ดไม่ครบหรือซ้ำซ้อน', dot: 'bg-red-500' },
+                { name: 'ของหมดไม่แจ้ง (เห็นผ่านหน้าระบบ)', penalty: 5, desc: 'สต๊อกในระบบหมดแต่ไม่แจ้งสั่งเติม', dot: 'bg-amber-500' }
+            ],
+            trd_stock: [
+                { name: 'สต๊อคสินค้าไม่พอใช้', penalty: 10, desc: 'สต๊อกหน้าร้านขาดแคลน', dot: 'bg-amber-500' },
+                { name: 'ของหมดไม่แจ้ง', penalty: 10, desc: 'สินค้าหมดชั้นแต่ไม่แจ้งคลัง', dot: 'bg-red-500' }
+            ],
+            trd_other: [
+                { name: 'ความผิดอื่น ๆ', penalty: 10, desc: 'ระบุรายละเอียดในช่องหมายเหตุ', dot: 'bg-slate-500' }
             ]
         };
 
@@ -4356,6 +4388,43 @@
             renderErrTeamHp();
         }
 
+        function renderErrCategoryPills() {
+            const container = document.getElementById('err-cat-pills');
+            if (!container) return;
+            if (currentBranch === 'TRD') {
+                const trdCats = [
+                    { id: 'trd_store', name: 'หน้าร้าน / ในร้าน', icon: 'fa-store text-amber-500' },
+                    { id: 'trd_cashier', name: 'แคชเชียร์/แอดมิน', icon: 'fa-cash-register text-blue-500' },
+                    { id: 'trd_stock', name: 'คลังหน้าร้าน', icon: 'fa-boxes-stacked text-emerald-500' },
+                    { id: 'trd_other', name: 'อื่น ๆ', icon: 'fa-ellipsis text-slate-500' }
+                ];
+                if (!['trd_store', 'trd_cashier', 'trd_stock', 'trd_other'].includes(errCategory)) {
+                    errCategory = 'trd_store';
+                }
+                container.innerHTML = trdCats.map(c => `
+                    <button type="button" onclick="switchErrCategory('${c.id}', this)" class="cat-chip ${errCategory === c.id ? 'cat-chip-active' : ''} shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1">
+                        <i class="fa-solid ${c.icon} mr-1"></i><span>${c.name}</span>
+                    </button>
+                `).join('');
+            } else {
+                const akraCats = [
+                    { id: 'outbound', name: 'ขาออก', icon: 'fa-truck-fast text-blue-500' },
+                    { id: 'store_stock', name: 'หน้าร้าน/สต๊อก', icon: 'fa-store text-amber-500' },
+                    { id: 'inbound', name: 'ขารับเข้า', icon: 'fa-box-archive text-emerald-500' },
+                    { id: 'transfer', name: 'โอนย้าย W2', icon: 'fa-arrows-rotate text-purple-500' },
+                    { id: 'shared', name: 'ร่วมรับผิดชอบ', icon: 'fa-handshake text-indigo-500' }
+                ];
+                if (!['outbound', 'store_stock', 'inbound', 'transfer', 'shared'].includes(errCategory)) {
+                    errCategory = 'outbound';
+                }
+                container.innerHTML = akraCats.map(c => `
+                    <button type="button" onclick="switchErrCategory('${c.id}', this)" class="cat-chip ${errCategory === c.id ? 'cat-chip-active' : ''} shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1">
+                        <i class="fa-solid ${c.icon} mr-1"></i><span>${c.name}</span>
+                    </button>
+                `).join('');
+            }
+        }
+
         function switchErrCategory(cat, btn) {
             errCategory = cat;
             document.querySelectorAll('.cat-chip').forEach(el => el.classList.remove('cat-chip-active'));
@@ -4364,6 +4433,7 @@
         }
 
         function renderErrSeverity() {
+            renderErrCategoryPills();
             const container = document.getElementById('pc-err-severity-list');
             if (!container) return;
             const list = ERROR_CATALOG[errCategory] || [];
@@ -4386,11 +4456,28 @@
             if (btn) btn.classList.add('severity-chip-active');
         }
 
+        function getBranchActiveRoster(branch = null) {
+            const b = branch || currentBranch || 'AKRA';
+            if (b === 'TRD') {
+                if (typeof BRANCH_CONFIG !== 'undefined' && BRANCH_CONFIG['TRD'] && Array.isArray(BRANCH_CONFIG['TRD'].employees) && BRANCH_CONFIG['TRD'].employees.length > 0) {
+                    return BRANCH_CONFIG['TRD'].employees;
+                }
+                if (typeof GLOBAL_CONFIG_LIST !== 'undefined' && Array.isArray(GLOBAL_CONFIG_LIST)) {
+                    const trdConfig = GLOBAL_CONFIG_LIST
+                        .filter(c => (c.branches ? c.branches.includes('TRD') : (c.branch === 'TRD')) && c.dept !== 'Admin' && c.status !== 'Inactive')
+                        .map(c => c.name);
+                    if (trdConfig.length > 0) return trdConfig;
+                }
+                return ['ท็อป', 'น้องใหม่', 'บรรเลง', 'บอย', 'มะปราง', 'ปิ่น'];
+            }
+            return getAkraOnDutyEmployees();
+        }
+
         function renderErrEmpChips() {
             const container = document.getElementById('pc-err-emp-chips');
             if (!container) return;
-            const onDuty = getAkraOnDutyEmployees();
-            const options = ['ทุกคนในกะ', ...onDuty];
+            const emps = getBranchActiveRoster(currentBranch);
+            const options = ['ทุกคนในกะ', ...emps];
             if (!selectedErrWorker || !options.includes(selectedErrWorker)) {
                 selectedErrWorker = options[0] || 'ทุกคนในกะ';
             }
@@ -4441,9 +4528,9 @@
         function renderErrTeamHp() {
             const grid = document.getElementById('err-team-hp-grid');
             if (!grid) return;
-            const onDuty = getAkraOnDutyEmployees();
+            const emps = getBranchActiveRoster(currentBranch);
             
-            grid.innerHTML = onDuty.map(emp => {
+            grid.innerHTML = emps.map(emp => {
                 let penaltySum = 0;
                 recordedErrorCases.forEach(c => {
                     if (c.worker === 'ทุกคนในกะ' || c.worker === emp) {

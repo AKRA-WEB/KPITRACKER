@@ -10,7 +10,7 @@ const versionPath = path.join(__dirname, '../version.json');
 const indexContent = fs.readFileSync(indexPath, 'utf8');
 const versionJson = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
 
-const expectedVersion = "20260822.17";
+const expectedVersion = "20260822.18";
 assert(indexContent.includes(`const CURRENT_VERSION = "${expectedVersion}";`), `CURRENT_VERSION in index.html must be ${expectedVersion}`);
 assert.strictEqual(versionJson.version, expectedVersion, `version.json must be ${expectedVersion}`);
 console.log(`  [PASS] Version parity verified: ${expectedVersion}`);
