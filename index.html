@@ -1817,7 +1817,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260822.08";
+        const CURRENT_VERSION = "20260822.09";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -4480,7 +4480,7 @@
                 totalUnits += units;
 
                 const statusStr = String(req.status || '');
-                const isDone = statusStr === 'จัดเสร็จแล้ว' || statusStr === 'done' || statusStr === 'picked' || statusStr === 'sent';
+                const isDone = statusStr.includes('จัดเสร็จ') || statusStr === 'done' || statusStr === 'picked' || statusStr === 'sent' || statusStr.includes('✅');
                 const isFailed = statusStr.includes('ไม่สำเร็จ') || statusStr.includes('หมด') || statusStr.includes('ยกเลิก') || statusStr.includes('❌');
 
                 if (isDone) completedCount++;
@@ -4504,20 +4504,18 @@
 
                 const billBadge = req.billNo || ('#' + (totalBills - idx));
                 let statusBadge = '';
-                if (isDone) {
-                    statusBadge = '<span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1">จัดเสร็จแล้ว ✅</span>';
-                } else if (isFailed) {
-                    statusBadge = '<span class="text-[11px] bg-red-100 text-red-800 font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1">จัดไม่สำเร็จ (ของหมด) ❌</span>';
-                } else {
-                    statusBadge = `
-                        <div class="flex items-center gap-1.5 justify-end">
-                            <button type="button" onclick="markReqStatus('${esc(req.uid)}', 'จัดเสร็จแล้ว')" class="text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded-lg shadow-sm transition-all inline-flex items-center gap-1 cursor-pointer">เสร็จ ✅</button>
-                            <button type="button" onclick="markReqStatus('${esc(req.uid)}', 'จัดไม่สำเร็จ (ของหมด)')" class="text-[11px] bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold px-2.5 py-1 rounded-lg transition-all inline-flex items-center gap-1 cursor-pointer">ไม่สำเร็จ ❌</button>
-                        </div>
-                    `;
-                }
+                let doneByText = '';
 
-                const doneByText = req.doneBy ? `<p class="text-[10px] text-slate-400 mt-0.5">${isFailed ? 'ผู้แจ้ง' : 'คนหยิบ'}: ${esc(req.doneBy)}</p>` : '';
+                if (isDone) {
+                    statusBadge = '<span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-lg border border-emerald-200 inline-flex items-center gap-1">จัดเสร็จแล้ว ✅</span>';
+                    doneByText = req.doneBy ? `<p class="text-[10px] text-slate-500 mt-0.5">คนจัด: <b class="text-slate-700">${esc(req.doneBy)}</b></p>` : '';
+                } else if (isFailed) {
+                    statusBadge = '<span class="text-[11px] bg-red-100 text-red-800 font-bold px-2.5 py-1 rounded-lg border border-red-200 inline-flex items-center gap-1">สินค้าหมด / ไม่สำเร็จ ❌</span>';
+                    doneByText = req.doneBy ? `<p class="text-[10px] text-slate-500 mt-0.5">ผู้แจ้ง: <b class="text-red-700">${esc(req.doneBy)}</b></p>` : '';
+                } else {
+                    statusBadge = '<span class="text-[11px] bg-amber-50 text-amber-700 font-bold px-2.5 py-1 rounded-lg border border-amber-200 inline-flex items-center gap-1">⏳ รอจัดสินค้า</span>';
+                    doneByText = '<p class="text-[10px] text-slate-400 mt-0.5">รอ Reaction ในกลุ่ม LINE</p>';
+                }
 
                 return `
                     <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2">
