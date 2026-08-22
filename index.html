@@ -2086,17 +2086,32 @@
         // ================= JWT DECODER =================
         function decodeJwtPayload(token) {
             try {
-                const parts = token.split('.');
+                if (!token || typeof token !== 'string') return null;
+                const cleanToken = token.trim().replace(/ /g, '+');
+                const parts = cleanToken.split('.');
                 if (parts.length !== 3) return null;
                 let base64Url = parts[1];
                 let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
                 while (base64.length % 4) {
                     base64 += '=';
                 }
-                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-                return JSON.parse(jsonPayload);
+                let jsonPayload = '';
+                if (typeof TextDecoder !== 'undefined' && typeof atob === 'function') {
+                    const binaryStr = atob(base64);
+                    const bytes = new Uint8Array(binaryStr.length);
+                    for (let i = 0; i < binaryStr.length; i++) {
+                        bytes[i] = binaryStr.charCodeAt(i);
+                    }
+                    jsonPayload = new TextDecoder('utf-8').decode(bytes);
+                } else if (typeof atob === 'function') {
+                    jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+                } else if (typeof Buffer !== 'undefined') {
+                    jsonPayload = Buffer.from(base64, 'base64').toString('utf8');
+                }
+                const parsed = JSON.parse(jsonPayload);
+                return parsed;
             } catch (e) {
                 console.error("Local JWT decode failed", e);
                 return null;
@@ -4645,22 +4660,27 @@
         }
 
         async function initSystem() {
-            // Safety: ensure loading spinner is dismissed after at most 800ms
+            // Safety: ensure loading spinner is dismissed after at most 1500ms
             const dismissTimer = setTimeout(() => {
                 const loader = document.getElementById('system-loading');
                 if (loader) loader.classList.add('hidden');
-            }, 800);
+            }, 1500);
 
             try {
                 const isVersionOk = await checkAppVersion();
                 if (!isVersionOk) return;
                 AppVersionGuard.start({ current: CURRENT_VERSION, readActions: [] });
 
-                // ตรวจสอบและย้ายไปเปิดเบราว์เซอร์ภายนอกเมื่อเปิดจาก LINE (ป้องกันบั๊กการกดปุ่มบน WebView ของ LINE)
+                // ตรวจสอบและย้ายไปเปิดเบราว์เซอร์ภายนอกเมื่อเปิดจาก LINE
                 if (handleLineBrowserRedirect()) return;
 
-                // โหลด config พนักงาน และตรวจ SSO token พร้อมกัน
-                const [, ssoResult] = await Promise.all([loadConfig(), resolveSsoAuth()]);
+                // 1. ตรวจสอบ SSO token ก่อน เพื่อนำ sessionToken ไปใช้เรียก loadConfig()
+                const ssoResult = await resolveSsoAuth();
+
+                // 2. โหลด Config พนักงานพร้อมส่ง Token ไปยัง GAS backend
+                await loadConfig();
+
+                // 3. ประเมินสิทธิ์และเตรียม UI
                 await checkAuth(ssoResult);
             } catch (err) {
                 console.error("InitSystem error:", err);
@@ -4677,13 +4697,15 @@
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 let ssoToken = urlParams.get('sso');
-                if (!ssoToken) {
-                    ssoToken = safeStorage.getItem('akra_sso_token');
+                if (ssoToken) {
+                    ssoToken = ssoToken.trim().replace(/ /g, '+');
+                } else {
+                    ssoToken = safeStorage.getItem('akra_sso_token') || safeStorage.getItem('akra_session_token');
                 }
                 if (!ssoToken) return result;
                 result.attempted = true;
 
-                // Local decode is only an early expiry check. Authorization always comes from server verification.
+                // Early local expiry check
                 const decodedUser = decodeJwtPayload(ssoToken);
                 if (decodedUser) {
                     const currentTime = new Date().getTime();
@@ -4692,6 +4714,8 @@
                         console.warn("SSO token is locally expired, clearing session");
                         safeStorage.removeItem('akra_sso_token');
                         safeStorage.removeItem('akra_sso_user_data');
+                        safeStorage.removeItem('akra_session_token');
+                        safeStorage.removeItem('akra_user_data');
                         sessionToken = null;
                         result.userData = null;
                         result.expired = true;
@@ -4699,9 +4723,10 @@
                     }
                 }
 
+                // Server Verification with resilient timeout (8000ms)
                 const portalApiUrl = "https://script.google.com/macros/s/AKfycbyQJLwb5HTexG6gxqTehGWlAxfSXVT--CpWnnp2JTcP4xCcMA1vUjSY_eWqPjUKwzq7/exec";
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 1200);
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
 
                 try {
                     const verifyRes = await fetch(`${portalApiUrl}?action=verifyToken&token=${encodeURIComponent(ssoToken)}`, { signal: controller.signal });
@@ -4727,9 +4752,21 @@
                             safeStorage.setItem('akra_sso_user_data', JSON.stringify(result.userData));
                         } else {
                             console.warn("SSO token was rejected by server:", verifyData && verifyData.reason);
+                            safeStorage.removeItem('akra_sso_token');
+                            safeStorage.removeItem('akra_sso_user_data');
+                            safeStorage.removeItem('akra_session_token');
+                            sessionToken = null;
+                            result.userData = null;
+                            result.expired = true;
                         }
                     } else {
                         console.warn("SSO token verification failed with HTTP", verifyRes.status);
+                        safeStorage.removeItem('akra_sso_token');
+                        safeStorage.removeItem('akra_sso_user_data');
+                        safeStorage.removeItem('akra_session_token');
+                        sessionToken = null;
+                        result.userData = null;
+                        result.expired = true;
                     }
                 } catch (apiErr) {
                     console.warn("API verify error:", apiErr);
@@ -4740,6 +4777,7 @@
                 if (!result.userData) {
                     safeStorage.removeItem('akra_sso_token');
                     safeStorage.removeItem('akra_sso_user_data');
+                    safeStorage.removeItem('akra_session_token');
                     sessionToken = null;
                     result.expired = true;
                 }
@@ -4873,14 +4911,25 @@
         }
 
         function applyRolePermissions() {
-            // ดึงสิทธิ์จากฐานข้อมูลพนักงานภายในก่อน
-            let permissions = USER_DB[String(currentUser).toLowerCase()] || [];
+            // 1. ดึงสิทธิ์จากฐานข้อมูลพนักงานภายในก่อน
+            let permissions = [...(USER_DB[String(currentUser).toLowerCase()] || [])];
 
-            // เพิ่มสิทธิ์จาก SSO Roles (ถ้ามี AKRA หรือ TRD) เพื่อให้รองรับพนักงานใหม่ที่ยังไม่ได้เพิ่มในแอป KPI
-            const ssoBranches = currentRoles.filter(role => ['AKRA', 'TRD'].includes(String(role).toUpperCase()));
-            ssoBranches.forEach(b => {
-                const upperB = b.toUpperCase();
-                if (!permissions.includes(upperB)) permissions.push(upperB);
+            // 2. หากเป็น Admin หรือ Supervisor มีสิทธิ์เข้าถึงทุกสาขาทันที
+            const isAdminOrSuper = IS_ADMIN || currentRoles.some(r => ['ADMIN', 'Admin', 'SUPERVISOR', 'Supervisor'].includes(String(r)));
+            if (isAdminOrSuper) {
+                ['AKRA', 'TRD'].forEach(b => {
+                    if (!permissions.includes(b)) permissions.push(b);
+                });
+            }
+
+            // 3. เพิ่มสิทธิ์จาก SSO Roles (AKRA, TRD, WAREHOUSE, Cashier)
+            currentRoles.forEach(role => {
+                const r = String(role).toUpperCase();
+                if (r === 'AKRA' || r === 'WAREHOUSE') {
+                    if (!permissions.includes('AKRA')) permissions.push('AKRA');
+                } else if (r === 'TRD') {
+                    if (!permissions.includes('TRD')) permissions.push('TRD');
+                }
             });
 
             if (permissions.length === 0) {
