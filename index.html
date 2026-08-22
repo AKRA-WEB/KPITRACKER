@@ -3829,7 +3829,7 @@
             const isUserAdmin = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin'));
             const visibleEmployees = isUserAdmin
                 ? onDuty
-                : onDuty.filter(emp => normalizeEmpName(emp) === normalizeEmpName(displayUserName));
+                : onDuty.filter(emp => normalizeEmpName(emp) === normalizeEmpName(displayUserName) || normalizeEmpName(emp) === normalizeEmpName(currentUser));
 
             if (visibleEmployees.length === 0) {
                 container.innerHTML = `
@@ -3874,7 +3874,7 @@
                 const primaryHours = Math.max(0, 10 - totalSupportHours);
                 const primaryPct = Math.round((primaryHours / 10) * 100);
                 const supportPct = Math.round((totalSupportHours / 10) * 100);
-                const canEditRow = isUserAdmin || normalizeEmpName(emp) === normalizeEmpName(displayUserName);
+                const canEditRow = isUserAdmin || normalizeEmpName(emp) === normalizeEmpName(displayUserName) || normalizeEmpName(emp) === normalizeEmpName(currentUser);
 
                 return `
                 <div class="workload-row-v2 enterprise-card p-4 border border-slate-200 shadow-sm rounded-xl space-y-3" 
@@ -8396,7 +8396,7 @@
             const isUserAdmin = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin'));
             let workload = getAkraWorkloadValues();
             if (!isUserAdmin) {
-                workload = workload.filter(w => normalizeEmpName(w.employee) === normalizeEmpName(displayUserName));
+                workload = workload.filter(w => normalizeEmpName(w.employee) === normalizeEmpName(displayUserName) || normalizeEmpName(w.employee) === normalizeEmpName(currentUser));
                 if (workload.length === 0) {
                     return showToast("ไม่พบข้อมูล Workload ของคุณ หรือคุณไม่ได้เข้ากะในวันนี้", true);
                 }
