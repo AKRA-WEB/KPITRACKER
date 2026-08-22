@@ -1817,7 +1817,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260822.09";
+        const CURRENT_VERSION = "20260822.10";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3898,7 +3898,8 @@
 
             const emps = BRANCH_CONFIG.AKRA.employees || [];
             card.classList.remove('hidden');
-            document.getElementById('akra-duty-roster').innerHTML = emps.map((emp, i) => akraRosterChipHtml(emp, `akra-duty-${i}`, 'akra-duty-cb', true)).join('');
+            const dutyRosterEl = document.getElementById('akra-duty-roster');
+            if (dutyRosterEl) dutyRosterEl.innerHTML = emps.map((emp, i) => akraRosterChipHtml(emp, `akra-duty-${i}`, 'akra-duty-cb', true)).join('');
             updateAkraDutyCount();
             renderAkraWorkloadEditor();
         }
@@ -4942,11 +4943,13 @@
             document.querySelectorAll('input[name="vendorBillsStatus"]').forEach(el => { el.required = branch === 'AKRA'; });
             toggleVendorBillsPending();
 
-            document.getElementById('error-entries-container').innerHTML = '';
-            document.getElementById('task-entries-container').innerHTML = '';
+            const errContainer = document.getElementById('error-entries-container');
+            if (errContainer) errContainer.innerHTML = '';
+            const taskContainer = document.getElementById('task-entries-container');
+            if (taskContainer) taskContainer.innerHTML = '';
 
             renderAkraRoster();
-            addErrorEntryRow();
+            if (errContainer) addErrorEntryRow();
             loadTasksForSelectedDate();
             applyEndOfShiftPermissionsUI();
             restoreRecordDraft();
@@ -8861,9 +8864,13 @@
                     showToast("บันทึก Workload สำเร็จ!");
                     sendAppLog("บันทึก Workload", `บันทึก Workload สาขา ${currentBranch} (วันที่ ${date})`);
                     safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_workload`);
-                    await syncDataFromSheet();
-                    loadDashboardData();
-                    updateDailyDashboard();
+                    try {
+                        await syncDataFromSheet();
+                        loadDashboardData();
+                        updateDailyDashboard();
+                    } catch (syncErr) {
+                        console.warn("Post-save UI refresh warning:", syncErr);
+                    }
                 } else {
                     showModal("บันทึกไม่สำเร็จ", res.message || "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์", "error");
                 }
@@ -9812,7 +9819,8 @@
                         if (currentBranch === 'AKRA') {
                             renderAkraWorkloadEditor(null, true);
                         }
-                        document.getElementById('error-entries-container').innerHTML = ''; addErrorEntryRow();
+                        const errC = document.getElementById('error-entries-container');
+                        if (errC) { errC.innerHTML = ''; addErrorEntryRow(); }
                         loadTasksForSelectedDate();
                         if (BRANCH_CONFIG[currentBranch].showZone2) {
                             ['vol-transfer','vol-pickup','vol-upcountry','vol-inmarket','vol-outmarket'].forEach(id => document.getElementById(id).value = '0');
