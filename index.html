@@ -1801,7 +1801,7 @@
                 <i class="fa-solid fa-rotate text-blue-400"></i> ซิงค์ข้อมูลล่าสุด
             </button>
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260822.14</span>
+                <span id="drawer-version-text">KPI Suite v20260822.17</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1817,7 +1817,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260822.14";
+        const CURRENT_VERSION = "20260822.17";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3836,18 +3836,49 @@
             BRANCH_CONFIG["TRD"].employees = [];
 
             configList.forEach(user => {
-                if (!user.uid) return;
+                if (!user.uid && !user.username) return;
+                const uid = user.uid || user.username;
 
                 // Normalize status at source (case-insensitive conversion to standard Active / Inactive)
                 const rawStatus = String(user.status || '').trim().toLowerCase();
                 user.status = (rawStatus === 'inactive') ? 'Inactive' : 'Active';
 
-                const uidStr = String(user.uid).toLowerCase();
-                const branches = user.branches.split(',').map(b => b.trim().toUpperCase()).filter(b => b);
+                const uidStr = String(uid).toLowerCase();
+
+                // Derive branches from user.branches or user.roles
+                let branches = [];
+                if (user.branches) {
+                    branches = String(user.branches).split(',').map(b => b.trim().toUpperCase()).filter(b => b);
+                }
+                const roles = Array.isArray(user.roles) ? user.roles.map(r => String(r).toUpperCase()) : [];
+                if (roles.includes('ADMIN') || roles.includes('SUPERVISOR')) {
+                    if (!branches.includes('AKRA')) branches.push('AKRA');
+                    if (!branches.includes('TRD')) branches.push('TRD');
+                }
+                if (roles.includes('AKRA') || roles.includes('WAREHOUSE')) {
+                    if (!branches.includes('AKRA')) branches.push('AKRA');
+                }
+                if (roles.includes('TRD') || roles.includes('CASHIER')) {
+                    if (!branches.includes('TRD')) branches.push('TRD');
+                }
+                // Normalize branch aliases
+                if (branches.includes('WAREHOUSE') && !branches.includes('AKRA')) branches.push('AKRA');
+                if (branches.includes('CASHIER') && !branches.includes('TRD')) branches.push('TRD');
 
                 USER_DB[uidStr] = branches;
-                const isSystemAdmin = user.dept && user.dept.toLowerCase() === 'admin';
+
+                const isSystemAdmin = (user.dept && user.dept.toLowerCase() === 'admin') || roles.includes('ADMIN');
                 const isActive = user.status === 'Active';
+
+                // Map department if empty based on roles
+                let dept = (user.dept || '').trim();
+                if (!dept) {
+                    if (roles.includes('CASHIER')) dept = 'แคชเชียร์';
+                    else if (roles.includes('TRD')) dept = 'หน้าร้าน/ในร้าน';
+                    else if (roles.includes('WAREHOUSE') || roles.includes('AKRA')) dept = 'คลังสินค้า';
+                }
+                // Normalize known TRD departments
+                if (dept === 'หน้าร้าน / ในร้าน' || dept === 'หน้าร้าน' || dept === 'ในร้าน') dept = 'หน้าร้าน/ในร้าน';
 
                 // กรองเฉพาะพนักงานที่ไม่ใช่ Admin เพื่อแสดงในหน้าบันทึก KPI และ Dashboard
                 if (user.name && !isSystemAdmin && isActive) {
@@ -3856,9 +3887,9 @@
                     }
                     if (branches.includes('TRD')) {
                         if (!BRANCH_CONFIG["TRD"].employees.includes(user.name)) BRANCH_CONFIG["TRD"].employees.push(user.name);
-                        if (user.dept) {
-                            if (!TRD_DEPARTMENTS[user.dept]) TRD_DEPARTMENTS[user.dept] = [];
-                            if (!TRD_DEPARTMENTS[user.dept].includes(user.name)) TRD_DEPARTMENTS[user.dept].push(user.name);
+                        if (dept) {
+                            if (!TRD_DEPARTMENTS[dept]) TRD_DEPARTMENTS[dept] = [];
+                            if (!TRD_DEPARTMENTS[dept].includes(user.name)) TRD_DEPARTMENTS[dept].push(user.name);
                         }
                     }
                 }
@@ -4037,9 +4068,24 @@
             const isUserAdmin = Boolean(sessionToken) && (['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin')));
 
             if (nameEl) nameEl.textContent = displayUserName || (currentUser ? String(currentUser) : 'ผู้ใช้งาน');
-            if (badgeEl) badgeEl.textContent = `${currentBranch || 'AKRA'} WAREHOUSE`;
+            if (badgeEl) badgeEl.textContent = `${currentBranch || 'AKRA'} ${currentBranch === 'TRD' ? 'STORE' : 'WAREHOUSE'}`;
             if (roleEl) {
-                roleEl.textContent = isUserAdmin ? 'ผู้ดูแลระบบ (Admin)' : 'พนักงานคลังสินค้า';
+                const rolesUpper = (typeof currentRoles !== 'undefined' && Array.isArray(currentRoles)) ? currentRoles.map(r => String(r).toUpperCase()) : [];
+                if (isUserAdmin || rolesUpper.includes('ADMIN')) {
+                    roleEl.textContent = 'ผู้ดูแลระบบ (Admin)';
+                } else if (rolesUpper.includes('SUPERVISOR')) {
+                    roleEl.textContent = 'หัวหน้างาน (Supervisor)';
+                } else if (rolesUpper.includes('CASHIER')) {
+                    roleEl.textContent = 'แคชเชียร์ (TRD)';
+                } else if (rolesUpper.includes('TRD')) {
+                    roleEl.textContent = 'พนักงานหน้าร้าน (TRD)';
+                } else if (rolesUpper.includes('WAREHOUSE')) {
+                    roleEl.textContent = 'พนักงานคลังสินค้า (AKRA)';
+                } else if (rolesUpper.includes('AKRA')) {
+                    roleEl.textContent = 'พนักงานคลังสินค้า (AKRA)';
+                } else {
+                    roleEl.textContent = currentBranch === 'TRD' ? 'พนักงาน TRD' : 'พนักงานคลังสินค้า';
+                }
             }
 
             const canViewAdmin = isUserAdmin;
@@ -4084,10 +4130,7 @@
             core: 'คลัง W1',
             coreLabel: 'คลังหลัก W1',
             totalHours: 10.0,
-            support: [
-                { id: 1, name: 'แวะขึ้นของ', icon: 'fa-truck-ramp-box', hours: 1.0 },
-                { id: 2, name: 'แวะไปส่งของ', icon: 'fa-motorcycle', hours: 0.5 }
-            ]
+            support: []
         };
 
         let errCategory = 'outbound';
@@ -4289,6 +4332,11 @@
 
         function renderAkraWorkloadEditor(savedData = null, forceReset = false) {
             if (currentBranch !== 'AKRA') return;
+            if (forceReset || !savedData || (Array.isArray(savedData) && savedData.length === 0)) {
+                workloadState.core = 'คลัง W1';
+                workloadState.coreLabel = 'คลังหลัก W1';
+                workloadState.support = [];
+            }
             if (savedData && Array.isArray(savedData) && savedData.length > 0) {
                 const meItem = savedData.find(item => normalizeEmpName(item.employee) === normalizeEmpName(displayUserName) || normalizeEmpName(item.employee) === normalizeEmpName(currentUser)) || savedData[0];
                 if (meItem) {
@@ -4296,6 +4344,8 @@
                     workloadState.coreLabel = meItem.primaryCore || 'คลัง W1';
                     if (meItem.supportDuties && Array.isArray(meItem.supportDuties)) {
                         workloadState.support = meItem.supportDuties;
+                    } else {
+                        workloadState.support = [];
                     }
                 }
             }
@@ -4949,12 +4999,12 @@
                 });
             }
 
-            // 3. เพิ่มสิทธิ์จาก SSO Roles (AKRA, TRD, WAREHOUSE, Cashier)
+            // 3. เพิ่มสิทธิ์จาก SSO Roles (AKRA, WAREHOUSE -> AKRA | TRD, Cashier -> TRD)
             currentRoles.forEach(role => {
                 const r = String(role).toUpperCase();
                 if (r === 'AKRA' || r === 'WAREHOUSE') {
                     if (!permissions.includes('AKRA')) permissions.push('AKRA');
-                } else if (r === 'TRD') {
+                } else if (r === 'TRD' || r === 'CASHIER') {
                     if (!permissions.includes('TRD')) permissions.push('TRD');
                 }
             });
@@ -4980,7 +5030,9 @@
             document.getElementById('view-selector').classList.remove('hidden');
             document.getElementById('selector-user-name').innerText = "ยินดีต้อนรับ: " + displayUserName;
             if (perms.includes('AKRA')) document.getElementById('btn-branch-akra').classList.remove('hidden');
+            else document.getElementById('btn-branch-akra').classList.add('hidden');
             if (perms.includes('TRD')) document.getElementById('btn-branch-trd').classList.remove('hidden');
+            else document.getElementById('btn-branch-trd').classList.add('hidden');
         }
 
         function selectBranch(branch, perms = null) {
@@ -4996,7 +5048,7 @@
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('header-branch-name').innerText = branch;
             const desktopBranchLabel = document.getElementById('desktop-branch-label');
-            if (desktopBranchLabel) desktopBranchLabel.innerText = branch + ' OPERATIONS';
+            if (desktopBranchLabel) desktopBranchLabel.innerText = branch === 'TRD' ? 'TRD STORE' : 'AKRA WAREHOUSE';
 
             if(branch === 'TRD') {
                 document.getElementById('header-branch-name').className = 'text-orange-300';
@@ -5021,7 +5073,11 @@
                 switchTab('workload');
             }
 
-            if(permissions.length > 1) document.getElementById('btn-switch-branch').classList.remove('hidden');
+            if(permissions.length > 1) {
+                document.getElementById('btn-switch-branch')?.classList.remove('hidden');
+            } else {
+                document.getElementById('btn-switch-branch')?.classList.add('hidden');
+            }
 
             if (BRANCH_CONFIG[branch].showZone2) {
                 document.getElementById('zone-2-container')?.classList.remove('hidden');
@@ -8669,10 +8725,27 @@
                         try {
                             const wlDraft = JSON.parse(wlRaw);
                             applyAkraRosterDraft(wlDraft.akraRoster);
-                            if (wlDraft.akraWorkload) {
+                            if (wlDraft.akraWorkload && Array.isArray(wlDraft.akraWorkload)) {
+                                // Filter out legacy mock support duties if they match old demo tasks
+                                wlDraft.akraWorkload.forEach(item => {
+                                    if (item.supportDuties && Array.isArray(item.supportDuties)) {
+                                        const isLegacyMock = item.supportDuties.length === 2 &&
+                                            item.supportDuties.some(d => d.name === 'แวะขึ้นของ') &&
+                                            item.supportDuties.some(d => d.name === 'แวะไปส่งของ');
+                                        if (isLegacyMock) {
+                                            item.supportDuties = [];
+                                            item.note = '';
+                                        }
+                                    }
+                                });
                                 applyAkraWorkloadDraft(wlDraft.akraWorkload);
+                            } else {
+                                renderAkraWorkloadEditor(null, true);
                             }
-                        } catch(e) { console.error("Error parsing workload draft", e); }
+                        } catch(e) {
+                            console.error("Error parsing workload draft", e);
+                            renderAkraWorkloadEditor(null, true);
+                        }
                     } else {
                         renderAkraWorkloadEditor(null, true);
                     }

@@ -573,9 +573,9 @@ console.log('\n[8/8] Testing Drawer Runtime, Accessibility State & Version Parit
 
     // Metadata and content lint checks
     const versionJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../version.json'), 'utf8'));
-    assert.strictEqual(versionJson.version, '20260822.14', 'version.json must be 20260822.14');
-    assert.match(htmlContent, /const CURRENT_VERSION = "20260822\.14";/, 'CURRENT_VERSION in index.html must be 20260822.14');
-    assert.match(htmlContent, /id="drawer-version-text">KPI Suite v20260822\.14<\/span>/, 'Drawer footer must display 20260822.14');
+    assert.strictEqual(versionJson.version, '20260822.17', 'version.json must be 20260822.17');
+    assert.match(htmlContent, /const CURRENT_VERSION = "20260822\.17";/, 'CURRENT_VERSION in index.html must be 20260822.17');
+    assert.match(htmlContent, /id="drawer-version-text">KPI Suite v20260822\.17<\/span>/, 'Drawer footer must display 20260822.17');
 
     // Check Zero emojis in key areas
     assert.doesNotMatch(htmlContent, /⚡ บิลด่วน \(แป้ง/, 'No raw lightning emoji in live bill title');
