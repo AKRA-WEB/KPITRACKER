@@ -487,8 +487,8 @@
                     <p class="text-xs text-slate-500">ดึงข้อมูลอัตโนมัติจากแอป Picking &amp; LINE กลุ่ม • ไม่ต้องนับมือ</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <input type="date" id="record-date-billcount" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button type="button" onclick="syncDataFromSheet()" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 transition-colors">
+                    <input type="date" id="record-date-billcount" onchange="syncAppRecordDate(this.value); fetchLiveRequisitions(this.value);" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="button" onclick="fetchLiveRequisitions(document.getElementById('record-date-billcount') ? document.getElementById('record-date-billcount').value : null)" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
                         <i class="fa-solid fa-arrows-rotate"></i>
                         <span>รีเฟรชข้อมูล</span>
                     </button>
@@ -1817,7 +1817,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260822.06";
+        const CURRENT_VERSION = "20260822.07";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -4399,30 +4399,46 @@
         }
 
         // ================= VIEW 3: LIVE REQUISITIONS CONTROLLERS =================
-        let liveRequisitionsList = [
-            {
-                billNo: "#18",
-                billType: "เติมหน้าร้าน TRD",
-                requester: "หน้าร้าน TRD (ท็อป)",
-                time: "10:05 น.",
-                itemsSummary: "นมสด 10 ลัง, เนย 5 กก., ชีส 3 แพ็ค",
-                skuCount: 3,
-                totalUnits: 18,
-                status: "จัดเสร็จแล้ว",
-                doneBy: "หมูหยอง"
-            },
-            {
-                billNo: "#17",
-                billType: "⚡ บิลด่วน",
-                requester: "แคชเชียร์ (มะปราง)",
-                time: "09:40 น.",
-                itemsSummary: "แป้งสาลีตราพัดโบก 2 กระสอบ",
-                skuCount: 1,
-                totalUnits: 2,
-                status: "กำลังหยิบ",
-                doneBy: "เอี้ยง"
+        const LINE_REQUISITION_API_URL = "https://script.google.com/macros/s/AKfycbxmPSklqwsZOtf1sQSZbNmXla3uz4pm6QRiulRUixgyqWGi247dyiF_LsN4ag8OwNk/exec";
+        let liveRequisitionsList = [];
+
+        async function fetchLiveRequisitions(targetDate = null) {
+            const d = targetDate || currentDate || new Date().toISOString().split('T')[0];
+            try {
+                const resp = await fetch(`${LINE_REQUISITION_API_URL}?action=getLiveRequisitions&date=${encodeURIComponent(d)}`);
+                if (resp.ok) {
+                    const res = await resp.json();
+                    if (res && res.success && Array.isArray(res.requisitions)) {
+                        liveRequisitionsList = res.requisitions;
+                        renderLiveRequisitions();
+                        return res;
+                    }
+                }
+            } catch (e) {
+                console.warn("fetchLiveRequisitions error:", e);
             }
-        ];
+            renderLiveRequisitions();
+        }
+
+        async function markReqDone(uid) {
+            const actor = (typeof displayUserName !== 'undefined' && displayUserName) ? displayUserName : (currentUser || 'หมูหยอง');
+            const item = liveRequisitionsList.find(r => r.uid === uid);
+            if (item) {
+                item.status = 'จัดเสร็จแล้ว';
+                item.doneBy = actor;
+                renderLiveRequisitions();
+                showToast('อัปเดตสถานะเป็น "จัดเสร็จแล้ว" เรียบร้อย!');
+            }
+            try {
+                await fetch(LINE_REQUISITION_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'updateStatus', uid: uid, status: 'จัดเสร็จแล้ว', doneBy: actor })
+                });
+            } catch (err) {
+                console.error('Error updating status to API:', err);
+            }
+        }
 
         function renderLiveRequisitions() {
             const listEl = document.getElementById('live-bill-list-cards');
@@ -4443,7 +4459,7 @@
                 if (urgentCountEl) urgentCountEl.innerText = '0 บิล (0 ชิ้น)';
                 if (regularCountEl) regularCountEl.innerText = '0 บิล (0 ชิ้น)';
                 if (listEl) {
-                    listEl.innerHTML = '<div class="p-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">ยังไม่มีรายการใบเบิกผ่าน LINE ในวันนี้</div>';
+                    listEl.innerHTML = '<div class="p-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">ยังไม่มีรายการใบเบิกผ่าน LINE ในวันนี้ (แตะปุ่ม "รีเฟรชข้อมูล" เพื่อดึงข้อมูลล่าสุด)</div>';
                 }
                 return;
             }
@@ -4483,8 +4499,8 @@
 
                 const billBadge = req.billNo || ('#' + (totalBills - idx));
                 const statusBadge = isDone 
-                    ? '<span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-md">จัดเสร็จแล้ว</span>'
-                    : '<span class="text-[11px] bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded-md">กำลังหยิบ</span>';
+                    ? '<span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1">จัดเสร็จแล้ว ✅</span>'
+                    : `<button type="button" onclick="markReqDone('${esc(req.uid)}')" class="text-[11px] bg-blue-600 hover:bg-blue-700 text-white font-bold px-2.5 py-1 rounded-lg shadow-sm transition-all inline-flex items-center gap-1 cursor-pointer">กำลังหยิบ • แตะเมื่อเสร็จ ✅</button>`;
                 const doneByText = req.doneBy ? `<p class="text-[10px] text-slate-400 mt-0.5">คนหยิบ: ${esc(req.doneBy)}</p>` : '';
 
                 return `
@@ -7821,6 +7837,7 @@
                 renderWorkload();
             } else if (tab === 'billcount') {
                 renderLiveRequisitions();
+                fetchLiveRequisitions();
             } else if (tab === 'admin-dash') {
                 renderAdminDashboard();
                 refreshActions();
