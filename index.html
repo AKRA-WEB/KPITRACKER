@@ -1801,7 +1801,7 @@
                 <i class="fa-solid fa-rotate text-blue-400"></i> ซิงค์ข้อมูลล่าสุด
             </button>
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260822.13</span>
+                <span id="drawer-version-text">KPI Suite v20260822.14</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1817,7 +1817,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260822.13";
+        const CURRENT_VERSION = "20260822.14";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -4705,7 +4705,7 @@
                 if (!ssoToken) return result;
                 result.attempted = true;
 
-                // Early local expiry check
+                // 1. Instant JWT SSO (<1ms) - Render UI & cached session immediately
                 const decodedUser = decodeJwtPayload(ssoToken);
                 if (decodedUser) {
                     const currentTime = new Date().getTime();
@@ -4721,9 +4721,25 @@
                         result.expired = true;
                         return result;
                     }
+
+                    const normalizedUid = String(decodedUser.id || decodedUser.name || '').toLowerCase();
+                    const ssoRoles = Array.isArray(decodedUser.roles) ? [...decodedUser.roles] : [];
+                    if ((ssoRoles.includes('ADMIN') || ssoRoles.includes('admin')) && !ssoRoles.includes('Admin')) {
+                        ssoRoles.push('Admin');
+                    }
+
+                    result.userData = {
+                        username: normalizedUid,
+                        name: decodedUser.name || normalizedUid,
+                        roles: ssoRoles,
+                        perms: decodedUser.perms || {}
+                    };
+                    sessionToken = ssoToken;
+                    safeStorage.setItem('akra_sso_token', ssoToken);
+                    safeStorage.setItem('akra_sso_user_data', JSON.stringify(result.userData));
                 }
 
-                // Server Verification with resilient timeout (8000ms)
+                // 2. Server Verification in background (with resilient timeout)
                 const portalApiUrl = "https://script.google.com/macros/s/AKfycbyQJLwb5HTexG6gxqTehGWlAxfSXVT--CpWnnp2JTcP4xCcMA1vUjSY_eWqPjUKwzq7/exec";
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -4750,8 +4766,8 @@
                             sessionToken = ssoToken;
                             safeStorage.setItem('akra_sso_token', ssoToken);
                             safeStorage.setItem('akra_sso_user_data', JSON.stringify(result.userData));
-                        } else {
-                            console.warn("SSO token was rejected by server:", verifyData && verifyData.reason);
+                        } else if (verifyData && verifyData.valid === false) {
+                            console.warn("SSO token was rejected by server:", verifyData.reason);
                             safeStorage.removeItem('akra_sso_token');
                             safeStorage.removeItem('akra_sso_user_data');
                             safeStorage.removeItem('akra_session_token');
@@ -4769,7 +4785,7 @@
                         result.expired = true;
                     }
                 } catch (apiErr) {
-                    console.warn("API verify error:", apiErr);
+                    console.warn("Server verify background check note:", apiErr.message);
                 } finally {
                     clearTimeout(timeoutId);
                 }
@@ -4820,10 +4836,21 @@
 
             // 2. ดึงจาก Storage หากไม่มีใน URL
             if (!userData) {
-                const savedData = safeStorage.getItem('akra_sso_user_data');
+                const savedData = safeStorage.getItem('akra_sso_user_data') || safeStorage.getItem('akra_user_data');
                 if (savedData) {
                     try {
-                        userData = JSON.parse(savedData);
+                        const parsed = JSON.parse(savedData);
+                        if (parsed && typeof parsed === 'object') {
+                            userData = {
+                                username: String(parsed.username || parsed.id || parsed.name || '').toLowerCase(),
+                                name: parsed.name || parsed.username || parsed.id || '',
+                                roles: Array.isArray(parsed.roles) ? parsed.roles : [],
+                                perms: parsed.perms || {}
+                            };
+                            if (!sessionToken) {
+                                sessionToken = safeStorage.getItem('akra_sso_token') || safeStorage.getItem('akra_session_token') || null;
+                            }
+                        }
                     } catch(e) { console.error(e); }
                 }
             }

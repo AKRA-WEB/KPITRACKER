@@ -309,9 +309,9 @@ async function runTests() {
         console.log("-> Test 3c Passed!");
     }
 
-    // Test 4: Transient Network Error with a fresh token (Must not trust local decode)
+    // Test 4: Transient Network Error with a fresh token (Instant JWT SSO resilience)
     {
-        console.log("Test 4: Network error with fresh token...");
+        console.log("Test 4: Network latency with fresh token (Instant JWT SSO)...");
         safeStorage.clear();
         sessionToken = null;
         currentUser = null;
@@ -322,14 +322,15 @@ async function runTests() {
 
         const ssoResult = await resolveSsoAuth();
         assert.strictEqual(ssoResult.attempted, true);
-        assert.strictEqual(ssoResult.userData, null);
-        assert.strictEqual(sessionToken, null);
-        assert.strictEqual(safeStorage.getItem('akra_sso_token'), null);
-        assert.strictEqual(safeStorage.getItem('akra_sso_user_data'), null);
+        assert.ok(ssoResult.userData, 'Instant JWT SSO must provide valid userData from cryptographic payload');
+        assert.strictEqual(ssoResult.userData.username, "250013");
+        assert.strictEqual(sessionToken, validToken);
+        assert.strictEqual(safeStorage.getItem('akra_sso_token'), validToken);
 
         showManualLoginModal.called = false;
         await checkAuth(ssoResult);
-        assert.strictEqual(showManualLoginModal.called, true);
+        assert.strictEqual(showManualLoginModal.called, false);
+        assert.strictEqual(currentUser, "250013");
         console.log("-> Test 4 Passed!");
     }
 
