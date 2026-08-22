@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --app-bg: #f6f7f9;
+            --app-bg: #0f172a;
             --app-surface: #ffffff;
             --app-surface-muted: #f8fafc;
             --app-border: #e2e8f0;
@@ -21,7 +21,8 @@
             --app-radius: 0.625rem;
             --app-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
         }
-        body { font-family: 'Prompt', sans-serif; background-color: var(--app-bg); color: var(--app-text); -webkit-tap-highlight-color: rgba(29, 78, 216, 0.12); touch-action: manipulation; }
+        body { font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #0f172a; color: #1e293b; -webkit-tap-highlight-color: rgba(29, 78, 216, 0.12); touch-action: manipulation; }
+        .font-num { font-family: 'Inter', sans-serif; }
         .enterprise-card { border: 1px solid #dbe3ee; border-radius: 0.875rem; background: #ffffff; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
         .executive-metric { position: relative; overflow: hidden; border: 1px solid #dbe3ee; border-radius: 0.75rem; background: #ffffff; padding: 0.875rem; }
         .executive-metric::before { content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 0.25rem; background: var(--metric-accent, #2563eb); }
@@ -36,9 +37,50 @@
             outline: 3px solid #f97316 !important;
             outline-offset: 2px;
         }
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         optgroup { font-weight: bold; color: #4f46e5; background-color: #f8fafc; }
         option { font-weight: normal; color: #1f2937; background-color: #ffffff; }
+
+        /* Chips and Active State from all-in-one-preview.html */
+        .chip-active {
+            border-color: #2563eb !important;
+            background-color: #eff6ff !important;
+            color: #1d4ed8 !important;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+        .support-chip-active {
+            border-color: #f59e0b !important;
+            background-color: #fffbeb !important;
+            color: #b45309 !important;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+        }
+        .cat-chip-active {
+            border-color: #dc2626 !important;
+            background-color: #dc2626 !important;
+            color: #ffffff !important;
+        }
+        .severity-chip-active {
+            border-color: #dc2626 !important;
+            background-color: #fee2e2 !important;
+            color: #991b1b !important;
+            box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25);
+        }
+        .emp-chip-active {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+            color: #b91c1c !important;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+        }
+        .nav-item-active {
+            color: #2563eb !important;
+        }
+        .desktop-tab-active {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
 
         /* Custom Checkbox Animation */
         .emp-label { transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -99,110 +141,11 @@
             .team-members { grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); }
         }
 
-        /* Code-drawn live pixel scene */
-        .team-live-scene { overflow: hidden; border: 1px solid #e5e7eb; border-radius: 0.875rem; background: #ffffff; container-type: inline-size; }
-        .team-live-viewport { overflow-x: auto; -webkit-overflow-scrolling: touch; border-bottom: 1px solid #e5e7eb; }
-        .team-live-scroll-hint { display: none; }
-        .team-live-stage { position: relative; width: 100%; min-width: 38rem; aspect-ratio: 16 / 9; overflow: hidden; container-type: inline-size; background: #f8fafc; image-rendering: pixelated; isolation: isolate; }
-        .team-live-bg { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; image-rendering: pixelated; }
-        .scene-open-glow { animation: sceneOpenBlink 1.45s steps(2, end) infinite; }
-        .scene-lamp-glow { animation: sceneLampFlicker 2.6s steps(4, end) infinite; }
-        .scene-window-light { animation: sceneWindowGlow 4.8s ease-in-out infinite; }
-        .team-live-sign { position: absolute; top: 0.7rem; left: 0.7rem; z-index: 120; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.32rem 0.55rem; border: 1px solid rgba(148,163,184,0.55); background: rgba(15,23,42,0.85); color: #f8fafc; box-shadow: 0 2px 0 rgba(15,23,42,0.45); font-size: 0.64rem; font-weight: 1000; letter-spacing: 0.05em; }
-        .team-live-status { position: absolute; top: 0.7rem; right: 0.7rem; z-index: 120; display: flex; gap: 0.35rem; align-items: center; padding: 0.32rem 0.55rem; border: 1px solid rgba(148,163,184,0.55); background: rgba(15,23,42,0.85); color: #4ade80; box-shadow: 0 2px 0 rgba(15,23,42,0.45); font-size: 0.62rem; font-weight: 1000; white-space: nowrap; }
-        .team-live-pulse { width: 0.45rem; height: 0.45rem; border-radius: 999px; background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.65); animation: livePulse 1.5s ease-out infinite; }
-        /* workers */
-        .team-live-worker { position: absolute; left: var(--x); top: var(--y); z-index: var(--z, 10); width: clamp(3.6rem, 7.4cqw, 5.2rem); transform: translate(-50%, -100%); }
-        .team-live-worker.cashier { --z: 20; }
-        .tlw-mover { position: relative; }
-        .tlw-mover::after { content: ""; position: absolute; left: 50%; bottom: -0.5rem; width: 60%; height: 0.3rem; border-radius: 999px; background: rgba(17,24,39,0.22); transform: translateX(-50%); }
-        .team-live-worker.cashier .tlw-mover::after { display: none; }
-        .tlw-flip { transform-origin: 50% 100%; }
-        .tlw-flip.facing-left { transform: scaleX(-1); }
-        .team-live-worker.lying { --z: 6; width: clamp(5rem, 10cqw, 7.2rem); }
-        .team-live-worker.lying .tlw-mover::after { width: 96%; }
-        .tlw-sprite { display: block; width: 100%; height: auto; image-rendering: pixelated; filter: drop-shadow(0 2px 0 rgba(17,24,39,0.3)); }
-        .tlw-sprite-wrap { display: block; width: 100%; line-height: 0; transform-origin: 50% 100%; translate: 0 0; rotate: 0deg; scale: 1; will-change: translate, rotate, scale; }
-        .team-live-worker:not(.lying) .tlw-sprite-wrap { animation: tlwBodySway var(--move-dur, 2.8s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
-        .tlw-sprite-img { object-fit: contain; object-position: 50% 100%; pointer-events: none; user-select: none; }
-        .tlw-sprite-fallback { display: block; width: 100%; }
-        .tlw-plate { position: absolute; left: 50%; bottom: calc(100% + 0.1rem); z-index: 4; width: max-content; max-width: 5.6rem; min-width: 3.4rem; padding: 0.16rem 0.32rem 0.2rem; border: 1px solid rgba(17,24,39,0.82); border-radius: 0.5rem; background: rgba(255,255,255,0.92); box-shadow: 2px 2px 0 rgba(17,24,39,0.82); text-align: center; line-height: 1; transform: translateX(-50%); }
-        .tlw-name { display: block; overflow: hidden; color: #111827; font-size: 0.56rem; font-weight: 1000; text-overflow: ellipsis; white-space: nowrap; }
-        .tlw-hp { display: block; height: 0.36rem; margin-top: 0.16rem; overflow: hidden; border: 1px solid #111827; border-radius: 999px; background: #f1f5f9; }
-        .tlw-hp span { display: block; width: var(--hp); height: 100%; background: var(--hp-color); }
-        .team-live-summary { display: grid; gap: 0.6rem; padding: 0.65rem; background: #f8fafc; }
-        .team-live-rolebar { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-        .team-live-rolechip { display: inline-flex; align-items: center; gap: 0.3rem; border: 1px solid #e5e7eb; border-radius: 999px; background: #ffffff; padding: 0.25rem 0.5rem; color: #475569; font-size: 0.62rem; font-weight: 900; }
-        .team-live-ranklist { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
-        .team-live-rankitem { display: flex; align-items: center; gap: 0.45rem; min-width: 0; border: 1px solid #e5e7eb; border-radius: 0.6rem; background: #ffffff; padding: 0.4rem; }
-        .team-live-rankno { display: inline-flex; align-items: center; justify-content: center; width: 1.55rem; height: 1.55rem; flex: 0 0 auto; border-radius: 0.5rem; background: #eef2ff; color: #3730a3; font-size: 0.58rem; font-weight: 1000; }
-        .team-live-rankname { min-width: 0; flex: 1 1 auto; overflow: hidden; color: #111827; font-size: 0.68rem; font-weight: 1000; text-overflow: ellipsis; white-space: nowrap; }
-        .team-live-rankhp { flex: 0 0 auto; color: var(--hp-color); font-size: 0.62rem; font-weight: 1000; white-space: nowrap; }
-        @keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.65); } 100% { box-shadow: 0 0 0 0.45rem rgba(34,197,94,0); } }
-        @keyframes sceneOpenBlink { 0%, 58% { opacity: 1; } 59%, 72% { opacity: 0.35; } 73%, 100% { opacity: 1; } }
-        @keyframes sceneLampFlicker { 0%, 100% { opacity: 0.72; } 18% { opacity: 0.46; } 22% { opacity: 0.84; } 54% { opacity: 0.56; } 58% { opacity: 0.78; } }
-        @keyframes sceneWindowGlow { 0%, 100% { opacity: 0.62; } 50% { opacity: 0.88; } }
-        @keyframes tlwBodySway {
-            0%, 100% { translate: 0 0; rotate: 0deg; scale: 1; }
-            32% { translate: 0 -2px; rotate: -1.4deg; scale: 1.01 0.995; }
-            68% { translate: 0 -1px; rotate: 1.2deg; scale: 0.998 1.004; }
-        }
-        @media (max-width: 640px) {
-            .team-live-status { top: 3rem; right: auto; left: 0.7rem; }
-            .team-live-scroll-hint { display: block; padding: 0.35rem 0.65rem; border-bottom: 1px solid #e5e7eb; background: #f8fafc; color: #64748b; font-size: 0.58rem; font-weight: 800; text-align: center; }
-            .team-live-ranklist { grid-template-columns: 1fr; }
-        }
-
         /* Desktop 2-column layout for tab views (kept off .hidden so tab switching still works) */
         @media (min-width: 768px) {
             .md-grid-2:not(.hidden) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
             .md-grid-2:not(.hidden) > * + * { margin-top: 0 !important; }
             .md-grid-2:not(.hidden) > .md-colspan-2 { grid-column: span 2 / span 2; }
-        }
-        /* Minimal operations visual layer. Keeps existing DOM and behavior contracts intact. */
-        .app-header { background: rgba(255,255,255,0.96); color: var(--app-text); border-color: var(--app-border); box-shadow: 0 1px 0 rgba(15,23,42,0.05); backdrop-filter: blur(12px); }
-        .app-header .app-brand-mark { color: var(--app-primary); }
-        .app-header .app-branch { color: #334155; }
-        .app-header .app-user-row { color: var(--app-muted); }
-        .app-header #showUserName { color: #334155; }
-        .app-header #btn-sync, .app-header #btn-switch-branch { min-height: 2.5rem; background: #fff; color: #334155; border: 1px solid var(--app-border); box-shadow: none; }
-        .app-header #btn-sync:hover, .app-header #btn-switch-branch:hover { background: var(--app-surface-muted); border-color: #cbd5e1; }
-        .branch-selector { background: #f8fafc; color: var(--app-text); }
-        .branch-selector .selector-icon { color: var(--app-primary); }
-        .branch-selector #selector-user-name, .branch-selector .selector-caption { color: var(--app-muted); }
-        .branch-selector #btn-branch-akra, .branch-selector #btn-branch-trd { min-height: 3.25rem; border: 1px solid var(--app-border); border-radius: var(--app-radius); background: #fff; color: #1e293b; box-shadow: var(--app-shadow); }
-        .branch-selector #btn-branch-akra:hover, .branch-selector #btn-branch-trd:hover { border-color: #94a3b8; background: var(--app-surface-muted); }
-        #app-content { width: 100%; }
-        #app-content :where(h1,h2,h3,h4) { color: var(--app-text); letter-spacing: 0; text-wrap: balance; }
-        #app-content :where(.font-black,.font-extrabold) { font-weight: 700; }
-        #app-content :where(.text-gray-400,.text-gray-500,.text-slate-500) { color: var(--app-muted); }
-        #app-content :where(.bg-white.rounded-xl, .enterprise-card, .team-live-scene, .team-scene) { border: 1px solid var(--app-border); border-radius: var(--app-radius); box-shadow: var(--app-shadow); }
-        #app-content :where(.border-l-4,.border-b-4) { border-left-width: 1px; border-bottom-width: 1px; }
-        #app-content :where(input,select,textarea) { border-color: #cbd5e1; border-radius: 0.5rem; background: #fff; color: var(--app-text); }
-        #app-content :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea) { min-height: 2.75rem; }
-        #view-admin-dash :where(button, select, input) { min-height: 2.75rem; }
-        #view-admin-dash :where(table, .executive-metric, [id^="exec-metric-"]) { font-variant-numeric: tabular-nums; }
-        #app-content :where(input,select,textarea)::placeholder { color: #94a3b8; }
-        #app-content .workload-row :where(.wl-outbound,.wl-inbound,.wl-transfer,.wl-shared) { min-height: 3rem; border-color: #fcd34d; border-radius: 0.5rem; background: #fffbeb; }
-        #app-content .workload-row .wl-note { min-height: 2rem; border-color: transparent; border-radius: 0; background: transparent; }
-        #app-content :where(button) { border-radius: 0.5rem; box-shadow: none; }
-        #app-content :where(.bg-gradient-to-r,.bg-gradient-to-br) { background-image: none; }
-        #daily-dashboard-card { background: #ffffff; color: #111827; }
-        #daily-dashboard-card :where(h2,h3,h4) { color: #111827; }
-        #daily-dashboard-card .daily-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr)); }
-        #btn-save, #btn-save-admin { background: var(--app-primary); border-color: var(--app-primary-dark); box-shadow: 0 4px 12px rgba(29,78,216,0.18); }
-        #btn-save:hover, #btn-save-admin:hover { background: var(--app-primary-dark); }
-        #dash-smart-summary { color: #334155; }
-        .secondary-team-section { background: #fff; border-color: var(--app-border); }
-        .app-nav { background: rgba(255,255,255,0.97); border-color: var(--app-border); box-shadow: 0 -1px 0 rgba(15,23,42,0.05); backdrop-filter: blur(12px); }
-        .app-nav button { min-height: 3.5rem; color: var(--app-muted); }
-        .app-nav .tab-active { color: var(--app-primary); border-bottom-color: var(--app-primary); }
-        .app-nav .tab-inactive { color: var(--app-muted); }
-        .app-nav span { font-size: 0.75rem; font-weight: 500; letter-spacing: 0; }
-        @media (min-width: 768px) {
-            .app-header { padding-inline: max(1.5rem, calc((100vw - 64rem) / 2)); }
-            #app-content { max-width: 64rem; }
-            .app-nav > div { max-width: 40rem; margin-inline: auto; }
         }
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
@@ -311,156 +254,326 @@
     </header>
 
     <!-- Main Content Area -->
-    <main id="app-content" class="p-3 sm:p-4 max-w-md mx-auto hidden md:max-w-4xl lg:max-w-6xl md:p-6 pb-24 md:pb-10" tabindex="-1">
+    <main id="app-content" class="p-3 sm:p-4 max-w-md md:max-w-6xl mx-auto hidden md:p-6 pb-24 md:pb-10" tabindex="-1">
 
         <!-- ================= VIEW 1: WORKLOAD (สัดส่วนเวลา) ================= -->
-        <div id="view-workload" class="ops-view space-y-4 max-w-2xl mx-auto">
-            <!-- Date Selection -->
-            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
-                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-regular fa-calendar text-blue-500"></i>วันที่บันทึก:</label>
-                <input type="date" id="record-date" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-
-            <!-- AKRA Core Roster -->
-            <div id="akra-core-roster-card" class="hidden bg-white p-4 rounded-2xl shadow-sm border-l-4 border-amber-500 border-y border-r border-slate-200">
-                <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2">
-                    <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-warehouse text-amber-500"></i>ทีม AKRA ประจำกะ</h2>
-                    <span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full" id="akra-duty-count">0 คน</span>
-                </div>
+        <div id="view-workload" class="ops-view space-y-4 max-w-5xl mx-auto">
+            <!-- Title & Date Row -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-2">พนักงานที่เข้ากะ</label>
-                    <div id="akra-duty-roster" class="flex flex-wrap gap-2"></div>
+                    <h2 class="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-business-time text-blue-600"></i>
+                        สัดส่วนเวลาทำงานประจำวัน (Workload Capacity Allocation)
+                    </h2>
+                    <p class="text-xs text-slate-500">บันทึกง่ายภายใน 10 วินาที • ระบบทอนเวลางานหลักและคำนวณ 10 ชม. ให้อัตโนมัติ</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs bg-blue-100 text-blue-800 font-bold px-3 py-1.5 rounded-xl">เต็มวัน 10 ชม. (100%)</span>
+                    <input type="date" id="record-date" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
 
-            <!-- AKRA Workload Editor v2 -->
-            <div id="akra-workload-card" class="hidden bg-white p-4 rounded-2xl shadow-sm border-l-4 border-blue-600 border-y border-r border-slate-200">
-                <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2.5">
-                    <div>
-                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-business-time text-blue-600"></i> บันทึกสัดส่วนเวลาปฏิบัติงาน (Workload)
-                        </h2>
-                        <p class="text-[11px] text-slate-500 mt-0.5">ระบุหน้าที่หลักและงานช่วยเพื่อจัดสรรเวลา 10.0 ชม. อัตโนมัติ</p>
-                    </div>
-                    <span class="text-xs text-blue-700 font-bold bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200 shadow-sm">
-                        ฐาน 10.0 ชม. (100%)
-                    </span>
+            <!-- Responsive Layout Grid on PC: 2 Columns -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- Col 1: Form Entry -->
+                <div class="space-y-3.5">
+                    <!-- Step 1: Core Work -->
+                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                                งานหลักวันนี้ของคุณคืออะไร?
+                            </label>
+                            <span class="text-[11px] text-blue-600 font-semibold">แตะเลือก 1 อย่าง</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2" id="wl-core-grid">
+                            <button type="button" onclick="selectCore('คลัง W1', this)" class="core-btn chip-active p-3 rounded-xl border border-slate-200 bg-white text-left transition-all active:scale-95 flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm shrink-0 font-bold"><i class="fa-solid fa-warehouse"></i></div>
+                                <div><p class="text-xs font-bold text-slate-800 leading-tight">คลังหลัก W1</p><p class="text-[10px] text-slate-500">หยิบ/แพ็ก/จัดเก็บ</p></div>
+                            </button>
+
+                            <button type="button" onclick="selectCore('คลัง W2', this)" class="core-btn p-3 rounded-xl border border-slate-200 bg-white text-left transition-all active:scale-95 flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm shrink-0 font-bold"><i class="fa-solid fa-boxes-packing"></i></div>
+                                <div><p class="text-xs font-bold text-slate-800 leading-tight">คลังสำรอง W2</p><p class="text-[10px] text-slate-500">สต๊อกใหญ่/เติมของ</p></div>
+                            </button>
+
+                            <button type="button" onclick="selectCore('รับสินค้าเข้า', this)" class="core-btn p-3 rounded-xl border border-slate-200 bg-white text-left transition-all active:scale-95 flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm shrink-0 font-bold"><i class="fa-solid fa-truck-ramp-box"></i></div>
+                                <div><p class="text-xs font-bold text-slate-800 leading-tight">รับสินค้าเข้า</p><p class="text-[10px] text-slate-500">ตรวจรับ &amp; ลงสินค้า</p></div>
+                            </button>
+
+                            <button type="button" onclick="selectCore('ขาออก', this)" class="core-btn p-3 rounded-xl border border-slate-200 bg-white text-left transition-all active:scale-95 flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm shrink-0 font-bold"><i class="fa-solid fa-truck"></i></div>
+                                <div><p class="text-xs font-bold text-slate-800 leading-tight">ขาออก</p><p class="text-[10px] text-slate-500">จัดส่ง &amp; จ่ายออก</p></div>
+                            </button>
+
+                            <button type="button" onclick="selectCore('ขนย้ายสินค้า', this)" class="core-btn p-3 rounded-xl border border-slate-200 bg-white text-left transition-all active:scale-95 flex items-center gap-2.5 col-span-2">
+                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm shrink-0 font-bold"><i class="fa-solid fa-dolly"></i></div>
+                                <div><p class="text-xs font-bold text-slate-800 leading-tight">ขนย้ายสินค้า</p><p class="text-[10px] text-slate-500">โอนย้าย &amp; จัดระเบียบ</p></div>
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- Step 2: Support Work -->
+                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-[10px] font-bold">2</span>
+                                วันนี้มีไปช่วยงานอื่นไหม?
+                            </label>
+                            <span class="text-[11px] text-slate-500">ถ้าไม่มี ข้ามได้เลย</span>
+                        </div>
+
+                        <div id="wl-support-items" class="space-y-2"></div>
+
+                        <button type="button" onclick="openSupportModal()" class="w-full py-2.5 px-3 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/70 hover:bg-amber-100 text-amber-800 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-98">
+                            <i class="fa-solid fa-plus-circle text-amber-600 text-sm"></i>
+                            <span>แตะเพิ่มงานที่ไปช่วย (แวะขึ้นของ / ส่งของ / หน้าร้าน)</span>
+                        </button>
+                    </section>
                 </div>
-                <div id="akra-workload-container" class="space-y-4"></div>
-                <button type="button" id="btn-save-workload" onclick="saveWorkloadCard()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white font-bold py-3.5 rounded-xl text-sm shadow-md flex justify-center items-center border border-blue-700 gap-2">
-                    <i class="fa-solid fa-cloud-arrow-up text-base"></i> บันทึก Workload ประจำวัน
-                </button>
+
+                <!-- Col 2: Summary Calculation & Team Matrix -->
+                <div class="space-y-3.5">
+                    <!-- Live Time Breakdown Box -->
+                    <section class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-2xl shadow-md border border-slate-700 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-200 flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-amber-400"></i>
+                                สรุปการแบ่งเวลาวันนี้
+                            </span>
+                            <span id="wl-total-badge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/40">
+                                รวม 10.0 / 10.0 ชม. (ครบ)
+                            </span>
+                        </div>
+
+                        <div class="w-full h-4 bg-slate-950 rounded-full overflow-hidden flex p-0.5 border border-slate-700">
+                            <div id="wl-bar-c" style="width: 100%;" class="h-full bg-blue-500 rounded-l-full transition-all duration-300"></div>
+                            <div id="wl-bar-s" style="width: 0%;" class="h-full bg-amber-400 rounded-r-full transition-all duration-300"></div>
+                        </div>
+
+                        <div class="space-y-1.5 text-xs pt-1 border-t border-slate-700/60">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-300 flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>งานหลัก: <b class="text-white font-medium" id="wl-c-name">คลังหลัก W1</b></span>
+                                <span class="font-bold text-blue-400 font-num" id="wl-c-val">10.0 ชม. (100%)</span>
+                            </div>
+                            <div id="wl-s-breakdown" class="space-y-1 text-slate-300"></div>
+                        </div>
+
+                        <button type="button" onclick="saveWorkloadCard()" id="btn-save-workload" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 mt-2">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>บันทึก Workload ประจำวัน</span>
+                        </button>
+                    </section>
+
+                    <!-- PC Team Capacity Preview -->
+                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800 block"><i class="fa-solid fa-users text-blue-600 mr-1.5"></i>ภาพรวมการเข้ากะของทีมวันนี้</span>
+                            <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full" id="akra-duty-count">0 คน</span>
+                        </div>
+                        <div id="wl-team-preview" class="space-y-2 text-xs"></div>
+                    </section>
+                </div>
+
             </div>
         </div>
 
         <!-- ================= VIEW 2: ERROR & QC (บันทึกความผิดพลาด) ================= -->
-        <div id="view-error" class="ops-view hidden space-y-4 max-w-2xl mx-auto">
-            <!-- Date Selection -->
-            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
-                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-regular fa-calendar text-red-500"></i>วันที่บันทึก QC:</label>
-                <input type="date" id="record-date-error" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-red-500">
+        <div id="view-error" class="ops-view hidden space-y-4 max-w-5xl mx-auto">
+            <!-- Title & Date Row -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-red-600"></i>
+                        บันทึกความผิดพลาดหน้างาน (Multi-Category Incident Log)
+                    </h2>
+                    <p class="text-xs text-slate-500">บันทึกเคสขาออก, คลังหน้าร้าน/ตกเบิกสต๊อก, ขารับเข้า, โอนย้าย • คิดคะแนน Daily Cap</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs bg-red-100 text-red-800 font-bold px-3 py-1.5 rounded-xl">Checker / Lead</span>
+                    <input type="date" id="record-date-error" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-red-500">
+                </div>
             </div>
 
-            <!-- Errors / Incident Log -->
-            <div id="errors-card" class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-red-500 border-y border-r border-slate-200">
-                <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2.5">
-                    <div>
-                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-triangle-exclamation text-red-500"></i> บันทึกความผิดพลาด (Quality Control)
-                        </h2>
-                        <p class="text-[11px] text-slate-500 mt-0.5">บันทึกเหตุการณ์ผิดพลาดรายเคส หรือยืนยันศูนย์ความผิดพลาด</p>
-                    </div>
+            <!-- Responsive Layout Grid on PC: 2 Columns -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- Col 1: Error Entry Form -->
+                <div class="space-y-3.5">
+                    <button type="button" onclick="confirmZeroErrors()" class="w-full py-2.5 px-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center justify-between transition-all active:scale-98 shadow-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-check"></i></div>
+                            <span>วันนี้ตรวจแล้ว ไม่พบข้อผิดพลาด</span>
+                        </div>
+                        <span class="text-[10px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-md font-bold">ยืนยัน Zero Error</span>
+                    </button>
+
+                    <!-- Step 1: Worker select -->
+                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                                ผู้รับผิดชอบในเคสนี้:
+                            </label>
+                            <span class="text-[11px] text-red-600 font-semibold">แตะเลือกชื่อ</span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-emp-chips"></div>
+                    </section>
+
+                    <!-- Step 2: Category & Severity -->
+                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+                                หมวดหมู่และประเภทปัญหา:
+                            </label>
+                            <span class="text-[11px] text-slate-500">แตะเปลี่ยนหมวด</span>
+                        </div>
+                        <div class="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1" id="err-cat-pills">
+                            <button type="button" onclick="switchErrCategory('outbound', this)" class="cat-chip cat-chip-active shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><span>🚚</span><span>ขาออก</span></button>
+                            <button type="button" onclick="switchErrCategory('store_stock', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><span>🏪</span><span>หน้าร้าน/สต๊อก</span></button>
+                            <button type="button" onclick="switchErrCategory('inbound', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><span>📦</span><span>ขารับเข้า</span></button>
+                            <button type="button" onclick="switchErrCategory('transfer', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><span>🔄</span><span>โอนย้าย W2</span></button>
+                            <button type="button" onclick="switchErrCategory('shared', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><span>🤝</span><span>ร่วมรับผิดชอบ</span></button>
+                        </div>
+                        <div class="space-y-1.5" id="pc-err-severity-list"></div>
+                    </section>
+
+                    <!-- Step 3: Note & Save -->
+                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                        <label class="text-xs font-bold text-slate-800 block">3. รายละเอียดสินค้า / เลขที่บิล (สั้นๆ):</label>
+                        <input type="text" id="pc-err-note-input" placeholder="เช่น 'ตกเบิกนมสด 5 ลัง หน้าร้านของหมด'" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-red-500">
+                        <button type="button" onclick="saveErrorCaseFromPreview()" class="w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 mt-2 transition-all active:scale-95">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>บันทึกเคสความผิดพลาดทันที</span>
+                        </button>
+                    </section>
                 </div>
 
-                <!-- Zero Error Quick Confirm -->
-                <div class="mb-4 p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-2.5 text-xs text-emerald-800 font-semibold">
-                        <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-                        <span>ไม่มีข้อผิดพลาดในกะนี้ (Team HP 100%)</span>
-                    </div>
-                    <button type="button" onclick="confirmZeroErrors()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition-all text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5">
-                        <i class="fa-solid fa-check"></i> ยืนยัน 0 Error
-                    </button>
+                <!-- Col 2: Team HP & Incident Timeline -->
+                <div class="space-y-3.5">
+                    <section class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-2xl border border-slate-700 shadow-md space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-200 flex items-center gap-2"><i class="fa-solid fa-heart-pulse text-red-400"></i>คะแนน Team HP วันนี้ (Daily Cap)</span>
+                            <span class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-bold">ฐาน 100 ต่อคน</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs" id="err-team-hp-grid"></div>
+                    </section>
+
+                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+                        <div class="flex justify-between items-center text-xs border-b border-slate-100 pb-2">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-slate-400"></i>ไทม์ไลน์เคสที่บันทึกวันนี้</h3>
+                            <span class="text-[10px] text-slate-500" id="err-case-count">0 เคส</span>
+                        </div>
+                        <div id="pc-err-timeline" class="space-y-2"></div>
+                    </section>
                 </div>
 
-                <div id="error-entries-container" class="space-y-3"></div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
-                    <button type="button" onclick="addErrorEntryRow()" class="w-full bg-red-50 text-red-700 border border-red-200 font-bold py-3 rounded-xl text-xs active:bg-red-100 shadow-sm transition-all hover:bg-red-100 flex justify-center items-center gap-2">
-                        <i class="fa-solid fa-plus-circle text-sm"></i> เพิ่มรายการความผิดพลาด
-                    </button>
-                    <button type="button" id="btn-save-errors" onclick="saveErrorsCard()" class="w-full bg-red-600 hover:bg-red-700 active:scale-95 transition-all text-white font-bold py-3 rounded-xl text-xs shadow-md flex justify-center items-center border border-red-700 gap-2">
-                        <i class="fa-solid fa-cloud-arrow-up text-sm"></i> บันทึกความผิดพลาด
-                    </button>
-                </div>
             </div>
         </div>
 
         <!-- ================= VIEW 3: BILL COUNT & LIVE SYNC (สรุปบิลเบิกย้าย) ================= -->
-        <div id="view-billcount" class="ops-view hidden space-y-4 max-w-2xl mx-auto">
-            <!-- Date Selection -->
-            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
-                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-regular fa-calendar text-indigo-500"></i>วันที่สรุปบิล:</label>
-                <input type="date" id="record-date-billcount" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        <div id="view-billcount" class="ops-view hidden space-y-4 max-w-5xl mx-auto">
+            <!-- Title & Date Row -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-file-invoice text-indigo-600"></i>
+                        สรุปบิลเบิกย้ายคลังและจัดส่ง (Live Requisition Sync)
+                    </h2>
+                    <p class="text-xs text-slate-500">ดึงข้อมูลอัตโนมัติจากแอป Picking &amp; LINE กลุ่ม • ไม่ต้องนับมือ</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="date" id="record-date-billcount" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="button" onclick="syncDataFromSheet()" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 transition-colors">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        <span>รีเฟรชข้อมูล</span>
+                    </button>
+                </div>
             </div>
 
-            <!-- Live Requisitions & Transfer Sync Card -->
-            <div id="live-requisitions-card" class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-indigo-600 border-y border-r border-slate-200">
-                <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2.5">
-                    <div>
-                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-boxes-stacked text-indigo-600"></i> สรุปบิลเบิกย้าย &amp; จัดส่งวันนี้ (Live Sync)
-                        </h2>
-                        <p class="text-[11px] text-slate-500 mt-0.5">ดึงข้อมูลจริงจากระบบ Picking &amp; LINE อัตโนมัติ (ไม่ต้องนับมือ)</p>
+            <!-- Summary Stats Banner -->
+            <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white p-5 rounded-2xl border border-indigo-700/50 shadow-md space-y-3">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                        <span class="text-[10px] text-slate-400 block uppercase font-medium">บิลเบิกทั้งหมด</span>
+                        <span class="text-3xl font-black text-white font-num" id="live-bill-count">18</span>
+                        <span class="text-[10px] text-slate-400 block">บิล</span>
                     </div>
-                    <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ซิงค์เรียลไทม์
-                    </span>
-                </div>
-
-                <!-- 4 KPI Metrics -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
-                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center">
-                        <div class="text-[10px] text-slate-500 font-bold uppercase">บิลเบิกทั้งหมด</div>
-                        <div class="text-xl font-bold text-blue-600 mt-0.5" id="live-bill-count">18</div>
-                        <div class="text-[10px] text-slate-400 font-medium">บิลวันนี้</div>
+                    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                        <span class="text-[10px] text-slate-400 block uppercase font-medium">รายการสินค้า (SKU)</span>
+                        <span class="text-3xl font-black text-amber-400 font-num" id="live-sku-count">142</span>
+                        <span class="text-[10px] text-slate-400 block">รายการ</span>
                     </div>
-                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center">
-                        <div class="text-[10px] text-slate-500 font-bold uppercase">รายการ SKU</div>
-                        <div class="text-xl font-bold text-slate-800 mt-0.5" id="live-sku-count">142</div>
-                        <div class="text-[10px] text-slate-400 font-medium">รายการสินค้า</div>
+                    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                        <span class="text-[10px] text-slate-400 block uppercase font-medium">จำนวนชิ้นรวม</span>
+                        <span class="text-3xl font-black text-emerald-400 font-num" id="live-unit-count">1,280</span>
+                        <span class="text-[10px] text-slate-400 block">ชิ้น</span>
                     </div>
-                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center">
-                        <div class="text-[10px] text-slate-500 font-bold uppercase">จำนวนชิ้นรวม</div>
-                        <div class="text-xl font-bold text-indigo-600 mt-0.5" id="live-unit-count">1,280</div>
-                        <div class="text-[10px] text-slate-400 font-medium">ชิ้นสินค้า</div>
-                    </div>
-                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center">
-                        <div class="text-[10px] text-slate-500 font-bold uppercase">จัดตรงเวลา</div>
-                        <div class="text-xl font-bold text-emerald-600 mt-0.5" id="live-ontime-rate">98.5%</div>
-                        <div class="text-[10px] text-emerald-600 font-medium">On-Time SLA</div>
+                    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                        <span class="text-[10px] text-slate-400 block uppercase font-medium">สถานะจ่ายบิล</span>
+                        <span class="text-3xl font-black text-blue-400 font-num" id="live-ontime-rate">98.5%</span>
+                        <span class="text-[10px] text-emerald-400 block">จ่ายครบตรงเวลา</span>
                     </div>
                 </div>
 
-                <!-- Category Breakdown -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs mb-3">
-                    <div class="p-2.5 rounded-lg bg-blue-50/60 border border-blue-100 flex items-center justify-between">
-                        <span class="text-blue-900 font-medium">🏪 เติมหน้าร้าน TRD</span>
-                        <span class="font-bold text-blue-700" id="live-trd-count">10 บิล (650 ชิ้น)</span>
+                <!-- 3 Badges row -->
+                <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-xs">
+                    <div class="bg-indigo-900/40 p-2 rounded-lg text-center border border-indigo-700/30">
+                        <span class="text-[10px] text-indigo-300 block">🏪 เติมหน้าร้าน TRD</span>
+                        <b class="text-white font-num" id="live-trd-count">10 บิล (650 ชิ้น)</b>
                     </div>
-                    <div class="p-2.5 rounded-lg bg-amber-50/60 border border-amber-100 flex items-center justify-between">
-                        <span class="text-amber-900 font-medium">⚡ บิลเบิกด่วน</span>
-                        <span class="font-bold text-amber-700" id="live-urgent-count">5 บิล (320 ชิ้น)</span>
+                    <div class="bg-amber-900/40 p-2 rounded-lg text-center border border-amber-700/30">
+                        <span class="text-[10px] text-amber-300 block">⚡ บิลด่วน</span>
+                        <b class="text-white font-num" id="live-urgent-count">5 บิล (320 ชิ้น)</b>
                     </div>
-                    <div class="p-2.5 rounded-lg bg-purple-50/60 border border-purple-100 flex items-center justify-between">
-                        <span class="text-purple-900 font-medium">🚚 จัดส่งทั่วไป</span>
-                        <span class="font-bold text-purple-700" id="live-regular-count">3 บิล (310 ชิ้น)</span>
+                    <div class="bg-emerald-900/40 p-2 rounded-lg text-center border border-emerald-700/30">
+                        <span class="text-[10px] text-emerald-300 block">📦 จัดส่งปกติ/ตจว.</span>
+                        <b class="text-white font-num" id="live-regular-count">3 บิล (310 ชิ้น)</b>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Bill Table / Cards -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <h3 class="text-xs font-bold text-slate-800">รายการใบเบิกที่ส่งเข้ากลุ่ม LINE ประจำวันนี้</h3>
+                
+                <div class="space-y-2 text-xs" id="live-bill-list-cards">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold font-num text-xs">#18</span>
+                            <div>
+                                <p class="font-bold text-slate-900">บิลเติมหน้าร้าน TRD (นมสด 10 ลัง, เนย 5 กก., ชีส 3 แพ็ค)</p>
+                                <p class="text-[11px] text-slate-500">ผู้ขอเบิก: หน้าร้าน TRD (ท็อป) • เวลา: 10:05 น.</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-md">จัดเสร็จแล้ว</span>
+                            <p class="text-[10px] text-slate-400 mt-0.5">คนหยิบ: หมูหยอง</p>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold font-num text-xs">#17</span>
+                            <div>
+                                <p class="font-bold text-slate-900">⚡ บิลด่วน (แป้งสาลีตราพัดโบก 2 กระสอบ)</p>
+                                <p class="text-[11px] text-slate-500">ผู้ขอเบิก: แคชเชียร์ (มะปราง) • เวลา: 09:40 น.</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[11px] bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded-md">กำลังหยิบ</span>
+                            <p class="text-[10px] text-slate-400 mt-0.5">คนหยิบ: เอี้ยง</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Vendor Bills Card (AKRA only) -->
-            <div id="vendor-bills-card" class="hidden bg-white p-4 rounded-2xl shadow-sm border-l-4 border-blue-500 border-y border-r border-slate-200">
+            <div id="vendor-bills-card" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
                     <h2 class="text-base font-bold text-gray-800"><i class="fa-solid fa-file-invoice-dollar text-blue-500 mr-2"></i>งานเอกสาร &amp; ระบบ (Vendor Bills)</h2>
                 </div>
@@ -494,14 +607,13 @@
                         <textarea id="vendor-bills-pending-note" name="vendorBillsPendingNote" rows="3" maxlength="1200" class="w-full min-h-24 resize-y p-3 border border-slate-300 rounded-lg text-base bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="ระบุรายการ สาเหตุ หรือสิ่งที่ต้องติดตาม..."></textarea>
                     </div>
                 </div>
-                <!-- Save Button for Vendor Bills Card -->
                 <button type="button" id="btn-save-vendor-bills" onclick="saveVendorBillsCard()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white font-bold py-3.5 rounded-xl text-sm shadow-md flex justify-center items-center border border-blue-800">
                     <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึก Vendor Bills
                 </button>
             </div>
 
-            <!-- General Data (Hidden for TRD) -->
-            <div id="zone-2-container" data-scoped-save-card class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-blue-500 border-y border-r border-slate-200">
+            <!-- General Data (Volume & Shipping) -->
+            <div id="zone-2-container" data-scoped-save-card class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-base font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2"><i class="fa-solid fa-boxes-stacked text-blue-500 mr-2"></i>ข้อมูลงานประจำวัน (Volume &amp; Shipping)</h2>
 
                 <div class="space-y-4">
@@ -566,34 +678,137 @@
                     <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึกข้อมูลงานประจำวัน
                 </button>
             </div>
-
-            <!-- Weekly Tasks -->
-            <div id="weekly-tasks-card" data-scoped-save-card class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-purple-500 border-y border-r border-slate-200">
-                <div class="border-b border-gray-100 pb-2 mb-4">
-                    <h2 class="text-base font-bold text-gray-800"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>แผนงาน (สัปดาห์นี้)</h2>
-                    <p class="text-[11px] text-gray-500 mt-1">อัปเดตความคืบหน้างาน โปรดระบุผู้รับผิดชอบ</p>
-                </div>
-
-                <div id="task-entries-container" class="space-y-3"></div>
-
-                <button onclick="addTaskEntryRow()" class="mt-4 w-full bg-purple-50 text-purple-600 border border-purple-200 font-bold py-3 rounded-xl text-sm active:bg-purple-100 shadow-sm transition-all hover:bg-purple-100 flex justify-center items-center">
-                    <i class="fa-solid fa-plus-circle mr-2 text-lg"></i> เพิ่มแผนงานใหม่
-                </button>
-                <button type="button" id="btn-save-tasks" data-skip-draft-autosave onclick="saveTasksCard()" class="mt-2.5 min-h-12 w-full bg-purple-600 hover:bg-purple-700 active:scale-95 transition-all text-white font-bold px-4 py-3 rounded-xl text-sm shadow-md flex justify-center items-center border border-purple-800">
-                    <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึกแผนงานสัปดาห์นี้
-                </button>
-            </div>
         </div>
 
-        <!-- ================= VIEW 4: DASHBOARD & EOS ================= -->
-        <div id="view-dashboard" class="ops-view hidden space-y-4 pb-6 md-grid-2">
+        <!-- ================= VIEW 4: DASHBOARD & EXECUTIVE COCKPIT ================= -->
+        <div id="view-dashboard" class="ops-view hidden space-y-4 max-w-5xl mx-auto">
+            <!-- Widescreen Cockpit Header -->
+            <div class="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 shadow-md space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div>
+                        <h2 class="text-sm md:text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-amber-400"></i>
+                            Executive Cockpit: ภาพรวมการทำงานและประสิทธิภาพคลัง AKRA
+                        </h2>
+                        <p class="text-xs text-slate-400">วิเคราะห์ Workload Capacity, ปัญหาหน้างาน (Pareto), และสถิติการจ่ายบิล</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl font-bold">สัปดาห์ปัจจุบัน</span>
+                    </div>
+                </div>
+
+                <!-- 4 Metric Cards Row -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-slate-800/90 p-3.5 rounded-2xl border border-slate-700">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">งานหลักเฉลี่ยทีม</span>
+                        <div class="flex items-baseline gap-1 mt-1">
+                            <span class="text-2xl font-black text-blue-400 font-num" id="cockpit-primary-pct">82.5%</span>
+                            <span class="text-[10px] text-slate-400">(8.2 ชม.)</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-400 mt-1"><i class="fa-solid fa-check mr-1"></i>โฟกัสงานหลักเกณฑ์ดี</p>
+                    </div>
+
+                    <div class="bg-slate-800/90 p-3.5 rounded-2xl border border-slate-700">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">งานซัพพอร์ตดึงเวลา</span>
+                        <div class="flex items-baseline gap-1 mt-1">
+                            <span class="text-2xl font-black text-amber-400 font-num" id="cockpit-support-pct">17.5%</span>
+                            <span class="text-[10px] text-slate-400">(1.8 ชม.)</span>
+                        </div>
+                        <p class="text-[10px] text-amber-300 mt-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i>แวะขึ้นของสูง</p>
+                    </div>
+
+                    <div class="bg-slate-800/90 p-3.5 rounded-2xl border border-slate-700">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">คะแนน Team HP</span>
+                        <div class="flex items-baseline gap-1 mt-1">
+                            <span class="text-2xl font-black text-emerald-400 font-num" id="cockpit-team-hp">95 HP</span>
+                            <span class="text-[10px] text-slate-400">/ 100</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-400 mt-1"><i class="fa-solid fa-shield mr-1"></i>เกณฑ์วินัยปลอดภัย</p>
+                    </div>
+
+                    <div class="bg-slate-800/90 p-3.5 rounded-2xl border border-slate-700">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">ยอดจ่ายบิลสำเร็จ</span>
+                        <div class="flex items-baseline gap-1 mt-1">
+                            <span class="text-2xl font-black text-indigo-400 font-num" id="cockpit-bill-status">18/18</span>
+                            <span class="text-[10px] text-slate-400">บิล</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-400 mt-1"><i class="fa-solid fa-circle-check mr-1"></i>ไม่มีบิลค้าง</p>
+                    </div>
+                </div>
+
+                <!-- 2 Column Analytics Grid on PC -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Support Task Pareto -->
+                    <div class="bg-slate-800/70 p-4 rounded-2xl border border-slate-700 space-y-3">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-200">งานซัพพอร์ตที่ดึงเวลาทีมคลังมากที่สุด (Pareto)</span>
+                            <span class="text-[10px] text-slate-400">ชม. รวม</span>
+                        </div>
+
+                        <div class="space-y-2 text-xs" id="cockpit-pareto-tasks">
+                            <div>
+                                <div class="flex justify-between text-[11px] mb-1">
+                                    <span class="text-slate-300">🚛 แวะช่วยขึ้นของ / ลงของ</span>
+                                    <span class="font-bold text-amber-400 font-num">8.5 ชม. (48%)</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden">
+                                    <div class="bg-amber-400 h-full rounded-full" style="width: 48%;"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-[11px] mb-1">
+                                    <span class="text-slate-300">🛵 แวะช่วยส่งของ / วิ่งงานด่วน</span>
+                                    <span class="font-bold text-blue-400 font-num">4.5 ชม. (26%)</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden">
+                                    <div class="bg-blue-400 h-full rounded-full" style="width: 26%;"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-[11px] mb-1">
+                                    <span class="text-slate-300">🏪 ซัพพอร์ตหน้าร้าน TRD</span>
+                                    <span class="font-bold text-purple-400 font-num">3.0 ชม. (17%)</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden">
+                                    <div class="bg-purple-400 h-full rounded-full" style="width: 17%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Incident Log Summary -->
+                    <div class="bg-slate-800/70 p-4 rounded-2xl border border-slate-700 space-y-3">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-200">สถิติปัญหาที่พบบ่อย (Incident Pareto)</span>
+                            <span class="text-[10px] text-slate-400">สัปดาห์นี้</span>
+                        </div>
+
+                        <div class="space-y-1.5 text-xs" id="cockpit-pareto-errors">
+                            <div class="flex justify-between p-2.5 bg-slate-900/60 rounded-xl border border-slate-800">
+                                <span class="text-slate-300">🟢 หยิบผิด แก้ทันก่อนจัดส่ง (ขาออก)</span>
+                                <span class="font-bold text-emerald-400 font-num">1 ครั้ง (-5)</span>
+                            </div>
+                            <div class="flex justify-between p-2.5 bg-slate-900/60 rounded-xl border border-slate-800">
+                                <span class="text-slate-300">🏪 ตกเบิกสต๊อก / ของหมดไม่แจ้ง (หน้าร้าน)</span>
+                                <span class="font-bold text-amber-400 font-num">1 ครั้ง (-5)</span>
+                            </div>
+                            <div class="flex justify-between p-2.5 bg-slate-900/60 rounded-xl border border-slate-800">
+                                <span class="text-slate-300">📦 วางสินค้าไม่เรียบร้อย (ขารับเข้า)</span>
+                                <span class="font-bold text-blue-400 font-num">0 ครั้ง</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Daily End-of-Shift Executive Brief -->
-            <section id="daily-eos-card" data-scoped-save-card class="enterprise-card p-4 md-colspan-2 border-l-4 border-l-slate-700" aria-labelledby="eos-title">
+            <section id="daily-eos-card" data-scoped-save-card class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm" aria-labelledby="eos-title">
                 <div class="border-b border-slate-100 pb-3 mb-4">
                     <div class="flex items-start justify-between gap-3">
                         <div>
-                            <h2 id="eos-title" class="text-lg font-semibold text-slate-900">สรุปรายงานประจำวัน (End of Shift)</h2>
+                            <h2 id="eos-title" class="text-base font-semibold text-slate-900">สรุปรายงานประจำวัน (End of Shift)</h2>
                             <p class="text-[11px] text-slate-500 mt-1">สรุปรายงานประจำวัน เน้นผลลัพธ์ ประเด็น และสิ่งที่ต้องติดตาม</p>
                         </div>
                         <span class="shrink-0 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 px-2 py-1 rounded-md">รายงานประจำวัน</span>
@@ -1378,6 +1593,42 @@
         <span id="toast-msg" class="text-sm font-medium tracking-wide">บันทึกสำเร็จ</span>
     </div>
 
+    <!-- Modal Support Picker from all-in-one-preview.html -->
+    <div id="support-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+        <div class="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-4 shadow-2xl space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5"><i class="fa-solid fa-hand-holding-hand text-amber-500"></i>เพิ่มงานที่ไปช่วย</h3>
+                <button type="button" onclick="closeSupportModal()" class="w-6 h-6 rounded-full bg-slate-100 text-slate-500 text-xs hover:bg-slate-200">✕</button>
+            </div>
+            <div>
+                <label class="text-[11px] font-bold text-slate-600 block mb-1.5">เลือกงานที่ไปช่วย:</label>
+                <div class="grid grid-cols-2 gap-1.5" id="modal-task-grid">
+                    <button type="button" onclick="selectModalTask('แวะขึ้นของ', '🚛', this)" class="modal-task-chip support-chip-active p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold">🚛 แวะขึ้นของ</button>
+                    <button type="button" onclick="selectModalTask('แวะไปส่งของ', '🛵', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold">🛵 แวะไปส่งของ</button>
+                    <button type="button" onclick="selectModalTask('ช่วยหน้าร้าน TRD', '🏪', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold">🏪 ช่วยหน้าร้าน</button>
+                    <button type="button" onclick="selectModalTask('ช่วยย้ายของ W2', '🔄', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold">🔄 ช่วยย้ายของ W2</button>
+                    <button type="button" onclick="selectModalTask('ช่วยยกสินค้า', '📦', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold">📦 ช่วยยกสินค้า</button>
+                    <button type="button" onclick="selectModalTask('คลัง W1', '🏬', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold">🏬 คลัง W1</button>
+                    <button type="button" onclick="selectModalTask('รับสินค้าเข้า', '📥', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold">📥 รับสินค้าเข้า</button>
+                    <button type="button" onclick="selectModalTask('ขาออก', '📤', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold">📤 ขาออก</button>
+                </div>
+            </div>
+            <div>
+                <label class="text-[11px] font-bold text-slate-600 block mb-1.5">ระยะเวลาที่ไปช่วย:</label>
+                <div class="grid grid-cols-4 gap-1.5" id="modal-time-grid">
+                    <button type="button" onclick="selectModalTime(0.5, this)" class="modal-time-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-bold font-num">30 นาที</button>
+                    <button type="button" onclick="selectModalTime(1.0, this)" class="modal-time-chip support-chip-active p-2 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-bold font-num">1 ชม.</button>
+                    <button type="button" onclick="selectModalTime(2.0, this)" class="modal-time-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-bold font-num">2 ชม.</button>
+                    <button type="button" onclick="selectModalTime(5.0, this)" class="modal-time-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-bold font-num">ครึ่งวัน (5h)</button>
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeSupportModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-600 transition-colors">ยกเลิก</button>
+                <button type="button" onclick="confirmAddSupportTask()" class="flex-[2] py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-xs font-bold text-slate-950 shadow-md transition-all">ยืนยันเพิ่มงาน</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Modal -->
     <div id="custom-modal" class="hidden fixed inset-0 bg-gray-900/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-200">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-200" id="custom-modal-content">
@@ -1566,7 +1817,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260822.03";
+        const CURRENT_VERSION = "20260822.04";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3657,7 +3908,13 @@
         }
 
         function getAkraOnDutyEmployees() {
-            return getCheckedValues('.akra-duty-cb');
+            const checked = getCheckedValues('.akra-duty-cb');
+            if (checked && checked.length > 0) return checked;
+            if (typeof GLOBAL_CONFIG_LIST !== 'undefined' && Array.isArray(GLOBAL_CONFIG_LIST)) {
+                const akraConfig = GLOBAL_CONFIG_LIST.filter(c => c.branch === 'AKRA' && (c.status === 'Active' || !c.status)).map(c => c.name);
+                if (akraConfig.length > 0) return akraConfig;
+            }
+            return ['หมูหยอง', 'เอี้ยง', 'ปีเตอร์', 'เบียร์', 'แบงค์'];
         }
 
         function getAkraCoreRoster() {
@@ -3760,363 +4017,377 @@
             { hours: 5.0, label: '5.0 ชม.' }
         ];
 
-        function getAkraWorkloadValues() {
-            if (currentBranch !== 'AKRA') return [];
-            const container = document.getElementById('akra-workload-container');
-            if (!container) return [];
+        let workloadState = {
+            core: 'คลัง W1',
+            coreLabel: 'คลังหลัก W1',
+            totalHours: 10.0,
+            support: [
+                { id: 1, name: 'แวะขึ้นของ', icon: '🚛', hours: 1.0 },
+                { id: 2, name: 'แวะไปส่งของ', icon: '🛵', hours: 0.5 }
+            ]
+        };
 
-            const rows = [];
-            container.querySelectorAll('.workload-row-v2').forEach(row => {
-                const emp = row.dataset.employee;
-                const capacity = 10;
-                const primaryCore = row.dataset.primaryCore || 'คลัง W1';
-                
-                let supportDuties = [];
-                try {
-                    supportDuties = JSON.parse(row.dataset.supportDuties || '[]');
-                } catch (e) {
-                    supportDuties = [];
-                }
+        let errCategory = 'outbound';
+        let selectedErrWorker = 'ทุกคนในกะ';
+        let recordedErrorCases = [];
 
-                const totalSupportHours = supportDuties.reduce((s, d) => s + (parseFloat(d.hours) || 0), 0);
-                const primaryHours = Math.max(0, capacity - totalSupportHours);
+        const ERROR_CATALOG = {
+            outbound: [
+                { name: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5, desc: 'ตรวจพบที่จุดเช็คก่อนขึ้นรถ', dot: 'bg-emerald-500' },
+                { name: 'หยิบผิด ถึงหน้าร้านแล้ว', penalty: 10, desc: 'ของหลุดไปหน้าร้าน TRD แล้วแจ้งกลับ', dot: 'bg-amber-500' },
+                { name: 'หยิบผิด ถึงลูกค้าแล้ว', penalty: 20, desc: 'ของส่งถึงลูกค้าแล้ว ลูกค้าแจ้งเคลม', dot: 'bg-red-600' }
+            ],
+            store_stock: [
+                { name: 'ตกเบิกสต๊อก / ของหมดไม่แจ้ง', penalty: 5, desc: 'สินค้าหมดไม่ส่งสัญญาณเตือนเติมของ', dot: 'bg-amber-500' },
+                { name: 'ปล่อยชั้นวางว่าง / เติมของช้า', penalty: 5, desc: 'หน้าร้านชั้นวางโล่ง ลูกค้ารอสินค้านาน', dot: 'bg-amber-500' }
+            ],
+            inbound: [
+                { name: 'วางสินค้าไม่เรียบร้อย/ผิดตำแหน่ง', penalty: 3, desc: 'ขารับเข้าจัดวางของผิดช่อง', dot: 'bg-blue-500' }
+            ],
+            transfer: [
+                { name: 'โอน W2→W1 จำนวนไม่ตรง', penalty: 5, desc: 'ย้ายของข้ามคลังยอดไม่ตรงกับใบเบิก', dot: 'bg-amber-500' }
+            ],
+            shared: [
+                { name: 'ร่วมรับผิดชอบทั้งกะ (ความผิดพลาดรวม)', penalty: 5, desc: 'หักคะแนน HP เฉลี่ยทุกคนในกะ', dot: 'bg-purple-500' }
+            ]
+        };
 
-                let outbound = 0, inbound = 0, transfer = 0, shared = 0;
-                if (primaryCore === 'คลัง W1' || primaryCore === 'ขาออก' || primaryCore === 'ส่งสินค้า') outbound += primaryHours;
-                else if (primaryCore === 'รับสินค้าเข้า' || primaryCore === 'ช่วยยกสินค้า') inbound += primaryHours;
-                else if (primaryCore === 'คลัง W2' || primaryCore === 'ขนย้ายสินค้า') transfer += primaryHours;
-                else shared += primaryHours;
+        let modalTask = { name: 'แวะขึ้นของ', icon: '🚛', hours: 1.0 };
 
-                supportDuties.forEach(d => {
-                    const h = parseFloat(d.hours) || 0;
-                    if (d.name === 'คลัง W1' || d.name === 'ขาออก' || d.name === 'ส่งสินค้า' || d.name === 'สนับสนุน TRD') outbound += h;
-                    else if (d.name === 'รับสินค้าเข้า' || d.name === 'ช่วยยกสินค้า') inbound += h;
-                    else if (d.name === 'คลัง W2' || d.name === 'ขนย้ายสินค้า') transfer += h;
-                    else shared += h;
-                });
-
-                const note = row.querySelector('.wl-note')?.value || (supportDuties.length > 0 ? supportDuties.map(d => `${d.name} ${d.hours}h`).join(', ') : '');
-
-                rows.push({
-                    employee: emp,
-                    capacity: 10,
-                    outbound: Math.round(outbound * 10) / 10,
-                    inbound: Math.round(inbound * 10) / 10,
-                    transfer: Math.round(transfer * 10) / 10,
-                    shared: Math.round(shared * 10) / 10,
-                    note: note || '',
-                    primaryCore,
-                    supportDuties
-                });
-            });
-            return rows;
+        function selectCore(name, btn) {
+            workloadState.core = name;
+            workloadState.coreLabel = name;
+            document.querySelectorAll('.core-btn').forEach(el => el.classList.remove('chip-active'));
+            if (btn) btn.classList.add('chip-active');
+            renderWorkload();
+            saveRecordDraftDebounced();
         }
 
-        function renderAkraWorkloadEditor(savedData = null, forceReset = false) {
-            if (currentBranch !== 'AKRA') {
-                const card = document.getElementById('akra-workload-card');
-                if (card) card.classList.add('hidden');
-                return;
+        function renderWorkload() {
+            const totalS = (workloadState.support || []).reduce((sum, t) => sum + (parseFloat(t.hours) || 0), 0);
+            const coreH = Math.max(0, workloadState.totalHours - totalS);
+            const coreP = Math.round((coreH / workloadState.totalHours) * 100);
+            const sP = Math.round((totalS / workloadState.totalHours) * 100);
+
+            const barC = document.getElementById('wl-bar-c');
+            const barS = document.getElementById('wl-bar-s');
+            const cName = document.getElementById('wl-c-name');
+            const cVal = document.getElementById('wl-c-val');
+            const totalBadge = document.getElementById('wl-total-badge');
+
+            if (barC) barC.style.width = `${coreP}%`;
+            if (barS) barS.style.width = `${sP}%`;
+            if (cName) cName.textContent = workloadState.coreLabel || workloadState.core;
+            if (cVal) cVal.textContent = `${coreH.toFixed(1)} ชม. (${coreP}%)`;
+            if (totalBadge) {
+                if (totalS > 10.0) {
+                    totalBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-red-950 text-red-300 border border-red-500/40';
+                    totalBadge.textContent = `เกิน ${(totalS + coreH).toFixed(1)} / 10.0 ชม.`;
+                } else {
+                    totalBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/40';
+                    totalBadge.textContent = `รวม 10.0 / 10.0 ชม. (ครบ)`;
+                }
             }
 
-            const card = document.getElementById('akra-workload-card');
-            if (card) card.classList.remove('hidden');
+            const container = document.getElementById('wl-support-items');
+            if (container) {
+                if (!workloadState.support || workloadState.support.length === 0) {
+                    container.innerHTML = `<div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70 text-center text-xs text-slate-500">ไม่มีงานแทรก ทำงานหลักเต็มวัน 100%</div>`;
+                } else {
+                    container.innerHTML = workloadState.support.map(task => `
+                        <div class="flex items-center justify-between p-2.5 bg-amber-50/70 rounded-xl border border-amber-200 text-xs">
+                            <div class="flex items-center gap-2"><span class="text-base">${task.icon || '📦'}</span><span class="font-bold text-slate-800">${esc(task.name)}</span></div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-md font-num text-[11px]">${task.hours} ชม.</span>
+                                <button type="button" onclick="removeSupport(${task.id})" class="w-6 h-6 rounded-full bg-red-100 text-red-600 hover:bg-red-200 flex items-center justify-center text-xs" title="ลบงานนี้"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
 
+            const breakdown = document.getElementById('wl-s-breakdown');
+            if (breakdown) {
+                breakdown.innerHTML = (workloadState.support || []).map(t => {
+                    const pct = Math.round(((parseFloat(t.hours) || 0) / workloadState.totalHours) * 100);
+                    return `<div class="flex justify-between pl-3 border-l-2 border-amber-400"><span>${t.icon || '📦'} ${esc(t.name)}</span><span class="font-bold text-amber-400 font-num">${t.hours} ชม. (${pct}%)</span></div>`;
+                }).join('');
+            }
+
+            renderTeamWorkloadPreview();
+        }
+
+        function removeSupport(id) {
+            workloadState.support = (workloadState.support || []).filter(t => t.id !== id);
+            renderWorkload();
+            saveRecordDraftDebounced();
+        }
+
+        function openSupportModal() {
+            const modal = document.getElementById('support-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeSupportModal() {
+            const modal = document.getElementById('support-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function selectModalTask(name, icon, btn) {
+            modalTask.name = name; modalTask.icon = icon;
+            document.querySelectorAll('.modal-task-chip').forEach(el => el.classList.remove('support-chip-active'));
+            if (btn) btn.classList.add('support-chip-active');
+        }
+
+        function selectModalTime(hours, btn) {
+            modalTask.hours = hours;
+            document.querySelectorAll('.modal-time-chip').forEach(el => el.classList.remove('support-chip-active'));
+            if (btn) btn.classList.add('support-chip-active');
+        }
+
+        function confirmAddSupportTask() {
+            if (!workloadState.support) workloadState.support = [];
+            workloadState.support.push({ id: Date.now(), name: modalTask.name, icon: modalTask.icon || '📦', hours: modalTask.hours });
+            closeSupportModal();
+            renderWorkload();
+            saveRecordDraftDebounced();
+        }
+
+        function renderTeamWorkloadPreview() {
+            const previewContainer = document.getElementById('wl-team-preview');
+            if (!previewContainer) return;
             const onDuty = getAkraOnDutyEmployees();
-            const container = document.getElementById('akra-workload-container');
-            if (!container) return;
+            const dutyCountEl = document.getElementById('akra-duty-count');
+            if (dutyCountEl) dutyCountEl.textContent = `${onDuty.length} คน`;
 
-            const isUserAdmin = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin'));
-            const visibleEmployees = isUserAdmin
-                ? onDuty
-                : onDuty.filter(emp => normalizeEmpName(emp) === normalizeEmpName(displayUserName) || normalizeEmpName(emp) === normalizeEmpName(currentUser));
-
-            if (visibleEmployees.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                        <i class="fa-solid fa-user-clock text-slate-400 text-2xl mb-2"></i>
-                        <p class="text-xs text-slate-500 font-medium">ไม่มีพนักงานเข้ากะสำหรับการระบุ Workload</p>
-                    </div>`;
+            if (onDuty.length === 0) {
+                previewContainer.innerHTML = `<div class="p-2 text-slate-400 text-center">ไม่มีพนักงานเข้ากะ</div>`;
                 return;
             }
 
-            const currentMap = {};
-            if (!forceReset) {
-                container.querySelectorAll('.workload-row-v2').forEach(row => {
-                    const emp = row.dataset.employee;
-                    const normKey = normalizeEmpName(emp);
-                    let supp = [];
-                    try { supp = JSON.parse(row.dataset.supportDuties || '[]'); } catch (e) {}
-                    currentMap[normKey] = {
-                        primaryCore: row.dataset.primaryCore || 'คลัง W1',
-                        supportDuties: supp,
-                        note: row.querySelector('.wl-note')?.value || ''
-                    };
-                });
-            }
-
-            if (savedData && Array.isArray(savedData)) {
-                savedData.forEach(item => {
-                    const normKey = normalizeEmpName(item.employee);
-                    currentMap[normKey] = {
-                        primaryCore: item.primaryCore || (item.inbound > item.outbound ? 'รับสินค้าเข้า' : (item.transfer > item.outbound ? 'คลัง W2' : 'คลัง W1')),
-                        supportDuties: item.supportDuties || [],
-                        note: item.note || ''
-                    };
-                });
-            }
-
-            container.innerHTML = visibleEmployees.map(emp => {
-                const normKey = normalizeEmpName(emp);
-                const val = currentMap[normKey] || { primaryCore: 'คลัง W1', supportDuties: [], note: '' };
-                const hasSupport = val.supportDuties && val.supportDuties.length > 0;
-                const totalSupportHours = (val.supportDuties || []).reduce((s, d) => s + (parseFloat(d.hours) || 0), 0);
-                const primaryHours = Math.max(0, 10 - totalSupportHours);
-                const primaryPct = Math.round((primaryHours / 10) * 100);
-                const supportPct = Math.round((totalSupportHours / 10) * 100);
-                const canEditRow = isUserAdmin || normalizeEmpName(emp) === normalizeEmpName(displayUserName) || normalizeEmpName(emp) === normalizeEmpName(currentUser);
-
+            previewContainer.innerHTML = onDuty.map(emp => {
+                const isMe = normalizeEmpName(emp) === normalizeEmpName(displayUserName) || normalizeEmpName(emp) === normalizeEmpName(currentUser);
+                const core = isMe ? (workloadState.core || 'คลัง W1') : 'คลัง W1';
+                const hasSupp = isMe ? ((workloadState.support || []).length > 0) : false;
                 return `
-                <div class="workload-row-v2 enterprise-card p-4 border border-slate-200 shadow-sm rounded-xl space-y-3" 
-                     id="wl-row-${esc(emp)}" 
-                     data-employee="${esc(emp)}" 
-                     data-capacity="10" 
-                     data-primary-core="${esc(val.primaryCore)}" 
-                     data-support-duties='${JSON.stringify(val.supportDuties || [])}'>
-                    
-                    <!-- Header -->
-                    <div class="flex justify-between items-center pb-2.5 border-b border-slate-100">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-lg bg-blue-600/10 text-blue-600 font-bold flex items-center justify-center text-xs">
-                                ${esc(emp.substring(0, 2))}
-                            </div>
-                            <div>
-                                <span class="text-sm font-bold text-slate-800">${esc(emp)}</span>
-                                <span class="text-[10px] text-slate-400 block">${canEditRow ? 'ผู้ปฏิบัติงาน (บัญชีของคุณ)' : 'พนักงานประจำกะ'}</span>
-                            </div>
+                    <div class="p-2 rounded-xl border ${isMe ? 'border-blue-300 bg-blue-50/50' : 'border-slate-100 bg-slate-50'} flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full ${isMe ? 'bg-blue-600' : 'bg-slate-400'}"></span>
+                            <span class="font-bold text-slate-800">${esc(emp)}</span>
+                            ${isMe ? '<span class="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded font-bold">คุณ</span>' : ''}
                         </div>
-                        <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                            กะทำงาน 10.0 ชม.
-                        </span>
-                    </div>
-
-                    <!-- Step 1: เลือกหน้าที่หลัก -->
-                    <div>
-                        <div class="text-[11px] font-bold text-slate-600 mb-1.5 flex items-center gap-1.5">
-                            <span class="w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-bold flex items-center justify-center">1</span>
-                            <span>เลือกหน้าที่หลักวันนี้</span>
-                        </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-                            ${AKRA_PRIMARY_DUTIES.map(d => {
-                                const isSelected = val.primaryCore === d.name;
-                                return `
-                                <button type="button" 
-                                        ${canEditRow ? '' : 'disabled'}
-                                        onclick="selectPrimaryCore('${esc(emp)}', '${esc(d.name)}')" 
-                                        class="p-2.5 rounded-xl border text-left transition-all ${isSelected ? 'border-blue-600 bg-blue-50/70 text-blue-900 ring-2 ring-blue-500/20' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}">
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <i class="fa-solid ${d.icon} ${isSelected ? 'text-blue-600' : 'text-slate-400'} text-xs"></i>
-                                        <span class="text-xs font-bold truncate">${esc(d.name)}</span>
-                                    </div>
-                                    <div class="text-[10px] ${isSelected ? 'text-blue-700 font-medium' : 'text-slate-400'} leading-tight">${esc(d.desc)}</div>
-                                </button>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-
-                    <!-- Step 2: งานสนับสนุน -->
-                    <div>
-                        <div class="text-[11px] font-bold text-slate-600 mb-1.5 flex items-center gap-1.5">
-                            <span class="w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-bold flex items-center justify-center">2</span>
-                            <span>งานสนับสนุน / ช่วยงานอื่น</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button type="button" 
-                                    ${canEditRow ? '' : 'disabled'}
-                                    onclick="toggleSupportMode('${esc(emp)}', false)" 
-                                    class="p-2.5 rounded-xl border text-left transition-all ${!hasSupport ? 'border-emerald-600 bg-emerald-50/70 text-emerald-900 ring-2 ring-emerald-500/20' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-solid fa-circle-check ${!hasSupport ? 'text-emerald-600' : 'text-slate-400'} text-xs"></i>
-                                    <span class="text-xs font-bold">ไม่มี</span>
-                                </div>
-                                <div class="text-[10px] ${!hasSupport ? 'text-emerald-700 font-medium' : 'text-slate-400'} mt-0.5">ทำงานหลักเต็มวัน 10 ชม.</div>
-                            </button>
-
-                            <button type="button" 
-                                    ${canEditRow ? '' : 'disabled'}
-                                    onclick="toggleSupportMode('${esc(emp)}', true)" 
-                                    class="p-2.5 rounded-xl border text-left transition-all ${hasSupport ? 'border-amber-600 bg-amber-50/70 text-amber-900 ring-2 ring-amber-500/20' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-solid fa-handshake-angle ${hasSupport ? 'text-amber-600' : 'text-slate-400'} text-xs"></i>
-                                    <span class="text-xs font-bold">มีงานสนับสนุน</span>
-                                </div>
-                                <div class="text-[10px] ${hasSupport ? 'text-amber-700 font-medium' : 'text-slate-400'} mt-0.5">ถูกดึงเวลาไปช่วยงานอื่น</div>
-                            </button>
-                        </div>
-
-                        <!-- Support Detail Container -->
-                        <div class="${hasSupport ? '' : 'hidden'} mt-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5" id="supp-detail-${esc(emp)}">
-                            <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">เลือกงานช่วย &amp; ระยะเวลา</div>
-                            
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                                ${AKRA_SUPPORT_DUTIES.map(sd => {
-                                    const activeItem = (val.supportDuties || []).find(d => d.name === sd.name);
-                                    const isItemActive = !!activeItem;
-                                    return `
-                                    <button type="button" 
-                                            ${canEditRow ? '' : 'disabled'}
-                                            onclick="toggleSupportTaskItem('${esc(emp)}', '${esc(sd.name)}')" 
-                                            class="p-2 rounded-lg border text-left transition-all ${isItemActive ? 'border-amber-500 bg-amber-100/70 text-amber-900 font-bold' : 'border-slate-200 bg-white text-slate-700 text-xs'}">
-                                        <div class="flex items-center gap-1.5 truncate">
-                                            <i class="fa-solid ${sd.icon} ${isItemActive ? 'text-amber-600' : 'text-slate-400'} text-xs"></i>
-                                            <span class="text-xs truncate">${esc(sd.name)}</span>
-                                        </div>
-                                    </button>
-                                    `;
-                                }).join('')}
-                            </div>
-
-                            <!-- Duration Selection for active support items -->
-                            ${(val.supportDuties || []).map((sd, idx) => `
-                                <div class="p-2 bg-white rounded-lg border border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-angle-right text-amber-500 text-xs"></i> ${esc(sd.name)}
-                                    </span>
-                                    <div class="flex items-center gap-1">
-                                        ${AKRA_SUPPORT_DURATIONS.map(dur => {
-                                            const isSelectedDur = parseFloat(sd.hours) === dur.hours;
-                                            return `
-                                            <button type="button" 
-                                                    ${canEditRow ? '' : 'disabled'}
-                                                    onclick="setSupportTaskDuration('${esc(emp)}', ${idx}, ${dur.hours})" 
-                                                    class="px-2 py-1 rounded text-[10px] font-bold transition-all ${isSelectedDur ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
-                                                ${dur.label}
-                                            </button>
-                                            `;
-                                        }).join('')}
-                                        <button type="button" 
-                                                ${canEditRow ? '' : 'disabled'}
-                                                onclick="removeSupportTaskItem('${esc(emp)}', ${idx})" 
-                                                class="w-6 h-6 rounded bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center text-xs ml-1" title="ลบรายการนี้">
-                                            <i class="fa-solid fa-trash-can text-[10px]"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-
-                    <!-- Live Calculation & Balance Bar -->
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="font-bold text-slate-700">สัดส่วนเวลาวันนี้:</span>
-                            <span class="font-bold text-slate-900" id="wl-summary-text-${esc(emp)}">
-                                ${esc(val.primaryCore)} (${primaryHours.toFixed(1)} ชม. • ${primaryPct}%)
-                                ${hasSupport ? `+ งานช่วย (${totalSupportHours.toFixed(1)} ชม. • ${supportPct}%)` : ''}
+                        <div class="flex items-center gap-2">
+                            <span class="text-slate-600 font-medium">${esc(core)}</span>
+                            <span class="text-[10px] font-bold ${hasSupp ? 'text-amber-700 bg-amber-100' : 'text-emerald-700 bg-emerald-100'} px-2 py-0.5 rounded-full font-num">
+                                ${hasSupp ? 'มีงานช่วย' : '100% หลัก'}
                             </span>
                         </div>
-                        <div class="w-full bg-slate-200 rounded-full h-2 flex overflow-hidden">
-                            <div class="bg-blue-600 h-full transition-all duration-300" style="width: ${primaryPct}%;" title="งานหลัก ${primaryHours} ชม."></div>
-                            <div class="bg-amber-500 h-full transition-all duration-300" style="width: ${supportPct}%;" title="งานช่วย ${totalSupportHours} ชม."></div>
-                        </div>
-                        <div class="flex justify-between text-[10px] text-slate-400 font-medium pt-0.5">
-                            <span>งานหลัก: ${primaryHours.toFixed(1)} ชม.</span>
-                            <span>งานช่วย: ${totalSupportHours.toFixed(1)} ชม.</span>
-                            <span class="text-emerald-600 font-bold">รวม 10.0 ชม. (100%)</span>
-                        </div>
                     </div>
-
-                    <!-- Note -->
-                    <div>
-                        <input type="text" 
-                               ${canEditRow ? '' : 'readonly'}
-                               placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)..." 
-                               class="wl-note w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 text-slate-700" 
-                               value="${esc(val.note)}" 
-                               oninput="saveRecordDraftDebounced()">
-                    </div>
-                </div>
                 `;
             }).join('');
         }
 
-        function selectPrimaryCore(empName, coreName) {
-            const row = document.getElementById(`wl-row-${empName}`);
-            if (!row) return;
-            row.dataset.primaryCore = coreName;
-            updateWorkloadRowAndRerender(empName);
+        function getAkraWorkloadValues() {
+            if (currentBranch !== 'AKRA') return [];
+            const targetEmp = (typeof displayUserName !== 'undefined' && displayUserName) ? displayUserName : (currentUser || 'หมูหยอง');
+            const totalS = (workloadState.support || []).reduce((sum, t) => sum + (parseFloat(t.hours) || 0), 0);
+            const primaryHours = Math.max(0, 10.0 - totalS);
+            
+            let outbound = 0, inbound = 0, transfer = 0, shared = 0;
+            const primaryCore = workloadState.core || 'คลัง W1';
+            
+            if (primaryCore === 'คลัง W1' || primaryCore === 'ขาออก' || primaryCore === 'ส่งสินค้า') outbound += primaryHours;
+            else if (primaryCore === 'รับสินค้าเข้า' || primaryCore === 'ช่วยยกสินค้า') inbound += primaryHours;
+            else if (primaryCore === 'คลัง W2' || primaryCore === 'ขนย้ายสินค้า') transfer += primaryHours;
+            else shared += primaryHours;
+
+            (workloadState.support || []).forEach(d => {
+                const h = parseFloat(d.hours) || 0;
+                if (d.name === 'คลัง W1' || d.name === 'ขาออก' || d.name === 'ส่งสินค้า' || d.name === 'สนับสนุน TRD' || d.name === 'แวะไปส่งของ') outbound += h;
+                else if (d.name === 'รับสินค้าเข้า' || d.name === 'ช่วยยกสินค้า' || d.name === 'แวะขึ้นของ') inbound += h;
+                else if (d.name === 'คลัง W2' || d.name === 'ขนย้ายสินค้า' || d.name === 'ช่วยย้ายของ W2') transfer += h;
+                else shared += h;
+            });
+
+            const note = (workloadState.support || []).map(d => `${d.name} ${d.hours}h`).join(', ');
+
+            return [{
+                employee: targetEmp,
+                capacity: 10,
+                outbound: Math.round(outbound * 10) / 10,
+                inbound: Math.round(inbound * 10) / 10,
+                transfer: Math.round(transfer * 10) / 10,
+                shared: Math.round(shared * 10) / 10,
+                note: note || '',
+                primaryCore,
+                supportDuties: workloadState.support || []
+            }];
         }
 
-        function toggleSupportMode(empName, enable) {
-            const row = document.getElementById(`wl-row-${empName}`);
-            if (!row) return;
-            if (!enable) {
-                row.dataset.supportDuties = '[]';
-            } else {
-                let current = [];
-                try { current = JSON.parse(row.dataset.supportDuties || '[]'); } catch (e) {}
-                if (current.length === 0) {
-                    current = [{ name: 'ช่วยยกสินค้า', hours: 1.0 }];
+        function renderAkraWorkloadEditor(savedData = null, forceReset = false) {
+            if (currentBranch !== 'AKRA') return;
+            if (savedData && Array.isArray(savedData) && savedData.length > 0) {
+                const meItem = savedData.find(item => normalizeEmpName(item.employee) === normalizeEmpName(displayUserName) || normalizeEmpName(item.employee) === normalizeEmpName(currentUser)) || savedData[0];
+                if (meItem) {
+                    workloadState.core = meItem.primaryCore || 'คลัง W1';
+                    workloadState.coreLabel = meItem.primaryCore || 'คลัง W1';
+                    if (meItem.supportDuties && Array.isArray(meItem.supportDuties)) {
+                        workloadState.support = meItem.supportDuties;
+                    }
                 }
-                row.dataset.supportDuties = JSON.stringify(current);
             }
-            updateWorkloadRowAndRerender(empName);
+            renderWorkload();
+            renderErrSeverity();
+            renderErrEmpChips();
+            renderErrTimeline();
+            renderErrTeamHp();
         }
 
-        function toggleSupportTaskItem(empName, taskName) {
-            const row = document.getElementById(`wl-row-${empName}`);
-            if (!row) return;
-            let current = [];
-            try { current = JSON.parse(row.dataset.supportDuties || '[]'); } catch (e) {}
-            const existingIdx = current.findIndex(d => d.name === taskName);
-            if (existingIdx >= 0) {
-                current.splice(existingIdx, 1);
-            } else {
-                current.push({ name: taskName, hours: 1.0 });
+        function switchErrCategory(cat, btn) {
+            errCategory = cat;
+            document.querySelectorAll('.cat-chip').forEach(el => el.classList.remove('cat-chip-active'));
+            if (btn) btn.classList.add('cat-chip-active');
+            renderErrSeverity();
+        }
+
+        function renderErrSeverity() {
+            const container = document.getElementById('pc-err-severity-list');
+            if (!container) return;
+            const list = ERROR_CATALOG[errCategory] || [];
+            container.innerHTML = list.map((opt, idx) => `
+                <button type="button" onclick="selectErrSeverityItem(${idx}, this)" data-name="${esc(opt.name)}" data-penalty="${opt.penalty}" class="sev-chip ${idx === 0 ? 'severity-chip-active' : ''} w-full p-2.5 rounded-xl border border-slate-200 bg-white text-left text-xs flex items-center justify-between transition-all">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full ${opt.dot} shrink-0"></span>
+                        <div>
+                            <span class="font-bold text-slate-800 block">${esc(opt.name)}</span>
+                            <p class="text-[10px] text-slate-500">${esc(opt.desc)}</p>
+                        </div>
+                    </div>
+                    <span class="font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg text-xs font-num shrink-0">-${opt.penalty}</span>
+                </button>
+            `).join('');
+        }
+
+        function selectErrSeverityItem(idx, btn) {
+            document.querySelectorAll('#pc-err-severity-list .sev-chip').forEach(el => el.classList.remove('severity-chip-active'));
+            if (btn) btn.classList.add('severity-chip-active');
+        }
+
+        function renderErrEmpChips() {
+            const container = document.getElementById('pc-err-emp-chips');
+            if (!container) return;
+            const onDuty = getAkraOnDutyEmployees();
+            const options = ['ทุกคนในกะ', ...onDuty];
+            if (!selectedErrWorker || !options.includes(selectedErrWorker)) {
+                selectedErrWorker = options[0] || 'ทุกคนในกะ';
             }
-            row.dataset.supportDuties = JSON.stringify(current);
-            updateWorkloadRowAndRerender(empName);
+
+            container.innerHTML = options.map(emp => {
+                const isSelected = selectedErrWorker === emp;
+                return `
+                    <button type="button" onclick="toggleErrEmp('${esc(emp)}', this)" class="emp-chip ${isSelected ? 'emp-chip-active' : ''} p-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 transition-all text-center">
+                        ${esc(emp)}
+                    </button>
+                `;
+            }).join('');
         }
 
-        function setSupportTaskDuration(empName, itemIndex, hours) {
-            const row = document.getElementById(`wl-row-${empName}`);
-            if (!row) return;
-            let current = [];
-            try { current = JSON.parse(row.dataset.supportDuties || '[]'); } catch (e) {}
-            if (current[itemIndex]) {
-                current[itemIndex].hours = parseFloat(hours) || 1.0;
+        function toggleErrEmp(name, btn) {
+            selectedErrWorker = name;
+            document.querySelectorAll('#pc-err-emp-chips .emp-chip').forEach(el => el.classList.remove('emp-chip-active'));
+            if (btn) btn.classList.add('emp-chip-active');
+        }
+
+        function renderErrTimeline() {
+            const container = document.getElementById('pc-err-timeline');
+            const countEl = document.getElementById('err-case-count');
+            if (!container) return;
+            if (countEl) countEl.textContent = `${recordedErrorCases.length} เคส`;
+
+            if (recordedErrorCases.length === 0) {
+                container.innerHTML = `
+                    <div class="p-3 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center text-xs text-slate-400">
+                        ยังไม่มีการบันทึกข้อผิดพลาดสำหรับวันนี้ (Team HP 100%)
+                    </div>
+                `;
+                return;
             }
-            row.dataset.supportDuties = JSON.stringify(current);
-            updateWorkloadRowAndRerender(empName);
+
+            container.innerHTML = recordedErrorCases.map(item => `
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1 text-xs">
+                    <div class="flex justify-between font-bold">
+                        <span>${item.time || '10:30 น.'} • ${esc(item.worker)}</span>
+                        <span class="text-red-600 font-num">-${item.penalty}</span>
+                    </div>
+                    <p class="text-slate-700 font-medium">${esc(item.type)}</p>
+                    ${item.note ? `<p class="text-[11px] text-slate-500">${esc(item.note)}</p>` : ''}
+                </div>
+            `).join('');
         }
 
-        function removeSupportTaskItem(empName, itemIndex) {
-            const row = document.getElementById(`wl-row-${empName}`);
-            if (!row) return;
-            let current = [];
-            try { current = JSON.parse(row.dataset.supportDuties || '[]'); } catch (e) {}
-            current.splice(itemIndex, 1);
-            row.dataset.supportDuties = JSON.stringify(current);
-            updateWorkloadRowAndRerender(empName);
+        function renderErrTeamHp() {
+            const grid = document.getElementById('err-team-hp-grid');
+            if (!grid) return;
+            const onDuty = getAkraOnDutyEmployees();
+            
+            grid.innerHTML = onDuty.map(emp => {
+                let penaltySum = 0;
+                recordedErrorCases.forEach(c => {
+                    if (c.worker === 'ทุกคนในกะ' || c.worker === emp) {
+                        penaltySum += (c.penalty || 0);
+                    }
+                });
+                const hp = Math.max(0, 100 - penaltySum);
+                const hpColor = hp >= 90 ? 'text-emerald-400' : (hp >= 75 ? 'text-amber-400' : 'text-red-400');
+                const barColor = hp >= 90 ? 'bg-emerald-400' : (hp >= 75 ? 'bg-amber-400' : 'bg-red-500');
+
+                return `
+                    <div class="p-2.5 bg-slate-900/60 rounded-xl border border-slate-800 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-slate-300 text-xs">${esc(emp)}</span>
+                            <span class="font-bold ${hpColor} font-num text-xs">${hp} HP</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div class="${barColor} h-full rounded-full transition-all duration-300" style="width: ${hp}%;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        function updateWorkloadRowAndRerender(empName) {
-            const currentValues = getAkraWorkloadValues();
-            renderAkraWorkloadEditor(currentValues, false);
+        async function saveErrorCaseFromPreview() {
+            const activeSev = document.querySelector('#pc-err-severity-list .severity-chip-active');
+            const noteInput = document.getElementById('pc-err-note-input');
+            const note = noteInput ? noteInput.value.trim() : '';
+            const sevName = activeSev ? activeSev.dataset.name : 'หยิบผิด แก้ทันก่อนจัดส่ง';
+            const penalty = activeSev ? (parseInt(activeSev.dataset.penalty, 10) || 5) : 5;
+
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
+
+            const newCase = {
+                id: Date.now(),
+                worker: selectedErrWorker || 'ทุกคนในกะ',
+                type: sevName,
+                penalty: penalty,
+                note: note,
+                time: timeStr
+            };
+
+            recordedErrorCases.unshift(newCase);
+            if (noteInput) noteInput.value = '';
+
+            renderErrTimeline();
+            renderErrTeamHp();
+            showToast("บันทึกเคสความผิดพลาดสำเร็จ!", false);
             saveRecordDraftDebounced();
             updateDailyDashboard();
         }
 
         function confirmZeroErrors() {
-            const container = document.getElementById('error-entries-container');
-            if (container) {
-                container.innerHTML = `
-                    <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
-                        <i class="fa-solid fa-circle-check text-emerald-600 text-lg mb-1"></i>
-                        <p class="text-xs text-emerald-800 font-bold">บันทึกเรียบร้อย: ไม่มีข้อผิดพลาดในกะนี้ (Team HP 100%)</p>
-                    </div>`;
-            }
+            recordedErrorCases = [];
+            renderErrTimeline();
+            renderErrTeamHp();
             showToast("ยืนยัน 0 ข้อผิดพลาดเรียบร้อย! Team HP 100%");
             saveRecordDraftDebounced();
             updateDailyDashboard();
@@ -7418,6 +7689,13 @@
             if (tab === 'dashboard') {
                 loadDashboardData();
                 updateDailyDashboard();
+            } else if (tab === 'error') {
+                renderErrSeverity();
+                renderErrEmpChips();
+                renderErrTimeline();
+                renderErrTeamHp();
+            } else if (tab === 'workload') {
+                renderWorkload();
             } else if (tab === 'admin-dash') {
                 renderAdminDashboard();
                 refreshActions();
