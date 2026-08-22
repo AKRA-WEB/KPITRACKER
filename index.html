@@ -1817,7 +1817,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260822.07";
+        const CURRENT_VERSION = "20260822.08";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -4420,20 +4420,20 @@
             renderLiveRequisitions();
         }
 
-        async function markReqDone(uid) {
+        async function markReqStatus(uid, newStatus) {
             const actor = (typeof displayUserName !== 'undefined' && displayUserName) ? displayUserName : (currentUser || 'หมูหยอง');
             const item = liveRequisitionsList.find(r => r.uid === uid);
             if (item) {
-                item.status = 'จัดเสร็จแล้ว';
+                item.status = newStatus;
                 item.doneBy = actor;
                 renderLiveRequisitions();
-                showToast('อัปเดตสถานะเป็น "จัดเสร็จแล้ว" เรียบร้อย!');
+                showToast(`อัปเดตสถานะเป็น "${newStatus}" เรียบร้อย!`);
             }
             try {
                 await fetch(LINE_REQUISITION_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'updateStatus', uid: uid, status: 'จัดเสร็จแล้ว', doneBy: actor })
+                    body: JSON.stringify({ action: 'updateStatus', uid: uid, status: newStatus, doneBy: actor })
                 });
             } catch (err) {
                 console.error('Error updating status to API:', err);
@@ -4467,7 +4467,8 @@
             let totalBills = liveRequisitionsList.length;
             let totalSKU = 0;
             let totalUnits = 0;
-            let onTimeCount = 0;
+            let completedCount = 0;
+            let failedCount = 0;
             let trdBills = 0, trdUnits = 0;
             let urgentBills = 0, urgentUnits = 0;
             let regularBills = 0, regularUnits = 0;
@@ -4478,8 +4479,12 @@
                 totalSKU += sku;
                 totalUnits += units;
 
-                const isDone = req.status === 'จัดเสร็จแล้ว' || req.status === 'done' || req.status === 'picked' || req.status === 'sent';
-                if (isDone) onTimeCount++;
+                const statusStr = String(req.status || '');
+                const isDone = statusStr === 'จัดเสร็จแล้ว' || statusStr === 'done' || statusStr === 'picked' || statusStr === 'sent';
+                const isFailed = statusStr.includes('ไม่สำเร็จ') || statusStr.includes('หมด') || statusStr.includes('ยกเลิก') || statusStr.includes('❌');
+
+                if (isDone) completedCount++;
+                if (isFailed) failedCount++;
 
                 const bType = String(req.billType || '').toLowerCase();
                 let badgeColor = 'bg-indigo-100 text-indigo-700';
@@ -4498,10 +4503,21 @@
                 }
 
                 const billBadge = req.billNo || ('#' + (totalBills - idx));
-                const statusBadge = isDone 
-                    ? '<span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1">จัดเสร็จแล้ว ✅</span>'
-                    : `<button type="button" onclick="markReqDone('${esc(req.uid)}')" class="text-[11px] bg-blue-600 hover:bg-blue-700 text-white font-bold px-2.5 py-1 rounded-lg shadow-sm transition-all inline-flex items-center gap-1 cursor-pointer">กำลังหยิบ • แตะเมื่อเสร็จ ✅</button>`;
-                const doneByText = req.doneBy ? `<p class="text-[10px] text-slate-400 mt-0.5">คนหยิบ: ${esc(req.doneBy)}</p>` : '';
+                let statusBadge = '';
+                if (isDone) {
+                    statusBadge = '<span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1">จัดเสร็จแล้ว ✅</span>';
+                } else if (isFailed) {
+                    statusBadge = '<span class="text-[11px] bg-red-100 text-red-800 font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1">จัดไม่สำเร็จ (ของหมด) ❌</span>';
+                } else {
+                    statusBadge = `
+                        <div class="flex items-center gap-1.5 justify-end">
+                            <button type="button" onclick="markReqStatus('${esc(req.uid)}', 'จัดเสร็จแล้ว')" class="text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded-lg shadow-sm transition-all inline-flex items-center gap-1 cursor-pointer">เสร็จ ✅</button>
+                            <button type="button" onclick="markReqStatus('${esc(req.uid)}', 'จัดไม่สำเร็จ (ของหมด)')" class="text-[11px] bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold px-2.5 py-1 rounded-lg transition-all inline-flex items-center gap-1 cursor-pointer">ไม่สำเร็จ ❌</button>
+                        </div>
+                    `;
+                }
+
+                const doneByText = req.doneBy ? `<p class="text-[10px] text-slate-400 mt-0.5">${isFailed ? 'ผู้แจ้ง' : 'คนหยิบ'}: ${esc(req.doneBy)}</p>` : '';
 
                 return `
                     <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2">
@@ -4520,7 +4536,8 @@
                 `;
             }).join('');
 
-            const onTimeRate = totalBills > 0 ? (onTimeCount / totalBills * 100).toFixed(1) + '%' : '100%';
+            const validBills = totalBills - failedCount;
+            const onTimeRate = validBills > 0 ? (completedCount / validBills * 100).toFixed(1) + '%' : (totalBills > 0 ? '0.0%' : '100%');
 
             if (billCountEl) billCountEl.innerText = totalBills;
             if (skuCountEl) skuCountEl.innerText = totalSKU;
