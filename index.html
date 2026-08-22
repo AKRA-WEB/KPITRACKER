@@ -1817,7 +1817,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260822.04";
+        const CURRENT_VERSION = "20260822.05";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -4391,6 +4391,124 @@
             showToast("ยืนยัน 0 ข้อผิดพลาดเรียบร้อย! Team HP 100%");
             saveRecordDraftDebounced();
             updateDailyDashboard();
+        }
+
+        // ================= VIEW 3: LIVE REQUISITIONS CONTROLLERS =================
+        let liveRequisitionsList = [
+            {
+                billNo: "#18",
+                billType: "เติมหน้าร้าน TRD",
+                requester: "หน้าร้าน TRD (ท็อป)",
+                time: "10:05 น.",
+                itemsSummary: "นมสด 10 ลัง, เนย 5 กก., ชีส 3 แพ็ค",
+                skuCount: 3,
+                totalUnits: 18,
+                status: "จัดเสร็จแล้ว",
+                doneBy: "หมูหยอง"
+            },
+            {
+                billNo: "#17",
+                billType: "⚡ บิลด่วน",
+                requester: "แคชเชียร์ (มะปราง)",
+                time: "09:40 น.",
+                itemsSummary: "แป้งสาลีตราพัดโบก 2 กระสอบ",
+                skuCount: 1,
+                totalUnits: 2,
+                status: "กำลังหยิบ",
+                doneBy: "เอี้ยง"
+            }
+        ];
+
+        function renderLiveRequisitions() {
+            const listEl = document.getElementById('live-bill-list-cards');
+            const billCountEl = document.getElementById('live-bill-count');
+            const skuCountEl = document.getElementById('live-sku-count');
+            const unitCountEl = document.getElementById('live-unit-count');
+            const onTimeRateEl = document.getElementById('live-ontime-rate');
+            const trdCountEl = document.getElementById('live-trd-count');
+            const urgentCountEl = document.getElementById('live-urgent-count');
+            const regularCountEl = document.getElementById('live-regular-count');
+
+            if (!Array.isArray(liveRequisitionsList) || liveRequisitionsList.length === 0) {
+                if (billCountEl) billCountEl.innerText = '0';
+                if (skuCountEl) skuCountEl.innerText = '0';
+                if (unitCountEl) unitCountEl.innerText = '0';
+                if (onTimeRateEl) onTimeRateEl.innerText = '100%';
+                if (trdCountEl) trdCountEl.innerText = '0 บิล (0 ชิ้น)';
+                if (urgentCountEl) urgentCountEl.innerText = '0 บิล (0 ชิ้น)';
+                if (regularCountEl) regularCountEl.innerText = '0 บิล (0 ชิ้น)';
+                if (listEl) {
+                    listEl.innerHTML = '<div class="p-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">ยังไม่มีรายการใบเบิกผ่าน LINE ในวันนี้</div>';
+                }
+                return;
+            }
+
+            let totalBills = liveRequisitionsList.length;
+            let totalSKU = 0;
+            let totalUnits = 0;
+            let onTimeCount = 0;
+            let trdBills = 0, trdUnits = 0;
+            let urgentBills = 0, urgentUnits = 0;
+            let regularBills = 0, regularUnits = 0;
+
+            const cardsHtml = liveRequisitionsList.map((req, idx) => {
+                const sku = req.skuCount || (req.items ? req.items.length : 1);
+                const units = req.totalUnits || 0;
+                totalSKU += sku;
+                totalUnits += units;
+
+                const isDone = req.status === 'จัดเสร็จแล้ว' || req.status === 'done' || req.status === 'picked' || req.status === 'sent';
+                if (isDone) onTimeCount++;
+
+                const bType = String(req.billType || '').toLowerCase();
+                let badgeColor = 'bg-indigo-100 text-indigo-700';
+                if (bType.includes('ด่วน')) {
+                    urgentBills++;
+                    urgentUnits += units;
+                    badgeColor = 'bg-amber-100 text-amber-800';
+                } else if (bType.includes('ตจว') || bType.includes('ส่ง') || bType.includes('ขนส่ง')) {
+                    regularBills++;
+                    regularUnits += units;
+                    badgeColor = 'bg-emerald-100 text-emerald-800';
+                } else {
+                    trdBills++;
+                    trdUnits += units;
+                    badgeColor = 'bg-indigo-100 text-indigo-700';
+                }
+
+                const billBadge = req.billNo || ('#' + (totalBills - idx));
+                const statusBadge = isDone 
+                    ? '<span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-md">จัดเสร็จแล้ว</span>'
+                    : '<span class="text-[11px] bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded-md">กำลังหยิบ</span>';
+                const doneByText = req.doneBy ? `<p class="text-[10px] text-slate-400 mt-0.5">คนหยิบ: ${esc(req.doneBy)}</p>` : '';
+
+                return `
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg ${badgeColor} flex items-center justify-center font-bold font-num text-xs">${esc(billBadge)}</span>
+                            <div>
+                                <p class="font-bold text-slate-900">${esc(req.billType || 'บิลเบิก')}: ${esc(req.itemsSummary || '')}</p>
+                                <p class="text-[11px] text-slate-500">ผู้ขอเบิก: ${esc(req.requester || 'หน้าร้าน')} • เวลา: ${esc(req.time || '')}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            ${statusBadge}
+                            ${doneByText}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const onTimeRate = totalBills > 0 ? (onTimeCount / totalBills * 100).toFixed(1) + '%' : '100%';
+
+            if (billCountEl) billCountEl.innerText = totalBills;
+            if (skuCountEl) skuCountEl.innerText = totalSKU;
+            if (unitCountEl) unitCountEl.innerText = totalUnits.toLocaleString();
+            if (onTimeRateEl) onTimeRateEl.innerText = onTimeRate;
+            if (trdCountEl) trdCountEl.innerText = `${trdBills} บิล (${trdUnits} ชิ้น)`;
+            if (urgentCountEl) urgentCountEl.innerText = `${urgentBills} บิล (${urgentUnits} ชิ้น)`;
+            if (regularCountEl) regularCountEl.innerText = `${regularBills} บิล (${regularUnits} ชิ้น)`;
+            if (listEl) listEl.innerHTML = cardsHtml;
         }
 
         function applyAkraWorkloadDraft(workload) {
@@ -7696,6 +7814,8 @@
                 renderErrTeamHp();
             } else if (tab === 'workload') {
                 renderWorkload();
+            } else if (tab === 'billcount') {
+                renderLiveRequisitions();
             } else if (tab === 'admin-dash') {
                 renderAdminDashboard();
                 refreshActions();
