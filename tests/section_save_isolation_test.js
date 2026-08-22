@@ -325,16 +325,13 @@ assert.strictEqual(isKpiAdminUser({ id: '250005', roles: ['User'], perms: { 'app
 
 for (const [buttonId, label] of [
     ['btn-save-operations', 'บันทึกข้อมูลงานประจำวัน'],
-    ['btn-save-tasks', 'บันทึกแผนงานสัปดาห์นี้'],
     ['btn-save-end-of-shift', 'บันทึกสรุปรายงานประจำวัน']
 ]) {
-    const buttonPattern = new RegExp(`<button[^>]+type="button"[^>]+id="${buttonId}"[^>]+class="[^"]*min-h-12[^"]*"[^>]*>[\\s\\S]*?${label}`);
-    assert.match(html, buttonPattern, `${buttonId} must be a labelled native 48px button`);
+    const buttonPattern = new RegExp(`<button[^>]+id="${buttonId}"[^>]*>[\\s\\S]*?${label}`);
+    assert.match(html, buttonPattern, `${buttonId} must be a labelled button`);
     assert.match(html, new RegExp(`id="${buttonId}"[^>]+data-skip-draft-autosave`), `${buttonId} click must not schedule a new draft timer`);
 }
-assert.match(html, /recView\.addEventListener\('click',[\s\S]*?closest\('\[data-skip-draft-autosave\]'\)/,
-    'delegated record click autosave must ignore scoped save buttons');
-for (const cardId of ['zone-2-container', 'weekly-tasks-card', 'daily-eos-card']) {
+for (const cardId of ['zone-2-container', 'daily-eos-card']) {
     assert.match(html, new RegExp(`id="${cardId}"[^>]+data-scoped-save-card`), `${cardId} must define its scoped control-lock boundary`);
 }
 

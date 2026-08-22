@@ -65,7 +65,9 @@ let window = {
 
 // Mock fetch
 let mockFetchHandler = null;
+let fetchCallCount = 0;
 async function fetch(url, options) {
+    fetchCallCount++;
     if (mockFetchHandler) {
         return mockFetchHandler(url, options);
     }
@@ -88,6 +90,9 @@ const document = {
             };
         }
         return documentElements[id];
+    },
+    querySelectorAll(selector) {
+        return [];
     }
 };
 
@@ -152,6 +157,7 @@ async function runTests() {
         safeStorage.clear();
         sessionToken = null;
         currentUser = null;
+        fetchCallCount = 0;
         window.location.search = `?sso=${validToken}`;
         mockFetchHandler = async (url) => {
             return {
@@ -166,6 +172,7 @@ async function runTests() {
         const ssoResult = await resolveSsoAuth();
         assert.strictEqual(ssoResult.attempted, true);
         assert.ok(ssoResult.userData);
+        assert.strictEqual(fetchCallCount, 1, 'A JWT must be verified by the SSO server before it is trusted');
         assert.strictEqual(ssoResult.userData.username, "250013");
         assert.strictEqual(sessionToken, validToken);
         assert.strictEqual(safeStorage.getItem('akra_sso_token'), validToken);
@@ -215,11 +222,12 @@ async function runTests() {
     {
         console.log("Test 3: HTTP 401 Rejection (No fallback)...");
         safeStorage.clear();
-        safeStorage.setItem('akra_sso_token', expiredToken);
+        safeStorage.setItem('akra_sso_token', validToken);
         safeStorage.setItem('akra_sso_user_data', JSON.stringify({ username: "250013", name: "เฉิน" }));
-        sessionToken = expiredToken;
+        sessionToken = validToken;
         currentUser = null;
-        window.location.search = `?sso=${expiredToken}`;
+        fetchCallCount = 0;
+        window.location.search = `?sso=${validToken}`;
         mockFetchHandler = async (url) => {
             return {
                 ok: false,
@@ -228,6 +236,7 @@ async function runTests() {
         };
 
         const ssoResult = await resolveSsoAuth();
+        assert.strictEqual(fetchCallCount, 1, 'HTTP 401 case must execute server verification');
         assert.strictEqual(ssoResult.attempted, true);
         assert.strictEqual(ssoResult.userData, null);
         assert.strictEqual(ssoResult.expired, true);
@@ -241,11 +250,12 @@ async function runTests() {
     {
         console.log("Test 3b: HTTP 404 Rejection (No fallback)...");
         safeStorage.clear();
-        safeStorage.setItem('akra_sso_token', expiredToken);
+        safeStorage.setItem('akra_sso_token', validToken);
         safeStorage.setItem('akra_sso_user_data', JSON.stringify({ username: "250013", name: "เฉิน" }));
-        sessionToken = expiredToken;
+        sessionToken = validToken;
         currentUser = null;
-        window.location.search = `?sso=${expiredToken}`;
+        fetchCallCount = 0;
+        window.location.search = `?sso=${validToken}`;
         mockFetchHandler = async (url) => {
             return {
                 ok: false,
@@ -254,6 +264,7 @@ async function runTests() {
         };
 
         const ssoResult = await resolveSsoAuth();
+        assert.strictEqual(fetchCallCount, 1, 'HTTP 404 case must execute server verification');
         assert.strictEqual(ssoResult.attempted, true);
         assert.strictEqual(ssoResult.userData, null);
         assert.strictEqual(ssoResult.expired, true);
@@ -263,7 +274,42 @@ async function runTests() {
         console.log("-> Test 3b Passed!");
     }
 
-    // Test 4: Transient Network Error with a fresh token (Should fallback to local decode and succeed)
+    // Test 3c: Forged, unexpired JWT rejected by server (Must not grant local Admin access)
+    {
+        console.log("Test 3c: Forged unexpired token rejected by server...");
+        const forgedToken = generateMockJwt({
+            id: "250013",
+            name: "Forged Admin",
+            roles: ["Admin"],
+            perms: { "app-kpi": ["adminDashboard"] },
+            exp: Math.floor(Date.now() / 1000) + 3600
+        });
+        safeStorage.clear();
+        sessionToken = null;
+        currentUser = null;
+        fetchCallCount = 0;
+        window.location.search = `?sso=${forgedToken}`;
+        mockFetchHandler = async () => ({
+            ok: true,
+            json: async () => ({ valid: false, reason: "invalid_signature" })
+        });
+
+        const ssoResult = await resolveSsoAuth();
+        assert.strictEqual(fetchCallCount, 1, 'Forged JWT must be submitted to server verification');
+        assert.strictEqual(ssoResult.userData, null);
+        assert.strictEqual(sessionToken, null);
+        assert.strictEqual(safeStorage.getItem('akra_sso_token'), null);
+        assert.strictEqual(safeStorage.getItem('akra_sso_user_data'), null);
+
+        showManualLoginModal.called = false;
+        await checkAuth(ssoResult);
+        assert.strictEqual(showManualLoginModal.called, true);
+        assert.strictEqual(IS_ADMIN, false);
+        assert.deepStrictEqual(_kpiPerms, []);
+        console.log("-> Test 3c Passed!");
+    }
+
+    // Test 4: Transient Network Error with a fresh token (Must not trust local decode)
     {
         console.log("Test 4: Network error with fresh token...");
         safeStorage.clear();
@@ -276,14 +322,14 @@ async function runTests() {
 
         const ssoResult = await resolveSsoAuth();
         assert.strictEqual(ssoResult.attempted, true);
-        assert.ok(ssoResult.userData);
-        assert.strictEqual(ssoResult.userData.username, "250013");
-        assert.strictEqual(sessionToken, validToken);
-        assert.strictEqual(safeStorage.getItem('akra_sso_token'), validToken);
-        assert.ok(safeStorage.getItem('akra_sso_user_data'));
+        assert.strictEqual(ssoResult.userData, null);
+        assert.strictEqual(sessionToken, null);
+        assert.strictEqual(safeStorage.getItem('akra_sso_token'), null);
+        assert.strictEqual(safeStorage.getItem('akra_sso_user_data'), null);
 
+        showManualLoginModal.called = false;
         await checkAuth(ssoResult);
-        assert.strictEqual(currentUser, "250013");
+        assert.strictEqual(showManualLoginModal.called, true);
         console.log("-> Test 4 Passed!");
     }
 
@@ -315,7 +361,7 @@ async function runTests() {
         console.log("-> Test 5 Passed!");
     }
 
-    // Test 6: HTTP 500 transient error with fresh token (Should fallback to local decode and succeed)
+    // Test 6: HTTP 500 error with fresh token (Must not trust local decode)
     {
         console.log("Test 6: HTTP 500 Server error with fresh token...");
         safeStorage.clear();
@@ -331,9 +377,10 @@ async function runTests() {
 
         const ssoResult = await resolveSsoAuth();
         assert.strictEqual(ssoResult.attempted, true);
-        assert.ok(ssoResult.userData);
-        assert.strictEqual(ssoResult.userData.username, "250013");
-        assert.strictEqual(sessionToken, validToken);
+        assert.strictEqual(ssoResult.userData, null);
+        assert.strictEqual(sessionToken, null);
+        assert.strictEqual(safeStorage.getItem('akra_sso_token'), null);
+        assert.strictEqual(safeStorage.getItem('akra_sso_user_data'), null);
         console.log("-> Test 6 Passed!");
     }
 

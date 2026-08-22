@@ -4,12 +4,16 @@ const assert = require('assert');
 console.log('=== VERIFYING KPITRACKER SUPABASE WIRING & VERSION PARITY ===\n');
 
 // 1. Version Parity
-const indexContent = fs.readFileSync('KPITRACKER/index.html', 'utf8');
-const versionJson = JSON.parse(fs.readFileSync('KPITRACKER/version.json', 'utf8'));
+const path = require('path');
+const indexPath = path.join(__dirname, '../index.html');
+const versionPath = path.join(__dirname, '../version.json');
+const indexContent = fs.readFileSync(indexPath, 'utf8');
+const versionJson = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
 
-assert(indexContent.includes('const CURRENT_VERSION = "20260820.06";'), 'CURRENT_VERSION in index.html must be 20260820.06');
-assert.strictEqual(versionJson.version, '20260820.06', 'version.json must be 20260820.06');
-console.log('  [PASS] Version parity verified: 20260820.06');
+const expectedVersion = "20260822.13";
+assert(indexContent.includes(`const CURRENT_VERSION = "${expectedVersion}";`), `CURRENT_VERSION in index.html must be ${expectedVersion}`);
+assert.strictEqual(versionJson.version, expectedVersion, `version.json must be ${expectedVersion}`);
+console.log(`  [PASS] Version parity verified: ${expectedVersion}`);
 
 // 2. Direct Supabase Wiring
 const kpiMatches = indexContent.match(/AkraSupabaseKPI/g) || [];
