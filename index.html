@@ -1817,7 +1817,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260822.05";
+        const CURRENT_VERSION = "20260822.06";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3910,11 +3910,16 @@
         function getAkraOnDutyEmployees() {
             const checked = getCheckedValues('.akra-duty-cb');
             if (checked && checked.length > 0) return checked;
+            if (typeof BRANCH_CONFIG !== 'undefined' && BRANCH_CONFIG['AKRA'] && Array.isArray(BRANCH_CONFIG['AKRA'].employees) && BRANCH_CONFIG['AKRA'].employees.length > 0) {
+                return BRANCH_CONFIG['AKRA'].employees;
+            }
             if (typeof GLOBAL_CONFIG_LIST !== 'undefined' && Array.isArray(GLOBAL_CONFIG_LIST)) {
-                const akraConfig = GLOBAL_CONFIG_LIST.filter(c => c.branch === 'AKRA' && (c.status === 'Active' || !c.status)).map(c => c.name);
+                const akraConfig = GLOBAL_CONFIG_LIST
+                    .filter(c => (c.branches ? c.branches.includes('AKRA') : (c.branch === 'AKRA')) && c.dept !== 'Admin' && c.status !== 'Inactive')
+                    .map(c => c.name);
                 if (akraConfig.length > 0) return akraConfig;
             }
-            return ['หมูหยอง', 'เอี้ยง', 'ปีเตอร์', 'เบียร์', 'แบงค์'];
+            return ['หมูหยอง', 'เอี้ยง', 'จอนห์นี่', 'ปีเตอร์', 'เอส'];
         }
 
         function getAkraCoreRoster() {
