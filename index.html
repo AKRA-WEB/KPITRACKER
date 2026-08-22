@@ -244,7 +244,12 @@
     <!-- Header -->
     <header class="app-header p-4 sticky top-0 z-10 flex flex-col space-y-2 border-b">
         <div class="flex justify-between items-center">
-            <h1 class="text-xl font-semibold"><i class="app-brand-mark fa-solid fa-chart-simple mr-2"></i>KPI Tracker <span class="text-slate-300 mx-1">/</span> <span id="header-branch-name" class="app-branch">AKRA</span></h1>
+            <div class="flex items-center space-x-2">
+                <button onclick="openDrawer()" id="btn-open-drawer" title="เปิดเมนูหลัก" class="text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 w-9 h-9 rounded-lg text-sm font-semibold shadow-sm transition-colors border border-slate-300 flex items-center justify-center">
+                    <i class="fa-solid fa-bars text-base"></i>
+                </button>
+                <h1 class="text-xl font-semibold"><i class="app-brand-mark fa-solid fa-chart-simple mr-2"></i>KPI Tracker <span class="text-slate-300 mx-1">/</span> <span id="header-branch-name" class="app-branch">AKRA</span></h1>
+            </div>
             <div class="flex items-center space-x-2">
                 <button onclick="forceCleanCacheAndReload()" title="ล้างแคชและอัปเดต" class="text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow transition-colors border border-slate-700">
                     <i class="fa-solid fa-broom mr-1"></i> ล้างแคช
@@ -283,32 +288,112 @@
                 </div>
             </div>
 
-            <!-- AKRA Workload Editor -->
-            <div id="akra-workload-card" class="hidden bg-white p-3 rounded-xl shadow-sm border-l-4 border-amber-500 border-y border-r border-gray-100 md-colspan-2 sm:p-4">
-                <div class="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
-                    <h2 class="text-lg font-bold text-gray-800 flex items-center"><i class="fa-solid fa-business-time text-amber-500 mr-2"></i>บันทึก Workload รายบุคคล</h2>
-                    <span class="text-xs text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">วันละ 10 คะแนน</span>
+            <!-- AKRA Workload Editor v2 -->
+            <div id="akra-workload-card" class="hidden bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500 border-y border-r border-slate-200 md-colspan-2">
+                <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2.5">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-business-time text-amber-500"></i> บันทึกสัดส่วนเวลาปฏิบัติงาน (Workload)
+                        </h2>
+                        <p class="text-[11px] text-slate-500 mt-0.5">ระบุหน้าที่หลักและงานช่วยเพื่อจัดสรรเวลา 10.0 ชม. อัตโนมัติ</p>
+                    </div>
+                    <span class="text-xs text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 shadow-sm">
+                        ฐาน 10.0 ชม. (100%)
+                    </span>
                 </div>
-                <div id="akra-workload-container" class="space-y-2"></div>
-                <button type="button" id="btn-save-workload" onclick="saveWorkloadCard()" class="mt-3 w-full bg-amber-600 hover:bg-amber-700 active:scale-95 transition-all text-white font-bold py-3 rounded-xl text-sm shadow-md flex justify-center items-center border border-amber-850">
-                    <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึก Workload
+                <div id="akra-workload-container" class="space-y-4"></div>
+                <button type="button" id="btn-save-workload" onclick="saveWorkloadCard()" class="mt-4 w-full bg-amber-600 hover:bg-amber-700 active:scale-95 transition-all text-white font-bold py-3.5 rounded-xl text-sm shadow-md flex justify-center items-center border border-amber-700 gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-base"></i> บันทึก Workload ประจำวัน
                 </button>
             </div>
 
-            <!-- Errors -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500 border-y border-r border-gray-100">
-                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
-                    <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>บันทึกความผิดพลาด (KPI)</h2>
+            <!-- Errors / Incident Log -->
+            <div id="errors-card" class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500 border-y border-r border-slate-200 md-colspan-2">
+                <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2.5">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation text-red-500"></i> บันทึกความผิดพลาด (Quality Control)
+                        </h2>
+                        <p class="text-[11px] text-slate-500 mt-0.5">บันทึกเหตุการณ์ผิดพลาดรายเคส หรือยืนยันศูนย์ความผิดพลาด</p>
+                    </div>
                 </div>
 
-                <div id="error-entries-container" class="space-y-4"></div>
+                <!-- Zero Error Quick Confirm -->
+                <div class="mb-4 p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5 text-xs text-emerald-800 font-semibold">
+                        <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                        <span>ไม่มีข้อผิดพลาดในกะนี้ (Team HP 100%)</span>
+                    </div>
+                    <button type="button" onclick="confirmZeroErrors()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition-all text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5">
+                        <i class="fa-solid fa-check"></i> ยืนยัน 0 Error
+                    </button>
+                </div>
 
-                <button type="button" onclick="addErrorEntryRow()" class="mt-4 w-full bg-red-50 text-red-600 border border-red-200 font-bold py-3.5 rounded-xl text-sm active:bg-red-100 shadow-sm transition-all hover:bg-red-100 flex justify-center items-center">
-                    <i class="fa-solid fa-plus-circle mr-2 text-lg"></i> เพิ่มรายการความผิดพลาด
-                </button>
-                <button type="button" id="btn-save-errors" onclick="saveErrorsCard()" class="hidden mt-2.5 w-full bg-red-600 hover:bg-red-700 active:scale-95 transition-all text-white font-bold py-3.5 rounded-xl text-sm shadow-md flex justify-center items-center border border-red-850">
-                    <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึกความผิดพลาด
-                </button>
+                <div id="error-entries-container" class="space-y-3"></div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
+                    <button type="button" onclick="addErrorEntryRow()" class="w-full bg-red-50 text-red-700 border border-red-200 font-bold py-3 rounded-xl text-xs active:bg-red-100 shadow-sm transition-all hover:bg-red-100 flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-plus-circle text-sm"></i> เพิ่มรายการความผิดพลาด
+                    </button>
+                    <button type="button" id="btn-save-errors" onclick="saveErrorsCard()" class="hidden w-full bg-red-600 hover:bg-red-700 active:scale-95 transition-all text-white font-bold py-3 rounded-xl text-xs shadow-md justify-center items-center border border-red-700 gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up text-sm"></i> บันทึกความผิดพลาด
+                    </button>
+                </div>
+            </div>
+
+            <!-- Live Requisitions & Transfer Sync Card -->
+            <div id="live-requisitions-card" class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 border-y border-r border-slate-200 md-colspan-2">
+                <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2.5">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-boxes-stacked text-blue-500"></i> สรุปบิลเบิกย้าย &amp; จัดส่งวันนี้ (Live Sync)
+                        </h2>
+                        <p class="text-[11px] text-slate-500 mt-0.5">ดึงข้อมูลจริงจากระบบ Picking &amp; LINE อัตโนมัติ (ไม่ต้องนับมือ)</p>
+                    </div>
+                    <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ซิงค์เรียลไทม์
+                    </span>
+                </div>
+
+                <!-- 4 KPI Metrics -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center">
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">บิลเบิกทั้งหมด</div>
+                        <div class="text-xl font-bold text-blue-600 mt-0.5" id="live-bill-count">18</div>
+                        <div class="text-[10px] text-slate-400 font-medium">บิลวันนี้</div>
+                    </div>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center">
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">รายการ SKU</div>
+                        <div class="text-xl font-bold text-slate-800 mt-0.5" id="live-sku-count">142</div>
+                        <div class="text-[10px] text-slate-400 font-medium">รายการสินค้า</div>
+                    </div>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center">
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">จำนวนชิ้นรวม</div>
+                        <div class="text-xl font-bold text-indigo-600 mt-0.5" id="live-unit-count">1,280</div>
+                        <div class="text-[10px] text-slate-400 font-medium">ชิ้นสินค้า</div>
+                    </div>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center">
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">จัดตรงเวลา</div>
+                        <div class="text-xl font-bold text-emerald-600 mt-0.5" id="live-ontime-rate">98.5%</div>
+                        <div class="text-[10px] text-emerald-600 font-medium">On-Time SLA</div>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs mb-3">
+                    <div class="p-2.5 rounded-lg bg-blue-50/60 border border-blue-100 flex items-center justify-between">
+                        <span class="text-blue-900 font-medium">🏪 เติมหน้าร้าน TRD</span>
+                        <span class="font-bold text-blue-700" id="live-trd-count">10 บิล (650 ชิ้น)</span>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-amber-50/60 border border-amber-100 flex items-center justify-between">
+                        <span class="text-amber-900 font-medium">⚡ บิลเบิกด่วน</span>
+                        <span class="font-bold text-amber-700" id="live-urgent-count">5 บิล (320 ชิ้น)</span>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-purple-50/60 border border-purple-100 flex items-center justify-between">
+                        <span class="text-purple-900 font-medium">🚚 จัดส่งทั่วไป</span>
+                        <span class="font-bold text-purple-700" id="live-regular-count">3 บิล (310 ชิ้น)</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Vendor Bills Card (AKRA only) -->
@@ -1323,6 +1408,90 @@
         </div>
     </div>
 
+    <!-- ================= HAMBURGER DRAWER ================= -->
+    <div id="drawer-backdrop" onclick="closeDrawer()" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[80] transition-opacity duration-300 opacity-0 pointer-events-none"></div>
+    <aside id="drawer-panel" class="fixed top-0 left-0 bottom-0 w-72 max-w-[80vw] bg-slate-900 text-white z-[90] shadow-2xl border-r border-slate-800 flex flex-col justify-between transform -translate-x-full transition-transform duration-300 ease-in-out">
+        <div>
+            <!-- Drawer Brand & Close -->
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                        <i class="fa-solid fa-chart-line text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold text-white tracking-wide">KPI TRACKER</div>
+                        <div class="text-[10px] text-slate-400 font-medium tracking-wider uppercase" id="drawer-branch-badge">AKRA WAREHOUSE</div>
+                    </div>
+                </div>
+                <button onclick="closeDrawer()" aria-label="ปิดเมนู" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- User Info Card -->
+            <div class="p-4 mx-3 my-3 bg-slate-800/60 border border-slate-700/50 rounded-xl flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-sm">
+                    <i class="fa-solid fa-user-check text-blue-400"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <div class="text-xs font-bold text-slate-200 truncate" id="drawer-user-name">กำลังตรวจสอบ...</div>
+                    <div class="text-[10px] text-emerald-400 font-medium flex items-center gap-1.5 mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="drawer-user-role">พนักงานคลังสินค้า</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="px-3 py-2 space-y-1">
+                <div class="px-3 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">เมนูการปฏิบัติงาน</div>
+                
+                <button onclick="drawerNavigate('workload')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-business-time text-amber-400 w-4 text-center text-sm"></i>
+                    <span>1. บันทึก Workload (สัดส่วนเวลา)</span>
+                </button>
+
+                <button onclick="drawerNavigate('errors')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-triangle-exclamation text-red-400 w-4 text-center text-sm"></i>
+                    <span>2. บันทึกความผิดพลาด (Quality)</span>
+                </button>
+
+                <button onclick="drawerNavigate('bills')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-boxes-stacked text-blue-400 w-4 text-center text-sm"></i>
+                    <span>3. สรุปบิลเบิกย้าย (Live Sync)</span>
+                </button>
+
+                <div class="pt-3 px-3 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">การวิเคราะห์ &amp; สรุปผล</div>
+
+                <button onclick="drawerNavigate('dashboard')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-chart-pie text-indigo-400 w-4 text-center text-sm"></i>
+                    <span>แดชบอร์ดรายวัน</span>
+                </button>
+
+                <button id="drawer-admin-dash-btn" onclick="drawerNavigate('admin-dash')" class="hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-gauge-high text-emerald-400 w-4 text-center text-sm"></i>
+                    <span>ภาพรวมผู้บริหาร (Cockpit)</span>
+                </button>
+
+                <button id="drawer-admin-btn" onclick="drawerNavigate('admin')" class="hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-gear text-slate-400 w-4 text-center text-sm"></i>
+                    <span>ตั้งค่าระบบ &amp; พนักงาน</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-4 border-t border-slate-800 space-y-2">
+            <button onclick="syncDataFromSheet(); closeDrawer();" class="w-full py-2.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center justify-center gap-2 border border-slate-700">
+                <i class="fa-solid fa-rotate text-blue-400"></i> ซิงค์ข้อมูลล่าสุด
+            </button>
+            <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
+                <span>KPI Suite v20260822.01</span>
+                <span>AKRA System</span>
+            </div>
+        </div>
+    </aside>
+
     <style>
         /* Add safe area support for modern phones like iPhone */
         @supports (padding-bottom: env(safe-area-inset-bottom)) {
@@ -1333,7 +1502,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260820.07";
+        const CURRENT_VERSION = "20260822.02";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -1758,13 +1927,18 @@
         const AKRA_CASE_MARKER = '[AKRA_CASE:';
         const TRD_CASE_MARKER = '[TRD_CASE:';
         const AKRA_CORE_CATALOG = [
-            { core: 'inbound', coreLabel: 'รับเข้า', type: 'ลงรับสินค้าในแอปผิด', penalty: 5 },
-            { core: 'inbound', coreLabel: 'รับเข้า', type: 'วางสินค้าไม่เรียบร้อย/ผิดตำแหน่ง', penalty: 3 },
-            { core: 'outbound', coreLabel: 'จ่ายออก', type: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5 },
-            { core: 'outbound', coreLabel: 'จ่ายออก', type: 'หยิบผิด ถึงหน้าร้านแล้ว', penalty: 10 },
-            { core: 'outbound', coreLabel: 'จ่ายออก', type: 'หยิบผิด ถึงลูกค้าแล้ว', penalty: 20 },
-            { core: 'internal', coreLabel: 'ย้ายภายใน', type: 'สินค้าหมด ต้องเบิกด่วน', penalty: 5 },
-            { core: 'internal', coreLabel: 'ย้ายภายใน', type: 'โอน W2→W1 จำนวนไม่ตรง', penalty: 5 },
+            { core: 'outbound', coreLabel: 'ขาออก & จัดส่ง', type: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5 },
+            { core: 'outbound', coreLabel: 'ขาออก & จัดส่ง', type: 'หยิบผิด ถึงหน้าร้านแล้ว', penalty: 10 },
+            { core: 'outbound', coreLabel: 'ขาออก & จัดส่ง', type: 'หยิบผิด ถึงลูกค้าแล้ว', penalty: 20 },
+            { core: 'outbound', coreLabel: 'ขาออก & จัดส่ง', type: 'จำนวนไม่ครบ / ขาดเกิน', penalty: 5 },
+            { core: 'store_stock', coreLabel: 'หน้าร้าน & สต๊อก', type: 'ตกเบิกสต๊อก / ของหมดไม่แจ้ง', penalty: 5 },
+            { core: 'store_stock', coreLabel: 'หน้าร้าน & สต๊อก', type: 'ปล่อยชั้นวางว่าง / เติมของช้า', penalty: 5 },
+            { core: 'store_stock', coreLabel: 'หน้าร้าน & สต๊อก', type: 'สต๊อกสินค้าไม่พอใช้ / สั่งของช้า', penalty: 10 },
+            { core: 'inbound', coreLabel: 'ขารับเข้า & จัดวาง', type: 'วางสินค้าไม่เรียบร้อย/ผิดตำแหน่ง', penalty: 3 },
+            { core: 'inbound', coreLabel: 'ขารับเข้า & จัดวาง', type: 'ลงรับสินค้าในแอปผิด', penalty: 5 },
+            { core: 'inbound', coreLabel: 'ขารับเข้า & จัดวาง', type: 'รับสินค้าชำรุดเข้ามาไม่แจ้ง', penalty: 5 },
+            { core: 'internal', coreLabel: 'โอนย้ายคลัง W2', type: 'โอน W2→W1 จำนวนไม่ตรง', penalty: 5 },
+            { core: 'internal', coreLabel: 'โอนย้ายคลัง W2', type: 'สินค้าหมด ต้องเบิกด่วน', penalty: 5 },
             { core: 'shared', coreLabel: 'รับผิดชอบร่วม', type: 'สินค้าหมดไม่แจ้งเตือน', penalty: 5 }
         ];
         const AKRA_LEGACY_PROCESS_BY_TYPE = {
@@ -1780,11 +1954,12 @@
                 employees: ['หมูหยอง', 'เอี้ยง', 'จอนห์นี่', 'ปีเตอร์', 'เอส'],
                 showZone2: true,
                 errorTypes: [
-                    { group: "1. รับเข้า", options: AKRA_CORE_CATALOG.filter(i => i.core === 'inbound').map(i => i.type) },
-                    { group: "2. จ่ายออก", options: AKRA_CORE_CATALOG.filter(i => i.core === 'outbound').map(i => i.type) },
-                    { group: "3. ย้ายภายใน", options: AKRA_CORE_CATALOG.filter(i => i.core === 'internal').map(i => i.type) },
-                    { group: "4. รับผิดชอบร่วม", options: AKRA_CORE_CATALOG.filter(i => i.core === 'shared').map(i => i.type) },
-                    { group: "5. อื่น ๆ", options: ["ความผิดอื่น ๆ"] }
+                    { group: "1. ขาออก & จัดส่ง", options: AKRA_CORE_CATALOG.filter(i => i.core === 'outbound').map(i => i.type) },
+                    { group: "2. หน้าร้าน & สต๊อก", options: AKRA_CORE_CATALOG.filter(i => i.core === 'store_stock').map(i => i.type) },
+                    { group: "3. ขารับเข้า & จัดวาง", options: AKRA_CORE_CATALOG.filter(i => i.core === 'inbound').map(i => i.type) },
+                    { group: "4. โอนย้ายคลัง W2", options: AKRA_CORE_CATALOG.filter(i => i.core === 'internal').map(i => i.type) },
+                    { group: "5. รับผิดชอบร่วม", options: AKRA_CORE_CATALOG.filter(i => i.core === 'shared').map(i => i.type) },
+                    { group: "6. อื่น ๆ", options: ["ความผิดอื่น ๆ"] }
                 ]
             },
             "TRD": {
@@ -1803,6 +1978,10 @@
         const HP_PENALTY = {
             'แก้ไขได้ก่อนจัดส่ง': 5, 'ผิดพลาดในการรับลงสินค้า': 10, 'ส่งถึงหน้าร้านแล้ว': 15, 'ส่งถึงลูกค้าแล้ว': 30,
             'สินค้าขาดสต๊อก': 10,
+            'หยิบผิด แก้ทันก่อนจัดส่ง': 5, 'หยิบผิด ถึงหน้าร้านแล้ว': 10, 'หยิบผิด ถึงลูกค้าแล้ว': 20, 'จำนวนไม่ครบ / ขาดเกิน': 5,
+            'ตกเบิกสต๊อก / ของหมดไม่แจ้ง': 5, 'ปล่อยชั้นวางว่าง / เติมของช้า': 5, 'สต๊อกสินค้าไม่พอใช้ / สั่งของช้า': 10,
+            'วางสินค้าไม่เรียบร้อย/ผิดตำแหน่ง': 3, 'ลงรับสินค้าในแอปผิด': 5, 'รับสินค้าชำรุดเข้ามาไม่แจ้ง': 5,
+            'โอน W2→W1 จำนวนไม่ตรง': 5, 'สินค้าหมด ต้องเบิกด่วน': 5, 'สินค้าหมดไม่แจ้งเตือน': 5,
             'จัดบิลผิด': 5, 'หยิบของผิด': 5, 'จำนวนไม่ครบ': 5, 'ลูกค้ารอสินค้านานเกิน 15 นาที': 10, 'ปล่อยของผิดถึงลูกค้า (Checker)': 30,
             'คิดเงินทอนเงินผิด': 15, 'ตอบแชทช้า': 10, 'ให้ข้อมูลสินค้าผิด': 5, 'เปิดบิลผิด': 10, 'คิดเงินพลาด': 15, 'ของหมดไม่แจ้ง (เห็นผ่านหน้าระบบ)': 5,
             'ไม่ช่วยใส่ถุง': 5, 'ไม่แนะนำสินค้า': 5, 'ไม่เดินดูแลลูกค้าเดินช้อป': 5, 'บริการไม่สุภาพ': 20, 'ปล่อยชั้นวางว่าง (เรียงของเติม)': 10,
@@ -3438,22 +3617,163 @@
             updateDailyDashboard();
         }
 
-        // ================= AKRA WORKLOAD EDITOR =================
+        // ================= HAMBURGER DRAWER HANDLERS =================
+        function openDrawer() {
+            const drawer = document.getElementById('drawer-panel');
+            const backdrop = document.getElementById('drawer-backdrop');
+            if (drawer && backdrop) {
+                drawer.classList.remove('-translate-x-full');
+                backdrop.classList.remove('opacity-0', 'pointer-events-none');
+                backdrop.classList.add('opacity-100');
+            }
+            updateDrawerUserInfo();
+        }
+
+        function closeDrawer() {
+            const drawer = document.getElementById('drawer-panel');
+            const backdrop = document.getElementById('drawer-backdrop');
+            if (drawer && backdrop) {
+                drawer.classList.add('-translate-x-full');
+                backdrop.classList.remove('opacity-100');
+                backdrop.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function drawerNavigate(target) {
+            closeDrawer();
+            if (target === 'workload') {
+                switchTab('record');
+                setTimeout(() => {
+                    const el = document.getElementById('akra-workload-card');
+                    if (el && !el.classList.contains('hidden')) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
+            } else if (target === 'errors') {
+                switchTab('record');
+                setTimeout(() => {
+                    const el = document.getElementById('errors-card') || document.getElementById('error-entries-container');
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
+            } else if (target === 'bills') {
+                switchTab('record');
+                setTimeout(() => {
+                    const el = document.getElementById('live-requisitions-card') || document.getElementById('vendor-bills-card');
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
+            } else if (target === 'dashboard') {
+                switchTab('dashboard');
+            } else if (target === 'admin-dash') {
+                switchTab('admin-dash');
+            } else if (target === 'admin') {
+                switchTab('admin');
+            }
+        }
+
+        function updateDrawerUserInfo() {
+            const nameEl = document.getElementById('drawer-user-name');
+            const roleEl = document.getElementById('drawer-user-role');
+            const badgeEl = document.getElementById('drawer-branch-badge');
+            const adminDashBtn = document.getElementById('drawer-admin-dash-btn');
+            const adminBtn = document.getElementById('drawer-admin-btn');
+
+            if (nameEl) nameEl.textContent = displayUserName || (currentUser ? String(currentUser) : 'ผู้ใช้งาน');
+            if (badgeEl) badgeEl.textContent = `${currentBranch || 'AKRA'} WAREHOUSE`;
+            if (roleEl) {
+                const isUserAdmin = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin'));
+                roleEl.textContent = isUserAdmin ? 'ผู้ดูแลระบบ (Admin)' : 'พนักงานคลังสินค้า';
+            }
+
+            const canViewAdmin = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin'));
+            if (adminDashBtn) {
+                if (canViewAdmin) adminDashBtn.classList.remove('hidden'), adminDashBtn.classList.add('flex');
+                else adminDashBtn.classList.add('hidden'), adminDashBtn.classList.remove('flex');
+            }
+            if (adminBtn) {
+                if (canViewAdmin) adminBtn.classList.remove('hidden'), adminBtn.classList.add('flex');
+                else adminBtn.classList.add('hidden'), adminBtn.classList.remove('flex');
+            }
+        }
+
+        // ================= AKRA WORKLOAD EDITOR V2 =================
+        const AKRA_PRIMARY_DUTIES = [
+            { id: 'W1', name: 'คลัง W1', desc: 'จัดเตรียม & แพ็กของ', icon: 'fa-boxes-stacked' },
+            { id: 'W2', name: 'คลัง W2', desc: 'สต๊อกใหญ่ & เติมของ', icon: 'fa-cubes-stacked' },
+            { id: 'OUTBOUND', name: 'ขาออก', desc: 'จัดส่ง & จ่ายออก', icon: 'fa-truck-fast' },
+            { id: 'INBOUND', name: 'รับสินค้าเข้า', desc: 'ตรวจรับ & ลงสินค้า', icon: 'fa-truck-ramp-box' },
+            { id: 'MOVE', name: 'ขนย้ายสินค้า', desc: 'โอนย้าย & จัดระเบียบ', icon: 'fa-dolly' }
+        ];
+
+        const AKRA_SUPPORT_DUTIES = [
+            { id: 'SUPP_W1', name: 'คลัง W1', desc: 'ช่วยงานคลัง W1', icon: 'fa-boxes-stacked' },
+            { id: 'SUPP_W2', name: 'คลัง W2', desc: 'ช่วยงานคลัง W2', icon: 'fa-cubes-stacked' },
+            { id: 'SUPP_OUT', name: 'ขาออก', desc: 'ช่วยจัดส่ง/จ่ายออก', icon: 'fa-truck-fast' },
+            { id: 'SUPP_IN', name: 'รับสินค้าเข้า', desc: 'ช่วยตรวจรับสินค้า', icon: 'fa-truck-ramp-box' },
+            { id: 'SUPP_MOVE', name: 'ขนย้ายสินค้า', desc: 'ช่วยขนย้ายสินค้า', icon: 'fa-dolly' },
+            { id: 'SUPP_LIFT', name: 'ช่วยยกสินค้า', desc: 'ช่วยยก/ขึ้นของ', icon: 'fa-truck-loading' },
+            { id: 'SUPP_TRD', name: 'สนับสนุน TRD', desc: 'ช่วยหน้าร้าน TRD', icon: 'fa-store' },
+            { id: 'SUPP_DEL', name: 'ส่งสินค้า', desc: 'วิ่งส่งสินค้าด่วน', icon: 'fa-motorcycle' }
+        ];
+
+        const AKRA_SUPPORT_DURATIONS = [
+            { hours: 0.5, label: '30 นาที' },
+            { hours: 1.0, label: '1.0 ชม.' },
+            { hours: 2.0, label: '2.0 ชม.' },
+            { hours: 5.0, label: '5.0 ชม.' }
+        ];
+
         function getAkraWorkloadValues() {
             if (currentBranch !== 'AKRA') return [];
             const container = document.getElementById('akra-workload-container');
             if (!container) return [];
 
             const rows = [];
-            container.querySelectorAll('.workload-row').forEach(row => {
+            container.querySelectorAll('.workload-row-v2').forEach(row => {
                 const emp = row.dataset.employee;
-                const capacity = parseInt(row.querySelector('.wl-capacity').value) || 0;
-                const outbound = parseInt(row.querySelector('.wl-outbound').value) || 0;
-                const inbound = parseInt(row.querySelector('.wl-inbound').value) || 0;
-                const transfer = parseInt(row.querySelector('.wl-transfer').value) || 0;
-                const shared = parseInt(row.querySelector('.wl-shared').value) || 0;
-                const note = row.querySelector('.wl-note').value || "";
-                rows.push({ employee: emp, capacity, outbound, inbound, transfer, shared, note });
+                const capacity = 10;
+                const primaryCore = row.dataset.primaryCore || 'คลัง W1';
+                
+                let supportDuties = [];
+                try {
+                    supportDuties = JSON.parse(row.dataset.supportDuties || '[]');
+                } catch (e) {
+                    supportDuties = [];
+                }
+
+                const totalSupportHours = supportDuties.reduce((s, d) => s + (parseFloat(d.hours) || 0), 0);
+                const primaryHours = Math.max(0, capacity - totalSupportHours);
+
+                let outbound = 0, inbound = 0, transfer = 0, shared = 0;
+                if (primaryCore === 'คลัง W1' || primaryCore === 'ขาออก' || primaryCore === 'ส่งสินค้า') outbound += primaryHours;
+                else if (primaryCore === 'รับสินค้าเข้า' || primaryCore === 'ช่วยยกสินค้า') inbound += primaryHours;
+                else if (primaryCore === 'คลัง W2' || primaryCore === 'ขนย้ายสินค้า') transfer += primaryHours;
+                else shared += primaryHours;
+
+                supportDuties.forEach(d => {
+                    const h = parseFloat(d.hours) || 0;
+                    if (d.name === 'คลัง W1' || d.name === 'ขาออก' || d.name === 'ส่งสินค้า' || d.name === 'สนับสนุน TRD') outbound += h;
+                    else if (d.name === 'รับสินค้าเข้า' || d.name === 'ช่วยยกสินค้า') inbound += h;
+                    else if (d.name === 'คลัง W2' || d.name === 'ขนย้ายสินค้า') transfer += h;
+                    else shared += h;
+                });
+
+                const note = row.querySelector('.wl-note')?.value || (supportDuties.length > 0 ? supportDuties.map(d => `${d.name} ${d.hours}h`).join(', ') : '');
+
+                rows.push({
+                    employee: emp,
+                    capacity: 10,
+                    outbound: Math.round(outbound * 10) / 10,
+                    inbound: Math.round(inbound * 10) / 10,
+                    transfer: Math.round(transfer * 10) / 10,
+                    shared: Math.round(shared * 10) / 10,
+                    note: note || '',
+                    primaryCore,
+                    supportDuties
+                });
             });
             return rows;
         }
@@ -3472,18 +3792,31 @@
             const container = document.getElementById('akra-workload-container');
             if (!container) return;
 
-            const currentValues = {};
+            const isUserAdmin = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin'));
+            const visibleEmployees = isUserAdmin
+                ? onDuty
+                : onDuty.filter(emp => normalizeEmpName(emp) === normalizeEmpName(displayUserName));
+
+            if (visibleEmployees.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        <i class="fa-solid fa-user-clock text-slate-400 text-2xl mb-2"></i>
+                        <p class="text-xs text-slate-500 font-medium">ไม่มีพนักงานเข้ากะสำหรับการระบุ Workload</p>
+                    </div>`;
+                return;
+            }
+
+            const currentMap = {};
             if (!forceReset) {
-                container.querySelectorAll('.workload-row').forEach(row => {
+                container.querySelectorAll('.workload-row-v2').forEach(row => {
                     const emp = row.dataset.employee;
                     const normKey = normalizeEmpName(emp);
-                    currentValues[normKey] = {
-                        capacity: parseInt(row.querySelector('.wl-capacity').value) || 0,
-                        outbound: parseInt(row.querySelector('.wl-outbound').value) || 0,
-                        inbound: parseInt(row.querySelector('.wl-inbound').value) || 0,
-                        transfer: parseInt(row.querySelector('.wl-transfer').value) || 0,
-                        shared: parseInt(row.querySelector('.wl-shared').value) || 0,
-                        note: row.querySelector('.wl-note').value || ""
+                    let supp = [];
+                    try { supp = JSON.parse(row.dataset.supportDuties || '[]'); } catch (e) {}
+                    currentMap[normKey] = {
+                        primaryCore: row.dataset.primaryCore || 'คลัง W1',
+                        supportDuties: supp,
+                        note: row.querySelector('.wl-note')?.value || ''
                     };
                 });
             }
@@ -3491,205 +3824,268 @@
             if (savedData && Array.isArray(savedData)) {
                 savedData.forEach(item => {
                     const normKey = normalizeEmpName(item.employee);
-                    currentValues[normKey] = {
-                        capacity: item.capacity !== undefined ? item.capacity : 10,
-                        outbound: item.outbound || 0,
-                        inbound: item.inbound || 0,
-                        transfer: item.transfer || 0,
-                        shared: item.shared || 0,
-                        note: item.note || ""
+                    currentMap[normKey] = {
+                        primaryCore: item.primaryCore || (item.inbound > item.outbound ? 'รับสินค้าเข้า' : (item.transfer > item.outbound ? 'คลัง W2' : 'คลัง W1')),
+                        supportDuties: item.supportDuties || [],
+                        note: item.note || ''
                     };
                 });
             }
 
-            const isUserAdmin = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', 'guest_admin', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin'));
-            const visibleEmployees = isUserAdmin
-                ? onDuty
-                : onDuty.filter(emp => normalizeEmpName(emp) === normalizeEmpName(displayUserName));
-
-            if (visibleEmployees.length === 0) {
-                container.innerHTML = `<div class="text-xs text-gray-400 py-2 text-center">ไม่มีพนักงานเข้ากะสำหรับการระบุ Workload</div>`;
-                return;
-            }
-
             container.innerHTML = visibleEmployees.map(emp => {
                 const normKey = normalizeEmpName(emp);
-                const val = currentValues[normKey] || { capacity: 0, outbound: 0, inbound: 0, transfer: 0, shared: 0, note: "" };
-                const total = val.outbound + val.inbound + val.transfer + val.shared;
-                let totalClass = "text-gray-500";
-                if (total > val.capacity) totalClass = "text-red-600 font-bold";
-                else if (total === val.capacity) totalClass = "text-green-600 font-bold";
-
+                const val = currentMap[normKey] || { primaryCore: 'คลัง W1', supportDuties: [], note: '' };
+                const hasSupport = val.supportDuties && val.supportDuties.length > 0;
+                const totalSupportHours = (val.supportDuties || []).reduce((s, d) => s + (parseFloat(d.hours) || 0), 0);
+                const primaryHours = Math.max(0, 10 - totalSupportHours);
+                const primaryPct = Math.round((primaryHours / 10) * 100);
+                const supportPct = Math.round((totalSupportHours / 10) * 100);
                 const canEditRow = isUserAdmin || normalizeEmpName(emp) === normalizeEmpName(displayUserName);
-                const disabledAttr = canEditRow ? '' : 'disabled';
-                const readonlyAttr = canEditRow ? '' : 'readonly';
 
                 return `
-                    <div class="workload-row bg-gray-50 p-2.5 rounded-lg border border-gray-100 flex flex-col space-y-2" data-employee="${esc(emp)}">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-bold text-gray-700">${esc(emp)}</span>
-                            <div class="flex items-center space-x-1.5">
-                                <span class="text-xs text-gray-500">ความสามารถ:</span>
-                                <select ${disabledAttr} class="wl-capacity bg-white border border-gray-200 rounded px-1.5 py-0.5 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="validateRowTotal(this.closest('.workload-row'))">
-                                    ${[...Array(11).keys()].map(i => `<option value="${i}" ${val.capacity === i ? 'selected' : ''}>${i}</option>`).join('')}
-                                </select>
-                                <button type="button" ${disabledAttr} onclick="setWorkloadCapacity(this.closest('.workload-row'), 10)" class="h-12 px-2 rounded-lg border border-amber-300 bg-amber-50 text-[11px] font-bold text-amber-800 active:bg-amber-100 ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">เต็มวัน 10</button>
+                <div class="workload-row-v2 enterprise-card p-4 border border-slate-200 shadow-sm rounded-xl space-y-3" 
+                     id="wl-row-${esc(emp)}" 
+                     data-employee="${esc(emp)}" 
+                     data-capacity="10" 
+                     data-primary-core="${esc(val.primaryCore)}" 
+                     data-support-duties='${JSON.stringify(val.supportDuties || [])}'>
+                    
+                    <!-- Header -->
+                    <div class="flex justify-between items-center pb-2.5 border-b border-slate-100">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-blue-600/10 text-blue-600 font-bold flex items-center justify-center text-xs">
+                                ${esc(emp.substring(0, 2))}
+                            </div>
+                            <div>
+                                <span class="text-sm font-bold text-slate-800">${esc(emp)}</span>
+                                <span class="text-[10px] text-slate-400 block">${canEditRow ? 'ผู้ปฏิบัติงาน (บัญชีของคุณ)' : 'พนักงานประจำกะ'}</span>
                             </div>
                         </div>
+                        <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                            กะทำงาน 10.0 ชม.
+                        </span>
+                    </div>
 
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
-                            <div class="bg-white p-1.5 rounded-lg border border-gray-100 flex flex-col items-center">
-                                <div class="text-[10px] text-gray-500 mb-0.5 font-semibold">ขาออก</div>
-                                <div class="flex items-center space-x-1">
-                                    <button type="button" ${disabledAttr} aria-label="ลดคะแนนขาออกของ ${esc(emp)}" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">−</button>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" enterkeyhint="done" aria-label="คะแนนขาออกของ ${esc(emp)}" class="wl-outbound w-8 text-center text-base font-bold text-gray-800 border focus:outline-none focus:ring-2 focus:ring-amber-400" value="${val.outbound}" onfocus="this.select()" onchange="setWorkloadDirectValue(this)">
-                                    <button type="button" ${disabledAttr} aria-label="เพิ่มคะแนนขาออกของ ${esc(emp)}" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
-                                </div>
-                            </div>
-                            <div class="bg-white p-1.5 rounded-lg border border-gray-100 flex flex-col items-center">
-                                <div class="text-[10px] text-gray-500 mb-0.5 font-semibold">ขาเข้า</div>
-                                <div class="flex items-center space-x-1">
-                                    <button type="button" ${disabledAttr} aria-label="ลดคะแนนขาเข้าของ ${esc(emp)}" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">−</button>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" enterkeyhint="done" aria-label="คะแนนขาเข้าของ ${esc(emp)}" class="wl-inbound w-8 text-center text-base font-bold text-gray-800 border focus:outline-none focus:ring-2 focus:ring-amber-400" value="${val.inbound}" onfocus="this.select()" onchange="setWorkloadDirectValue(this)">
-                                    <button type="button" ${disabledAttr} aria-label="เพิ่มคะแนนขาเข้าของ ${esc(emp)}" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
-                                </div>
-                            </div>
-                            <div class="bg-white p-1.5 rounded-lg border border-gray-100 flex flex-col items-center">
-                                <div class="text-[10px] text-gray-500 mb-0.5 font-semibold">ขาย้าย</div>
-                                <div class="flex items-center space-x-1">
-                                    <button type="button" ${disabledAttr} aria-label="ลดคะแนนขาย้ายของ ${esc(emp)}" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">−</button>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" enterkeyhint="done" aria-label="คะแนนขาย้ายของ ${esc(emp)}" class="wl-transfer w-8 text-center text-base font-bold text-gray-800 border focus:outline-none focus:ring-2 focus:ring-amber-400" value="${val.transfer}" onfocus="this.select()" onchange="setWorkloadDirectValue(this)">
-                                    <button type="button" ${disabledAttr} aria-label="เพิ่มคะแนนขาย้ายของ ${esc(emp)}" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
-                                </div>
-                            </div>
-                            <div class="bg-white p-1.5 rounded-lg border border-gray-100 flex flex-col items-center">
-                                <div class="text-[10px] text-gray-500 mb-0.5 font-semibold">อื่น ๆ</div>
-                                <div class="flex items-center space-x-1">
-                                    <button type="button" ${disabledAttr} aria-label="ลดคะแนนอื่น ๆ ของ ${esc(emp)}" onclick="adjWorkload(this, -1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">−</button>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" enterkeyhint="done" aria-label="คะแนนอื่น ๆ ของ ${esc(emp)}" class="wl-shared w-8 text-center text-base font-bold text-gray-800 border focus:outline-none focus:ring-2 focus:ring-amber-400" value="${val.shared}" onfocus="this.select()" onchange="setWorkloadDirectValue(this)">
-                                    <button type="button" ${disabledAttr} aria-label="เพิ่มคะแนนอื่น ๆ ของ ${esc(emp)}" onclick="adjWorkload(this, 1)" class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 text-base font-bold active:bg-gray-150 text-gray-600 select-none flex items-center justify-center ${canEditRow ? '' : 'opacity-40 cursor-not-allowed'}">+</button>
-                                </div>
-                            </div>
+                    <!-- Step 1: เลือกหน้าที่หลัก -->
+                    <div>
+                        <div class="text-[11px] font-bold text-slate-600 mb-1.5 flex items-center gap-1.5">
+                            <span class="w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-bold flex items-center justify-center">1</span>
+                            <span>เลือกหน้าที่หลักวันนี้</span>
                         </div>
-
-                        <div class="flex justify-between items-center pt-1.5 border-t border-gray-150/50">
-                            <input type="text" ${readonlyAttr} placeholder="หมายเหตุ (ถ้ามี)" class="wl-note w-2/3 bg-transparent text-[11px] text-gray-500 placeholder-gray-300 outline-none border-b border-transparent focus:border-gray-200 pb-0.5" value="${esc(val.note)}" oninput="saveRecordDraftDebounced()">
-                            <span class="text-xs ${totalClass} wl-total-indicator">รวม ${total}/${val.capacity}</span>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                            ${AKRA_PRIMARY_DUTIES.map(d => {
+                                const isSelected = val.primaryCore === d.name;
+                                return `
+                                <button type="button" 
+                                        ${canEditRow ? '' : 'disabled'}
+                                        onclick="selectPrimaryCore('${esc(emp)}', '${esc(d.name)}')" 
+                                        class="p-2.5 rounded-xl border text-left transition-all ${isSelected ? 'border-blue-600 bg-blue-50/70 text-blue-900 ring-2 ring-blue-500/20' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <i class="fa-solid ${d.icon} ${isSelected ? 'text-blue-600' : 'text-slate-400'} text-xs"></i>
+                                        <span class="text-xs font-bold truncate">${esc(d.name)}</span>
+                                    </div>
+                                    <div class="text-[10px] ${isSelected ? 'text-blue-700 font-medium' : 'text-slate-400'} leading-tight">${esc(d.desc)}</div>
+                                </button>
+                                `;
+                            }).join('')}
                         </div>
                     </div>
+
+                    <!-- Step 2: งานสนับสนุน -->
+                    <div>
+                        <div class="text-[11px] font-bold text-slate-600 mb-1.5 flex items-center gap-1.5">
+                            <span class="w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-bold flex items-center justify-center">2</span>
+                            <span>งานสนับสนุน / ช่วยงานอื่น</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" 
+                                    ${canEditRow ? '' : 'disabled'}
+                                    onclick="toggleSupportMode('${esc(emp)}', false)" 
+                                    class="p-2.5 rounded-xl border text-left transition-all ${!hasSupport ? 'border-emerald-600 bg-emerald-50/70 text-emerald-900 ring-2 ring-emerald-500/20' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-circle-check ${!hasSupport ? 'text-emerald-600' : 'text-slate-400'} text-xs"></i>
+                                    <span class="text-xs font-bold">ไม่มี</span>
+                                </div>
+                                <div class="text-[10px] ${!hasSupport ? 'text-emerald-700 font-medium' : 'text-slate-400'} mt-0.5">ทำงานหลักเต็มวัน 10 ชม.</div>
+                            </button>
+
+                            <button type="button" 
+                                    ${canEditRow ? '' : 'disabled'}
+                                    onclick="toggleSupportMode('${esc(emp)}', true)" 
+                                    class="p-2.5 rounded-xl border text-left transition-all ${hasSupport ? 'border-amber-600 bg-amber-50/70 text-amber-900 ring-2 ring-amber-500/20' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-handshake-angle ${hasSupport ? 'text-amber-600' : 'text-slate-400'} text-xs"></i>
+                                    <span class="text-xs font-bold">มีงานสนับสนุน</span>
+                                </div>
+                                <div class="text-[10px] ${hasSupport ? 'text-amber-700 font-medium' : 'text-slate-400'} mt-0.5">ถูกดึงเวลาไปช่วยงานอื่น</div>
+                            </button>
+                        </div>
+
+                        <!-- Support Detail Container -->
+                        <div class="${hasSupport ? '' : 'hidden'} mt-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5" id="supp-detail-${esc(emp)}">
+                            <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">เลือกงานช่วย &amp; ระยะเวลา</div>
+                            
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                                ${AKRA_SUPPORT_DUTIES.map(sd => {
+                                    const activeItem = (val.supportDuties || []).find(d => d.name === sd.name);
+                                    const isItemActive = !!activeItem;
+                                    return `
+                                    <button type="button" 
+                                            ${canEditRow ? '' : 'disabled'}
+                                            onclick="toggleSupportTaskItem('${esc(emp)}', '${esc(sd.name)}')" 
+                                            class="p-2 rounded-lg border text-left transition-all ${isItemActive ? 'border-amber-500 bg-amber-100/70 text-amber-900 font-bold' : 'border-slate-200 bg-white text-slate-700 text-xs'}">
+                                        <div class="flex items-center gap-1.5 truncate">
+                                            <i class="fa-solid ${sd.icon} ${isItemActive ? 'text-amber-600' : 'text-slate-400'} text-xs"></i>
+                                            <span class="text-xs truncate">${esc(sd.name)}</span>
+                                        </div>
+                                    </button>
+                                    `;
+                                }).join('')}
+                            </div>
+
+                            <!-- Duration Selection for active support items -->
+                            ${(val.supportDuties || []).map((sd, idx) => `
+                                <div class="p-2 bg-white rounded-lg border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-angle-right text-amber-500 text-xs"></i> ${esc(sd.name)}
+                                    </span>
+                                    <div class="flex items-center gap-1">
+                                        ${AKRA_SUPPORT_DURATIONS.map(dur => {
+                                            const isSelectedDur = parseFloat(sd.hours) === dur.hours;
+                                            return `
+                                            <button type="button" 
+                                                    ${canEditRow ? '' : 'disabled'}
+                                                    onclick="setSupportTaskDuration('${esc(emp)}', ${idx}, ${dur.hours})" 
+                                                    class="px-2 py-1 rounded text-[10px] font-bold transition-all ${isSelectedDur ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                                                ${dur.label}
+                                            </button>
+                                            `;
+                                        }).join('')}
+                                        <button type="button" 
+                                                ${canEditRow ? '' : 'disabled'}
+                                                onclick="removeSupportTaskItem('${esc(emp)}', ${idx})" 
+                                                class="w-6 h-6 rounded bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center text-xs ml-1" title="ลบรายการนี้">
+                                            <i class="fa-solid fa-trash-can text-[10px]"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Live Calculation & Balance Bar -->
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-700">สัดส่วนเวลาวันนี้:</span>
+                            <span class="font-bold text-slate-900" id="wl-summary-text-${esc(emp)}">
+                                ${esc(val.primaryCore)} (${primaryHours.toFixed(1)} ชม. • ${primaryPct}%)
+                                ${hasSupport ? `+ งานช่วย (${totalSupportHours.toFixed(1)} ชม. • ${supportPct}%)` : ''}
+                            </span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2 flex overflow-hidden">
+                            <div class="bg-blue-600 h-full transition-all duration-300" style="width: ${primaryPct}%;" title="งานหลัก ${primaryHours} ชม."></div>
+                            <div class="bg-amber-500 h-full transition-all duration-300" style="width: ${supportPct}%;" title="งานช่วย ${totalSupportHours} ชม."></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-400 font-medium pt-0.5">
+                            <span>งานหลัก: ${primaryHours.toFixed(1)} ชม.</span>
+                            <span>งานช่วย: ${totalSupportHours.toFixed(1)} ชม.</span>
+                            <span class="text-emerald-600 font-bold">รวม 10.0 ชม. (100%)</span>
+                        </div>
+                    </div>
+
+                    <!-- Note -->
+                    <div>
+                        <input type="text" 
+                               ${canEditRow ? '' : 'readonly'}
+                               placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)..." 
+                               class="wl-note w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 text-slate-700" 
+                               value="${esc(val.note)}" 
+                               oninput="saveRecordDraftDebounced()">
+                    </div>
+                </div>
                 `;
             }).join('');
         }
 
-        function adjWorkload(btn, delta) {
-            const parent = btn.closest('div');
-            const input = parent.querySelector('input');
-            let currentVal = parseInt(input.value) || 0;
+        function selectPrimaryCore(empName, coreName) {
+            const row = document.getElementById(`wl-row-${empName}`);
+            if (!row) return;
+            row.dataset.primaryCore = coreName;
+            updateWorkloadRowAndRerender(empName);
+        }
 
-            const row = btn.closest('.workload-row');
-            const capacity = parseInt(row.querySelector('.wl-capacity').value) || 0;
-
-            const outboundVal = parseInt(row.querySelector('.wl-outbound').value) || 0;
-            const inboundVal = parseInt(row.querySelector('.wl-inbound').value) || 0;
-            const transferVal = parseInt(row.querySelector('.wl-transfer').value) || 0;
-            const sharedVal = parseInt(row.querySelector('.wl-shared').value) || 0;
-            const currentTotal = outboundVal + inboundVal + transferVal + sharedVal;
-
-            let newVal = currentVal + delta;
-            if (newVal < 0) newVal = 0;
-
-            const diff = newVal - currentVal;
-            if (diff > 0 && currentTotal + diff > capacity) {
-                return;
+        function toggleSupportMode(empName, enable) {
+            const row = document.getElementById(`wl-row-${empName}`);
+            if (!row) return;
+            if (!enable) {
+                row.dataset.supportDuties = '[]';
+            } else {
+                let current = [];
+                try { current = JSON.parse(row.dataset.supportDuties || '[]'); } catch (e) {}
+                if (current.length === 0) {
+                    current = [{ name: 'ช่วยยกสินค้า', hours: 1.0 }];
+                }
+                row.dataset.supportDuties = JSON.stringify(current);
             }
+            updateWorkloadRowAndRerender(empName);
+        }
 
-            input.value = newVal;
-            validateRowTotal(row);
+        function toggleSupportTaskItem(empName, taskName) {
+            const row = document.getElementById(`wl-row-${empName}`);
+            if (!row) return;
+            let current = [];
+            try { current = JSON.parse(row.dataset.supportDuties || '[]'); } catch (e) {}
+            const existingIdx = current.findIndex(d => d.name === taskName);
+            if (existingIdx >= 0) {
+                current.splice(existingIdx, 1);
+            } else {
+                current.push({ name: taskName, hours: 1.0 });
+            }
+            row.dataset.supportDuties = JSON.stringify(current);
+            updateWorkloadRowAndRerender(empName);
+        }
+
+        function setSupportTaskDuration(empName, itemIndex, hours) {
+            const row = document.getElementById(`wl-row-${empName}`);
+            if (!row) return;
+            let current = [];
+            try { current = JSON.parse(row.dataset.supportDuties || '[]'); } catch (e) {}
+            if (current[itemIndex]) {
+                current[itemIndex].hours = parseFloat(hours) || 1.0;
+            }
+            row.dataset.supportDuties = JSON.stringify(current);
+            updateWorkloadRowAndRerender(empName);
+        }
+
+        function removeSupportTaskItem(empName, itemIndex) {
+            const row = document.getElementById(`wl-row-${empName}`);
+            if (!row) return;
+            let current = [];
+            try { current = JSON.parse(row.dataset.supportDuties || '[]'); } catch (e) {}
+            current.splice(itemIndex, 1);
+            row.dataset.supportDuties = JSON.stringify(current);
+            updateWorkloadRowAndRerender(empName);
+        }
+
+        function updateWorkloadRowAndRerender(empName) {
+            const currentValues = getAkraWorkloadValues();
+            renderAkraWorkloadEditor(currentValues, false);
             saveRecordDraftDebounced();
+            updateDailyDashboard();
         }
 
-        function setWorkloadCapacity(row, capacity) {
-            const select = row.querySelector('.wl-capacity');
-            if (!select || select.disabled) return;
-            select.value = String(capacity);
-            validateRowTotal(row);
-        }
-
-        function setWorkloadDirectValue(input) {
-            const parsed = parseInt(input.value, 10);
-            input.value = String(Math.min(10, Math.max(0, Number.isFinite(parsed) ? parsed : 0)));
-            validateRowTotal(input.closest('.workload-row'));
-        }
-
-        function validateRowTotal(row) {
-            const capacity = parseInt(row.querySelector('.wl-capacity').value) || 0;
-            const outbound = parseInt(row.querySelector('.wl-outbound').value) || 0;
-            const inbound = parseInt(row.querySelector('.wl-inbound').value) || 0;
-            const transfer = parseInt(row.querySelector('.wl-transfer').value) || 0;
-            const shared = parseInt(row.querySelector('.wl-shared').value) || 0;
-
-            let total = outbound + inbound + transfer + shared;
-
-            if (total > capacity) {
-                let overage = total - capacity;
-
-                let wlShared = row.querySelector('.wl-shared');
-                let sharedVal = parseInt(wlShared.value) || 0;
-                if (sharedVal > 0) {
-                    let reduce = Math.min(sharedVal, overage);
-                    wlShared.value = sharedVal - reduce;
-                    overage -= reduce;
-                }
-
-                if (overage > 0) {
-                    let wlTransfer = row.querySelector('.wl-transfer');
-                    let transferVal = parseInt(wlTransfer.value) || 0;
-                    if (transferVal > 0) {
-                        let reduce = Math.min(transferVal, overage);
-                        wlTransfer.value = transferVal - reduce;
-                        overage -= reduce;
-                    }
-                }
-
-                if (overage > 0) {
-                    let wlInbound = row.querySelector('.wl-inbound');
-                    let inboundVal = parseInt(wlInbound.value) || 0;
-                    if (inboundVal > 0) {
-                        let reduce = Math.min(inboundVal, overage);
-                        wlInbound.value = inboundVal - reduce;
-                        overage -= reduce;
-                    }
-                }
-
-                if (overage > 0) {
-                    let wlOutbound = row.querySelector('.wl-outbound');
-                    let outboundVal = parseInt(wlOutbound.value) || 0;
-                    if (outboundVal > 0) {
-                        let reduce = Math.min(outboundVal, overage);
-                        wlOutbound.value = outboundVal - reduce;
-                        overage -= reduce;
-                    }
-                }
-
-                const adjustedOutbound = parseInt(row.querySelector('.wl-outbound').value) || 0;
-                const adjustedInbound = parseInt(row.querySelector('.wl-inbound').value) || 0;
-                const adjustedTransfer = parseInt(row.querySelector('.wl-transfer').value) || 0;
-                const adjustedShared = parseInt(row.querySelector('.wl-shared').value) || 0;
-                total = adjustedOutbound + adjustedInbound + adjustedTransfer + adjustedShared;
+        function confirmZeroErrors() {
+            const container = document.getElementById('error-entries-container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                        <i class="fa-solid fa-circle-check text-emerald-600 text-lg mb-1"></i>
+                        <p class="text-xs text-emerald-800 font-bold">บันทึกเรียบร้อย: ไม่มีข้อผิดพลาดในกะนี้ (Team HP 100%)</p>
+                    </div>`;
             }
-
-            const indicator = row.querySelector('.wl-total-indicator');
-            let totalClass = "text-gray-500";
-            if (total > capacity) {
-                totalClass = "text-red-600 font-bold";
-            } else if (total === capacity) {
-                totalClass = "text-green-600 font-bold";
-            }
-
-            indicator.className = `text-xs ${totalClass} wl-total-indicator`;
-            indicator.innerText = `รวม ${total}/${capacity}`;
-
+            showToast("ยืนยัน 0 ข้อผิดพลาดเรียบร้อย! Team HP 100%");
             saveRecordDraftDebounced();
+            updateDailyDashboard();
         }
 
         function applyAkraWorkloadDraft(workload) {
