@@ -113,11 +113,59 @@ async function call(handler, token = 'token', action = 'getConfig', origin = 'ht
   }
 
   {
+    let migrated = false;
+    const upserts = [];
+    const fixtures = {
+      dbCalls: [],
+      verifyMainJwt: async () => ({ id: 'not-migrated', roles: ['STALE'], exp: 9999999999 }),
+      verifyLegacyMainUser: async token => {
+        assert.strictEqual(token, 'valid-main-token');
+        return { id: 'not-migrated', name: 'Current Main User', roles: ['WAREHOUSE'], mustChangePassword: false };
+      },
+      dbUpsertUser: async user => {
+        upserts.push(user);
+        migrated = true;
+      },
+      dbRows: async (table, query) => {
+        fixtures.dbCalls.push({ table, query });
+        if (table === 'users' && query.includes('username=eq.not-migrated')) {
+          return migrated
+            ? [{ username: 'not-migrated', name: 'Current Main User', roles: ['WAREHOUSE'], status: 'Active' }]
+            : [];
+        }
+        if (table === 'users') {
+          return [{ username: 'not-migrated', name: 'Current Main User', roles: ['WAREHOUSE'], status: 'Active' }];
+        }
+        if (table === 'kpi_employees') return [];
+        throw new Error(`unexpected table ${table}`);
+      }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await call(runtime.handler, 'valid-main-token');
+    assert.strictEqual(result.status, 200, 'a currently authorized legacy Main user must migrate and continue');
+    assert.deepStrictEqual(Array.from(result.body.viewer.roles), ['WAREHOUSE']);
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(upserts)), [{
+      username: 'not-migrated',
+      name: 'Current Main User',
+      roles: ['WAREHOUSE'],
+      status: 'Active',
+      is_migrated: true,
+      legacy_uid: 'not-migrated',
+      legacy_sheet_source: 'Main verify migration'
+    }], 'migration must contain current Main identity fields and no credential');
+  }
+
+  {
     const warnings = [];
     const fixtures = {
       dbCalls: [],
       console: { ...console, warn: (...args) => warnings.push(args) },
-      verifyMainJwt: async () => ({ id: 'not-migrated', roles: ['WAREHOUSE'], exp: 9999999999 }),
+      verifyMainJwt: async () => ({
+        id: 'not-migrated-v2', roles: ['WAREHOUSE'], apps: ['app-kpi'], tokenVersion: 2,
+        sessionVersion: 1, authorizationRevision: 'current', exp: 9999999999
+      }),
+      dbRpc: async () => ({ valid: true }),
+      verifyLegacyMainUser: async () => assert.fail('v2 identities must never use legacy migration'),
       dbRows: async (table, query) => {
         fixtures.dbCalls.push({ table, query });
         return [];
@@ -132,6 +180,21 @@ async function call(handler, token = 'token', action = 'getConfig', origin = 'ht
       [['kpi-api request rejected', { action: 'getConfig', status: 403, stage: 'current_user_missing' }]],
       'safe diagnostics must identify the rejection stage without logging token or identity data'
     );
+  }
+
+  {
+    let upsertCalls = 0;
+    const fixtures = {
+      dbCalls: [],
+      verifyMainJwt: async () => ({ id: 'removed-user', roles: ['ADMIN'], exp: 9999999999 }),
+      verifyLegacyMainUser: async () => null,
+      dbUpsertUser: async () => { upsertCalls++; },
+      dbRows: async () => []
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await call(runtime.handler, 'removed-main-token');
+    assert.strictEqual(result.status, 403);
+    assert.strictEqual(upsertCalls, 0, 'a user rejected by current Main verification must never be migrated');
   }
 
   {
