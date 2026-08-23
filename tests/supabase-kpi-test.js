@@ -28,13 +28,13 @@ async function runTests() {
   );
   console.log('  -> fetchBranchData correctly deactivated with fallback notice');
 
-  // 4. Employee Roster and Config Query should throw containment error
-  console.log('\n[4/5] Testing getConfig throws containment error...');
-  await assert.rejects(
-    async () => { await kpiClient.getConfig(); },
-    /Supabase KPI client deactivated/
-  );
-  console.log('  -> getConfig correctly deactivated with fallback notice');
+  // 4. Employee Roster and Config Query should resolve with SORN
+  console.log('\n[4/5] Testing getConfig returns array including SORN...');
+  const result = await kpiClient.getConfig();
+  assert(Array.isArray(result), 'Result should be an array');
+  assert(result.length > 0, 'Result should have at least one employee');
+  assert(result.some(e => e.name === 'SORN'), 'SORN should be in the returned array');
+  console.log(`  -> getConfig returned ${result.length} employees including SORN`);
 
   // 5. Executive Action Center should throw containment error
   console.log('\n[5/5] Testing saveAction throws containment error...');
