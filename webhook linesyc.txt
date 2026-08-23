@@ -1,0 +1,652 @@
+/**
+     * ============================================================================
+     * AKRA OPERATIONS - LINE REQUISITION AUTO-PARSER & LIVE SYNC API
+     * Spreadsheet ID: 1WD8f2-D0EvWFIj_TwBxAkG2cMFroCeJaMpKBaUXsKKM
+     * Target Group ID: Ca9026f3d07901107f3c1db8ffcd442f2 (กลุ่มเบิกสินค้า)
+     * ============================================================================
+     */
+    
+    // ================= CONFIGURATION =================
+    const SPREADSHEET_ID = "1WD8f2-D0EvWFIj_TwBxAkG2cMFroCeJaMpKBaUXsKKM";
+    const SHEET_NAME = "Requisitions";
+    const TIMEZONE = "GMT+7";
+    
+    // ล็อกรหัสกลุ่ม LINE เบิกสินค้าเฉพาะกลุ่มนี้
+    const TARGET_LINE_GROUP_ID = "Ca9026f3d07901107f3c1db8ffcd442f2";
+    
+    // หัวตาราง (Headers)
+    const HEADERS = [
+      "uid",            // A: รหัสอ้างอิงบิล (เช่น REQ-20260822-001)
+      "billNo",         // B: เลขที่บิลลำดับวัน (เช่น #1, #2)
+      "timestamp",      // C: วันที่และเวลาเต็ม
+      "date",           // D: วันที่ (YYYY-MM-DD)
+      "time",           // E: เวลา (HH:mm น.)
+      "billType",       // F: ประเภทบิล (⚡ บิลด่วน, 🏪 เติมหน้าร้าน TRD, 📦 จัดส่งปกติ/ตจว.)
+      "requester",      // G: ผู้ขอเบิก (ดึงจากชื่อ LINE หรือข้อความ)
+      "itemsSummary",   // H: สรุปรายการสินค้า
+      "skuCount",       // I: จำนวน SKU
+      "totalUnits",     // J: จำนวนชิ้น/ลังรวม
+      "status",         // K: สถานะ (⏳ รอจัดสินค้า / จัดเสร็จแล้ว ✅ / สินค้าหมด / ไม่สำเร็จ ❌)
+      "doneBy",         // L: คนหยิบสินค้า / ผู้แจ้ง
+      "doneAt",         // M: เวลาที่หยิบเสร็จ
+      "rawText",        // N: ข้อความต้นฉบับจาก LINE
+      "groupId",        // O: LINE Group ID
+      "userId",         // P: LINE User ID
+      "messageId"       // Q: LINE Message ID (ใช้จับคู่กับ Reaction อีโมจิ)
+    ];
+    
+    // ================= ENTRY POINTS =================
+    
+    /**
+     * จัดการ Webhook (POST) จาก LINE Messaging API หรือ Web Client
+     */
+    function doPost(e) {
+      try {
+        if (!e || !e.postData || !e.postData.contents) {
+          return jsonOutput({ success: false, message: "No post data" });
+        }
+    
+        var payload = JSON.parse(e.postData.contents);
+    
+        // 1. ตรวจสอบว่ามาจาก LINE Webhook หรือไม่
+        if (payload.events && Array.isArray(payload.events)) {
+          return handleLineWebhook(payload);
+        }
+    
+        // 2. ตรวจสอบคำสั่ง API ทั่วไปจาก Web App
+        var action = payload.action;
+        if (action === "updateStatus") {
+          return jsonOutput(updateRequisitionStatus(payload.uid, payload.status, payload.doneBy));
+        }
+    
+        return jsonOutput({ success: false, message: "Unknown action" });
+      } catch (err) {
+        console.error("doPost error: " + (err && err.stack ? err.stack : err));
+        return jsonOutput({ success: false, message: err.toString() });
+      }
+    }
+    
+    /**
+     * บริการ API (GET) ดึงสรุปข้อมูลบิลเบิกย้ายประจำวันสำหรับ KPI Tracker
+     */
+    function doGet(e) {
+      try {
+        var p = (e && e.parameter) || {};
+        var action = p.action || "getLiveRequisitions";
+        var tz = TIMEZONE;
+        var targetDate = p.date || Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
+    
+        if (action === "getLiveRequisitions" || action === "getData") {
+          return jsonOutput(getLiveRequisitionsData(targetDate));
+        }
+    
+        if (action === "ping") {
+          return jsonOutput({ success: true, message: "LINE Requisition API is active", targetGroup: TARGET_LINE_GROUP_ID, time: new Date() });
+        }
+    
+        return jsonOutput({ success: false, message: "Unknown GET action" });
+      } catch (err) {
+        console.error("doGet error: " + (err && err.stack ? err.stack : err));
+        return jsonOutput({ success: false, message: err.toString() });
+      }
+    }
+    
+    // ================= LINE WEBHOOK HANDLERS =================
+    
+    /**
+     * ประมวลผล Events ทั้งหมดที่ส่งมาจาก LINE
+     */
+    function handleLineWebhook(payload) {
+      var events = payload.events || [];
+      events.forEach(function (event) {
+        // กรอง Duplicate Webhook Event ID
+        if (isDuplicateEvent(event)) return;
+    
+        // รับเฉพาะ event จากกลุ่ม LINE เป้าหมายเท่านั้น (ไม่รับ direct chat หรือ room)
+        var source = event && event.source;
+        if (!source || source.type !== "group" || String(source.groupId || "") !== TARGET_LINE_GROUP_ID) {
+          return;
+        }
+    
+        // กรณีที่ 1: ข้อความตัวอักษรพิมพ์เบิกสินค้า
+        if (event.type === "message" && event.message && event.message.type === "text") {
+          var isStatusReply = handleLineStatusReply(event);
+          if (!isStatusReply) {
+            handleLineTextMessage(event);
+          }
+        } 
+        // กรณีที่ 2: กด Reaction อีโมจิ (✅ ติ๊กถูก = จัดเสร็จ / ❌ กากบาท = ของหมด)
+        else if (event.type === "reaction") {
+          handleLineReaction(event);
+        }
+      });
+    
+      return jsonOutput({ success: true });
+    }
+    
+    /**
+     * ตรวจจับและอ่านข้อความเบิกสินค้าภาษาไทย
+     */
+    function handleLineTextMessage(event) {
+      var source = event && event.source;
+      if (!source || source.type !== "group" || String(source.groupId || "") !== TARGET_LINE_GROUP_ID) {
+        return;
+      }
+
+      var rawText = (event.message && event.message.text || "").trim();
+      if (!rawText) return;
+    
+      var parsed = parseLineRequisition(rawText, "", event.timestamp);
+      if (!parsed) return;
+    
+      var senderName = getLineDisplayName(source);
+      if (senderName) parsed.requester = senderName;
+    
+      var groupId = source.groupId;
+      var userId = source.userId || "";
+      var messageId = (event.message && event.message.id) || "";
+    
+      var lock = LockService.getScriptLock();
+      try {
+        lock.waitLock(5000);
+      } catch (e) {
+        console.error("Lock wait timeout in handleLineTextMessage: " + e);
+        return;
+      }
+    
+      try {
+        var ss = getSpreadsheet();
+        var sheet = getOrCreateRequisitionsSheet(ss);
+    
+        var billCountNum = computeDailyBillNo(sheet, parsed.date);
+        var billNo = "#" + billCountNum;
+        var uid = "REQ-" + parsed.date.replace(/-/g, "") + "-" + ("000" + billCountNum).slice(-3);
+        var now = new Date();
+    
+        var rowData = [
+          uid,                  // A: uid
+          billNo,               // B: billNo
+          now,                  // C: timestamp
+          parsed.date,          // D: date
+          parsed.time,          // E: time
+          parsed.billType,      // F: billType
+          parsed.requester,     // G: requester
+          parsed.itemsSummary,  // H: itemsSummary
+          parsed.skuCount,      // I: skuCount
+          parsed.totalUnits,    // J: totalUnits
+          "⏳ รอจัดสินค้า",       // K: status (เริ่มต้นยังไม่มี Reaction)
+          "",                   // L: doneBy
+          "",                   // M: doneAt
+          rawText,              // N: rawText
+          groupId,              // O: groupId
+          userId,               // P: userId
+          messageId             // Q: messageId
+        ];
+    
+        sheet.appendRow(rowData);
+      } catch (err) {
+        console.error("Error saving parsed LINE requisition: " + (err && err.stack ? err.stack : err));
+      } finally {
+        lock.releaseLock();
+      }
+    }
+    
+    /**
+     * จัดการเมื่อพนักงานกด Reaction อีโมจิ (✅ ติ๊กถูก = จัดเสร็จ / ❌ กากบาท = ของหมด) บนข้อความเบิก
+     */
+    function handleLineReaction(event) {
+      var reaction = event.reaction;
+      if (!reaction) return;
+    
+      var targetMessageId = reaction.messageId;
+      if (!targetMessageId) return;
+    
+      var actorName = getLineDisplayName(event.source) || "พนักงานคลัง";
+    
+      // กรณียกเลิก Reaction
+      if (reaction.action === "remove") {
+        markRequisitionStatusByMessageId(targetMessageId, "⏳ รอจัดสินค้า", "", "");
+        return;
+      }
+    
+      // กรณีเพิ่ม Reaction
+      if (reaction.action === "add") {
+        var rawEmoji = String(reaction.emoji || "").toLowerCase();
+        var isFailed = rawEmoji.indexOf("cross") !== -1 || rawEmoji.indexOf("x") !== -1 || rawEmoji.indexOf("cancel") !== -1 || rawEmoji.indexOf("no") !== -1 || rawEmoji.indexOf("dislike") !== -1 || rawEmoji.indexOf("sad") !== -1 || rawEmoji.indexOf("cry") !== -1 || rawEmoji.indexOf("ng") !== 
+  -1;
+        var statusText = isFailed ? "สินค้าหมด / ไม่สำเร็จ ❌" : "จัดเสร็จแล้ว ✅";
+    
+        markRequisitionStatusByMessageId(targetMessageId, statusText, actorName, new Date());
+      }
+    }
+    
+    /**
+     * จัดการเมื่อพนักงานพิมพ์หรือตอบกลับข้อความ (Fallback)
+     */
+    function handleLineStatusReply(event) {
+      var text = (event.message && event.message.text || "").trim();
+      var doneKeywords = ["✅", "✔️", "จัดเสร็จ", "เรียบร้อย", "ครบแล้ว", "เสร็จแล้ว", "จัดครบ"];
+      var failedKeywords = ["❌", "✖️", "❎", "ของหมด", "จัดไม่ได้", "ยกเลิก", "ไม่มีของ", "ไม่ครบ", "ของขาด"];
+    
+      var isDone = doneKeywords.some(function(k) { return text.indexOf(k) !== -1; });
+      var isFailed = failedKeywords.some(function(k) { return text.indexOf(k) !== -1; });
+    
+      if (!isDone && !isFailed) return false;
+    
+      var statusText = isFailed ? "สินค้าหมด / ไม่สำเร็จ ❌" : "จัดเสร็จแล้ว ✅";
+      var actorName = getLineDisplayName(event.source) || "พนักงานคลัง";
+      var quotedMessageId = event.message && event.message.quotedMessageId;
+    
+      if (quotedMessageId) {
+        return markRequisitionStatusByMessageId(quotedMessageId, statusText, actorName, new Date());
+      } else {
+        return markLatestPendingRequisitionStatus(statusText, actorName, new Date());
+      }
+    }
+    
+    function markRequisitionStatusByMessageId(messageId, statusText, actorName, doneDate) {
+      var ss = getSpreadsheet();
+      var sheet = ss.getSheetByName(SHEET_NAME);
+      if (!sheet) return false;
+    
+      var data = sheet.getDataRange().getValues();
+      for (var i = data.length - 1; i >= 1; i--) {
+        if (String(data[i][14] || "").trim() === TARGET_LINE_GROUP_ID &&
+            String(data[i][16] || "") === String(messageId)) { // Col O: groupId, Col Q: messageId
+          var rowIdx = i + 1;
+          sheet.getRange(rowIdx, 11).setValue(statusText);           // Col K: status
+          sheet.getRange(rowIdx, 12).setValue(actorName || "");      // Col L: doneBy
+          sheet.getRange(rowIdx, 13).setValue(doneDate ? doneDate : ""); // Col M: doneAt
+          return true;
+        }
+      }
+      return false;
+    }
+    
+    function markLatestPendingRequisitionStatus(statusText, actorName, doneDate) {
+      var ss = getSpreadsheet();
+      var sheet = ss.getSheetByName(SHEET_NAME);
+      if (!sheet) return false;
+    
+      var todayStr = Utilities.formatDate(new Date(), TIMEZONE, "yyyy-MM-dd");
+      var data = sheet.getDataRange().getValues();
+    
+      for (var i = data.length - 1; i >= 1; i--) {
+        var rowDate = formatSheetDate(data[i][3]);
+        var status = String(data[i][10] || "");
+        var rowGroupId = String(data[i][14] || "").trim();
+    
+        if (rowGroupId === TARGET_LINE_GROUP_ID && rowDate === todayStr && (status.indexOf("รอ") !== -1 || status === "กำลังหยิบ" || status === "pending")) {
+          var rowIdx = i + 1;
+          sheet.getRange(rowIdx, 11).setValue(statusText);
+          sheet.getRange(rowIdx, 12).setValue(actorName || "");
+          sheet.getRange(rowIdx, 13).setValue(doneDate ? doneDate : "");
+          return true;
+        }
+      }
+      return false;
+    }
+    
+    function formatSheetDate(dVal) {
+      if (!dVal) return "";
+      if (dVal instanceof Date) {
+        return Utilities.formatDate(dVal, TIMEZONE, "yyyy-MM-dd");
+      }
+      var str = String(dVal).trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+        return str.substring(0, 10);
+      }
+      try {
+        var p = new Date(str);
+        if (!isNaN(p.getTime())) {
+          return Utilities.formatDate(p, TIMEZONE, "yyyy-MM-dd");
+        }
+      } catch (e) {}
+      return str;
+    }
+    
+    /**
+     * ตัดคำนำหน้าและคำลงท้ายภาษาไทยที่ไม่เกี่ยวข้อง
+     */
+    function cleanThaiText(text) {
+      var s = String(text || "").trim();
+      var prefixes = ["⚡", "ด่วนมาก", "ด่วน", "ขอเบิก", "เบิก", "เอาของ", "เติมหน้าร้าน", "เติมของ", "ช่วยจัด", "บิล", "จัดส่ง", "ส่ง", "ตจว", "ต่างจังหวัด", "-", "•", "*"];
+      var changed = true;
+      while (changed) {
+        changed = false;
+        s = s.trim();
+        for (var i = 0; i < prefixes.length; i++) {
+          var p = prefixes[i];
+          if (s.indexOf(p) === 0) {
+            s = s.substring(p.length).trim();
+            changed = true;
+          }
+        }
+      }
+    
+      var suffixes = ["ขอบคุณครับ", "ขอบคุณค่ะ", "ลูกค้ารอเคาน์เตอร์", "ลูกค้ารอ", "ครับ", "ค่ะ", "จ้า", "นะ", "จ้ะ"];
+      changed = true;
+      while (changed) {
+        changed = false;
+        s = s.trim();
+        for (var j = 0; j < suffixes.length; j++) {
+          var suf = suffixes[j];
+          if (s.length >= suf.length && s.lastIndexOf(suf) === s.length - suf.length) {
+            s = s.substring(0, s.length - suf.length).trim();
+            changed = true;
+          }
+        }
+      }
+      return s;
+    }
+    
+    /**
+     * ฟังก์ชันหลักในการแกะข้อความภาษาไทย (Thai Text Parser)
+     */
+    function parseLineRequisition(text, senderName, timestampMs) {
+      if (!text || typeof text !== "string") return null;
+      var cleanText = text.trim();
+    
+      var reqKeywords = ["เบิก", "ขอเบิก", "ด่วน", "⚡", "เติมของ", "เติมหน้าร้าน", "ย้ายของ", "โอนย้าย", "เอาของ", "สั่งของ", "จัดของ", "ขึ้นของ"];
+      var hasReqKeyword = reqKeywords.some(function(k) { return cleanText.indexOf(k) !== -1; });
+    
+      var unitList = ["กระสอบ", "กระป๋อง", "กระปุก", "กล่อง", "กิโลกรัม", "กิโล", "กรัม", "แพ็ค", "แพค", "ปี๊บ", "ปิ๊บ", "แผง", "ชิ้น", "ม้วน", "ขวด", "ถุง", "ถัง", "อัน", "ลัง", "กก", "โหล"];
+      var hasUnitPattern = /\d+/.test(cleanText) && unitList.some(function(u) { return cleanText.indexOf(u) !== -1; });
+    
+      if (!hasReqKeyword && !hasUnitPattern) {
+        return null;
+      }
+    
+      var billType = "🏪 เติมหน้าร้าน TRD";
+      if (cleanText.indexOf("ด่วน") !== -1 || cleanText.indexOf("⚡") !== -1 || cleanText.indexOf("เร่งด่วน") !== -1 || cleanText.indexOf("ลูกค้ารอ") !== -1) {
+        billType = "⚡ บิลด่วน";
+      } else if (cleanText.indexOf("ตจว") !== -1 || cleanText.indexOf("ต่างจังหวัด") !== -1 || cleanText.indexOf("จัดส่ง") !== -1 || cleanText.indexOf("รอบส่ง") !== -1 || cleanText.indexOf("ขนส่ง") !== -1) {
+        billType = "📦 จัดส่งปกติ/ตจว.";
+      }
+    
+      var rawLines = cleanText.split(/[\n,;+]/).map(function (s) { return s.trim(); }).filter(Boolean);
+      var items = [];
+      var totalUnits = 0;
+    
+      var unitRegexPart = "(?:กระสอบ|กระป๋อง|กระปุก|กล่อง|กิโลกรัม|กิโล|กรัม|แพ็ค|แพค|ปี๊บ|ปิ๊บ|แผง|ชิ้น|ม้วน|ขวด|ถุง|ถัง|อัน|ลัง|กก\\.?|โหล)";
+      var pattern1 = new RegExp("^(.+?)\\s+(\\d+(?:\\.\\d+)?)\\s*(" + unitRegexPart + ")?$", "i");
+      var pattern2 = new RegExp("^(\\d+(?:\\.\\d+)?)\\s*(" + unitRegexPart + ")?\\s+(.+)$", "i");
+    
+      rawLines.forEach(function (line) {
+        var stripped = cleanThaiText(line);
+        if (!stripped) return;
+    
+        var match = stripped.match(pattern1) || stripped.match(pattern2);
+        if (match) {
+          var itemName = "";
+          var qty = 1;
+          var unit = "ชิ้น";
+    
+          if (isNaN(Number(match[1]))) {
+            itemName = match[1].trim();
+            qty = parseFloat(match[2]);
+            unit = match[3] || "ชิ้น";
+          } else {
+            qty = parseFloat(match[1]);
+            unit = match[2] || "ชิ้น";
+            itemName = match[3].trim();
+          }
+    
+          items.push({ name: itemName, qty: qty, unit: unit });
+          totalUnits += qty;
+        } else {
+          items.push({ name: stripped, qty: 1, unit: "รายการ" });
+          totalUnits += 1;
+        }
+      });
+    
+      if (items.length === 0) return null;
+    
+      var dateObj = timestampMs ? new Date(timestampMs) : new Date();
+      var hours = ("0" + dateObj.getHours()).slice(-2);
+      var minutes = ("0" + dateObj.getMinutes()).slice(-2);
+      var timeStr = hours + ":" + minutes + " น.";
+      var dateStr = Utilities.formatDate(dateObj, TIMEZONE, "yyyy-MM-dd");
+      var itemsSummary = items.map(function (it) { return it.name + " " + it.qty + " " + it.unit; }).join(", ");
+    
+      return {
+        timestamp: dateObj.toISOString(),
+        date: dateStr,
+        time: timeStr,
+        billType: billType,
+        requester: senderName || "หน้าร้าน TRD",
+        items: items,
+        skuCount: items.length,
+        totalUnits: totalUnits,
+        itemsSummary: itemsSummary,
+        rawText: cleanText
+      };
+    }
+    
+    // ================= DATA QUERY & METRICS =================
+    
+    /**
+     * ดึงข้อมูลใบเบิกและคำนวณสถิติประจำวันสำหรับ KPITracker
+     */
+    function getLiveRequisitionsData(targetDate) {
+      var ss = getSpreadsheet();
+      var sheet = ss.getSheetByName(SHEET_NAME);
+      if (!sheet) {
+        return {
+          success: true,
+          date: targetDate,
+          stats: { totalBills: 0, totalSKU: 0, totalUnits: 0, onTimeRate: "100%", trdBills: 0, trdUnits: 0, urgentBills: 0, urgentUnits: 0, regularBills: 0, regularUnits: 0, completedBills: 0, failedBills: 0 },
+          requisitions: []
+        };
+      }
+    
+      var data = sheet.getDataRange().getValues();
+      if (data.length < 2) {
+        return {
+          success: true,
+          date: targetDate,
+          stats: { totalBills: 0, totalSKU: 0, totalUnits: 0, onTimeRate: "100%", trdBills: 0, trdUnits: 0, urgentBills: 0, urgentUnits: 0, regularBills: 0, regularUnits: 0, completedBills: 0, failedBills: 0 },
+          requisitions: []
+        };
+      }
+    
+      var requisitions = [];
+      var totalBills = 0;
+      var totalSKU = 0;
+      var totalUnits = 0;
+      var completedCount = 0;
+      var failedCount = 0;
+      var trdBills = 0, trdUnits = 0;
+      var urgentBills = 0, urgentUnits = 0;
+      var regularBills = 0, regularUnits = 0;
+    
+      for (var i = data.length - 1; i >= 1; i--) {
+        var row = data[i];
+        var rowDate = formatSheetDate(row[3]);
+        var rowGroupId = String(row[14] || "").trim();
+    
+        if (rowDate === targetDate && rowGroupId === TARGET_LINE_GROUP_ID) {
+          totalBills++;
+          var sku = Number(row[8]) || 1;
+          var units = Number(row[9]) || 0;
+          var status = String(row[10] || "⏳ รอจัดสินค้า");
+          var billType = String(row[5] || "🏪 เติมหน้าร้าน TRD");
+    
+          totalSKU += sku;
+          totalUnits += units;
+    
+          if (status.indexOf("จัดเสร็จ") !== -1 || status === "done" || status === "picked" || status.indexOf("✅") !== -1) {
+            completedCount++;
+          } else if (status.indexOf("ไม่สำเร็จ") !== -1 || status.indexOf("หมด") !== -1 || status.indexOf("ยกเลิก") !== -1 || status.indexOf("❌") !== -1) {
+            failedCount++;
+          }
+    
+          if (billType.indexOf("ด่วน") !== -1) {
+            urgentBills++;
+            urgentUnits += units;
+          } else if (billType.indexOf("ตจว") !== -1 || billType.indexOf("จัดส่ง") !== -1) {
+            regularBills++;
+            regularUnits += units;
+          } else {
+            trdBills++;
+            trdUnits += units;
+          }
+    
+          requisitions.push({
+            uid: row[0],
+            billNo: row[1],
+            time: row[4],
+            billType: billType,
+            requester: row[6],
+            itemsSummary: row[7],
+            skuCount: sku,
+            totalUnits: units,
+            status: status,
+            doneBy: row[11],
+            doneAt: row[12]
+          });
+        }
+      }
+    
+      var validBills = totalBills - failedCount;
+      var onTimeRate = validBills > 0 ? (completedCount / validBills * 100).toFixed(1) + "%" : (totalBills > 0 ? "0.0%" : "100%");
+    
+      return {
+        success: true,
+        date: targetDate,
+        stats: {
+          totalBills: totalBills,
+          completedBills: completedCount,
+          failedBills: failedCount,
+          totalSKU: totalSKU,
+          totalUnits: totalUnits,
+          onTimeRate: onTimeRate,
+          trdBills: trdBills,
+          trdUnits: trdUnits,
+          urgentBills: urgentBills,
+          urgentUnits: urgentUnits,
+          regularBills: regularBills,
+          regularUnits: regularUnits
+        },
+        requisitions: requisitions
+      };
+    }
+    
+    /**
+     * อัปเดตสถานะบิล
+     */
+    function updateRequisitionStatus(uid, newStatus, doneByName) {
+      var ss = getSpreadsheet();
+      var sheet = ss.getSheetByName(SHEET_NAME);
+      if (!sheet) return { success: false, message: "Sheet not found" };
+    
+      var data = sheet.getDataRange().getValues();
+      for (var i = 1; i < data.length; i++) {
+        if (String(data[i][14] || "").trim() === TARGET_LINE_GROUP_ID &&
+            String(data[i][0]) === String(uid)) {
+          var rowIdx = i + 1;
+          sheet.getRange(rowIdx, 11).setValue(newStatus || "จัดเสร็จแล้ว ✅");
+          if (doneByName) sheet.getRange(rowIdx, 12).setValue(doneByName);
+          sheet.getRange(rowIdx, 13).setValue(new Date());
+          return { success: true, message: "Updated status successfully" };
+        }
+      }
+      return { success: false, message: "Bill not found" };
+    }
+    
+    // ================= UTILITIES & SETUP =================
+    
+    function getSpreadsheet() {
+      if (SPREADSHEET_ID) {
+        return SpreadsheetApp.openById(SPREADSHEET_ID);
+      }
+      return SpreadsheetApp.getActiveSpreadsheet();
+    }
+    
+    function getOrCreateRequisitionsSheet(ss) {
+      var sheet = ss.getSheetByName(SHEET_NAME);
+      if (!sheet) {
+        sheet = ss.insertSheet(SHEET_NAME);
+        sheet.appendRow(HEADERS);
+        sheet.getRange(1, 1, 1, HEADERS.length).setBackground("#1E293B").setFontColor("#FFFFFF").setFontWeight("bold");
+        sheet.setFrozenRows(1);
+      }
+      return sheet;
+    }
+    
+    /**
+     * ฟังก์ชันตั้งค่าตารางเริ่มต้น (รันครั้งเดียว)
+     */
+    function setupSheet() {
+      var ss = getSpreadsheet();
+      var sheet = getOrCreateRequisitionsSheet(ss);
+      sheet.getRange(1, 1, 1, HEADERS.length).setBackground("#1E293B").setFontColor("#FFFFFF").setFontWeight("bold");
+      sheet.setFrozenRows(1);
+      Logger.log("✅ Requisitions Sheet setup completed successfully for group: " + TARGET_LINE_GROUP_ID);
+    }
+    
+    function computeDailyBillNo(sheet, targetDate) {
+      var lastRow = sheet.getLastRow();
+      if (lastRow < 2) return 1;
+      var count = 0;
+      var rows = sheet.getRange(2, 4, lastRow - 1, 12).getValues();
+      for (var i = 0; i < rows.length; i++) {
+        var rawD = rows[i][0];
+        var d = formatSheetDate(rawD);
+        var groupId = String(rows[i][11] || "").trim();
+        if (String(d) === String(targetDate) && groupId === TARGET_LINE_GROUP_ID) {
+          count++;
+        }
+      }
+      return count + 1;
+    }
+    
+    function isDuplicateEvent(event) {
+      var id = event.webhookEventId;
+      if (!id) return false;
+      var cache = CacheService.getScriptCache();
+      if (cache.get("evt_" + id)) return true;
+      cache.put("evt_" + id, "1", 21600); // 6h
+      return false;
+    }
+    
+    function getLineDisplayName(source) {
+      if (!source) return "";
+      var props = PropertiesService.getScriptProperties();
+      var lineToken = props.getProperty("LINE_CHANNEL_TOKEN") || props.getProperty("LINE_CHANNEL_ACCESS_TOKEN") || "";
+      var userId = source.userId;
+      var groupId = source.groupId || source.roomId || TARGET_LINE_GROUP_ID;
+    
+      if (!lineToken || !userId) return "";
+    
+      var cache = CacheService.getScriptCache();
+      var cachedName = cache.get("line_user_" + userId);
+      if (cachedName) return cachedName;
+
+      try {
+        var url = groupId 
+          ? "https://api.line.me/v2/bot/group/" + encodeURIComponent(groupId) + "/member/" + encodeURIComponent(userId)
+          : "https://api.line.me/v2/bot/profile/" + encodeURIComponent(userId);
+
+        var resp = UrlFetchApp.fetch(url, {
+          headers: { Authorization: "Bearer " + lineToken },
+          muteHttpExceptions: true
+        });
+
+        if (resp.getResponseCode() === 200) {
+          var profile = JSON.parse(resp.getContentText());
+          var name = profile.displayName || "";
+          if (name) {
+            cache.put("line_user_" + userId, name, 86400); // 24h
+            return name;
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to fetch LINE profile: " + e);
+      }
+      return "";
+    }
+
+    function jsonOutput(data) {
+      return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+    }

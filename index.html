@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --app-bg: #0f172a;
+            --app-bg: #f1f5f9;
             --app-surface: #ffffff;
             --app-surface-muted: #f8fafc;
             --app-border: #e2e8f0;
@@ -21,7 +21,7 @@
             --app-radius: 0.625rem;
             --app-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
         }
-        body { font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #0f172a; color: #1e293b; -webkit-tap-highlight-color: rgba(29, 78, 216, 0.12); touch-action: manipulation; }
+        body { font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--app-bg); color: #1e293b; -webkit-tap-highlight-color: rgba(29, 78, 216, 0.12); touch-action: manipulation; }
         .font-num { font-family: 'Inter', sans-serif; }
         .enterprise-card { border: 1px solid #dbe3ee; border-radius: 0.875rem; background: #ffffff; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
         .executive-metric { position: relative; overflow: hidden; border: 1px solid #dbe3ee; border-radius: 0.75rem; background: #ffffff; padding: 0.875rem; }
@@ -38,8 +38,8 @@
             outline-offset: 2px;
         }
         ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
         optgroup { font-weight: bold; color: #4f46e5; background-color: #f8fafc; }
         option { font-weight: normal; color: #1f2937; background-color: #ffffff; }
 
@@ -60,6 +60,13 @@
             border-color: #dc2626 !important;
             background-color: #dc2626 !important;
             color: #ffffff !important;
+        }
+        .incident-category-grid .cat-chip {
+            min-block-size: 3rem;
+            width: 100%;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.25;
         }
         .severity-chip-active {
             border-color: #dc2626 !important;
@@ -184,71 +191,46 @@
         <p class="selector-caption mt-10 text-xs">ระบบติดตามผลการปฏิบัติงาน</p>
     </div>
 
-    <!-- Header -->
-    <!-- Header -->
-    <header class="app-header p-3 sm:p-4 sticky top-0 z-20 flex flex-col space-y-2 border-b bg-slate-900 text-white shadow-md">
-        <div class="flex justify-between items-center">
-            <div class="flex items-center space-x-2.5">
-                <button onclick="openDrawer()" id="btn-open-drawer" title="เปิดเมนูหลัก" aria-label="เปิดเมนูหลัก" aria-controls="drawer-panel" aria-expanded="false" class="text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 w-9 h-9 rounded-xl text-sm font-semibold shadow transition-all border border-slate-700 flex items-center justify-center active:scale-95">
-                    <i class="fa-solid fa-bars text-base"></i>
-                </button>
-                <div class="flex items-center gap-2">
-                    <h1 class="text-base sm:text-lg font-bold tracking-wide flex items-center">
-                        <i class="fa-solid fa-chart-simple text-blue-400 mr-2"></i>KPI Tracker <span class="text-slate-500 mx-1.5 font-light">/</span> <span id="header-branch-name" class="text-white">AKRA</span>
-                    </h1>
-                    <span id="header-section-badge" class="text-[10px] bg-blue-950 text-blue-300 border border-blue-600/40 px-2 py-0.5 rounded font-bold">Workload</span>
+    <!-- Compact application header: one primary navigation system per breakpoint -->
+    <header class="app-header sticky top-0 z-20 border-b border-slate-800 bg-slate-900 text-white shadow-md">
+        <div class="max-w-6xl mx-auto min-h-[4rem] px-3 sm:px-4 md:px-6 flex items-center gap-3">
+            <div class="flex items-center gap-2.5 shrink-0 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-400/30 text-blue-300 flex items-center justify-center" aria-hidden="true">
+                    <i class="fa-solid fa-chart-simple"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="text-sm sm:text-base font-bold tracking-wide whitespace-nowrap">KPI Tracker <span class="text-slate-500 font-light">/</span> <span id="header-branch-name">AKRA</span></h1>
+                    <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                        <span id="desktop-branch-label" class="hidden sm:inline font-semibold">AKRA WAREHOUSE</span>
+                        <span id="header-section-badge" class="md:hidden text-blue-300 font-bold">Workload</span>
+                    </div>
                 </div>
             </div>
-            <div class="flex items-center space-x-1.5">
-                <button onclick="forceCleanCacheAndReload()" title="ล้างแคชและอัปเดต" class="text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow transition-colors border border-slate-700">
-                    <i class="fa-solid fa-broom mr-1"></i> ล้างแคช
-                </button>
-                <button onclick="syncDataFromSheet()" id="btn-sync" aria-label="ซิงค์ข้อมูลล่าสุด" class="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow active:bg-blue-800 transition-colors border border-blue-500">
-                    <i class="fa-solid fa-rotate mr-1"></i> ซิงค์
-                </button>
-            </div>
-        </div>
 
-        <div class="app-user-row flex justify-between items-center text-xs text-slate-300">
-            <div class="flex items-center gap-1.5">
-                <i class="fa-solid fa-user-circle text-blue-400 text-sm"></i>
-                <span>ผู้ใช้งาน:</span>
-                <span id="showUserName" class="font-bold text-white">กำลังตรวจสอบ...</span>
-            </div>
-            <button id="btn-switch-branch" onclick="safeSessionStorage.removeItem('active_branch'); location.reload();" aria-label="สลับสาขา" class="hidden bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded text-slate-300 active:scale-95"><i class="fa-solid fa-right-left mr-1"></i> สลับสาขา</button>
-        </div>
+            <nav id="desktop-primary-nav" aria-label="เมนูหลักบนเดสก์ท็อป" class="hidden md:flex flex-1 items-center justify-center gap-1.5 min-w-0">
+                <button type="button" onclick="switchTab('workload')" id="dtab-workload" class="desktop-tab desktop-tab-active px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-blue-600 text-white shadow">
+                    <i class="fa-solid fa-business-time"></i><span>Workload</span>
+                </button>
+                <button type="button" onclick="switchTab('error')" id="dtab-error" class="desktop-tab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-clipboard-check text-red-400"></i><span>Incident QC</span>
+                </button>
+                <button type="button" onclick="switchTab('billcount')" id="dtab-billcount" class="desktop-tab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-file-invoice text-indigo-400"></i><span>Live Bill Sync</span>
+                </button>
+                <button type="button" onclick="switchTab('dashboard')" id="dtab-dashboard" class="desktop-tab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-chart-pie text-amber-400"></i><span>Dashboard</span>
+                </button>
+            </nav>
 
-        <!-- Desktop Navigation Tabs (Visible on PC: md:flex) -->
-        <div class="hidden md:flex items-center justify-between pt-2.5 border-t border-slate-800">
-            <div class="flex items-center gap-1.5 overflow-x-auto">
-                <button type="button" onclick="switchTab('workload')" id="dtab-workload" class="desktop-tab desktop-tab-active px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-blue-600 text-white shadow">
-                    <i class="fa-solid fa-business-time"></i>
-                    <span>1. Workload (สัดส่วนเวลา)</span>
+            <div class="ml-auto flex items-center gap-2 shrink-0">
+                <div class="flex items-center gap-1.5 text-[10px] text-slate-300" aria-label="สถานะผู้ใช้งานพร้อมใช้งาน">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,0.12)]" aria-hidden="true"></span>
+                    <span class="hidden lg:inline">พร้อมใช้งาน</span>
+                    <span id="showUserName" class="hidden xl:inline font-bold text-white">กำลังตรวจสอบ...</span>
+                </div>
+                <button onclick="openDrawer()" id="btn-open-drawer" title="เครื่องมือเพิ่มเติม" aria-label="เปิดเครื่องมือเพิ่มเติม" aria-controls="drawer-panel" aria-expanded="false" class="text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 w-10 h-10 rounded-xl text-sm font-semibold shadow transition-all border border-slate-700 flex items-center justify-center active:scale-95">
+                    <i class="fa-solid fa-ellipsis-vertical text-base"></i>
                 </button>
-                <button type="button" onclick="switchTab('error')" id="dtab-error" class="desktop-tab px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800">
-                    <i class="fa-solid fa-clipboard-check text-red-400"></i>
-                    <span>2. ความผิดพลาด (QC)</span>
-                </button>
-                <button type="button" onclick="switchTab('billcount')" id="dtab-billcount" class="desktop-tab px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800">
-                    <i class="fa-solid fa-file-invoice text-indigo-400"></i>
-                    <span>3. บิลเบิกย้าย (Live Sync)</span>
-                </button>
-                <button type="button" onclick="switchTab('dashboard')" id="dtab-dashboard" class="desktop-tab px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800">
-                    <i class="fa-solid fa-chart-pie text-amber-400"></i>
-                    <span>4. แดชบอร์ด</span>
-                </button>
-                <button type="button" onclick="switchTab('admin-dash')" id="dtab-admin-dash" class="desktop-tab hidden px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-purple-300 hover:text-white hover:bg-slate-800">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>ภาพรวมผู้บริหาร</span>
-                </button>
-                <button type="button" onclick="switchTab('admin')" id="dtab-admin" class="desktop-tab hidden px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
-                    <i class="fa-solid fa-gear"></i>
-                    <span>ตั้งค่า</span>
-                </button>
-            </div>
-            <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-xl">
-                <i class="fa-solid fa-warehouse text-blue-400 text-xs"></i>
-                <span class="text-xs font-bold text-white" id="desktop-branch-label">AKRA WAREHOUSE</span>
             </div>
         </div>
     </header>
@@ -295,7 +277,7 @@
                             </button>
 
                             <button type="button" onclick="selectCore('คลัง W2', this)" class="core-btn p-3 rounded-xl border border-slate-200 bg-white text-left transition-all active:scale-95 flex items-center gap-2.5">
-                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm shrink-0 font-bold"><i class="fa-solid fa-boxes-packing"></i></div>
+                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm shrink-0 font-bold"><i class="fa-solid fa-boxes-stacked"></i></div>
                                 <div><p class="text-xs font-bold text-slate-800 leading-tight">คลังสำรอง W2</p><p class="text-[10px] text-slate-500">สต๊อกใหญ่/เติมของ</p></div>
                             </button>
 
@@ -432,7 +414,7 @@
                             </label>
                             <span class="text-[11px] text-slate-500">แตะเปลี่ยนหมวด</span>
                         </div>
-                        <div class="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1" id="err-cat-pills">
+                        <div class="incident-category-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5" id="err-cat-pills">
                             <button type="button" onclick="switchErrCategory('outbound', this)" class="cat-chip cat-chip-active shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-truck-fast text-blue-500 mr-1"></i><span>ขาออก</span></button>
                             <button type="button" onclick="switchErrCategory('store_stock', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-store text-amber-500 mr-1"></i><span>หน้าร้าน/สต๊อก</span></button>
                             <button type="button" onclick="switchErrCategory('inbound', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-box-archive text-emerald-500 mr-1"></i><span>ขารับเข้า</span></button>
@@ -541,7 +523,7 @@
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
                 <h3 class="text-xs font-bold text-slate-800">รายการใบเบิกที่ส่งเข้ากลุ่ม LINE ประจำวันนี้</h3>
                 
-                <div class="space-y-2 text-xs" id="live-bill-list-cards">
+                <div class="space-y-2 text-xs max-h-[40rem] md:max-h-[25rem] overflow-y-auto overscroll-contain pr-1" id="live-bill-list-cards" role="region" aria-label="รายการใบเบิกวันนี้ เลื่อนเพื่อดูรายการเพิ่มเติม" tabindex="0">
                     <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2">
                         <div class="flex items-center gap-3">
                             <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold font-num text-xs">#18</span>
@@ -682,126 +664,20 @@
 
         <!-- ================= VIEW 4: DASHBOARD & EXECUTIVE COCKPIT ================= -->
         <div id="view-dashboard" class="ops-view hidden space-y-4 max-w-5xl mx-auto">
-            <!-- Widescreen Cockpit Header -->
-            <div class="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 shadow-md space-y-4">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <div>
-                        <h2 class="text-sm md:text-base font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-chart-pie text-amber-400"></i>
-                            Executive Cockpit: ภาพรวมการทำงานและประสิทธิภาพคลัง AKRA
+            <!-- Active Branch Dashboard Header -->
+            <section id="dashboard-branch-context" class="bg-slate-900 text-white p-4 rounded-2xl border border-slate-800 shadow-md sm:p-5" aria-labelledby="dashboard-branch-title">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Dashboard ประจำสาขา</p>
+                        <h2 id="dashboard-branch-title" class="mt-1 text-base font-bold text-white flex items-center gap-2 sm:text-lg">
+                            <i class="fa-solid fa-chart-pie text-amber-400" aria-hidden="true"></i>
+                            <span id="dashboard-branch-title-text">ภาพรวมการปฏิบัติงานสาขา AKRA</span>
                         </h2>
-                        <p class="text-xs text-slate-400">วิเคราะห์ Workload Capacity, ปัญหาหน้างาน (Pareto), และสถิติการจ่ายบิล</p>
+                        <p id="dashboard-branch-description" class="mt-1 text-xs leading-relaxed text-slate-300">ข้อมูล Workload, ปัญหาหน้างาน, รายงานประจำวัน และงานติดตามของ AKRA เท่านั้น</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl font-bold">สัปดาห์ปัจจุบัน</span>
-                    </div>
+                    <span id="dashboard-branch-badge" class="shrink-0 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-black text-amber-300">AKRA WAREHOUSE</span>
                 </div>
-
-                <!-- 4 Metric Cards Row -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="bg-slate-800/90 p-3.5 rounded-2xl border border-slate-700">
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold">งานหลักเฉลี่ยทีม</span>
-                        <div class="flex items-baseline gap-1 mt-1">
-                            <span class="text-2xl font-black text-blue-400 font-num" id="cockpit-primary-pct">82.5%</span>
-                            <span class="text-[10px] text-slate-400">(8.2 ชม.)</span>
-                        </div>
-                        <p class="text-[10px] text-emerald-400 mt-1"><i class="fa-solid fa-check mr-1"></i>โฟกัสงานหลักเกณฑ์ดี</p>
-                    </div>
-
-                    <div class="bg-slate-800/90 p-3.5 rounded-2xl border border-slate-700">
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold">งานซัพพอร์ตดึงเวลา</span>
-                        <div class="flex items-baseline gap-1 mt-1">
-                            <span class="text-2xl font-black text-amber-400 font-num" id="cockpit-support-pct">17.5%</span>
-                            <span class="text-[10px] text-slate-400">(1.8 ชม.)</span>
-                        </div>
-                        <p class="text-[10px] text-amber-300 mt-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i>แวะขึ้นของสูง</p>
-                    </div>
-
-                    <div class="bg-slate-800/90 p-3.5 rounded-2xl border border-slate-700">
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold">คะแนน Team HP</span>
-                        <div class="flex items-baseline gap-1 mt-1">
-                            <span class="text-2xl font-black text-emerald-400 font-num" id="cockpit-team-hp">95 HP</span>
-                            <span class="text-[10px] text-slate-400">/ 100</span>
-                        </div>
-                        <p class="text-[10px] text-emerald-400 mt-1"><i class="fa-solid fa-shield mr-1"></i>เกณฑ์วินัยปลอดภัย</p>
-                    </div>
-
-                    <div class="bg-slate-800/90 p-3.5 rounded-2xl border border-slate-700">
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold">ยอดจ่ายบิลสำเร็จ</span>
-                        <div class="flex items-baseline gap-1 mt-1">
-                            <span class="text-2xl font-black text-indigo-400 font-num" id="cockpit-bill-status">18/18</span>
-                            <span class="text-[10px] text-slate-400">บิล</span>
-                        </div>
-                        <p class="text-[10px] text-emerald-400 mt-1"><i class="fa-solid fa-circle-check mr-1"></i>ไม่มีบิลค้าง</p>
-                    </div>
-                </div>
-
-                <!-- 2 Column Analytics Grid on PC -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Support Task Pareto -->
-                    <div class="bg-slate-800/70 p-4 rounded-2xl border border-slate-700 space-y-3">
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="font-bold text-slate-200">งานซัพพอร์ตที่ดึงเวลาทีมคลังมากที่สุด (Pareto)</span>
-                            <span class="text-[10px] text-slate-400">ชม. รวม</span>
-                        </div>
-
-                        <div class="space-y-2 text-xs" id="cockpit-pareto-tasks">
-                            <div>
-                                <div class="flex justify-between text-[11px] mb-1">
-                                    <span class="text-slate-300"><i class="fa-solid fa-truck-ramp-box text-blue-400 mr-1.5"></i> แวะช่วยขึ้นของ / ลงของ</span>
-                                    <span class="font-bold text-amber-400 font-num">8.5 ชม. (48%)</span>
-                                </div>
-                                <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden">
-                                    <div class="bg-amber-400 h-full rounded-full" style="width: 48%;"></div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div class="flex justify-between text-[11px] mb-1">
-                                    <span class="text-slate-300"><i class="fa-solid fa-motorcycle text-indigo-400 mr-1.5"></i> แวะช่วยส่งของ / วิ่งงานด่วน</span>
-                                    <span class="font-bold text-blue-400 font-num">4.5 ชม. (26%)</span>
-                                </div>
-                                <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden">
-                                    <div class="bg-blue-400 h-full rounded-full" style="width: 26%;"></div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div class="flex justify-between text-[11px] mb-1">
-                                    <span class="text-slate-300"><i class="fa-solid fa-store text-amber-400 mr-1.5"></i> ซัพพอร์ตหน้าร้าน TRD</span>
-                                    <span class="font-bold text-purple-400 font-num">3.0 ชม. (17%)</span>
-                                </div>
-                                <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden">
-                                    <div class="bg-purple-400 h-full rounded-full" style="width: 17%;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Incident Log Summary -->
-                    <div class="bg-slate-800/70 p-4 rounded-2xl border border-slate-700 space-y-3">
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="font-bold text-slate-200">สถิติปัญหาที่พบบ่อย (Incident Pareto)</span>
-                            <span class="text-[10px] text-slate-400">สัปดาห์นี้</span>
-                        </div>
-
-                        <div class="space-y-1.5 text-xs" id="cockpit-pareto-errors">
-                            <div class="flex justify-between p-2.5 bg-slate-900/60 rounded-xl border border-slate-800">
-                                <span class="text-slate-300"><i class="fa-solid fa-circle-check text-emerald-400 mr-1.5"></i> หยิบผิด แก้ทันก่อนจัดส่ง (ขาออก)</span>
-                                <span class="font-bold text-emerald-400 font-num">1 ครั้ง (-5)</span>
-                            </div>
-                            <div class="flex justify-between p-2.5 bg-slate-900/60 rounded-xl border border-slate-800">
-                                <span class="text-slate-300"><i class="fa-solid fa-store text-amber-400 mr-1.5"></i> ตกเบิกสต๊อก / ของหมดไม่แจ้ง (หน้าร้าน)</span>
-                                <span class="font-bold text-amber-400 font-num">1 ครั้ง (-5)</span>
-                            </div>
-                            <div class="flex justify-between p-2.5 bg-slate-900/60 rounded-xl border border-slate-800">
-                                <span class="text-slate-300"><i class="fa-solid fa-box-archive text-blue-400 mr-1.5"></i> วางสินค้าไม่เรียบร้อย (ขารับเข้า)</span>
-                                <span class="font-bold text-blue-400 font-num">0 ครั้ง</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </section>
 
             <!-- Daily End-of-Shift Executive Brief -->
             <section id="daily-eos-card" data-scoped-save-card class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm" aria-labelledby="eos-title">
@@ -1558,7 +1434,7 @@
     </main>
 
     <!-- Bottom Navigation (Mobile: md:hidden) -->
-    <nav id="bottom-nav" class="md:hidden app-nav fixed bottom-0 left-0 right-0 w-full border-t p-1.5 pb-safe z-40 bg-white/95 backdrop-blur-md shadow-lg" aria-label="เมนูหลัก">
+    <nav id="bottom-nav" class="md:hidden app-nav fixed bottom-0 left-0 right-0 w-full border-t p-1.5 pb-safe z-40 bg-white/95 backdrop-blur-md shadow-lg" aria-label="เมนูหลักบนมือถือ">
         <div class="flex justify-around w-full max-w-md mx-auto">
             <button onclick="switchTab('workload')" id="tab-workload" class="flex flex-col items-center p-2 flex-1 tab-active transition-colors rounded-xl mx-0.5 hover:bg-blue-50 bg-blue-50 text-blue-700">
                 <i class="fa-solid fa-business-time text-xl mb-1 mt-0.5"></i>
@@ -1575,14 +1451,6 @@
             <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50 text-slate-500">
                 <i class="fa-solid fa-chart-pie text-xl mb-1 mt-0.5"></i>
                 <span class="text-[10px] font-bold tracking-wide">แดชบอร์ด</span>
-            </button>
-            <button onclick="switchTab('admin-dash')" id="tab-admin-dash" class="hidden flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-purple-50 text-purple-600">
-                <i class="fa-solid fa-chart-line text-xl mb-1 mt-0.5"></i>
-                <span class="text-[10px] font-bold tracking-wide">ภาพรวม</span>
-            </button>
-            <button onclick="switchTab('admin')" id="tab-admin" class="hidden flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50 text-slate-500">
-                <i class="fa-solid fa-gear text-xl mb-1 mt-0.5"></i>
-                <span class="text-[10px] font-bold tracking-wide">ตั้งค่า</span>
             </button>
         </div>
     </nav>
@@ -1723,9 +1591,9 @@
         </div>
     </div>
 
-    <!-- ================= HAMBURGER DRAWER ================= -->
+    <!-- ================= SECONDARY UTILITY DRAWER ================= -->
     <div id="drawer-backdrop" onclick="closeDrawer()" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[80] transition-opacity duration-300 opacity-0 pointer-events-none"></div>
-    <aside id="drawer-panel" aria-label="เมนูหลัก" aria-hidden="true" inert class="fixed top-0 left-0 bottom-0 w-72 max-w-[80vw] bg-slate-900 text-white z-[90] shadow-2xl border-r border-slate-800 flex flex-col justify-between transform -translate-x-full transition-transform duration-300 ease-in-out">
+    <aside id="drawer-panel" aria-label="เครื่องมือเพิ่มเติม" aria-hidden="true" inert class="fixed top-0 right-0 bottom-0 w-80 max-w-[88vw] bg-slate-900 text-white z-[90] shadow-2xl border-l border-slate-800 flex flex-col justify-between transform translate-x-full transition-transform duration-300 ease-in-out">
         <div>
             <!-- Drawer Brand & Close -->
             <div class="p-5 border-b border-slate-800 flex items-center justify-between">
@@ -1734,7 +1602,7 @@
                         <i class="fa-solid fa-chart-line text-lg"></i>
                     </div>
                     <div>
-                        <div class="text-sm font-bold text-white tracking-wide">KPI TRACKER</div>
+                        <div class="text-sm font-bold text-white tracking-wide">เครื่องมือเพิ่มเติม</div>
                         <div class="text-[10px] text-slate-400 font-medium tracking-wider uppercase" id="drawer-branch-badge">AKRA WAREHOUSE</div>
                     </div>
                 </div>
@@ -1757,51 +1625,43 @@
                 </div>
             </div>
 
-            <!-- Navigation Links -->
+            <!-- Secondary utilities only: primary routes stay in desktop tabs/mobile bottom navigation -->
             <div class="px-3 py-2 space-y-1">
-                <div class="px-3 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">เมนูการปฏิบัติงาน</div>
-                
-                <button onclick="drawerNavigate('workload')" id="drawer-nav-workload" class="drawer-nav-item w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-white bg-blue-600 shadow-md transition-all text-left">
-                    <i class="fa-solid fa-business-time text-blue-300 w-4 text-center text-sm"></i>
-                    <span>1. บันทึก Workload (สัดส่วนเวลา)</span>
+                <div class="px-3 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">ข้อมูลและอุปกรณ์</div>
+
+                <button onclick="syncDataFromSheet(); closeDrawer();" id="btn-sync" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-rotate text-blue-400 w-4 text-center text-sm"></i>
+                    <span>ซิงค์ข้อมูลล่าสุด</span>
                 </button>
 
-                <button onclick="drawerNavigate('error')" id="drawer-nav-error" class="drawer-nav-item w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
-                    <i class="fa-solid fa-triangle-exclamation text-red-400 w-4 text-center text-sm"></i>
-                    <span>2. บันทึกความผิดพลาด (QC)</span>
+                <button onclick="forceCleanCacheAndReload()" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-broom text-amber-400 w-4 text-center text-sm"></i>
+                    <span>ล้างแคชและอัปเดต</span>
                 </button>
 
-                <button onclick="drawerNavigate('billcount')" id="drawer-nav-billcount" class="drawer-nav-item w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
-                    <i class="fa-solid fa-boxes-stacked text-indigo-400 w-4 text-center text-sm"></i>
-                    <span>3. สรุปบิลเบิกย้าย (Live Sync)</span>
+                <button id="btn-switch-branch" onclick="safeSessionStorage.removeItem('active_branch'); location.reload();" aria-label="สลับสาขา" class="hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-right-left text-emerald-400 w-4 text-center text-sm"></i>
+                    <span>เปลี่ยนสาขา</span>
                 </button>
 
-                <div class="pt-3 px-3 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">การวิเคราะห์ &amp; สรุปผล</div>
-
-                <button onclick="drawerNavigate('dashboard')" id="drawer-nav-dashboard" class="drawer-nav-item w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
-                    <i class="fa-solid fa-chart-pie text-amber-400 w-4 text-center text-sm"></i>
-                    <span>4. แดชบอร์ดรายวัน</span>
-                </button>
+                <div id="drawer-admin-heading" class="hidden pt-3 px-3 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">สำหรับผู้ดูแลระบบ</div>
 
                 <button id="drawer-admin-dash-btn" onclick="drawerNavigate('admin-dash')" class="drawer-nav-item hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-purple-300 hover:text-white hover:bg-slate-800 transition-all text-left">
                     <i class="fa-solid fa-gauge-high text-purple-400 w-4 text-center text-sm"></i>
-                    <span>5. ภาพรวมผู้บริหาร (Cockpit)</span>
+                    <span>ภาพรวมผู้บริหาร (Cockpit)</span>
                 </button>
 
                 <button id="drawer-admin-btn" onclick="drawerNavigate('admin')" class="drawer-nav-item hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all text-left">
                     <i class="fa-solid fa-gear text-slate-400 w-4 text-center text-sm"></i>
-                    <span>6. ตั้งค่าระบบ &amp; พนักงาน</span>
+                    <span>ตั้งค่าระบบ &amp; พนักงาน</span>
                 </button>
             </div>
         </div>
 
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
-            <button onclick="syncDataFromSheet(); closeDrawer();" class="w-full py-2.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center justify-center gap-2 border border-slate-700">
-                <i class="fa-solid fa-rotate text-blue-400"></i> ซิงค์ข้อมูลล่าสุด
-            </button>
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260822.18</span>
+                <span id="drawer-version-text">KPI Suite v20260823.03</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1817,7 +1677,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260822.18";
+        const CURRENT_VERSION = "20260823.03";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3988,7 +3848,7 @@
             updateDailyDashboard();
         }
 
-        // ================= HAMBURGER DRAWER HANDLERS =================
+        // ================= SECONDARY UTILITY DRAWER HANDLERS =================
         function openDrawer() {
             const drawer = document.getElementById('drawer-panel');
             const backdrop = document.getElementById('drawer-backdrop');
@@ -3997,7 +3857,7 @@
             const header = document.querySelector('.app-header');
 
             if (drawer && backdrop) {
-                drawer.classList.remove('-translate-x-full');
+                drawer.classList.remove('translate-x-full');
                 drawer.removeAttribute('aria-hidden');
                 drawer.removeAttribute('inert');
                 backdrop.classList.remove('opacity-0', 'pointer-events-none');
@@ -4025,7 +3885,7 @@
             const header = document.querySelector('.app-header');
 
             if (drawer && backdrop) {
-                drawer.classList.add('-translate-x-full');
+                drawer.classList.add('translate-x-full');
                 drawer.setAttribute('aria-hidden', 'true');
                 drawer.setAttribute('inert', '');
                 backdrop.classList.remove('opacity-100');
@@ -4048,7 +3908,7 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 const drawer = document.getElementById('drawer-panel');
-                if (drawer && !drawer.classList.contains('-translate-x-full')) {
+                if (drawer && !drawer.classList.contains('translate-x-full')) {
                     closeDrawer();
                 }
             }
@@ -4063,6 +3923,7 @@
             const nameEl = document.getElementById('drawer-user-name');
             const roleEl = document.getElementById('drawer-user-role');
             const badgeEl = document.getElementById('drawer-branch-badge');
+            const adminHeading = document.getElementById('drawer-admin-heading');
             const adminDashBtn = document.getElementById('drawer-admin-dash-btn');
             const adminBtn = document.getElementById('drawer-admin-btn');
             const isUserAdmin = Boolean(sessionToken) && (['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin')));
@@ -4089,6 +3950,10 @@
             }
 
             const canViewAdmin = isUserAdmin;
+            if (adminHeading) {
+                if (canViewAdmin) adminHeading.classList.remove('hidden');
+                else adminHeading.classList.add('hidden');
+            }
             if (adminDashBtn) {
                 if (canViewAdmin) adminDashBtn.classList.remove('hidden'), adminDashBtn.classList.add('flex');
                 else adminDashBtn.classList.add('hidden'), adminDashBtn.classList.remove('flex');
@@ -4102,7 +3967,7 @@
         // ================= AKRA WORKLOAD EDITOR V2 =================
         const AKRA_PRIMARY_DUTIES = [
             { id: 'W1', name: 'คลัง W1', desc: 'จัดเตรียม & แพ็กของ', icon: 'fa-boxes-stacked' },
-            { id: 'W2', name: 'คลัง W2', desc: 'สต๊อกใหญ่ & เติมของ', icon: 'fa-cubes-stacked' },
+            { id: 'W2', name: 'คลัง W2', desc: 'สต๊อกใหญ่ & เติมของ', icon: 'fa-boxes-stacked' },
             { id: 'OUTBOUND', name: 'ขาออก', desc: 'จัดส่ง & จ่ายออก', icon: 'fa-truck-fast' },
             { id: 'INBOUND', name: 'รับสินค้าเข้า', desc: 'ตรวจรับ & ลงสินค้า', icon: 'fa-truck-ramp-box' },
             { id: 'MOVE', name: 'ขนย้ายสินค้า', desc: 'โอนย้าย & จัดระเบียบ', icon: 'fa-dolly' }
@@ -4998,7 +4863,7 @@
 
             IS_ADMIN = false;
             _kpiPerms = [];
-            ['tab-admin', 'tab-admin-dash', 'dtab-admin', 'dtab-admin-dash', 'drawer-admin-dash-btn', 'drawer-admin-btn'].forEach(id => {
+            ['drawer-admin-heading', 'drawer-admin-dash-btn', 'drawer-admin-btn'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.classList.add('hidden');
@@ -5037,18 +4902,7 @@
             if (_kpiPerms.length === 0 && IS_ADMIN) _kpiPerms = ["adminDashboard"];
 
             if(can("adminDashboard")) {
-                document.getElementById('tab-admin')?.classList.remove('hidden');
-                document.getElementById('tab-admin')?.classList.add('flex');
-
-                document.getElementById('tab-admin-dash')?.classList.remove('hidden');
-                document.getElementById('tab-admin-dash')?.classList.add('flex');
-
-                document.getElementById('dtab-admin')?.classList.remove('hidden');
-                document.getElementById('dtab-admin')?.classList.add('flex');
-
-                document.getElementById('dtab-admin-dash')?.classList.remove('hidden');
-                document.getElementById('dtab-admin-dash')?.classList.add('flex');
-
+                document.getElementById('drawer-admin-heading')?.classList.remove('hidden');
                 document.getElementById('drawer-admin-dash-btn')?.classList.remove('hidden');
                 document.getElementById('drawer-admin-dash-btn')?.classList.add('flex');
 
@@ -5136,6 +4990,16 @@
             document.getElementById('header-branch-name').innerText = branch;
             const desktopBranchLabel = document.getElementById('desktop-branch-label');
             if (desktopBranchLabel) desktopBranchLabel.innerText = branch === 'TRD' ? 'TRD STORE' : 'AKRA WAREHOUSE';
+            const dashboardBranchTitleText = document.getElementById('dashboard-branch-title-text');
+            const dashboardBranchDescription = document.getElementById('dashboard-branch-description');
+            const dashboardBranchBadge = document.getElementById('dashboard-branch-badge');
+            if (dashboardBranchTitleText) dashboardBranchTitleText.innerText = `ภาพรวมการปฏิบัติงานสาขา ${branch}`;
+            if (dashboardBranchDescription) {
+                dashboardBranchDescription.innerText = branch === 'TRD'
+                    ? 'ข้อมูลปัญหาหน้างาน รายงานประจำวัน และงานติดตามของ TRD เท่านั้น'
+                    : 'ข้อมูล Workload ปัญหาหน้างาน รายงานประจำวัน และงานติดตามของ AKRA เท่านั้น';
+            }
+            if (dashboardBranchBadge) dashboardBranchBadge.innerText = branch === 'TRD' ? 'TRD STORE' : 'AKRA WAREHOUSE';
 
             if(branch === 'TRD') {
                 document.getElementById('header-branch-name').className = 'text-orange-300';
@@ -8036,9 +7900,8 @@
             if (tab === 'bills') tab = 'billcount';
 
             const views = ['view-workload', 'view-error', 'view-billcount', 'view-dashboard', 'view-admin-dash', 'view-admin', 'view-record'];
-            const mobileTabs = ['tab-workload', 'tab-error', 'tab-billcount', 'tab-dashboard', 'tab-admin-dash', 'tab-admin', 'tab-record'];
-            const desktopTabs = ['dtab-workload', 'dtab-error', 'dtab-billcount', 'dtab-dashboard', 'dtab-admin-dash', 'dtab-admin'];
-            const drawerItems = ['drawer-nav-workload', 'drawer-nav-error', 'drawer-nav-billcount', 'drawer-nav-dashboard', 'drawer-admin-dash-btn', 'drawer-admin-btn'];
+            const mobileTabs = ['tab-workload', 'tab-error', 'tab-billcount', 'tab-dashboard', 'tab-record'];
+            const desktopTabs = ['dtab-workload', 'dtab-error', 'dtab-billcount', 'dtab-dashboard'];
 
             views.forEach(v => {
                 const el = document.getElementById(v);
@@ -8061,14 +7924,6 @@
                 }
             });
 
-            drawerItems.forEach(t => {
-                const el = document.getElementById(t);
-                if (el) {
-                    el.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                    el.classList.add('text-slate-300');
-                }
-            });
-
             const activeView = document.getElementById('view-' + tab);
             if (activeView) activeView.classList.remove('hidden');
 
@@ -8082,12 +7937,6 @@
             if (activeDesktopTab) {
                 activeDesktopTab.classList.remove('text-slate-300');
                 activeDesktopTab.classList.add('desktop-tab-active', 'bg-blue-600', 'text-white', 'shadow');
-            }
-
-            const activeDrawerItem = document.getElementById('drawer-nav-' + tab) || (tab === 'admin-dash' ? document.getElementById('drawer-admin-dash-btn') : (tab === 'admin' ? document.getElementById('drawer-admin-btn') : null));
-            if (activeDrawerItem) {
-                activeDrawerItem.classList.remove('text-slate-300');
-                activeDrawerItem.classList.add('bg-blue-600', 'text-white', 'shadow-md');
             }
 
             // Update Header Badge

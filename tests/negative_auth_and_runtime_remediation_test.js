@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-console.log('=== RUNNING KPITRACKER NEGATIVE AUTH & RUNTIME REMEDIATION TESTS (v20260822.13) ===\n');
+console.log('=== RUNNING KPITRACKER NEGATIVE AUTH & RUNTIME REMEDIATION TESTS (v20260823.03) ===\n');
 
 const htmlPath = path.join(__dirname, '../index.html');
 const gasPath = path.join(__dirname, '../Code.gs.txt');
@@ -520,7 +520,7 @@ console.log('\n[8/8] Testing Drawer Runtime, Accessibility State & Version Parit
     }
 
     const elements = {
-        'drawer-panel': mockElement(['-translate-x-full']),
+        'drawer-panel': mockElement(['translate-x-full']),
         'drawer-backdrop': mockElement(['opacity-0', 'pointer-events-none']),
         'btn-open-drawer': mockElement(),
         'app-content': mockElement(),
@@ -573,9 +573,9 @@ console.log('\n[8/8] Testing Drawer Runtime, Accessibility State & Version Parit
 
     // Metadata and content lint checks
     const versionJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../version.json'), 'utf8'));
-    assert.strictEqual(versionJson.version, '20260822.18', 'version.json must be 20260822.18');
-    assert.match(htmlContent, /const CURRENT_VERSION = "20260822\.18";/, 'CURRENT_VERSION in index.html must be 20260822.18');
-    assert.match(htmlContent, /id="drawer-version-text">KPI Suite v20260822\.18<\/span>/, 'Drawer footer must display 20260822.18');
+    assert.strictEqual(versionJson.version, '20260823.03', 'version.json must be 20260823.03');
+    assert.match(htmlContent, /const CURRENT_VERSION = "20260823\.03";/, 'CURRENT_VERSION in index.html must be 20260823.03');
+    assert.match(htmlContent, /id="drawer-version-text">KPI Suite v20260823\.03<\/span>/, 'Drawer footer must display 20260823.03');
 
     // Check Zero emojis in key areas
     assert.doesNotMatch(htmlContent, /⚡ บิลด่วน \(แป้ง/, 'No raw lightning emoji in live bill title');
