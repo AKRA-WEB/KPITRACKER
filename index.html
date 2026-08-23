@@ -1585,7 +1585,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260823.07</span>
+                <span id="drawer-version-text">KPI Suite v20260823.08</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1597,12 +1597,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260823.07"></script>
+    <script src="js/supabase-kpi-client.js?v=20260823.08"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260823.07";
+        const CURRENT_VERSION = "20260823.08";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -5108,6 +5108,46 @@
         }
 
         // ================= API / SYNC =================
+        function mergeAuthoritativeWorkloadData(dailyData, workloadRecords, branch) {
+            const merged = (Array.isArray(dailyData) ? dailyData : []).map(day => ({
+                ...day,
+                workload: Array.isArray(day.workload) ? day.workload.map(item => ({ ...item })) : []
+            }));
+            if (String(branch || '').toUpperCase() !== 'AKRA') return merged;
+
+            const byDate = new Map(merged.map(day => [String(day.date || '').slice(0, 10), day]));
+            (Array.isArray(workloadRecords) ? workloadRecords : []).forEach(record => {
+                const date = String(record?.date || '').slice(0, 10);
+                if (!date) return;
+                const authoritative = Array.isArray(record.workload) ? record.workload.map(item => ({ ...item })) : [];
+                let day = byDate.get(date);
+                if (!day) {
+                    day = { date, branch: 'AKRA', workload: [] };
+                    merged.push(day);
+                    byDate.set(date, day);
+                }
+                const authoritativeUids = new Set(authoritative.map(item => String(item.employeeUid || '').trim()).filter(Boolean));
+                const authoritativeNames = new Set(authoritative.map(item => normalizeEmpName(item.employee)).filter(Boolean));
+                const legacyPeers = (Array.isArray(day.workload) ? day.workload : []).filter(item => {
+                    const uid = String(item.employeeUid || '').trim();
+                    const name = normalizeEmpName(item.employee);
+                    if (uid) return !authoritativeUids.has(uid);
+                    return !name || !authoritativeNames.has(name);
+                });
+                day.workload = [...legacyPeers, ...authoritative];
+            });
+            return merged;
+        }
+
+        async function mergeLatestWorkloadData(dailyData, branch, months = 3) {
+            if (String(branch || '').toUpperCase() !== 'AKRA') return mergeAuthoritativeWorkloadData(dailyData, [], branch);
+            if (!sessionToken || !window.AkraSupabaseKPI?.getWorkloadData) {
+                throw new Error('ระบบอ่าน Workload ยังไม่พร้อม กรุณาโหลดหน้าใหม่');
+            }
+            const result = await AkraSupabaseKPI.getWorkloadData(sessionToken, 'AKRA', months);
+            return mergeAuthoritativeWorkloadData(dailyData, result.records, 'AKRA');
+        }
+
         function sendAppLog(action, details) {
             if (!currentUser) return;
             const payload = { user: currentUser, action: action, app: CURRENT_APP_NAME, details: details };
@@ -5147,6 +5187,10 @@
                 }
 
                 if (Array.isArray(data)) {
+                    data = await mergeLatestWorkloadData(data, currentBranch, 3);
+                }
+
+                if (Array.isArray(data)) {
                     _dailyDataLoadError = '';
                     safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
                     safeStorage.setItem('kpiData_' + currentBranch + '_ts', String(Date.now()));
@@ -5165,6 +5209,10 @@
                     _dailyDataLoadError = 'เชื่อมต่อข้อมูลล่าสุดไม่สำเร็จ';
                     showToast("ทำงานโหมดออฟไลน์ (เชื่อมต่อข้อมูลไม่สำเร็จ)", true);
                 }
+            } catch (error) {
+                console.error('KPI sync error:', error);
+                _dailyDataLoadError = error?.message || 'เชื่อมต่อข้อมูลล่าสุดไม่สำเร็จ';
+                showToast("ซิงค์ข้อมูล Workload ไม่สำเร็จ กรุณาลองใหม่", true);
             } finally {
                 _dailyDataLoading = false;
                 updateDailyDashboard();
@@ -6145,8 +6193,9 @@
             }
             const res = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=" + branch + "&token=" + encodeURIComponent(sessionToken || "") + (monthsQuery || ""));
             if (!res.ok) throw new Error(`โหลดข้อมูล ${branch} ไม่สำเร็จ (HTTP ${res.status})`);
-            const data = await res.json();
+            let data = await res.json();
             if (!Array.isArray(data)) throw new Error(`รูปแบบข้อมูล ${branch} ไม่ถูกต้อง`);
+            data = await mergeLatestWorkloadData(data, branch, monthsQuery ? (parseInt(String(monthsQuery).split('months=')[1], 10) || 3) : 3);
             safeStorage.setItem('kpiData_' + branch, JSON.stringify(data));
             safeStorage.setItem('kpiData_' + branch + '_ts', String(Date.now()));
         }
@@ -8827,13 +8876,20 @@
             btn.disabled = true;
 
             try {
-                const res = await postToAppScript({
-                    action: 'saveSection',
-                    branch: currentBranch,
-                    date: date,
-                    section: 'workload',
-                    workload: workload
-                });
+                const res = isUserAdmin
+                    ? await postToAppScript({
+                        action: 'saveSection',
+                        branch: currentBranch,
+                        date: date,
+                        section: 'workload',
+                        workload: workload
+                    })
+                    : await (async () => {
+                        if (!window.AkraSupabaseKPI?.saveWorkload) {
+                            throw new Error('ระบบบันทึก Workload ยังไม่พร้อม กรุณาโหลดหน้าใหม่');
+                        }
+                        return AkraSupabaseKPI.saveWorkload(sessionToken, currentUser, date, workload[0]);
+                    })();
 
                 if (res && res.status === 'success') {
                     showToast("บันทึก Workload สำเร็จ!");

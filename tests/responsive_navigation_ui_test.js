@@ -53,6 +53,7 @@ async function isVisible(locator) {
 
 async function verifyAuthenticatedSupabaseInitialization(page, origin) {
     let getConfigCalls = 0;
+    let getWorkloadDataCalls = 0;
     await page.route('https://script.google.com/macros/s/**', route => {
         const action = new URL(route.request().url()).searchParams.get('action');
         return route.fulfill({
@@ -68,8 +69,16 @@ async function verifyAuthenticatedSupabaseInitialization(page, origin) {
     });
     await page.route('https://hgxrrskztbpejirrdpbq.supabase.co/functions/v1/kpi-api', async route => {
         const payload = route.request().postDataJSON();
-        assert.equal(payload.action, 'getConfig');
         assert.ok(payload.token, 'Authenticated initialization must forward the Main token');
+        if (payload.action === 'getWorkloadData') {
+            getWorkloadDataCalls++;
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ status: 'success', records: [] })
+            });
+        }
+        assert.equal(payload.action, 'getConfig');
         getConfigCalls++;
         await route.fulfill({
             status: 200,
@@ -92,8 +101,13 @@ async function verifyAuthenticatedSupabaseInitialization(page, origin) {
     })}.test-signature`;
     await page.goto(`${origin}/?sso=${encodeURIComponent(token)}`, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.getElementById('system-loading').classList.contains('hidden'));
+    await page.evaluate(async () => {
+        localStorage.removeItem('kpiData_AKRA_ts');
+        await syncDataFromSheet();
+    });
 
     assert.equal(getConfigCalls, 1, 'Authenticated initialization must call Supabase getConfig exactly once');
+    assert.ok(getWorkloadDataCalls >= 1, 'Authenticated sync must load authoritative AKRA Workload');
     assert.equal(await page.evaluate(() => typeof window.AkraSupabaseKPI?.getConfig), 'function');
     assert.deepEqual(
         await page.evaluate(() => GLOBAL_CONFIG_LIST.map(employee => employee.name)),

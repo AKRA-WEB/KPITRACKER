@@ -40,6 +40,15 @@ async function call(handler, token = 'token', action = 'getConfig', origin = 'ht
   return { status: response.status, body: await response.json() };
 }
 
+async function callPayload(handler, body, origin = 'https://akra-web.github.io') {
+  const response = await handler(new Request('https://example.test', {
+    method: 'POST',
+    headers: { Origin: origin, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }));
+  return { status: response.status, body: await response.json() };
+}
+
 (async () => {
   {
     const runtime = loadHandler({ dbCalls: [], verifyMainJwt: async () => null });
@@ -226,6 +235,7 @@ async function call(handler, token = 'token', action = 'getConfig', origin = 'ht
   {
     const fixtures = {
       dbCalls: [], rpcCalls: [],
+      now: new Date('2026-08-23T12:00:00.000Z'),
       verifyMainJwt: async () => ({
         id: 'worker', roles: ['WAREHOUSE'], apps: ['app-kpi'], tokenVersion: 2,
         sessionVersion: 7, authorizationRevision: 'rev-7', exp: 9999999999
@@ -257,6 +267,7 @@ async function call(handler, token = 'token', action = 'getConfig', origin = 'ht
   {
     const fixtures = {
       dbCalls: [], rpcCalls: [],
+      now: new Date('2026-08-23T12:00:00.000Z'),
       verifyMainJwt: async () => ({
         id: 'worker', roles: ['WAREHOUSE'], apps: ['app-kpi'], tokenVersion: 2,
         sessionVersion: 7, authorizationRevision: 'revoked', exp: 9999999999
@@ -308,6 +319,147 @@ async function call(handler, token = 'token', action = 'getConfig', origin = 'ht
     assert.deepStrictEqual(Array.from(result.body.workload.previousRecordedEmployees), ['Somsri']);
     const workloadCall = fixtures.dbCalls.find(call => call.table === 'kpi_daily_records');
     assert.match(workloadCall.query, /record_date=in\.\(2026-08-22,2026-08-23\)/);
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [], rpcCalls: [],
+      verifyMainJwt: async () => ({ id: '250007', roles: ['AKRA'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async (table, query) => {
+        fixtures.dbCalls.push({ table, query });
+        if (table === 'users' && query.includes('username=eq.250007')) {
+          return [{ username: '250007', name: 'หมูหยอง', roles: ['AKRA'], status: 'Active' }];
+        }
+        throw new Error(`unexpected table ${table}`);
+      },
+      dbRpc: async (name, body) => {
+        fixtures.rpcCalls.push({ name, body });
+        return { status: 'success', workload: [body.p_entry] };
+      }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await callPayload(runtime.handler, {
+      action: 'saveWorkload', token: 'valid-worker-token', employeeUid: '250007', date: '2026-08-23',
+      workload: {
+        employee: 'ชื่อจาก Main ที่ต่างจาก roster', capacity: 10,
+        outbound: 7, inbound: 1, transfer: 1, shared: 1,
+        note: '', primaryCore: 'คลัง W1', supportDuties: []
+      }
+    });
+    assert.strictEqual(result.status, 200, 'the same stable Main identity must be able to save its own Workload');
+    assert.strictEqual(fixtures.rpcCalls.length, 1);
+    assert.strictEqual(fixtures.rpcCalls[0].name, 'kpi_save_workload_entry_v1');
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(fixtures.rpcCalls[0].body)), {
+      p_record_date: '2026-08-23',
+      p_username: '250007',
+      p_entry: {
+        employeeUid: '250007', employee: 'หมูหยอง', capacity: 10,
+        outbound: 7, inbound: 1, transfer: 1, shared: 1,
+        note: '', primaryCore: 'คลัง W1', supportDuties: [], updatedBy: '250007'
+      }
+    }, 'the server must bind the mutation to the current user and canonical roster name');
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [], rpcCalls: [],
+      verifyMainJwt: async () => ({ id: '250007', roles: ['AKRA'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async () => { fixtures.dbCalls.push('unexpected'); return []; },
+      dbRpc: async () => { fixtures.rpcCalls.push('unexpected'); return {}; }
+    };
+    const runtime = loadHandler(fixtures);
+    const crossEmployee = await callPayload(runtime.handler, {
+      action: 'saveWorkload', token: 'valid-worker-token', employeeUid: '250008', date: '2026-08-23',
+      workload: { capacity: 10, outbound: 10, inbound: 0, transfer: 0, shared: 0 }
+    });
+    assert.strictEqual(crossEmployee.status, 403);
+    assert.strictEqual(crossEmployee.body.reason, 'permission_denied');
+    assert.strictEqual(fixtures.dbCalls.length, 0, 'cross-employee mutation must make zero database queries');
+    assert.strictEqual(fixtures.rpcCalls.length, 0, 'cross-employee mutation must make zero mutation calls');
+
+    const invalidCapacity = await callPayload(runtime.handler, {
+      action: 'saveWorkload', token: 'valid-worker-token', employeeUid: '250007', date: '2026-08-23',
+      workload: { capacity: 10, outbound: 9, inbound: 0, transfer: 0, shared: 0 }
+    });
+    assert.strictEqual(invalidCapacity.status, 400);
+    assert.strictEqual(invalidCapacity.body.reason, 'invalid_workload');
+    assert.strictEqual(fixtures.dbCalls.length, 0, 'invalid Workload must make zero database queries');
+    assert.strictEqual(fixtures.rpcCalls.length, 0, 'invalid Workload must make zero mutation calls');
+
+    const futureDate = await callPayload(runtime.handler, {
+      action: 'saveWorkload', token: 'valid-worker-token', employeeUid: '250007', date: '2026-08-24',
+      workload: { capacity: 10, outbound: 10, inbound: 0, transfer: 0, shared: 0 }
+    });
+    assert.strictEqual(futureDate.status, 400);
+    assert.strictEqual(futureDate.body.reason, 'invalid_workload');
+    assert.strictEqual(fixtures.dbCalls.length, 0, 'future Workload must make zero database queries');
+    assert.strictEqual(fixtures.rpcCalls.length, 0, 'future Workload must make zero mutation calls');
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [], rpcCalls: [],
+      now: new Date('2026-08-23T12:00:00.000Z'),
+      verifyMainJwt: async () => ({ id: '250007', roles: ['AKRA'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async (table, query) => {
+        fixtures.dbCalls.push({ table, query });
+        return [{ username: '250007', name: 'หมูหยอง', roles: ['AKRA'], status: 'Active' }];
+      },
+      dbRpc: async (name, body) => {
+        fixtures.rpcCalls.push({ name, body });
+        return {};
+      }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await callPayload(runtime.handler, {
+      action: 'saveWorkload', token: 'valid-worker-token', employeeUid: '250007', date: '2026-08-23',
+      workload: { capacity: 10, outbound: 10, inbound: 0, transfer: 0, shared: 0 }
+    });
+    assert.strictEqual(result.status, 500);
+    assert.strictEqual(result.body.reason, 'database_error', 'malformed RPC success must fail closed');
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [],
+      now: new Date('2026-08-23T12:00:00.000Z'),
+      verifyMainJwt: async () => ({ id: '250007', roles: ['AKRA'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async (table, query) => {
+        fixtures.dbCalls.push({ table, query });
+        if (table === 'users') return [{ username: '250007', name: 'หมูหยอง', roles: ['AKRA'], status: 'Active' }];
+        if (table === 'kpi_daily_records') {
+          return [{ record_date: '2026-08-23', workload_data: [{ employeeUid: '250007', employee: 'หมูหยอง', capacity: 10 }] }];
+        }
+        throw new Error(`unexpected table ${table}`);
+      }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await callPayload(runtime.handler, {
+      action: 'getWorkloadData', token: 'valid-worker-token', branch: 'AKRA', months: 3
+    });
+    assert.strictEqual(result.status, 200);
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(result.body.records)), [{
+      date: '2026-08-23', workload: [{ employeeUid: '250007', employee: 'หมูหยอง', capacity: 10 }]
+    }]);
+    const workloadRead = fixtures.dbCalls.find(call => call.table === 'kpi_daily_records');
+    assert.match(workloadRead.query, /branch=eq\.AKRA/);
+    assert.match(workloadRead.query, /record_date=gte\.2026-06-01/);
+    assert.match(workloadRead.query, /record_date=lte\.2026-08-23/);
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [],
+      verifyMainJwt: async () => ({ id: '250007', roles: ['AKRA'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async () => { fixtures.dbCalls.push('unexpected'); return []; }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await callPayload(runtime.handler, {
+      action: 'getWorkloadData', token: 'valid-worker-token', branch: 'TRD', months: 3
+    });
+    assert.strictEqual(result.status, 400);
+    assert.strictEqual(result.body.reason, 'invalid_workload_query');
+    assert.strictEqual(fixtures.dbCalls.length, 0, 'invalid Workload read scope must make zero database queries');
   }
 
   console.log('KPI config Edge auth and Main-roster projection passed.');

@@ -229,8 +229,17 @@ function verifyVisibleAdminPolling() {
 
 async function verifyWorkloadRoleAuthority() {
   const button = { innerHTML: '', disabled: false };
+  const edgeSaves = [];
+  const supabaseClient = {
+    saveWorkload: async (token, employeeUid, date, workload) => {
+      edgeSaves.push({ token, employeeUid, date, workload });
+      return { status: 'success', workload: [workload] };
+    }
+  };
   const context = vm.createContext({
     console,
+    window: { AkraSupabaseKPI: supabaseClient },
+    AkraSupabaseKPI: supabaseClient,
     sessionToken: 'signed-token',
     currentUser: '250013',
     displayUserName: '250013',
@@ -245,7 +254,7 @@ async function verifyWorkloadRoleAuthority() {
       { employee: 'Other', outbound: 1, inbound: 1, transfer: 1, shared: 1, capacity: 4 }
     ],
     postToAppScript: async request => {
-      context.savedWorkloads = request.workload;
+      context.savedAdminWorkloads = request.workload;
       return { status: 'success' };
     },
     showToast: () => {}, showModal: () => {}, sendAppLog: () => {},
@@ -254,10 +263,14 @@ async function verifyWorkloadRoleAuthority() {
   });
   vm.runInContext(extractFunction('saveWorkloadCard'), context);
   await context.saveWorkloadCard();
-  assert.strictEqual(context.savedWorkloads.length, 1, 'a formerly hard-coded Admin ID without current Main ADMIN role may save only its own Workload');
+  assert.strictEqual(edgeSaves.length, 1, 'a non-admin must save its own Workload through the authenticated Edge boundary');
+  assert.strictEqual(edgeSaves[0].employeeUid, '250013');
+  assert.strictEqual(edgeSaves[0].workload.employee, '250013');
+  assert.strictEqual(context.savedAdminWorkloads, undefined, 'a non-admin self-save must not call the legacy team mutation');
   context.currentRoles = ['ADMIN'];
   await context.saveWorkloadCard();
-  assert.strictEqual(context.savedWorkloads.length, 2, 'current Main ADMIN role may submit the team Workload');
+  assert.strictEqual(edgeSaves.length, 1, 'ADMIN team save remains on its existing contained path in this focused cutover');
+  assert.strictEqual(context.savedAdminWorkloads.length, 2, 'current Main ADMIN role may submit the team Workload');
 }
 
 verifyAdminStatusRefresh().then(() => {
