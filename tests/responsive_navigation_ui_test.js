@@ -51,6 +51,59 @@ async function isVisible(locator) {
     });
 }
 
+async function verifyAuthenticatedSupabaseInitialization(page, origin) {
+    let getConfigCalls = 0;
+    await page.route('https://script.google.com/macros/s/**', route => {
+        const action = new URL(route.request().url()).searchParams.get('action');
+        return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: action === 'verifyToken'
+                ? JSON.stringify({
+                    valid: true,
+                    user: { id: '250001', name: 'Somchai', roles: ['WAREHOUSE'], perms: {} }
+                })
+                : JSON.stringify([])
+        });
+    });
+    await page.route('https://hgxrrskztbpejirrdpbq.supabase.co/functions/v1/kpi-api', async route => {
+        const payload = route.request().postDataJSON();
+        assert.equal(payload.action, 'getConfig');
+        assert.ok(payload.token, 'Authenticated initialization must forward the Main token');
+        getConfigCalls++;
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                status: 'success',
+                viewer: { uid: '250001', name: 'Somchai', roles: ['WAREHOUSE'], status: 'Active' },
+                employees: [
+                    { uid: '250001', name: 'Somchai', roles: ['WAREHOUSE'], branches: 'AKRA', status: 'Active' },
+                    { uid: '250018', name: 'SORN', roles: ['WAREHOUSE'], branches: 'AKRA', status: 'Active' }
+                ],
+                workload: { date: '2026-08-23', hour: 12, recordedEmployees: [] }
+            })
+        });
+    });
+
+    const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
+    const token = `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({
+        id: '250001', name: 'Somchai', roles: ['WAREHOUSE'], exp: Math.floor(Date.now() / 1000) + 3600
+    })}.test-signature`;
+    await page.goto(`${origin}/?sso=${encodeURIComponent(token)}`, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.getElementById('system-loading').classList.contains('hidden'));
+
+    assert.equal(getConfigCalls, 1, 'Authenticated initialization must call Supabase getConfig exactly once');
+    assert.equal(await page.evaluate(() => typeof window.AkraSupabaseKPI?.getConfig), 'function');
+    assert.deepEqual(
+        await page.evaluate(() => GLOBAL_CONFIG_LIST.map(employee => employee.name)),
+        ['Somchai', 'SORN'],
+        'Authenticated initialization must populate the Main roster from the Edge response'
+    );
+    assert.equal(await page.locator('#custom-modal').evaluate(element => element.classList.contains('hidden')), true);
+    await page.evaluate(() => localStorage.clear());
+}
+
 async function verifyResponsivePrimaryNavigation(page) {
     const desktopNav = page.locator('#desktop-primary-nav');
     const mobileNav = page.locator('#bottom-nav');
@@ -322,7 +375,9 @@ async function verifyBoundedLiveBillList(page) {
     });
 
     try {
-        await page.goto(`http://127.0.0.1:${port}/?mock=1`, { waitUntil: 'domcontentloaded' });
+        const origin = `http://127.0.0.1:${port}`;
+        await verifyAuthenticatedSupabaseInitialization(page, origin);
+        await page.goto(`${origin}/?mock=1`, { waitUntil: 'domcontentloaded' });
         await page.waitForFunction(() => getComputedStyle(document.querySelector('#bottom-nav')).position === 'fixed');
         await page.waitForFunction(() => document.getElementById('system-loading').classList.contains('hidden'));
         await page.evaluate(() => {
