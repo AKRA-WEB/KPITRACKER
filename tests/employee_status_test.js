@@ -75,12 +75,14 @@ const renderHistoricalEmployeeBadgeCode = extractFunction(htmlContent, 'renderHi
 const normalizeEmpNameCode = extractFunction(htmlContent, 'normalizeEmpName');
 const processConfigListCode = extractFunction(htmlContent, 'processConfigList');
 const dedupeConfigListCode = extractFunction(htmlContent, 'dedupeConfigList');
+const normalizeMainEmployeeStatusCode = extractFunction(htmlContent, 'normalizeMainEmployeeStatus');
 const accumulateDailyEmployeePenaltyCode = extractFunction(htmlContent, 'accumulateDailyEmployeePenalty');
 
 eval(dedupeConfigListCode);
 eval(isEmployeeActiveCode);
 eval(renderHistoricalEmployeeBadgeCode);
 eval(normalizeEmpNameCode);
+eval(normalizeMainEmployeeStatusCode);
 eval(processConfigListCode);
 eval(accumulateDailyEmployeePenaltyCode);
 
@@ -196,7 +198,8 @@ async function runTests() {
             { uid: "emp1", name: "Somchai", branches: "AKRA", dept: "", gender: "M", status: "Active" },
             { uid: "emp2", name: "Somsri", branches: "TRD", dept: "แคชเชียร์", gender: "F", status: "inactive" }, // Lower inactive
             { uid: "emp3", name: "Sompong", branches: "AKRA,TRD", dept: "หน้าร้าน/ในร้าน", gender: "M", status: "" }, // Blank
-            { uid: "emp4", name: "Sompis", branches: "TRD", dept: "แคชเชียร์", gender: "F", status: "Active" } // TRD Active
+            { uid: "emp4", name: "Sompis", branches: "TRD", dept: "แคชเชียร์", gender: "F", status: "Active" }, // TRD Active
+            { uid: "emp5", name: "Suspended User", branches: "AKRA", dept: "", gender: "", status: "Suspended" }
         ];
 
         processConfigList(configList);
@@ -206,6 +209,9 @@ async function runTests() {
         assert.strictEqual(chen.status, "Active", "Upper active status must be normalized to Active");
         const somsri = GLOBAL_CONFIG_LIST.find(e => e.name === "Somsri");
         assert.strictEqual(somsri.status, "Inactive", "Lower inactive status must be normalized to Inactive");
+        const suspended = GLOBAL_CONFIG_LIST.find(e => e.name === "Suspended User");
+        assert.strictEqual(suspended.status, "Suspended", "Suspended Main status must be preserved");
+        assert.ok(!BRANCH_CONFIG["AKRA"].employees.includes("Suspended User"), "Suspended employee must not enter the active Workload roster");
 
         // Verify that Admin is not in BRANCH_CONFIG employees list
         assert.ok(!BRANCH_CONFIG["AKRA"].employees.includes("เฉิน"), "Admin must not be in AKRA employees list");
@@ -221,10 +227,10 @@ async function runTests() {
         assert.ok(TRD_DEPARTMENTS["แคชเชียร์"].includes("Sompis"), "Active TRD employee must be present in TRD_DEPARTMENTS");
         assert.ok(!TRD_DEPARTMENTS["แคชเชียร์"].includes("Somsri"), "Inactive TRD employee must NOT be present in TRD_DEPARTMENTS");
 
-        // Verify Legacy blank status employee ( Sompong )
-        assert.ok(BRANCH_CONFIG["AKRA"].employees.includes("Sompong"), "Blank status employee must default to Active and be in AKRA");
-        assert.ok(BRANCH_CONFIG["TRD"].employees.includes("Sompong"), "Blank status employee must default to Active and be in TRD");
-        assert.ok(TRD_DEPARTMENTS["หน้าร้าน/ในร้าน"].includes("Sompong"), "Blank status TRD employee must remain in the configured department");
+        // Blank Main status is fail-closed and must not enter operational rosters.
+        assert.ok(!BRANCH_CONFIG["AKRA"].employees.includes("Sompong"), "Blank status employee must not be in AKRA");
+        assert.ok(!BRANCH_CONFIG["TRD"].employees.includes("Sompong"), "Blank status employee must not be in TRD");
+        assert.ok(!TRD_DEPARTMENTS["หน้าร้าน/ในร้าน"], "Blank status employee must not initialize a TRD department");
         console.log("-> Test 2 Passed!");
     }
 

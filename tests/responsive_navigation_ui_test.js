@@ -144,6 +144,12 @@ async function verifyResponsivePrimaryNavigation(page) {
             sessionToken = 'test-signed-session';
             currentUser = '250013';
             currentRoles = ['Admin'];
+            IS_ADMIN = canAccessAdminSettings(currentRoles, sessionToken);
+            window.AkraSupabaseKPI = window.AkraSupabaseKPI || {};
+            window.AkraSupabaseKPI.getAdminStatus = async () => ({
+                status: 'success', employees: GLOBAL_CONFIG_LIST,
+                workload: { date: '2026-08-23', hour: 12, recordedEmployees: [] }
+            });
             refreshActions = async () => {};
             updateDrawerUserInfo();
         });
@@ -318,10 +324,12 @@ async function verifyBoundedLiveBillList(page) {
     try {
         await page.goto(`http://127.0.0.1:${port}/?mock=1`, { waitUntil: 'domcontentloaded' });
         await page.waitForFunction(() => getComputedStyle(document.querySelector('#bottom-nav')).position === 'fixed');
+        await page.waitForFunction(() => document.getElementById('system-loading').classList.contains('hidden'));
         await page.evaluate(() => {
             currentBranch = 'AKRA';
             document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('system-loading').classList.add('hidden');
+            document.getElementById('custom-modal').classList.add('hidden');
+            releaseFocusFromModal('custom-modal');
         });
         await verifyResponsivePrimaryNavigation(page);
         await verifyVisualHierarchy(page);

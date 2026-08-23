@@ -57,6 +57,7 @@ let displayUserName = "";
 let currentRoles = [];
 let IS_ADMIN = false;
 let _kpiPerms = [];
+let KPI_MAIN_VIEWER = null;
 let window = {
     location: {
         search: ""
@@ -127,13 +128,17 @@ function syncAllBranchesForAdmin() {
 }
 syncAllBranchesForAdmin.called = false;
 
+function startAdminStatusRefresh() {}
+
 // 2. Evaluate the extracted functions in the local test runner context
 const decodeJwtPayloadCode = extractFunction(htmlContent, 'decodeJwtPayload');
 const resolveSsoAuthCode = extractFunction(htmlContent, 'resolveSsoAuth');
+const canAccessAdminSettingsCode = extractFunction(htmlContent, 'canAccessAdminSettings');
 const checkAuthCode = extractFunction(htmlContent, 'checkAuth');
 
 eval(decodeJwtPayloadCode);
 eval(resolveSsoAuthCode);
+eval(canAccessAdminSettingsCode);
 eval(checkAuthCode);
 
 // Helper to generate mock base64url JWT tokens
@@ -182,6 +187,12 @@ async function runTests() {
         assert.strictEqual(currentUser, "250013");
         assert.ok(_kpiPerms.includes("adminDashboard"));
         console.log("-> Test 1 Passed!");
+
+        KPI_MAIN_VIEWER = { uid: '250013', name: 'Current Worker', roles: ['WAREHOUSE'], status: 'Active' };
+        await checkAuth(ssoResult);
+        assert.deepStrictEqual(currentRoles, ['WAREHOUSE'], 'current Main row roles must override stale JWT roles');
+        assert.strictEqual(IS_ADMIN, false, 'stale ADMIN claim must not expose Admin Settings');
+        KPI_MAIN_VIEWER = null;
     }
 
     // Test 2: Expired SSO token in URL (Server explicitly rejects with valid: false)

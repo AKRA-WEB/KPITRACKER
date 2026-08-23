@@ -1334,100 +1334,24 @@
             </div>
             <div class="h-6"></div>
         </div>
-<!-- ================= VIEW: ADMIN PANEL (ตั้งค่า) ================= -->
+<!-- ================= VIEW: ADMIN PANEL (สถานะพนักงานจาก Main) ================= -->
         <div id="view-admin" class="hidden space-y-4 pb-6 md-grid-2">
+            <section class="bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-800 text-white md-colspan-2" aria-labelledby="employee-status-title">
+                <h2 id="employee-status-title" class="text-lg font-bold"><i class="fa-solid fa-user-shield text-blue-300 mr-2"></i>ตั้งค่าระบบ &amp; สถานะพนักงาน</h2>
+                <p class="mt-1 text-xs leading-relaxed text-slate-300">อ่านรายชื่อและสาขาจาก Role ใน Main โดยตรง หน้านี้สำหรับ ADMIN เท่านั้น และไม่ใช้แก้ไขข้อมูลพนักงาน</p>
+                <p id="admin-workload-summary" class="mt-3 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-semibold" role="status" aria-live="polite">กำลังตรวจสอบ Workload วันนี้…</p>
+            </section>
 
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-lg font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2"><i class="fa-solid fa-user-plus text-blue-500 mr-2"></i>เพิ่ม/แก้ไขพนักงาน</h2>
-
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-[11px] font-bold text-gray-600 mb-1">รหัสพนักงาน (หรือชื่อภาษาอังกฤษ)</label>
-                        <input type="text" id="admin-input-uid" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" placeholder="เช่น 250099 หรือ jame">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold text-gray-600 mb-1">ชื่อพนักงาน (ภาษาไทย สำหรับแสดงผล)</label>
-                        <input type="text" id="admin-input-name" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" placeholder="เช่น สมชาย">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold text-gray-600 mb-1.5">สาขาที่เข้าได้</label>
-                        <div class="flex space-x-3">
-                            <label class="flex items-center space-x-2 cursor-pointer bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg flex-1">
-                                <input type="checkbox" id="admin-input-branch-akra" value="AKRA" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                                <span class="text-sm font-semibold text-gray-700">AKRA</span>
-                            </label>
-                            <label class="flex items-center space-x-2 cursor-pointer bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg flex-1">
-                                <input type="checkbox" id="admin-input-branch-trd" value="TRD" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" onchange="toggleAdminDept()">
-                                <span class="text-sm font-semibold text-gray-700">TRD</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div id="admin-dept-container" class="hidden opacity-0 transition-opacity duration-300">
-                        <label class="block text-[11px] font-bold text-gray-600 mb-1">แผนก (สำหรับสาขา TRD)</label>
-                        <select id="admin-input-dept" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-semibold text-gray-700">
-                            <option value="">-- ไม่ระบุ --</option>
-                            <option value="หน้าร้าน/ในร้าน">หน้าร้าน/ในร้าน</option>
-                            <option value="แคชเชียร์">แคชเชียร์</option>
-                            <option value="คลัง">คลัง</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold text-gray-600 mb-1.5">สถานะการทำงาน</label>
-                        <div class="flex space-x-2 mb-3">
-                            <label class="flex items-center justify-center space-x-1.5 cursor-pointer bg-green-50 border border-green-200 px-3 py-2 rounded-lg flex-1">
-                                <input type="radio" name="admin-input-status" id="admin-input-status-active" value="Active" checked class="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500">
-                                <span class="text-xs font-semibold text-green-700">Active (ทำงานอยู่)</span>
-                            </label>
-                            <label class="flex items-center justify-center space-x-1.5 cursor-pointer bg-red-50 border border-red-200 px-3 py-2 rounded-lg flex-1">
-                                <input type="radio" name="admin-input-status" id="admin-input-status-inactive" value="Inactive" class="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500">
-                                <span class="text-xs font-semibold text-red-700">Inactive (ลาออก)</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold text-gray-600 mb-1.5">เพศ (สำหรับตัวละครในแดชบอร์ด)</label>
-                        <div class="flex space-x-2">
-                            <label class="flex items-center justify-center space-x-1.5 cursor-pointer bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg flex-1">
-                                <input type="radio" name="admin-input-gender" value="" checked class="w-4 h-4 border-gray-300 focus:ring-gray-400">
-                                <span class="text-xs font-semibold text-gray-600">ไม่ระบุ</span>
-                            </label>
-                            <label class="flex items-center justify-center space-x-1.5 cursor-pointer bg-orange-50 border border-orange-200 px-3 py-2 rounded-lg flex-1">
-                                <input type="radio" name="admin-input-gender" value="M" class="w-4 h-4 border-gray-300 focus:ring-orange-400">
-                                <span class="text-xs font-semibold text-orange-700">ชาย (เสื้อส้ม)</span>
-                            </label>
-                            <label class="flex items-center justify-center space-x-1.5 cursor-pointer bg-gray-50 border border-gray-300 px-3 py-2 rounded-lg flex-1">
-                                <input type="radio" name="admin-input-gender" value="F" class="w-4 h-4 border-gray-300 focus:ring-gray-400">
-                                <span class="text-xs font-semibold text-gray-700">หญิง (เสื้อขาว)</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="flex space-x-2 mt-2" id="admin-form-actions">
-                        <button onclick="saveEmployeeFromAdmin()" id="btn-submit-emp" class="w-full bg-blue-100 text-blue-700 border border-blue-200 font-bold py-3 rounded-xl text-sm active:bg-blue-200 shadow-sm transition-all hover:bg-blue-200 flex justify-center items-center">
-                            <i class="fa-solid fa-plus mr-2 text-lg"></i> เพิ่มเข้าสู่รายชื่อ
-                        </button>
-                        <button onclick="cancelEditAdminEmp()" id="btn-cancel-emp" class="hidden w-1/3 bg-gray-100 text-gray-600 border border-gray-200 font-bold py-3 rounded-xl text-sm active:bg-gray-200 shadow-sm transition-all hover:bg-gray-200 justify-center items-center">
-                            ยกเลิก
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md-colspan-2" aria-labelledby="employee-list-title">
                 <div class="flex justify-between items-center border-b border-gray-50 pb-2 mb-3">
-                     <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-users text-purple-500 mr-2"></i>รายชื่อพนักงานทั้งหมด</h3>
+                     <h3 id="employee-list-title" class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-users text-purple-500 mr-2"></i>รายชื่อผู้ใช้งานจาก Main ทั้งหมด</h3>
                      <span id="admin-emp-count" class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold">0 คน</span>
                 </div>
 
                 <div id="admin-employee-list" class="space-y-2 max-h-96 overflow-y-auto pr-1">
                     <!-- Employee cards will be injected here -->
                 </div>
-
-                <p class="text-[10px] text-gray-400 mt-3 text-center"><i class="fa-solid fa-circle-check text-green-400 mr-1"></i>เพิ่ม/แก้ไข/ลบ แล้วระบบบันทึกเข้าฐานข้อมูลให้อัตโนมัติ — ปุ่มด้านล่างใช้บันทึกซ้ำกรณีเน็ตมีปัญหา</p>
-                <button onclick="saveAdminConfig()" id="btn-save-admin" class="mt-2 w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-transform flex justify-center items-center">
-                    <i class="fa-solid fa-cloud-arrow-up mr-2"></i> อัปเดตเข้าระบบฐานข้อมูล
-                </button>
-            </div>
+            </section>
             <div class="h-6"></div>
         </div>
 
@@ -1661,7 +1585,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260823.04</span>
+                <span id="drawer-version-text">KPI Suite v20260823.06</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1677,7 +1601,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260823.04";
+        const CURRENT_VERSION = "20260823.06";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -2200,6 +2124,10 @@
         let _dailyDataLoading = false;
         let _dailyDataLoadError = '';
         let sessionToken = safeStorage.getItem('akra_sso_token') || null;
+        let KPI_MAIN_VIEWER = null;
+        let KPI_WORKLOAD_STATUS = { date: '', hour: 0, recordedEmployees: [] };
+        let adminStatusRequest = null;
+        let adminStatusRefreshTimer = null;
         function can(perm) {
             if (!sessionToken) return false;
             if (_kpiPerms.length > 0) return _kpiPerms.includes(perm);
@@ -3677,6 +3605,58 @@
             return '<span class="inline-flex ml-1 mt-1 px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-[9px] font-bold text-amber-700 whitespace-nowrap">อดีตพนักงาน</span>';
         }
 
+        function getBranchesFromMainRoles(roles) {
+            const normalized = new Set((Array.isArray(roles) ? roles : []).map(role => String(role).toUpperCase()));
+            const branches = [];
+            if (normalized.has('ADMIN') || normalized.has('SUPERVISOR') || normalized.has('AKRA') || normalized.has('WAREHOUSE')) branches.push('AKRA');
+            if (normalized.has('ADMIN') || normalized.has('SUPERVISOR') || normalized.has('TRD') || normalized.has('CASHIER')) branches.push('TRD');
+            return branches;
+        }
+
+        function canAccessAdminSettings(roles, hasAuthenticatedToken) {
+            return Boolean(hasAuthenticatedToken) && (Array.isArray(roles) ? roles : []).some(role => String(role).toUpperCase() === 'ADMIN');
+        }
+
+        function getKpiBangkokClock(now = new Date()) {
+            const values = {};
+            new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', hourCycle: 'h23'
+            }).formatToParts(now).forEach(part => {
+                if (part.type !== 'literal') values[part.type] = part.value;
+            });
+            return { date: `${values.year}-${values.month}-${values.day}`, hour: Number(values.hour) };
+        }
+
+        function getPreviousKpiDate(date) {
+            const value = new Date(`${date}T00:00:00.000Z`);
+            if (Number.isNaN(value.getTime())) return '';
+            value.setUTCDate(value.getUTCDate() - 1);
+            return value.toISOString().slice(0, 10);
+        }
+
+        function getEmployeeWorkloadStatus(employee, workloadStatus, bangkokDate, bangkokHour) {
+            const status = String(employee?.status || 'Inactive');
+            const roles = (Array.isArray(employee?.roles) ? employee.roles : []).map(role => String(role).toUpperCase());
+            const branches = String(employee?.branches || '').split(',').map(branch => branch.trim().toUpperCase()).filter(Boolean);
+            if (status !== 'Active') return { state: 'inactive', label: `${status} · ไม่อยู่ในสถานะทำงาน` };
+            if (roles.includes('ADMIN') || !branches.includes('AKRA')) return { state: 'not_required', label: 'ไม่ใช้ Workload' };
+            if (!workloadStatus?.date || workloadStatus.date !== bangkokDate) {
+                return { state: 'unavailable', label: 'ยังตรวจสอบ Workload ไม่ได้' };
+            }
+            if (workloadStatus.previousDate && workloadStatus.previousDate !== getPreviousKpiDate(bangkokDate)) {
+                return { state: 'unavailable', label: 'ยังตรวจสอบ Workload ไม่ได้' };
+            }
+            const employeeName = normalizeEmpName(employee?.name);
+            const previousRecorded = new Set((workloadStatus?.previousRecordedEmployees || []).map(name => normalizeEmpName(name)));
+            if (workloadStatus?.previousDate && !previousRecorded.has(employeeName)) {
+                return { state: 'missing', label: `ไม่ได้บันทึก Workload วันที่ ${workloadStatus.previousDate}` };
+            }
+            const recorded = new Set((workloadStatus?.recordedEmployees || []).map(name => normalizeEmpName(name)));
+            if (recorded.has(employeeName)) return { state: 'recorded', label: 'บันทึก Workload วันนี้แล้ว' };
+            return { state: 'pending', label: 'รอบันทึกภายในวันนี้ ก่อน 23:59' };
+        }
+
         function dedupeConfigList(configList) {
             const seen = new Map();
             configList.forEach(user => {
@@ -3685,6 +3665,14 @@
                 seen.set(key, user);
             });
             return [...seen.values()];
+        }
+
+        function normalizeMainEmployeeStatus(status) {
+            const value = String(status || '').trim();
+            const normalized = value.toLowerCase();
+            if (normalized === 'active') return 'Active';
+            if (normalized === 'inactive' || !normalized) return 'Inactive';
+            return value;
         }
 
         function processConfigList(configList) {
@@ -3702,34 +3690,21 @@
                 const uid = user.uid || user.username;
 
                 // Normalize status at source (case-insensitive conversion to standard Active / Inactive)
-                const rawStatus = String(user.status || '').trim().toLowerCase();
-                user.status = (rawStatus === 'inactive') ? 'Inactive' : 'Active';
+                user.status = normalizeMainEmployeeStatus(user.status);
 
                 const uidStr = String(uid).toLowerCase();
 
-                // Derive branches from user.branches or user.roles
-                let branches = [];
-                if (user.branches) {
-                    branches = String(user.branches).split(',').map(b => b.trim().toUpperCase()).filter(b => b);
-                }
                 const roles = Array.isArray(user.roles) ? user.roles.map(r => String(r).toUpperCase()) : [];
-                if (roles.includes('ADMIN') || roles.includes('SUPERVISOR')) {
-                    if (!branches.includes('AKRA')) branches.push('AKRA');
-                    if (!branches.includes('TRD')) branches.push('TRD');
-                }
-                if (roles.includes('AKRA') || roles.includes('WAREHOUSE')) {
-                    if (!branches.includes('AKRA')) branches.push('AKRA');
-                }
-                if (roles.includes('TRD') || roles.includes('CASHIER')) {
-                    if (!branches.includes('TRD')) branches.push('TRD');
-                }
-                // Normalize branch aliases
-                if (branches.includes('WAREHOUSE') && !branches.includes('AKRA')) branches.push('AKRA');
-                if (branches.includes('CASHIER') && !branches.includes('TRD')) branches.push('TRD');
+                const branches = roles.length
+                    ? getBranchesFromMainRoles(roles)
+                    : String(user.branches || '').split(',').map(b => b.trim().toUpperCase()).filter(Boolean);
+                user.roles = roles;
+                user.branches = branches.join(',');
 
                 USER_DB[uidStr] = branches;
 
-                const isSystemAdmin = (user.dept && user.dept.toLowerCase() === 'admin') || roles.includes('ADMIN');
+                const isSystemAdmin = roles.includes('ADMIN')
+                    || (roles.length === 0 && user.dept && user.dept.toLowerCase() === 'admin');
                 const isActive = user.status === 'Active';
 
                 // Map department if empty based on roles
@@ -3928,7 +3903,7 @@
             const adminHeading = document.getElementById('drawer-admin-heading');
             const adminDashBtn = document.getElementById('drawer-admin-dash-btn');
             const adminBtn = document.getElementById('drawer-admin-btn');
-            const isUserAdmin = Boolean(sessionToken) && (['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin')));
+            const isUserAdmin = IS_ADMIN;
 
             if (nameEl) nameEl.textContent = displayUserName || (currentUser ? String(currentUser) : 'ผู้ใช้งาน');
             if (badgeEl) badgeEl.textContent = `${currentBranch || 'AKRA'} ${currentBranch === 'TRD' ? 'STORE' : 'WAREHOUSE'}`;
@@ -3952,12 +3927,13 @@
             }
 
             const canViewAdmin = isUserAdmin;
+            const canViewExecutive = can('adminDashboard');
             if (adminHeading) {
-                if (canViewAdmin) adminHeading.classList.remove('hidden');
+                if (canViewAdmin || canViewExecutive) adminHeading.classList.remove('hidden');
                 else adminHeading.classList.add('hidden');
             }
             if (adminDashBtn) {
-                if (canViewAdmin) adminDashBtn.classList.remove('hidden'), adminDashBtn.classList.add('flex');
+                if (canViewExecutive) adminDashBtn.classList.remove('hidden'), adminDashBtn.classList.add('flex');
                 else adminDashBtn.classList.add('hidden'), adminDashBtn.classList.remove('flex');
             }
             if (adminBtn) {
@@ -4616,41 +4592,28 @@
         }
 
         async function loadConfig() {
+            if (!sessionToken) {
+                processConfigList(GLOBAL_CONFIG_LIST);
+                return;
+            }
             let loaded = false;
             if (typeof window !== "undefined" && window.AkraSupabaseKPI) {
                 try {
-                    const configList = await AkraSupabaseKPI.getConfig();
-                    if (Array.isArray(configList) && configList.length > 0) {
-                        processConfigList(configList);
+                    const configResult = await AkraSupabaseKPI.getConfig(sessionToken);
+                    if (configResult && Array.isArray(configResult.employees) && configResult.employees.length > 0) {
+                        processConfigList(configResult.employees);
+                        KPI_MAIN_VIEWER = configResult.viewer || null;
+                        KPI_WORKLOAD_STATUS = configResult.workload || KPI_WORKLOAD_STATUS;
                         loaded = true;
                     }
                 } catch (supaErr) {
-                    console.warn('[Supabase KPI] loadConfig fallback to GAS:', supaErr);
+                    console.warn('[Supabase KPI] authenticated loadConfig failed:', supaErr);
                 }
             }
 
             if (!loaded) {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-                try {
-                    const response = await fetch(LOG_APP_SCRIPT_URL + "?action=getConfig" + (sessionToken ? "&token=" + encodeURIComponent(sessionToken) : ""), { signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    if (!response.ok) throw new Error("Network response was not ok");
-                    const configList = await response.json();
-                    processConfigList(configList);
-                } catch(e) {
-                    console.warn("ใช้รายชื่อพนักงานตั้งต้น (Fallback)", e);
-                    processConfigList(GLOBAL_CONFIG_LIST);
-                }
+                throw new Error('ไม่สามารถโหลดรายชื่อพนักงานจาก Main ผ่าน Supabase ได้');
             }
-
-            // Ensure hardcoded admin fallbacks are always in USER_DB to prevent permission rejection
-            const admins = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', '172980'];
-            admins.forEach(adminId => {
-                if (!USER_DB[adminId]) {
-                    USER_DB[adminId] = ["AKRA", "TRD"];
-                }
-            });
 
             const deptFilter = document.getElementById('dash-dept-filter');
             if (deptFilter) {
@@ -4661,6 +4624,60 @@
             }
 
             populateAdminEmpFilter();
+        }
+
+        async function refreshAdminStatus() {
+            if (!IS_ADMIN || !sessionToken || !window.AkraSupabaseKPI?.getAdminStatus) return false;
+            if (adminStatusRequest) return adminStatusRequest;
+            const summary = document.getElementById('admin-workload-summary');
+            if (summary) summary.textContent = 'กำลังอัปเดตสถานะพนักงานและ Workload วันนี้…';
+            adminStatusRequest = (async () => {
+                try {
+                    const result = await AkraSupabaseKPI.getAdminStatus(sessionToken);
+                    processConfigList(result.employees);
+                    KPI_MAIN_VIEWER = result.viewer || KPI_MAIN_VIEWER;
+                    KPI_WORKLOAD_STATUS = result.workload || { date: '', hour: 0, recordedEmployees: [] };
+                    renderAdminPanel();
+                    return true;
+                } catch (error) {
+                    console.warn('[Supabase KPI] admin status refresh failed:', error);
+                    const privilegeLost = ['permission_denied', 'invalid_or_expired_token', 'mandatory_password_change_required'].includes(error?.message);
+                    if (privilegeLost) {
+                        IS_ADMIN = false;
+                        currentRoles = (Array.isArray(currentRoles) ? currentRoles : []).filter(role => String(role).toUpperCase() !== 'ADMIN');
+                        KPI_MAIN_VIEWER = null;
+                        KPI_WORKLOAD_STATUS = { date: '', hour: 0, recordedEmployees: [] };
+                        _kpiPerms = [];
+                        processConfigList(GLOBAL_CONFIG_LIST.filter(employee => employee.status === 'Active'));
+                        if (error?.message !== 'permission_denied') {
+                            sessionToken = null;
+                            safeStorage.removeItem('akra_sso_token');
+                            safeStorage.removeItem('akra_sso_user_data');
+                        }
+                        startAdminStatusRefresh();
+                        updateDrawerUserInfo();
+                        switchTab('workload');
+                    }
+                    if (summary) summary.textContent = 'อัปเดตสถานะพนักงานไม่สำเร็จ กรุณาลองเปิดหน้านี้ใหม่';
+                    showToast('อัปเดตสถานะพนักงานไม่สำเร็จ', true);
+                    return false;
+                } finally {
+                    adminStatusRequest = null;
+                }
+            })();
+            return adminStatusRequest;
+        }
+
+        function startAdminStatusRefresh() {
+            if (adminStatusRefreshTimer) {
+                clearInterval(adminStatusRefreshTimer);
+                adminStatusRefreshTimer = null;
+            }
+            if (!IS_ADMIN) return;
+            adminStatusRefreshTimer = setInterval(() => {
+                const adminView = document.getElementById('view-admin');
+                if (adminView && !adminView.classList.contains('hidden')) refreshAdminStatus();
+            }, 60000);
         }
 
         async function initSystem() {
@@ -4681,13 +4698,14 @@
                 // 1. ตรวจสอบ SSO token ก่อน เพื่อนำ sessionToken ไปใช้เรียก loadConfig()
                 const ssoResult = await resolveSsoAuth();
 
-                // 2. โหลด Config พนักงานพร้อมส่ง Token ไปยัง GAS backend
+                // 2. โหลดรายชื่อและ Role จาก Main ผ่าน Supabase Edge boundary
                 await loadConfig();
 
                 // 3. ประเมินสิทธิ์และเตรียม UI
                 await checkAuth(ssoResult);
             } catch (err) {
                 console.error("InitSystem error:", err);
+                showModal("โหลดข้อมูลพนักงานไม่สำเร็จ", err?.message || "ไม่สามารถเชื่อมต่อ Supabase ได้", "error");
             } finally {
                 clearTimeout(dismissTimer);
                 const loader = document.getElementById('system-loading');
@@ -4876,7 +4894,8 @@
             if (userData) {
                 currentUser = userData.username || userData.id || userData.name;
                 displayUserName = userData.name || currentUser;
-                currentRoles = userData.roles || [];
+                currentRoles = KPI_MAIN_VIEWER?.roles || userData.roles || [];
+                if (KPI_MAIN_VIEWER?.name) displayUserName = KPI_MAIN_VIEWER.name;
             } else {
                 // หากไม่พบข้อมูลล็อกอิน ให้แสดงกล่องกรอกรหัสพนักงานเพื่อล็อกอิน
                 currentUser = null;
@@ -4895,24 +4914,24 @@
             const recordDate = document.getElementById('record-date');
             if(recordDate) recordDate.value = todayStr;
 
-            IS_ADMIN = Boolean(sessionToken) && (
-                currentRoles.includes('Admin') || currentRoles.includes('admin') ||
-                ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', '172980'].includes(String(currentUser).toLowerCase())
-            );
+            IS_ADMIN = canAccessAdminSettings(currentRoles, sessionToken);
+            startAdminStatusRefresh();
             const _ssoData = JSON.parse(safeStorage.getItem('akra_sso_user_data') || '{}');
             _kpiPerms = Boolean(sessionToken) ? ((_ssoData.perms && _ssoData.perms["app-kpi"]) || []) : [];
             if (_kpiPerms.length === 0 && IS_ADMIN) _kpiPerms = ["adminDashboard"];
 
-            if(can("adminDashboard")) {
+            if(can("adminDashboard") || IS_ADMIN) {
                 document.getElementById('drawer-admin-heading')?.classList.remove('hidden');
+            }
+            if(can("adminDashboard")) {
                 document.getElementById('drawer-admin-dash-btn')?.classList.remove('hidden');
                 document.getElementById('drawer-admin-dash-btn')?.classList.add('flex');
-
+                syncAllBranchesForAdmin();
+            }
+            if(IS_ADMIN) {
                 document.getElementById('drawer-admin-btn')?.classList.remove('hidden');
                 document.getElementById('drawer-admin-btn')?.classList.add('flex');
-
                 renderAdminPanel();
-                syncAllBranchesForAdmin();
             }
 
             applyRolePermissions();
@@ -7638,260 +7657,73 @@
             showToast("ส่งออกไฟล์ CSV สำเร็จ");
         }
 
-        // ================= ADMIN FUNCTIONS =================
-        let editingEmpIndex = -1;
-
-        function getAdminGenderValue() {
-            const el = document.querySelector('input[name="admin-input-gender"]:checked');
-            return el ? el.value : '';
-        }
-
-        function setAdminGenderValue(v) {
-            const val = (v === 'M' || v === 'F') ? v : '';
-            const el = document.querySelector(`input[name="admin-input-gender"][value="${val}"]`);
-            if (el) el.checked = true;
-        }
-
-        function toggleAdminDept() {
-            const trdChecked = document.getElementById('admin-input-branch-trd').checked;
-            const deptContainer = document.getElementById('admin-dept-container');
-            if (trdChecked) {
-                deptContainer.classList.remove('hidden');
-                setTimeout(() => deptContainer.classList.remove('opacity-0'), 10);
-            } else {
-                deptContainer.classList.add('opacity-0');
-                setTimeout(() => deptContainer.classList.add('hidden'), 300);
-            }
-        }
-
+        // ================= ADMIN STATUS VIEW =================
         function renderAdminPanel() {
             const container = document.getElementById('admin-employee-list');
+            const summary = document.getElementById('admin-workload-summary');
+            if (!IS_ADMIN || !container) {
+                if (container) container.innerHTML = '';
+                return false;
+            }
             let html = '';
-            let displayedCount = 0;
+            const bangkokClock = getKpiBangkokClock();
+            const bangkokDate = bangkokClock.date;
+            const bangkokHour = bangkokClock.hour;
+            const statusStyles = {
+                recorded: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+                missing: 'border-red-300 bg-red-50 text-red-800',
+                pending: 'border-amber-200 bg-amber-50 text-amber-800',
+                not_required: 'border-slate-200 bg-slate-100 text-slate-600',
+                inactive: 'border-slate-300 bg-slate-100 text-slate-600',
+                unavailable: 'border-amber-200 bg-amber-50 text-amber-800'
+            };
+            const statusIcons = {
+                recorded: 'fa-circle-check', missing: 'fa-triangle-exclamation', pending: 'fa-clock',
+                not_required: 'fa-minus', inactive: 'fa-user-slash', unavailable: 'fa-circle-question'
+            };
+            let missingCount = 0;
+            let expectedCount = 0;
 
-            GLOBAL_CONFIG_LIST.forEach((emp, index) => {
-                const isSystemAdmin = emp.dept && emp.dept.toLowerCase() === 'admin';
-                if (isSystemAdmin) return; // ไม่แสดงรายชื่อ Admin ในหน้าจัดการพนักงาน
-
-                displayedCount++;
-                let branchesBadge = emp.branches.split(',').map(b => `<span class="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 mr-1">${esc(b)}</span>`).join('');
-                let deptBadge = emp.dept ? `<span class="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded border border-purple-100">${esc(emp.dept)}</span>` : '';
-                const genderVal = emp.gender ? String(emp.gender).trim().toUpperCase() : '';
-                const statusVal = emp.status ? String(emp.status).trim() : 'Active';
-                let statusBadge = statusVal === 'Inactive'
-                    ? `<span class="bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100">Inactive (ลาออก)</span>`
-                    : `<span class="bg-green-50 text-green-600 px-1.5 py-0.5 rounded border border-green-100">Active</span>`;
-                let genderBadge = genderVal === 'M'
-                    ? `<span class="bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded border border-orange-200">ชาย</span>`
-                    : (genderVal === 'F'
-                        ? `<span class="bg-gray-50 text-gray-700 px-1.5 py-0.5 rounded border border-gray-300">หญิง</span>`
-                        : `<span class="bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded border border-gray-200">ไม่ระบุเพศ</span>`);
+            GLOBAL_CONFIG_LIST.forEach(emp => {
+                const roles = Array.isArray(emp.roles) ? emp.roles : [];
+                const branches = String(emp.branches || '').split(',').map(branch => branch.trim()).filter(Boolean);
+                const workload = getEmployeeWorkloadStatus(emp, KPI_WORKLOAD_STATUS, bangkokDate, bangkokHour);
+                if (!['not_required', 'inactive'].includes(workload.state)) expectedCount++;
+                if (workload.state === 'missing') missingCount++;
+                const branchesBadge = branches.length
+                    ? branches.map(branch => `<span class="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 font-bold text-blue-700">${esc(branch)}</span>`).join('')
+                    : '<span class="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-slate-500">ไม่ผูกสาขา</span>';
+                const rolesBadge = roles.length
+                    ? roles.map(role => `<span class="rounded border border-purple-200 bg-purple-50 px-1.5 py-0.5 font-bold text-purple-700">${esc(role)}</span>`).join('')
+                    : '<span class="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-slate-500">ไม่มี Role</span>';
+                const mainStatus = String(emp.status || 'Inactive');
 
                 html += `
-                    <div class="bg-gray-50/50 p-3 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center mb-2 transition-all hover:bg-white">
-                        <div>
-                            <div class="font-bold text-gray-800 text-sm flex items-center">
+                    <article class="mb-2 rounded-xl border border-gray-200 bg-gray-50/50 p-3 shadow-sm">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="min-w-0">
+                                <h4 class="flex min-w-0 flex-wrap items-center gap-1.5 text-sm font-bold text-gray-800">
                                 ${esc(emp.name)} <span class="text-[10px] text-gray-400 font-medium ml-1.5 bg-white px-1 border border-gray-100 rounded">ID: ${esc(emp.uid)}</span>
+                                </h4>
+                                <div class="mt-1.5 flex flex-wrap gap-1 text-[10px] text-gray-600">${rolesBadge}${branchesBadge}</div>
+                                <p class="mt-1.5 text-[11px] text-slate-600">สถานะจาก Main: <strong>${esc(mainStatus)}</strong></p>
                             </div>
-                            <div class="text-[10px] text-gray-600 mt-1.5 flex flex-wrap gap-1">
-                                ${branchesBadge} ${deptBadge} ${genderBadge} ${statusBadge}
-                            </div>
+                            <span class="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border px-2.5 py-1.5 text-xs font-bold ${statusStyles[workload.state]}">
+                                <i class="fa-solid ${statusIcons[workload.state]}" aria-hidden="true"></i>${esc(workload.label)}
+                            </span>
                         </div>
-                        <div class="flex space-x-1.5">
-                            <button onclick="editEmployeeFromAdmin(${index})" class="text-blue-400 bg-white border border-blue-100 w-8 h-8 flex justify-center items-center rounded-lg hover:bg-blue-50 hover:text-blue-500 hover:border-blue-200 transition-colors shadow-sm">
-                                <i class="fa-solid fa-pen text-xs"></i>
-                            </button>
-                            <button onclick="removeEmployeeFromAdmin(${index})" class="text-red-400 bg-white border border-red-100 w-8 h-8 flex justify-center items-center rounded-lg hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors shadow-sm">
-                                <i class="fa-solid fa-trash-can text-xs"></i>
-                            </button>
-                        </div>
-                    </div>
+                    </article>
                 `;
             });
 
-            document.getElementById('admin-emp-count').innerText = `${displayedCount} คน`;
+            document.getElementById('admin-emp-count').innerText = `${GLOBAL_CONFIG_LIST.length} คน`;
             container.innerHTML = html || '<div class="text-center text-gray-400 text-sm py-4">ไม่พบรายชื่อพนักงาน</div>';
-        }
-
-        function editEmployeeFromAdmin(index) {
-            editingEmpIndex = index;
-            const emp = GLOBAL_CONFIG_LIST[index];
-
-            document.getElementById('admin-input-uid').value = emp.uid;
-            document.getElementById('admin-input-name').value = emp.name;
-
-            const branches = emp.branches.split(',').map(b => b.trim());
-            document.getElementById('admin-input-branch-akra').checked = branches.includes('AKRA');
-            document.getElementById('admin-input-branch-trd').checked = branches.includes('TRD');
-
-            document.getElementById('admin-input-dept').value = emp.dept || '';
-            setAdminGenderValue(emp.gender ? String(emp.gender).trim().toUpperCase() : '');
-
-            const statusVal = emp.status ? String(emp.status).trim() : 'Active';
-            if (statusVal === 'Inactive') {
-                document.getElementById('admin-input-status-inactive').checked = true;
-            } else {
-                document.getElementById('admin-input-status-active').checked = true;
+            if (summary) {
+                summary.textContent = missingCount > 0
+                    ? `วันนี้ ${bangkokDate} · ตรวจเมื่อวาน ${KPI_WORKLOAD_STATUS.previousDate} · ไม่ได้บันทึก Workload ${missingCount} จาก ${expectedCount} คน`
+                    : `วันนี้ ${bangkokDate} · รอบันทึกได้ถึง 23:59 · ผู้ที่ต้องบันทึก Workload ${expectedCount} คน`;
             }
-
-            toggleAdminDept();
-
-            const btnSubmit = document.getElementById('btn-submit-emp');
-            btnSubmit.innerHTML = '<i class="fa-solid fa-save mr-2 text-lg"></i> บันทึกการแก้ไข';
-            btnSubmit.className = "w-2/3 bg-yellow-100 text-yellow-700 border border-yellow-200 font-bold py-3 rounded-xl text-sm active:bg-yellow-200 shadow-sm transition-all hover:bg-yellow-200 flex justify-center items-center";
-
-            document.getElementById('btn-cancel-emp').classList.remove('hidden');
-            document.getElementById('btn-cancel-emp').classList.add('flex');
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function cancelEditAdminEmp() {
-            editingEmpIndex = -1;
-            document.getElementById('admin-input-uid').value = '';
-            document.getElementById('admin-input-name').value = '';
-            document.getElementById('admin-input-branch-akra').checked = false;
-            document.getElementById('admin-input-branch-trd').checked = false;
-            document.getElementById('admin-input-dept').value = '';
-            setAdminGenderValue('');
-            document.getElementById('admin-input-status-active').checked = true;
-            toggleAdminDept();
-
-            const btnSubmit = document.getElementById('btn-submit-emp');
-            btnSubmit.innerHTML = '<i class="fa-solid fa-plus mr-2 text-lg"></i> เพิ่มเข้าสู่รายชื่อ';
-            btnSubmit.className = "w-full bg-blue-100 text-blue-700 border border-blue-200 font-bold py-3 rounded-xl text-sm active:bg-blue-200 shadow-sm transition-all hover:bg-blue-200 flex justify-center items-center";
-
-            document.getElementById('btn-cancel-emp').classList.add('hidden');
-            document.getElementById('btn-cancel-emp').classList.remove('flex');
-        }
-
-        function saveEmployeeFromAdmin() {
-            const uid = document.getElementById('admin-input-uid').value.trim();
-            const name = document.getElementById('admin-input-name').value.trim();
-            const isAkra = document.getElementById('admin-input-branch-akra').checked;
-            const isTrd = document.getElementById('admin-input-branch-trd').checked;
-            const dept = document.getElementById('admin-input-dept').value;
-            const gender = getAdminGenderValue();
-            const status = document.querySelector('input[name="admin-input-status"]:checked') ? document.querySelector('input[name="admin-input-status"]:checked').value : 'Active';
-
-            if (!uid || !name) return showToast("กรุณาระบุรหัสพนักงานและชื่อให้ครบถ้วน", true);
-            if (!isAkra && !isTrd) return showToast("กรุณาเลือกสาขาอย่างน้อย 1 สาขา", true);
-            if (isTrd && !dept) return showToast("กรุณาเลือกแผนกสำหรับสาขา TRD", true);
-
-            const existsIndex = GLOBAL_CONFIG_LIST.findIndex(e => String(e.uid).toLowerCase() === String(uid).toLowerCase() || e.name === name);
-            if (existsIndex !== -1 && existsIndex !== editingEmpIndex) {
-                showModal("พบข้อมูลซ้ำ", `พบข้อมูลรหัสพนักงานหรือชื่อนี้ในระบบแล้ว (${GLOBAL_CONFIG_LIST[existsIndex].name}) ต้องการบันทึกทับข้อมูลเดิมหรือไม่?`, "confirm", () => {
-                    if (existsIndex > editingEmpIndex && editingEmpIndex !== -1) {
-                         GLOBAL_CONFIG_LIST.splice(existsIndex, 1);
-                    } else if (existsIndex < editingEmpIndex && editingEmpIndex !== -1) {
-                         GLOBAL_CONFIG_LIST.splice(existsIndex, 1);
-                         editingEmpIndex--;
-                    } else if (editingEmpIndex === -1) {
-                         GLOBAL_CONFIG_LIST.splice(existsIndex, 1);
-                    }
-                    proceedSaveAdminEmp(uid, name, isAkra, isTrd, dept, gender, status);
-                });
-                return;
-            }
-            proceedSaveAdminEmp(uid, name, isAkra, isTrd, dept, gender, status);
-        }
-
-        // ต่อคิวคำสั่งบันทึก config ทีละคำขอ — autosave ติด ๆ กันจะไม่ยิงซ้อนจนชีตฝั่ง GAS เขียนแทรกกัน
-        let adminSyncChain = Promise.resolve();
-        function syncAdminConfigToServer() {
-            const run = adminSyncChain.then(() => doSyncAdminConfig());
-            adminSyncChain = run.then(() => {}, () => {});
-            return run;
-        }
-
-        // ส่งรายชื่อทั้งหมดขึ้น backend ทันที (auto-sync) แล้ว refresh ข้อมูลในหน่วยความจำ
-        async function doSyncAdminConfig() {
-            if (await AppVersionGuard.blockIfStale()) return false;
-            try {
-                const res = await postToAppScript({ action: "saveConfig", configData: GLOBAL_CONFIG_LIST });
-                if (!res || res.status !== 'success') {
-                    throw new Error((res && res.message) || 'บันทึกการตั้งค่าพนักงานไม่สำเร็จ');
-                }
-                processConfigList(GLOBAL_CONFIG_LIST);
-                refreshConfigDependentUI();
-                return true;
-            } catch (error) {
-                console.error(error);
-                showToast("บันทึกไม่สำเร็จ เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กดปุ่มอัปเดตเข้าระบบซ้ำอีกครั้ง", true);
-                return false;
-            }
-        }
-
-        function refreshConfigDependentUI() {
-            const admins = ['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', '172980'];
-            admins.forEach(adminId => { if (!USER_DB[adminId]) USER_DB[adminId] = ["AKRA", "TRD"]; });
-
-            const deptFilter = document.getElementById('dash-dept-filter');
-            if (deptFilter) {
-                const cur = deptFilter.value;
-                deptFilter.innerHTML = '<option value="ALL">ดูรวมทุกแผนก</option>';
-                Object.keys(TRD_DEPARTMENTS).forEach(dept => {
-                    deptFilter.innerHTML += `<option value="${dept}">${dept}</option>`;
-                });
-                if ([...deptFilter.options].some(o => o.value === cur)) deptFilter.value = cur;
-            }
-            populateAdminEmpFilter();
-        }
-
-        function proceedSaveAdminEmp(uid, name, isAkra, isTrd, dept, gender, status) {
-            let branches = [];
-            if (isAkra) branches.push("AKRA");
-            if (isTrd) branches.push("TRD");
-
-            const empData = {
-                uid: uid,
-                name: name,
-                branches: branches.join(","),
-                dept: isTrd ? dept : "",
-                gender: gender || "",
-                status: status || "Active"
-            };
-
-            const isEdit = editingEmpIndex >= 0;
-            if (isEdit) {
-                GLOBAL_CONFIG_LIST[editingEmpIndex] = empData;
-            } else {
-                GLOBAL_CONFIG_LIST.push(empData);
-            }
-
-            cancelEditAdminEmp();
-            renderAdminPanel();
-            syncAdminConfigToServer().then(ok => {
-                if (ok) showToast(isEdit ? `บันทึกการแก้ไข ${name} เข้าระบบแล้ว` : `เพิ่ม ${name} เข้าระบบแล้ว`);
-            });
-        }
-
-        function removeEmployeeFromAdmin(index) {
-            const empName = GLOBAL_CONFIG_LIST[index].name;
-            showModal("ยืนยันการลบ", `การลบพนักงานออกแบบถาวรอาจส่งผลต่อการเชื่อมโยงข้อมูลรายงานในอดีต หากพนักงานลาออกหรือหยุดงาน แนะนำให้ใช้วิธีเปลี่ยนสถานะเป็น Inactive (ลาออก) แทน คุณยืนยันที่จะลบรายชื่อ "${empName}" ออกจากระบบอย่างถาวรใช่หรือไม่?`, "confirm", () => {
-                GLOBAL_CONFIG_LIST.splice(index, 1);
-                if (editingEmpIndex === index) {
-                    cancelEditAdminEmp();
-                } else if (editingEmpIndex > index) {
-                    editingEmpIndex--;
-                }
-                renderAdminPanel();
-                syncAdminConfigToServer().then(ok => {
-                    if (ok) showToast(`ลบ ${empName} ออกจากระบบแล้ว`);
-                });
-            });
-        }
-
-        async function saveAdminConfig() {
-            const btn = document.getElementById('btn-save-admin');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังอัปเดตระบบ...';
-            btn.disabled = true;
-
-            const ok = await syncAdminConfigToServer();
-            if (ok) showToast("อัปเดตการตั้งค่าเข้าระบบกลางเรียบร้อย");
-
-            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> อัปเดตเข้าระบบฐานข้อมูล';
-            btn.disabled = false;
+            return true;
         }
 
         // ================= UI FUNCTIONS =================
@@ -7900,6 +7732,10 @@
             if (tab === 'record') tab = (currentBranch === 'TRD' ? 'error' : 'workload');
             if (tab === 'errors') tab = 'error';
             if (tab === 'bills') tab = 'billcount';
+            if (tab === 'admin' && !IS_ADMIN) {
+                showToast('เมนูตั้งค่าระบบและพนักงานใช้ได้เฉพาะ Admin', true);
+                return false;
+            }
 
             const views = ['view-workload', 'view-error', 'view-billcount', 'view-dashboard', 'view-admin-dash', 'view-admin', 'view-record'];
             const mobileTabs = ['tab-workload', 'tab-error', 'tab-billcount', 'tab-dashboard', 'tab-record'];
@@ -7975,6 +7811,7 @@
                 refreshActions();
             } else if (tab === 'admin') {
                 renderAdminPanel();
+                refreshAdminStatus();
             }
         }
 
@@ -8968,7 +8805,7 @@
             const date = document.getElementById('record-date').value;
             if (!date) return showToast("กรุณาเลือกวันที่บันทึก", true);
 
-            const isUserAdmin = Boolean(sessionToken) && (['250013', 'chen', 'เฉิน', 'hhsawyer', 'stamp111', 'stamp1112', '172980'].includes(String(currentUser).toLowerCase()) || (typeof currentRoles !== 'undefined' && currentRoles.includes('Admin')));
+            const isUserAdmin = canAccessAdminSettings(currentRoles, sessionToken);
             let workload = getAkraWorkloadValues();
             if (!isUserAdmin) {
                 workload = workload.filter(w => normalizeEmpName(w.employee) === normalizeEmpName(displayUserName) || normalizeEmpName(w.employee) === normalizeEmpName(currentUser));

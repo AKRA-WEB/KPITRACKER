@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-console.log('=== RUNNING KPITRACKER NEGATIVE AUTH & RUNTIME REMEDIATION TESTS (v20260823.04) ===\n');
+console.log('=== RUNNING KPITRACKER NEGATIVE AUTH & RUNTIME REMEDIATION TESTS (v20260823.06) ===\n');
 
 const htmlPath = path.join(__dirname, '../index.html');
 const gasPath = path.join(__dirname, '../Code.gs.txt');
@@ -244,12 +244,14 @@ async function testClientAdminHardening() {
         currentUser: null,
         displayUserName: '',
         currentRoles: [],
+        KPI_MAIN_VIEWER: null,
         sessionToken: null, // NO TOKEN!
         IS_ADMIN: false,
         _kpiPerms: [],
         resolveSsoAuth: async () => ({ userData: null, expired: false, attempted: false }),
         renderAdminPanel: () => {},
         syncAllBranchesForAdmin: () => {},
+        startAdminStatusRefresh: () => {},
         applyRolePermissions: () => {},
         refreshActions: () => {},
         showManualLoginModal: () => {},
@@ -546,12 +548,15 @@ console.log('\n[8/8] Testing Drawer Runtime, Accessibility State & Version Parit
         currentUser: '250007',
         currentBranch: 'AKRA',
         currentRoles: [],
-        sessionToken: null
+        sessionToken: null,
+        IS_ADMIN: false,
+        can: () => false
     };
     vm.createContext(sandbox);
     vm.runInContext([
         extractHtmlFunction('openDrawer()'),
         extractHtmlFunction('closeDrawer()'),
+        extractHtmlFunction('canAccessAdminSettings(roles, hasAuthenticatedToken)'),
         extractHtmlFunction('updateDrawerUserInfo()')
     ].join('\n'), sandbox);
 
@@ -573,9 +578,9 @@ console.log('\n[8/8] Testing Drawer Runtime, Accessibility State & Version Parit
 
     // Metadata and content lint checks
     const versionJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../version.json'), 'utf8'));
-    assert.strictEqual(versionJson.version, '20260823.04', 'version.json must be 20260823.04');
-    assert.match(htmlContent, /const CURRENT_VERSION = "20260823\.04";/, 'CURRENT_VERSION in index.html must be 20260823.04');
-    assert.match(htmlContent, /id="drawer-version-text">KPI Suite v20260823\.04<\/span>/, 'Drawer footer must display 20260823.04');
+    assert.strictEqual(versionJson.version, '20260823.06', 'version.json must be 20260823.06');
+    assert.match(htmlContent, /const CURRENT_VERSION = "20260823\.06";/, 'CURRENT_VERSION in index.html must be 20260823.06');
+    assert.match(htmlContent, /id="drawer-version-text">KPI Suite v20260823\.06<\/span>/, 'Drawer footer must display 20260823.06');
 
     // Check Zero emojis in key areas
     assert.doesNotMatch(htmlContent, /⚡ บิลด่วน \(แป้ง/, 'No raw lightning emoji in live bill title');

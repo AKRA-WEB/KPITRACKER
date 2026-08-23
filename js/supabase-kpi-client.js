@@ -1,8 +1,8 @@
 /**
  * ============================================================================
  * AKRA KPITRACKER SUPABASE API CLIENT
- * Status: DEACTIVATED / CONTAINED for Security Hardening (Plan 20260820-004)
- * KPI daily records, actions, and config operations execute via authoritative GAS backend.
+ * Status: CONTAINED for writes; authenticated KPI roster/config reads use kpi-api.
+ * KPI daily records and actions remain on their existing contained paths.
  * ============================================================================
  */
 
@@ -19,41 +19,32 @@
         KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneHJyc2t6dGJwZWppcnJkcGJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMjQ1ODAsImV4cCI6MjEwMjcwMDU4MH0.IQWpcgqCCVVLwRJso1eamXHuCH4tKeWohd2oCUCVavw'
     };
 
+    async function fetchConfigAction(action, token) {
+        if (!token) throw new Error('KPI config requires an authenticated Main session.');
+        const url = `${SUPABASE_CONFIG.URL}/functions/v1/kpi-api`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_CONFIG.KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ action, token })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.status !== 'success') {
+            throw new Error(data.reason || ('Supabase fetch failed: ' + response.statusText));
+        }
+        if (!Array.isArray(data.employees)) throw new Error('invalid_kpi_config_response');
+        return data;
+    }
+
     return {
         saveDailyRecord: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
         fetchBranchData: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
         getWeeklyRecords: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
         getEmployees: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
-        getConfig: async () => {
-            const url = `${SUPABASE_CONFIG.URL}/rest/v1/kpi_employees?select=name,branch,status,role,legacy_uid&is_migrated=eq.true&order=branch,sort_order`;
-            const response = await fetch(url, {
-                headers: {
-                    'apikey': SUPABASE_CONFIG.KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_CONFIG.KEY
-                }
-            });
-            if (!response.ok) throw new Error('Supabase fetch failed: ' + response.statusText);
-            const data = await response.json();
-            const merged = {};
-            data.forEach(row => {
-                if (!merged[row.name]) {
-                    merged[row.name] = {
-                        uid: row.legacy_uid || row.name,
-                        name: row.name,
-                        branches: row.branch,
-                        dept: '',
-                        gender: '',
-                        status: row.status
-                    };
-                } else {
-                    const existingBranches = merged[row.name].branches.split(',');
-                    if (!existingBranches.includes(row.branch)) {
-                        merged[row.name].branches += ',' + row.branch;
-                    }
-                }
-            });
-            return Object.values(merged);
-        },
+        getConfig: token => fetchConfigAction('getConfig', token),
+        getAdminStatus: token => fetchConfigAction('getAdminStatus', token),
         getActions: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
         saveAction: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); }
     };

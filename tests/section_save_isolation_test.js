@@ -351,9 +351,6 @@ assert.match(postFunction, /'Content-Type': 'text\/plain;charset=UTF-8'/,
     'authenticated GAS POSTs must use a CORS-safelisted content type so the browser does not send an unsupported OPTIONS preflight');
 assert.doesNotMatch(postFunction, /'Content-Type': 'application\/json'/,
     'authenticated GAS POSTs must not trigger an application/json CORS preflight');
-const adminSync = extractFunction(html, 'doSyncAdminConfig');
-assert.match(adminSync, /postToAppScript\(\{ action: "saveConfig"/, 'admin config save must use authenticated request helper');
-
 const saveConfigStart = backend.indexOf('if (action === "saveConfig")');
 const saveConfigEnd = backend.indexOf('// 1.5 สำหรับ Admin/พนักงาน', saveConfigStart);
 const saveConfigBlock = backend.slice(saveConfigStart, saveConfigEnd);

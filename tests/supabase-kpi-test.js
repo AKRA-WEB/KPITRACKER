@@ -28,13 +28,30 @@ async function runTests() {
   );
   console.log('  -> fetchBranchData correctly deactivated with fallback notice');
 
-  // 4. Employee Roster and Config Query should resolve with SORN
-  console.log('\n[4/5] Testing getConfig returns array including SORN...');
-  const result = await kpiClient.getConfig();
-  assert(Array.isArray(result), 'Result should be an array');
-  assert(result.length > 0, 'Result should have at least one employee');
-  assert(result.some(e => e.name === 'SORN'), 'SORN should be in the returned array');
-  console.log(`  -> getConfig returned ${result.length} employees including SORN`);
+  // 4. Employee roster/config must use the authenticated Edge boundary.
+  console.log('\n[4/5] Testing authenticated getConfig Edge request...');
+  const originalFetch = global.fetch;
+  let capturedRequest;
+  global.fetch = async (url, init) => {
+    capturedRequest = { url, init };
+    return {
+      ok: true,
+      json: async () => ({
+        status: 'success',
+        employees: [{ uid: 'TRAINEE_SORN', name: 'SORN', roles: ['WAREHOUSE'], branches: 'AKRA', status: 'Active' }],
+        workload: { date: '2026-08-23', hour: 18, recordedEmployees: [] }
+      })
+    };
+  };
+  const result = await kpiClient.getConfig('signed-main-token');
+  assert.strictEqual(result.employees[0].name, 'SORN');
+  assert.ok(capturedRequest.url.endsWith('/functions/v1/kpi-api'));
+  assert.deepStrictEqual(JSON.parse(capturedRequest.init.body), { action: 'getConfig', token: 'signed-main-token' });
+  await kpiClient.getAdminStatus('signed-main-token');
+  assert.deepStrictEqual(JSON.parse(capturedRequest.init.body), { action: 'getAdminStatus', token: 'signed-main-token' });
+  global.fetch = originalFetch;
+  await assert.rejects(() => kpiClient.getConfig(''), /authenticated Main session/);
+  console.log('  -> getConfig used the signed Main token and returned the Edge response');
 
   // 5. Executive Action Center should throw containment error
   console.log('\n[5/5] Testing saveAction throws containment error...');
