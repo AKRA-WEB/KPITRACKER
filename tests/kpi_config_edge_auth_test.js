@@ -14,7 +14,7 @@ function loadHandler(fixtures) {
     .replace(': Record<string, string> = {}', ' = {}')
     .replace(/Deno\.serve\(/, 'capture(');
   const context = {
-    console,
+    console: fixtures.console || console,
     Request,
     Response,
     Headers,
@@ -110,6 +110,28 @@ async function call(handler, token = 'token', action = 'getConfig', origin = 'ht
     const result = await call(runtime.handler, 'inactive-token', 'getAdminStatus');
     assert.strictEqual(result.status, 403);
     assert.strictEqual(runtime.dbCalls.length, 1, 'inactive caller must be denied before roster/workload reads');
+  }
+
+  {
+    const warnings = [];
+    const fixtures = {
+      dbCalls: [],
+      console: { ...console, warn: (...args) => warnings.push(args) },
+      verifyMainJwt: async () => ({ id: 'not-migrated', roles: ['WAREHOUSE'], exp: 9999999999 }),
+      dbRows: async (table, query) => {
+        fixtures.dbCalls.push({ table, query });
+        return [];
+      }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await call(runtime.handler, 'valid-main-token');
+    assert.strictEqual(result.status, 403);
+    assert.strictEqual(result.body.reason, 'permission_denied', 'client contract must remain unchanged');
+    assert.deepStrictEqual(
+      JSON.parse(JSON.stringify(warnings)),
+      [['kpi-api request rejected', { action: 'getConfig', status: 403, stage: 'current_user_missing' }]],
+      'safe diagnostics must identify the rejection stage without logging token or identity data'
+    );
   }
 
   {
