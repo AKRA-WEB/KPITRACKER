@@ -385,7 +385,7 @@
                 
                 <!-- Col 1: Error Entry Form -->
                 <div class="space-y-3.5">
-                    <button type="button" onclick="confirmZeroErrors()" class="w-full py-2.5 px-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center justify-between transition-all active:scale-98 shadow-sm">
+                    <button type="button" id="btn-confirm-zero-errors" onclick="confirmZeroErrors()" class="w-full py-2.5 px-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center justify-between transition-all active:scale-98 shadow-sm">
                         <div class="flex items-center gap-2">
                             <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-check"></i></div>
                             <span>วันนี้ตรวจแล้ว ไม่พบข้อผิดพลาด</span>
@@ -428,7 +428,7 @@
                     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                         <label class="text-xs font-bold text-slate-800 block">3. รายละเอียดสินค้า / เลขที่บิล (สั้นๆ):</label>
                         <input type="text" id="pc-err-note-input" placeholder="เช่น 'ตกเบิกนมสด 5 ลัง หน้าร้านของหมด'" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-red-500">
-                        <button type="button" onclick="saveErrorCaseFromPreview()" class="w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 mt-2 transition-all active:scale-95">
+                        <button type="button" id="btn-save-error-preview" onclick="saveErrorCaseFromPreview()" class="w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 mt-2 transition-all active:scale-95">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
                             <span>บันทึกเคสความผิดพลาดทันที</span>
                         </button>
@@ -1586,7 +1586,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260824.02</span>
+                <span id="drawer-version-text">KPI Suite v20260824.03</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1598,12 +1598,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260823.08"></script>
+    <script src="js/supabase-kpi-client.js?v=20260824.03"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260824.02";
+        const CURRENT_VERSION = "20260824.03";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -4067,6 +4067,9 @@
         let errCategory = 'outbound';
         let selectedErrWorker = 'ทุกคนในกะ';
         let recordedErrorCases = [];
+        let incidentZeroConfirmed = false;
+        let incidentSaveInFlight = false;
+        let pendingIncidentCaseId = '';
 
         const ERROR_CATALOG = {
             outbound: [
@@ -4458,7 +4461,7 @@
             if (recordedErrorCases.length === 0) {
                 container.innerHTML = `
                     <div class="p-3 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center text-xs text-slate-400">
-                        ยังไม่มีการบันทึกข้อผิดพลาดสำหรับวันนี้ (Team HP 100%)
+                        ${incidentZeroConfirmed ? 'ยืนยันแล้วว่าไม่พบข้อผิดพลาดสำหรับวันนี้ (Team HP 100%)' : 'ยังไม่มีการบันทึกข้อผิดพลาดสำหรับวันนี้ (Team HP 100%)'}
                     </div>
                 `;
                 return;
@@ -4507,41 +4510,100 @@
         }
 
         async function saveErrorCaseFromPreview() {
+            if (incidentSaveInFlight) return;
             const activeSev = document.querySelector('#pc-err-severity-list .severity-chip-active');
             const noteInput = document.getElementById('pc-err-note-input');
+            const date = document.getElementById('record-date-error')?.value || '';
             const note = noteInput ? noteInput.value.trim() : '';
             const sevName = activeSev ? activeSev.dataset.name : 'หยิบผิด แก้ทันก่อนจัดส่ง';
             const penalty = activeSev ? (parseInt(activeSev.dataset.penalty, 10) || 5) : 5;
+
+            if (!date) return showToast('กรุณาเลือกวันที่บันทึก', true);
+            if (!sessionToken || !window.AkraSupabaseKPI?.saveIncident) {
+                return showModal('บันทึกไม่สำเร็จ', 'ระบบบันทึก Incident ยังไม่พร้อม กรุณาโหลดหน้าใหม่', 'error');
+            }
 
             const now = new Date();
             const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
 
             const newCase = {
-                id: Date.now(),
+                kind: 'case',
+                caseId: pendingIncidentCaseId || `ERR-${date}-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
                 worker: selectedErrWorker || 'ทุกคนในกะ',
+                participants: selectedErrWorker === 'ทุกคนในกะ'
+                    ? getBranchActiveRoster(currentBranch)
+                    : [selectedErrWorker],
+                roster: getBranchActiveRoster(currentBranch),
+                category: errCategory,
                 type: sevName,
                 penalty: penalty,
                 note: note,
                 time: timeStr
             };
-
-            recordedErrorCases.unshift(newCase);
-            if (noteInput) noteInput.value = '';
-
-            renderErrTimeline();
-            renderErrTeamHp();
-            showToast("บันทึกเคสความผิดพลาดสำเร็จ!", false);
-            saveRecordDraftDebounced();
-            updateDailyDashboard();
+            pendingIncidentCaseId = newCase.caseId;
+            const button = document.getElementById('btn-save-error-preview');
+            incidentSaveInFlight = true;
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>กำลังบันทึก...</span>';
+            }
+            try {
+                const result = await AkraSupabaseKPI.saveIncident(sessionToken, currentBranch, date, newCase);
+                recordedErrorCases = result.incidents;
+                incidentZeroConfirmed = result.zeroConfirmed;
+                pendingIncidentCaseId = '';
+                if (noteInput) noteInput.value = '';
+                applyIncidentSaveResultToCache(date, currentBranch, result);
+                renderErrTimeline();
+                renderErrTeamHp();
+                showToast('บันทึกเคสความผิดพลาดสำเร็จ!', false);
+                loadDashboardData();
+                updateDailyDashboard();
+            } catch (error) {
+                console.error('Incident save failed:', error);
+                showModal('บันทึกไม่สำเร็จ', error?.message || 'เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้', 'error');
+            } finally {
+                incidentSaveInFlight = false;
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i><span>บันทึกเคสความผิดพลาดทันที</span>';
+                }
+            }
         }
 
-        function confirmZeroErrors() {
-            recordedErrorCases = [];
-            renderErrTimeline();
-            renderErrTeamHp();
-            showToast("ยืนยัน 0 ข้อผิดพลาดเรียบร้อย! Team HP 100%");
-            saveRecordDraftDebounced();
-            updateDailyDashboard();
+        async function confirmZeroErrors() {
+            if (incidentSaveInFlight) return;
+            const date = document.getElementById('record-date-error')?.value || '';
+            if (!date) return showToast('กรุณาเลือกวันที่บันทึก', true);
+            if (recordedErrorCases.length > 0) {
+                return showModal('ยืนยัน Zero Error ไม่ได้', 'วันนี้มีเคสความผิดพลาดที่บันทึกแล้ว', 'error');
+            }
+            if (!sessionToken || !window.AkraSupabaseKPI?.saveIncident) {
+                return showModal('บันทึกไม่สำเร็จ', 'ระบบบันทึก Incident ยังไม่พร้อม กรุณาโหลดหน้าใหม่', 'error');
+            }
+            const button = document.getElementById('btn-confirm-zero-errors');
+            incidentSaveInFlight = true;
+            if (button) button.disabled = true;
+            try {
+                const result = await AkraSupabaseKPI.saveIncident(sessionToken, currentBranch, date, {
+                    kind: 'zero', caseId: 'NO_ERRORS', worker: 'SYSTEM', participants: ['SYSTEM'],
+                    category: 'none', type: 'ไม่มีความผิดพลาด', penalty: 0, note: '', time: ''
+                });
+                recordedErrorCases = result.incidents;
+                incidentZeroConfirmed = result.zeroConfirmed;
+                applyIncidentSaveResultToCache(date, currentBranch, result);
+                renderErrTimeline();
+                renderErrTeamHp();
+                showToast('ยืนยัน 0 ข้อผิดพลาดเรียบร้อย! Team HP 100%');
+                loadDashboardData();
+                updateDailyDashboard();
+            } catch (error) {
+                console.error('Zero Error save failed:', error);
+                showModal('บันทึกไม่สำเร็จ', error?.message || 'เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้', 'error');
+            } finally {
+                incidentSaveInFlight = false;
+                if (button) button.disabled = false;
+            }
         }
 
         // ================= VIEW 3: LIVE REQUISITIONS CONTROLLERS =================
@@ -5054,7 +5116,10 @@
             });
             const mainDate = document.getElementById('record-date');
             if (mainDate && mainDate.value !== val) mainDate.value = val;
-            handleDateChange();
+            loadTasksForSelectedDate();
+            hydrateSelectedDayRecord(val);
+            hydrateIncidentPreview(val);
+            updateDailyDashboard();
         }
 
         function applyRolePermissions() {
@@ -5209,6 +5274,7 @@
             loadTasksForSelectedDate();
             applyEndOfShiftPermissionsUI();
             restoreRecordDraft();
+            hydrateIncidentPreview(document.getElementById('record-date-error')?.value || _lastRecordDate);
             updateDailyDashboard();
             // Cached-first: แสดงข้อมูลจาก cache ทันที แล้วค่อย sync เบื้องหลังเมื่อ cache เก่า
             if (isKpiCacheStale(currentBranch)) syncDataFromSheet();
@@ -5246,6 +5312,50 @@
             return merged;
         }
 
+        function mergeAuthoritativeIncidentData(dailyData, incidentRecords, branch) {
+            const normalizedBranch = String(branch || '').toUpperCase();
+            const merged = (Array.isArray(dailyData) ? dailyData : []).map(day => ({ ...day }));
+            const byDate = new Map(merged.map(day => [String(day.date || '').slice(0, 10), day]));
+            (Array.isArray(incidentRecords) ? incidentRecords : []).forEach(record => {
+                const date = String(record?.date || '').slice(0, 10);
+                if (!date) return;
+                let day = byDate.get(date);
+                if (!day) {
+                    day = { date, branch: normalizedBranch };
+                    merged.push(day);
+                    byDate.set(date, day);
+                }
+                day.errors = Array.isArray(record.errors) ? record.errors.map(item => ({ ...item })) : [];
+                day.incidentCases = Array.isArray(record.incidents) ? record.incidents.map(item => ({ ...item })) : [];
+                day.zeroErrorsConfirmed = record.zeroConfirmed === true;
+            });
+            return merged;
+        }
+
+        function applyIncidentSaveResultToCache(date, branch, result) {
+            const key = `kpiData_${branch}`;
+            const current = JSON.parse(safeStorage.getItem(key) || '[]');
+            const merged = mergeAuthoritativeIncidentData(current, [{
+                date,
+                errors: Array.isArray(result.errors) ? result.errors : (getSelectedServerDay(date)?.errors || []),
+                incidents: result.incidents,
+                zeroConfirmed: result.zeroConfirmed
+            }], branch);
+            safeStorage.setItem(key, JSON.stringify(merged));
+            safeStorage.setItem(`${key}_ts`, String(Date.now()));
+        }
+
+        function hydrateIncidentPreview(date) {
+            const selectedDay = getSelectedServerDay(date);
+            recordedErrorCases = Array.isArray(selectedDay?.incidentCases)
+                ? selectedDay.incidentCases.map(item => ({ ...item }))
+                : [];
+            incidentZeroConfirmed = selectedDay?.zeroErrorsConfirmed === true;
+            pendingIncidentCaseId = '';
+            renderErrTimeline();
+            renderErrTeamHp();
+        }
+
         async function mergeLatestWorkloadData(dailyData, branch, months = 3) {
             if (String(branch || '').toUpperCase() !== 'AKRA') return mergeAuthoritativeWorkloadData(dailyData, [], branch);
             if (!sessionToken || !window.AkraSupabaseKPI?.getWorkloadData) {
@@ -5253,6 +5363,14 @@
             }
             const result = await AkraSupabaseKPI.getWorkloadData(sessionToken, 'AKRA', months);
             return mergeAuthoritativeWorkloadData(dailyData, result.records, 'AKRA');
+        }
+
+        async function mergeLatestIncidentData(dailyData, branch, months = 3) {
+            if (!sessionToken || !window.AkraSupabaseKPI?.getIncidentData) {
+                throw new Error('ระบบอ่าน Incident ยังไม่พร้อม กรุณาโหลดหน้าใหม่');
+            }
+            const result = await AkraSupabaseKPI.getIncidentData(sessionToken, branch, months);
+            return mergeAuthoritativeIncidentData(dailyData, result.records, branch);
         }
 
         function sendAppLog(action, details) {
@@ -5295,6 +5413,7 @@
 
                 if (Array.isArray(data)) {
                     data = await mergeLatestWorkloadData(data, currentBranch, 3);
+                    data = await mergeLatestIncidentData(data, currentBranch, 3);
                 }
 
                 if (Array.isArray(data)) {
@@ -5302,6 +5421,7 @@
                     safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
                     safeStorage.setItem('kpiData_' + currentBranch + '_ts', String(Date.now()));
                     if (currentBranch === 'AKRA') renderTeamWorkloadPreview();
+                    hydrateIncidentPreview(document.getElementById('record-date-error')?.value || _lastRecordDate);
                     _adminFullLoaded = false;
                     if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
                         loadDashboardData();

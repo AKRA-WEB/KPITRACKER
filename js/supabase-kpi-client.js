@@ -1,8 +1,8 @@
 /**
  * ============================================================================
  * AKRA KPITRACKER SUPABASE API CLIENT
- * Status: CONTAINED for writes; authenticated KPI roster/config reads use kpi-api.
- * KPI daily records and actions remain on their existing contained paths.
+ * Status: authenticated KPI roster, Workload, and Incident paths use kpi-api.
+ * Remaining daily-record sections and actions stay on their contained paths.
  * ============================================================================
  */
 
@@ -58,6 +58,18 @@
         getWorkloadData: async (token, branch, months) => {
             const data = await fetchKpiAction('getWorkloadData', token, { branch, months });
             if (!Array.isArray(data.records)) throw new Error('invalid_kpi_workload_response');
+            return data;
+        },
+        saveIncident: async (token, branch, date, incident) => {
+            const data = await fetchKpiAction('saveIncident', token, { branch, date, incident });
+            if (!Array.isArray(data.incidents) || typeof data.zeroConfirmed !== 'boolean') {
+                throw new Error('invalid_kpi_incident_response');
+            }
+            return data;
+        },
+        getIncidentData: async (token, branch, months) => {
+            const data = await fetchKpiAction('getIncidentData', token, { branch, months });
+            if (!Array.isArray(data.records)) throw new Error('invalid_kpi_incident_response');
             return data;
         },
         getActions: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },

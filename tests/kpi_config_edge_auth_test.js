@@ -614,6 +614,270 @@ async function callPayload(handler, body, origin = 'https://akra-web.github.io')
     assert.strictEqual(fixtures.dbCalls.length, 0, 'invalid Workload read scope must make zero database queries');
   }
 
+  {
+    const fixtures = {
+      dbCalls: [], rpcCalls: [],
+      now: new Date('2026-08-24T03:00:00.000Z'),
+      verifyMainJwt: async () => ({ id: '250002', roles: ['TRD'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async (table, query) => {
+        fixtures.dbCalls.push({ table, query });
+        if (table === 'users' && query.includes('username=eq.250002')) {
+          return [{ username: '250002', name: 'ท็อป', roles: ['TRD'], status: 'Active' }];
+        }
+        if (table === 'users' && query.includes('status=eq.Active')) {
+          return [
+            { name: 'ท็อป', roles: ['TRD'], status: 'Active' },
+            { name: 'น้องใหม่', roles: ['TRD'], status: 'Active' }
+          ];
+        }
+        throw new Error(`unexpected table ${table}`);
+      },
+      dbRpc: async (name, body) => {
+        fixtures.rpcCalls.push({ name, body });
+        return { status: 'success', errors: body.p_entries };
+      }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await callPayload(runtime.handler, {
+      action: 'saveIncident', token: 'valid-trd-token', branch: 'TRD', date: '2026-08-24',
+      incident: {
+        kind: 'case', caseId: 'ERR-2026-08-24-100-1', worker: 'น้องใหม่', participants: ['น้องใหม่'],
+        roster: ['ท็อป', 'น้องใหม่'], category: 'trd_store', type: 'จัดบิลผิด', penalty: 5,
+        note: 'บิล TRD-100', time: '10:00 น.'
+      }
+    });
+    assert.strictEqual(result.status, 200);
+    assert.strictEqual(fixtures.rpcCalls.length, 1);
+    assert.strictEqual(fixtures.rpcCalls[0].name, 'kpi_save_incident_v1');
+    const rpcBody = JSON.parse(JSON.stringify(fixtures.rpcCalls[0].body));
+    assert.strictEqual(rpcBody.p_record_date, '2026-08-24');
+    assert.strictEqual(rpcBody.p_branch, 'TRD');
+    assert.strictEqual(rpcBody.p_username, '250002');
+    assert.strictEqual(rpcBody.p_entries.length, 1);
+    assert.deepStrictEqual(rpcBody.p_entries[0].participants, ['น้องใหม่']);
+    assert.strictEqual(rpcBody.p_entries[0].emp, 'น้องใหม่');
+    assert.strictEqual(rpcBody.p_entries[0].caseId, 'ERR-2026-08-24-100-1');
+    assert.match(rpcBody.p_entries[0].note, /\[TRD_CASE:/);
+    assert.strictEqual(result.body.incidents.length, 1);
+    assert.strictEqual(result.body.zeroConfirmed, false);
+    assert.strictEqual(result.body.incidents[0].note, 'บิล TRD-100');
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [], rpcCalls: [],
+      now: new Date('2026-08-24T03:00:00.000Z'),
+      verifyMainJwt: async () => ({ id: '250007', roles: ['AKRA'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async (table, query) => {
+        fixtures.dbCalls.push({ table, query });
+        if (query.includes('username=eq.250007')) {
+          return [{ username: '250007', name: 'หมูหยอง', roles: ['AKRA'], status: 'Active' }];
+        }
+        if (query.includes('status=eq.Active')) {
+          return [
+            { name: 'หมูหยอง', roles: ['AKRA'], status: 'Active' },
+            { name: 'เอี้ยง', roles: ['AKRA'], status: 'Active' }
+          ];
+        }
+        throw new Error(`unexpected table ${table} ${query}`);
+      },
+      dbRpc: async (name, body) => {
+        fixtures.rpcCalls.push({ name, body });
+        return { status: 'success', errors: body.p_entries };
+      }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await callPayload(runtime.handler, {
+      action: 'saveIncident', token: 'valid-akra-token', branch: 'AKRA', date: '2026-08-24',
+      incident: {
+        kind: 'case', caseId: 'ERR-2026-08-24-200-1', worker: 'ทุกคนในกะ',
+        participants: ['หมูหยอง', 'เอี้ยง'], roster: ['หมูหยอง', 'เอี้ยง'],
+        category: 'outbound', type: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5,
+        note: 'AKRA shared case', time: '10:05 น.'
+      }
+    });
+    assert.strictEqual(result.status, 200);
+    const entries = JSON.parse(JSON.stringify(fixtures.rpcCalls[0].body.p_entries));
+    assert.deepStrictEqual(entries.map(entry => entry.emp), ['หมูหยอง', 'เอี้ยง']);
+    assert.ok(entries.every(entry => entry.worker === 'ทุกคนในกะ'));
+    assert.ok(entries.every(entry => entry.note.startsWith('[AKRA_CASE:')));
+    assert.strictEqual(result.body.incidents.length, 1, 'expanded participant rows must project as one visible case');
+
+    const zeroResult = await callPayload(runtime.handler, {
+      action: 'saveIncident', token: 'valid-akra-token', branch: 'AKRA', date: '2026-08-23',
+      incident: {
+        kind: 'zero', caseId: 'NO_ERRORS', worker: 'SYSTEM', participants: ['SYSTEM'],
+        category: 'none', type: 'ไม่มีความผิดพลาด', penalty: 0, note: '', time: ''
+      }
+    });
+    assert.strictEqual(zeroResult.status, 200);
+    assert.strictEqual(zeroResult.body.zeroConfirmed, true);
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(zeroResult.body.incidents)), []);
+    assert.strictEqual(fixtures.rpcCalls[1].body.p_entries[0].caseId, 'NO_ERRORS');
+    assert.match(fixtures.rpcCalls[1].body.p_entries[0].note, /^\[AKRA_CASE:/);
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [], rpcCalls: [],
+      now: new Date('2026-08-24T03:00:00.000Z'),
+      verifyMainJwt: async () => ({ id: '250007', roles: ['AKRA'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async () => { fixtures.dbCalls.push('unexpected'); return []; },
+      dbRpc: async () => { fixtures.rpcCalls.push('unexpected'); return {}; }
+    };
+    const runtime = loadHandler(fixtures);
+    for (const incident of [
+      { kind: 'case', caseId: 'bad', worker: 'หมูหยอง', participants: ['หมูหยอง'], roster: ['หมูหยอง'], category: 'outbound', type: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5, note: '', time: '10:00 น.' },
+      { kind: 'case', caseId: 'ERR-2026-08-24-1', worker: 'หมูหยอง', participants: ['หมูหยอง'], roster: ['หมูหยอง'], category: 'outbound', type: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 99, note: '', time: '10:00 น.' },
+      { kind: 'case', caseId: 'ERR-2026-08-24-2', worker: 'หมูหยอง', participants: ['หมูหยอง'], roster: ['หมูหยอง'], category: 'outbound', type: 'UNKNOWN', penalty: 5, note: '', time: '10:00 น.' }
+    ]) {
+      const invalid = await callPayload(runtime.handler, {
+        action: 'saveIncident', token: 'valid-akra-token', branch: 'AKRA', date: '2026-08-24', incident
+      });
+      assert.strictEqual(invalid.status, 400);
+      assert.strictEqual(invalid.body.reason, 'invalid_incident');
+    }
+    const futureDate = await callPayload(runtime.handler, {
+      action: 'saveIncident', token: 'valid-akra-token', branch: 'AKRA', date: '2026-08-25',
+      incident: {
+        kind: 'case', caseId: 'ERR-2026-08-25-1', worker: 'หมูหยอง', participants: ['หมูหยอง'],
+        roster: ['หมูหยอง'], category: 'outbound', type: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5,
+        note: '', time: '10:00 น.'
+      }
+    });
+    assert.strictEqual(futureDate.status, 400);
+    assert.strictEqual(futureDate.body.reason, 'invalid_incident');
+    assert.strictEqual(fixtures.dbCalls.length, 0, 'invalid Incident payloads must make zero database queries');
+    assert.strictEqual(fixtures.rpcCalls.length, 0, 'invalid Incident payloads must make zero mutation calls');
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [], rpcCalls: [],
+      now: new Date('2026-08-24T03:00:00.000Z'),
+      verifyMainJwt: async () => ({ id: '250007', roles: ['AKRA'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async (table, query) => {
+        fixtures.dbCalls.push({ table, query });
+        return [{ username: '250007', name: 'หมูหยอง', roles: ['AKRA'], status: 'Active' }];
+      },
+      dbRpc: async () => { fixtures.rpcCalls.push('unexpected'); return {}; }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await callPayload(runtime.handler, {
+      action: 'saveIncident', token: 'valid-akra-token', branch: 'TRD', date: '2026-08-24',
+      incident: {
+        kind: 'case', caseId: 'ERR-2026-08-24-300-1', worker: 'ท็อป', participants: ['ท็อป'],
+        roster: ['ท็อป'], category: 'trd_store', type: 'จัดบิลผิด', penalty: 5, note: '', time: '10:00 น.'
+      }
+    });
+    assert.strictEqual(result.status, 403);
+    assert.strictEqual(result.body.reason, 'permission_denied');
+    assert.strictEqual(fixtures.dbCalls.length, 0, 'cross-branch claim denial must make zero database queries');
+    assert.strictEqual(fixtures.rpcCalls.length, 0, 'cross-branch Incident must not mutate data');
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [], rpcCalls: [],
+      now: new Date('2026-08-24T03:00:00.000Z'),
+      verifyMainJwt: async () => ({ id: '250007', roles: ['AKRA'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async (table, query) => {
+        fixtures.dbCalls.push({ table, query });
+        if (query.includes('username=eq.250007')) {
+          return [{ username: '250007', name: 'หมูหยอง', roles: ['AKRA'], status: 'Active' }];
+        }
+        if (query.includes('status=eq.Active')) {
+          return [{ name: 'หมูหยอง', roles: ['AKRA'], status: 'Active' }];
+        }
+        throw new Error(`unexpected table ${table} ${query}`);
+      },
+      dbRpc: async () => { fixtures.rpcCalls.push('unexpected'); return {}; }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await callPayload(runtime.handler, {
+      action: 'saveIncident', token: 'valid-akra-token', branch: 'AKRA', date: '2026-08-24',
+      incident: {
+        kind: 'case', caseId: 'ERR-2026-08-24-unknown-1', worker: 'บุคคลนอกสาขา',
+        participants: ['บุคคลนอกสาขา'], roster: ['บุคคลนอกสาขา'],
+        category: 'outbound', type: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5, note: '', time: '10:00 น.'
+      }
+    });
+    assert.strictEqual(result.status, 400);
+    assert.strictEqual(result.body.reason, 'invalid_incident');
+    assert.strictEqual(fixtures.dbCalls.length, 2, 'personnel validation may read only current user and Active Main roster');
+    assert.strictEqual(fixtures.rpcCalls.length, 0, 'unknown or cross-branch personnel must not mutate data');
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [], rpcCalls: [],
+      verifyMainJwt: async () => null,
+      dbRows: async () => { fixtures.dbCalls.push('unexpected'); return []; },
+      dbRpc: async () => { fixtures.rpcCalls.push('unexpected'); return {}; }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await callPayload(runtime.handler, {
+      action: 'saveIncident', token: 'forged', branch: 'TRD', date: '2026-08-24',
+      incident: {
+        kind: 'case', caseId: 'ERR-2026-08-24-400-1', worker: 'ท็อป', participants: ['ท็อป'],
+        roster: ['ท็อป'], category: 'trd_store', type: 'จัดบิลผิด', penalty: 5, note: '', time: '10:00 น.'
+      }
+    });
+    assert.strictEqual(result.status, 401);
+    assert.strictEqual(fixtures.dbCalls.length, 0, 'unauthorized Incident save must make zero database queries');
+    assert.strictEqual(fixtures.rpcCalls.length, 0, 'unauthorized Incident save must make zero mutation calls');
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [],
+      now: new Date('2026-08-24T03:00:00.000Z'),
+      verifyMainJwt: async () => ({ id: '250002', roles: ['TRD'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async (table, query) => {
+        fixtures.dbCalls.push({ table, query });
+        if (table === 'users') return [{ username: '250002', name: 'ท็อป', roles: ['TRD'], status: 'Active' }];
+        if (table === 'kpi_daily_records') return [{
+          record_date: '2026-08-24', errors_data: [{
+            caseId: 'ERR-2026-08-24-100-1', kind: 'case', worker: 'น้องใหม่', participants: ['น้องใหม่'],
+            category: 'trd_store', type: 'จัดบิลผิด', penalty: 5, displayNote: 'บิล TRD-100', time: '10:00 น.', emp: 'น้องใหม่'
+          }]
+        }];
+        throw new Error(`unexpected table ${table}`);
+      }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await callPayload(runtime.handler, {
+      action: 'getIncidentData', token: 'valid-trd-token', branch: 'TRD', months: 3
+    });
+    assert.strictEqual(result.status, 200);
+    assert.strictEqual(result.body.records[0].incidents.length, 1);
+    assert.strictEqual(result.body.records[0].incidents[0].note, 'บิล TRD-100');
+    assert.strictEqual(result.body.records[0].zeroConfirmed, false);
+    const read = fixtures.dbCalls.find(call => call.table === 'kpi_daily_records');
+    assert.match(read.query, /branch=eq\.TRD/);
+    assert.match(read.query, /select=record_date,errors_data/);
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [], rpcCalls: [],
+      verifyMainJwt: async () => ({
+        id: '250007', roles: ['AKRA'], apps: ['app-kpi'], tokenVersion: 2,
+        sessionVersion: 1, authorizationRevision: 'current', exp: 9999999999
+      }),
+      dbRows: async () => { fixtures.dbCalls.push('unexpected'); return []; },
+      dbRpc: async () => { fixtures.rpcCalls.push('unexpected'); return { valid: true }; }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await callPayload(runtime.handler, {
+      action: 'getIncidentData', token: 'valid-akra-token', branch: 'TRD', months: 3
+    });
+    assert.strictEqual(result.status, 403);
+    assert.strictEqual(result.body.reason, 'permission_denied');
+    assert.strictEqual(fixtures.dbCalls.length, 0, 'cross-branch Incident read must make zero row queries');
+    assert.strictEqual(fixtures.rpcCalls.length, 0, 'cross-branch Incident read must stop before v2 session RPC');
+  }
+
   console.log('KPI config Edge auth and Main-roster projection passed.');
 })().catch(error => {
   console.error(error);

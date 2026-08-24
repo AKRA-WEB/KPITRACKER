@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-console.log('=== RUNNING KPITRACKER NEGATIVE AUTH & RUNTIME REMEDIATION TESTS (v20260824.02) ===\n');
+console.log('=== RUNNING KPITRACKER NEGATIVE AUTH & RUNTIME REMEDIATION TESTS (v20260824.03) ===\n');
 
 const htmlPath = path.join(__dirname, '../index.html');
 const gasPath = path.join(__dirname, '../Code.gs.txt');
@@ -578,9 +578,10 @@ console.log('\n[8/8] Testing Drawer Runtime, Accessibility State & Version Parit
 
     // Metadata and content lint checks
     const versionJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../version.json'), 'utf8'));
-    assert.strictEqual(versionJson.version, '20260824.02', 'version.json must be 20260824.02');
-    assert.match(htmlContent, /const CURRENT_VERSION = "20260824\.02";/, 'CURRENT_VERSION in index.html must be 20260824.02');
-    assert.match(htmlContent, /id="drawer-version-text">KPI Suite v20260824\.02<\/span>/, 'Drawer footer must display 20260824.02');
+    assert.strictEqual(versionJson.version, '20260824.03', 'version.json must be 20260824.03');
+    assert.match(htmlContent, /const CURRENT_VERSION = "20260824\.03";/, 'CURRENT_VERSION in index.html must be 20260824.03');
+    assert.match(htmlContent, /id="drawer-version-text">KPI Suite v20260824\.03<\/span>/, 'Drawer footer must display 20260824.03');
+    assert.match(htmlContent, /supabase-kpi-client\.js\?v=20260824\.03/, 'Incident client asset cache key must match 20260824.03');
 
     // Check Zero emojis in key areas
     assert.doesNotMatch(htmlContent, /⚡ บิลด่วน \(แป้ง/, 'No raw lightning emoji in live bill title');

@@ -84,6 +84,36 @@ async function runTests() {
   assert.deepStrictEqual(JSON.parse(capturedRequest.init.body), {
     action: 'getWorkloadData', token: 'signed-main-token', branch: 'AKRA', months: 3
   });
+
+  console.log('\n[6b/7] Testing authenticated Incident write/read Edge requests...');
+  global.fetch = async (url, init) => {
+    capturedRequest = { url, init };
+    return {
+      ok: true,
+      json: async () => ({ status: 'success', incidents: [{ caseId: 'ERR-1' }], zeroConfirmed: false, errors: [] })
+    };
+  };
+  await kpiClient.saveIncident('signed-main-token', 'TRD', '2026-08-24', {
+    kind: 'case', caseId: 'ERR-1', worker: 'ท็อป'
+  });
+  assert.deepStrictEqual(JSON.parse(capturedRequest.init.body), {
+    action: 'saveIncident', token: 'signed-main-token', branch: 'TRD', date: '2026-08-24',
+    incident: { kind: 'case', caseId: 'ERR-1', worker: 'ท็อป' }
+  });
+  global.fetch = async (url, init) => {
+    capturedRequest = { url, init };
+    return { ok: true, json: async () => ({ status: 'success', records: [{ date: '2026-08-24', incidents: [] }] }) };
+  };
+  await kpiClient.getIncidentData('signed-main-token', 'TRD', 3);
+  assert.deepStrictEqual(JSON.parse(capturedRequest.init.body), {
+    action: 'getIncidentData', token: 'signed-main-token', branch: 'TRD', months: 3
+  });
+  global.fetch = async () => ({ ok: true, json: async () => ({ status: 'success', zeroConfirmed: false }) });
+  await assert.rejects(
+    () => kpiClient.saveIncident('signed-main-token', 'TRD', '2026-08-24', {}),
+    /invalid_kpi_incident_response/,
+    'malformed Incident save response must fail closed'
+  );
   global.fetch = originalFetch;
   await assert.rejects(() => kpiClient.getConfig(''), /authenticated Main session/);
   console.log('  -> getConfig used the signed Main token and returned the Edge response');
