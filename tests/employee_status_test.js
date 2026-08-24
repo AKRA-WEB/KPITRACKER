@@ -117,7 +117,6 @@ function formatDisplayDate(d) { return d; }
 function renderEndOfShiftDashboard() {}
 function renderVendorBillsDashboard() {}
 function renderWorkloadTrend() {}
-function renderTeamScene() { return ''; }
 function renderEmpBreakdown() {}
 function getSmartSuggestion() { return ''; }
 function analyzeKeywordInsights() { return []; }

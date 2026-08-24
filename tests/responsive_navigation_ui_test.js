@@ -320,6 +320,43 @@ async function verifyBranchDashboardIsolation(page) {
     }
 }
 
+async function verifyDashboardTeamHpRemoval(page) {
+    for (const [branch, width] of [['TRD', 1280], ['AKRA', 390]]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.evaluate(selectedBranch => {
+            currentBranch = selectedBranch;
+            initApp(selectedBranch, ['AKRA', 'TRD']);
+            switchTab('dashboard');
+        }, branch);
+
+        const dashboard = page.locator('#view-dashboard');
+        assert.equal(await dashboard.locator('#dash-gamification').count(), 0, `${branch} Dashboard must remove the Team HP mount point`);
+        assert.doesNotMatch(
+            await dashboard.innerText(),
+            /สถานะทีม \(HP\)|เริ่ม 100 HP|Live Team HP|BAKERY SUPPLY · TRD/,
+            `${branch} Dashboard must not expose Team HP scene copy`
+        );
+    }
+
+    await page.evaluate(() => switchTab('error'));
+    assert.equal(await page.locator('#err-team-hp-grid').count(), 1, 'Incident QC Team HP must remain available');
+    const incidentEmployee = await page.evaluate(() => {
+        currentBranch = 'TRD';
+        const employee = getBranchActiveRoster(currentBranch)[0];
+        recordedErrorCases = [{ worker: employee, penalty: 5 }];
+        renderErrTeamHp();
+        return employee;
+    });
+    const incidentHpText = await page.locator('#err-team-hp-grid').innerText();
+    assert.match(incidentHpText, new RegExp(incidentEmployee), 'Incident QC Team HP must render an employee row');
+    assert.match(incidentHpText, /95 HP/, 'Incident QC Team HP must apply the seeded five-point penalty');
+    await page.evaluate(() => {
+        currentBranch = 'AKRA';
+        initApp('AKRA', ['AKRA', 'TRD']);
+        switchTab('error');
+    });
+}
+
 async function verifyFocusedUiDefects(page) {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.evaluate(() => switchTab('error'));
@@ -446,6 +483,7 @@ async function verifyBoundedLiveBillList(page) {
         await verifyResponsivePrimaryNavigation(page);
         await verifyVisualHierarchy(page);
         await verifyBranchDashboardIsolation(page);
+        await verifyDashboardTeamHpRemoval(page);
         await verifyFocusedUiDefects(page);
         await verifyWorkloadDurationChoices(page);
         await verifyBoundedLiveBillList(page);
@@ -454,6 +492,7 @@ async function verifyBoundedLiveBillList(page) {
         console.log('PASS: responsive primary navigation and non-duplicating utilities');
         console.log('PASS: light application canvas and contained dark surfaces');
         console.log('PASS: active-branch Dashboard isolation without fixed sample metrics');
+        console.log('PASS: Dashboard Team HP scene removed while Incident QC Team HP remains');
         console.log('PASS: visible W2 icon and non-clipped Incident QC categories');
         console.log('PASS: exact Workload duration choices and 3-hour recalculation');
         console.log('PASS: team-shift preview shows zero and explicit missing status for unsubmitted Workload');
