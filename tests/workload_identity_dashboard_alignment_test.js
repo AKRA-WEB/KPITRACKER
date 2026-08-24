@@ -4,6 +4,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const html = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
+const storage = new Map();
 
 function extractFunction(name) {
   const marker = `function ${name}(`;
@@ -29,6 +30,10 @@ const context = vm.createContext({
   currentUser: 'AKRA12123',
   displayUserName: 'TRAINEE (SORN)',
   workloadState: { core: 'คลัง W1', coreLabel: 'คลังหลัก W1', support: [], totalHours: 10 },
+  safeStorage: {
+    getItem: key => storage.has(key) ? storage.get(key) : null,
+    setItem: (key, value) => storage.set(key, String(value))
+  },
   esc: value => String(value),
   updateAkraDutyCount() {},
   syncAkraSharedEntries() {},
@@ -56,6 +61,10 @@ const context = vm.createContext({
   'normalizeWorkloadEntry',
   'getCanonicalWorkloadEntry',
   'getCanonicalWorkloadEntries',
+  'parseDateKeyLocal',
+  'formatDateKeyLocal',
+  'normalizeClientDateKey',
+  'getSelectedServerDay',
   'getStartOfWeek',
   'computeWorkloadTrend',
   'aggregateDescriptivePeriod',
@@ -146,6 +155,7 @@ assert.deepStrictEqual(
 
 const preview = { innerHTML: '' };
 const dutyCount = { textContent: '' };
+const recordDate = { value: '2026-08-24' };
 context.currentUser = 'A';
 context.displayUserName = 'Shared Name';
 context.workloadState = { core: 'รับสินค้าเข้า', support: [{ name: 'ช่วยย้ายของ W2', hours: 3 }] };
@@ -155,13 +165,28 @@ context.getAkraOnDutyRoster = () => [
 ];
 context.document = {
   querySelectorAll: () => [],
-  getElementById: id => id === 'wl-team-preview' ? preview : (id === 'akra-duty-count' ? dutyCount : null)
+  getElementById: id => id === 'wl-team-preview'
+    ? preview
+    : (id === 'akra-duty-count' ? dutyCount : (id === 'record-date' ? recordDate : null))
 };
+storage.set('kpiData_AKRA', JSON.stringify([{
+  date: '2026-08-24',
+  workload: [{
+    employeeUid: 'A', employee: 'Shared Name', capacity: 10,
+    primaryCore: 'คลัง W2', supportDuties: [{ name: 'ช่วยย้ายของ W2', hours: 3 }]
+  }]
+}]));
 context.renderTeamWorkloadPreview();
 assert.strictEqual((preview.innerHTML.match(/คุณ/g) || []).length, 1,
   'team preview must mark exactly the current stable UID as you');
-assert.strictEqual((preview.innerHTML.match(/รับสินค้าเข้า/g) || []).length, 1,
-  'team preview must not copy the current user workload onto a same-name peer');
+assert.strictEqual((preview.innerHTML.match(/คลัง W2/g) || []).length, 1,
+  'team preview must show the current employee persisted Workload instead of unsaved editor defaults');
+assert.strictEqual((preview.innerHTML.match(/>0 ชม\.<\/span>/g) || []).length, 1,
+  'an on-duty employee without persisted Workload must show zero hours');
+assert.strictEqual((preview.innerHTML.match(/ยังไม่ได้กรอกข้อมูล/g) || []).length, 1,
+  'an on-duty employee without persisted Workload must be identified explicitly');
+assert.strictEqual(preview.innerHTML.includes('รับสินค้าเข้า'), false,
+  'an unsaved editor selection must not make the team preview look recorded');
 context.currentUser = 'AKRA12123';
 context.displayUserName = 'TRAINEE (SORN)';
 context.workloadState = { core: 'คลัง W1', coreLabel: 'คลังหลัก W1', support: [], totalHours: 10 };

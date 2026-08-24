@@ -114,6 +114,12 @@ async function verifyAuthenticatedSupabaseInitialization(page, origin) {
         ['Somchai', 'TRAINEE (SORN)'],
         'Authenticated initialization must keep the exact Main name and suppress its verified legacy alias'
     );
+    const teamPreviewRows = page.locator('#wl-team-preview > div');
+    assert.equal(await teamPreviewRows.count(), 2, 'Today team preview must include every Active on-duty Main employee');
+    assert.ok(
+        (await teamPreviewRows.allTextContents()).every(text => text.includes('0 ชม.') && text.includes('ยังไม่ได้กรอกข้อมูล')),
+        'Employees without persisted Workload must remain zero and explicitly unsubmitted even when the editor has defaults'
+    );
     assert.equal(await page.locator('#custom-modal').evaluate(element => element.classList.contains('hidden')), true);
     await page.evaluate(() => localStorage.clear());
 }
@@ -440,6 +446,7 @@ async function verifyBoundedLiveBillList(page) {
         console.log('PASS: active-branch Dashboard isolation without fixed sample metrics');
         console.log('PASS: visible W2 icon and non-clipped Incident QC categories');
         console.log('PASS: exact Workload duration choices and 3-hour recalculation');
+        console.log('PASS: team-shift preview shows zero and explicit missing status for unsubmitted Workload');
         console.log('PASS: bounded, keyboard-scrollable Live Bill list');
     } finally {
         await browser.close();

@@ -1586,7 +1586,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260824.01</span>
+                <span id="drawer-version-text">KPI Suite v20260824.02</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1603,7 +1603,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260824.01";
+        const CURRENT_VERSION = "20260824.02";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -4239,21 +4239,33 @@
                 GLOBAL_CONFIG_LIST
             );
             const currentUid = String(currentIdentity.uid || currentUser || '').trim().toLowerCase();
+            const selectedDate = document.getElementById('record-date')?.value || '';
+            const selectedDay = getSelectedServerDay(selectedDate);
+            const savedByIdentity = new Map(
+                getCanonicalWorkloadEntries(selectedDay?.workload || [], GLOBAL_CONFIG_LIST)
+                    .map(entry => [entry.identityKey, entry])
+            );
             previewContainer.innerHTML = onDuty.map(employee => {
-                const isMe = String(employee.uid || '').trim().toLowerCase() === currentUid;
-                const core = isMe ? (workloadState.core || 'คลัง W1') : 'คลัง W1';
-                const hasSupp = isMe ? ((workloadState.support || []).length > 0) : false;
+                const identity = resolveWorkloadEmployee(
+                    { employeeUid: employee.uid, employee: employee.name },
+                    GLOBAL_CONFIG_LIST
+                );
+                const identityKey = String(identity.uid || `name:${identity.name}`).trim().toLowerCase();
+                const saved = savedByIdentity.get(identityKey);
+                const isMe = String(identity.uid || employee.uid || '').trim().toLowerCase() === currentUid;
+                const totalHours = saved ? saved.primaryHours + saved.secondaryHours : 0;
+                const hasSupp = saved ? saved.secondaryHours > 0 : false;
                 return `
-                    <div class="p-2 rounded-xl border ${isMe ? 'border-blue-300 bg-blue-50/50' : 'border-slate-100 bg-slate-50'} flex items-center justify-between text-xs">
+                    <div class="p-2 rounded-xl border ${isMe ? 'border-blue-300 bg-blue-50/50' : (saved ? 'border-slate-100 bg-slate-50' : 'border-amber-200 bg-amber-50/60')} flex items-center justify-between gap-2 text-xs">
                         <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full ${isMe ? 'bg-blue-600' : 'bg-slate-400'}"></span>
+                            <span class="w-2 h-2 rounded-full ${isMe ? 'bg-blue-600' : (saved ? 'bg-emerald-500' : 'bg-amber-500')}"></span>
                             <span class="font-bold text-slate-800">${esc(employee.name)}</span>
                             ${isMe ? '<span class="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded font-bold">คุณ</span>' : ''}
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-slate-600 font-medium">${esc(core)}</span>
-                            <span class="text-[10px] font-bold ${hasSupp ? 'text-amber-700 bg-amber-100' : 'text-emerald-700 bg-emerald-100'} px-2 py-0.5 rounded-full font-num">
-                                ${hasSupp ? 'มีงานช่วย' : '100% หลัก'}
+                        <div class="flex flex-wrap items-center justify-end gap-2 text-right">
+                            <span class="text-slate-600 font-medium font-num">${saved ? esc(saved.primaryCore) : '0 ชม.'}</span>
+                            <span class="text-[10px] font-bold ${saved ? (hasSupp ? 'text-amber-700 bg-amber-100' : 'text-emerald-700 bg-emerald-100') : 'text-amber-800 bg-amber-100'} px-2 py-0.5 rounded-full font-num">
+                                ${saved ? `${totalHours.toLocaleString('th-TH')} ชม.${hasSupp ? ' · มีงานช่วย' : ' · งานหลัก'}` : 'ยังไม่ได้กรอกข้อมูล'}
                             </span>
                         </div>
                     </div>
@@ -5289,6 +5301,7 @@
                     _dailyDataLoadError = '';
                     safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(data));
                     safeStorage.setItem('kpiData_' + currentBranch + '_ts', String(Date.now()));
+                    if (currentBranch === 'AKRA') renderTeamWorkloadPreview();
                     _adminFullLoaded = false;
                     if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
                         loadDashboardData();
