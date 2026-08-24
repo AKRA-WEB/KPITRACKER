@@ -73,16 +73,28 @@ const document = {
 const isEmployeeActiveCode = extractFunction(htmlContent, 'isEmployeeActive');
 const renderHistoricalEmployeeBadgeCode = extractFunction(htmlContent, 'renderHistoricalEmployeeBadge');
 const normalizeEmpNameCode = extractFunction(htmlContent, 'normalizeEmpName');
+const getBranchesFromMainRolesCode = extractFunction(htmlContent, 'getBranchesFromMainRoles');
 const processConfigListCode = extractFunction(htmlContent, 'processConfigList');
 const dedupeConfigListCode = extractFunction(htmlContent, 'dedupeConfigList');
 const normalizeMainEmployeeStatusCode = extractFunction(htmlContent, 'normalizeMainEmployeeStatus');
+const getBranchRosterEmployeesCode = extractFunction(htmlContent, 'getBranchRosterEmployees');
+const normalizeWorkloadEntryCode = extractFunction(htmlContent, 'normalizeWorkloadEntry');
+const resolveWorkloadEmployeeCode = extractFunction(htmlContent, 'resolveWorkloadEmployee');
+const getCanonicalWorkloadEntryCode = extractFunction(htmlContent, 'getCanonicalWorkloadEntry');
+const getCanonicalWorkloadEntriesCode = extractFunction(htmlContent, 'getCanonicalWorkloadEntries');
 const accumulateDailyEmployeePenaltyCode = extractFunction(htmlContent, 'accumulateDailyEmployeePenalty');
 
 eval(dedupeConfigListCode);
 eval(isEmployeeActiveCode);
 eval(renderHistoricalEmployeeBadgeCode);
 eval(normalizeEmpNameCode);
+eval(getBranchesFromMainRolesCode);
 eval(normalizeMainEmployeeStatusCode);
+eval(getBranchRosterEmployeesCode);
+eval(normalizeWorkloadEntryCode);
+eval(resolveWorkloadEmployeeCode);
+eval(getCanonicalWorkloadEntryCode);
+eval(getCanonicalWorkloadEntriesCode);
 eval(processConfigListCode);
 eval(accumulateDailyEmployeePenaltyCode);
 
@@ -293,11 +305,11 @@ async function runTests() {
         assert.ok(errorNotesHTML.includes("Somchai"), "Active employee errors must be in note history");
         assert.ok(!errorNotesHTML.includes("Somsri"), "Inactive employee errors must NOT be in note history");
 
-        // 4. Verify workload totals are preserved and mathematically proven:
-        // Outbound = 4, Inbound = 6. Total = 10. Outbound pct = 40%, Inbound pct = 60%.
+        // 4. Verify legacy workload totals are preserved and include inactive history:
+        // Recorded = 4 + 6 = 10 hours against 20 hours of capacity. Active-only would be 4/10.
         const dashWorkloadTeamHTML = document.getElementById('dash-workload-team').innerHTML;
-        assert.ok(dashWorkloadTeamHTML.includes("ขาออก 40%"), "Team workload total must include inactive employee workloads (proven 40% outbound)");
-        assert.ok(dashWorkloadTeamHTML.includes("ขาเข้า 60%"), "Team workload total must include inactive employee workloads (proven 60% inbound)");
+        assert.ok(dashWorkloadTeamHTML.includes("งานหลัก 100%"), "legacy four-bucket history must use the explicit primary-work compatibility view");
+        assert.ok(dashWorkloadTeamHTML.includes("บันทึก 10/20 ชม."), "team total must include inactive historical Workload without inflating unused capacity");
 
         // 5. Verify workload individuals display: only Somchai is listed, Somsri is hidden
         const dashWorkloadIndHTML = document.getElementById('dash-workload-individuals').innerHTML;
@@ -348,6 +360,80 @@ async function runTests() {
         assert.ok(!errorNotesHTML.includes("Somsri"), "Inactive name Somsri must not be in error note history");
 
         console.log("-> Test 4 Passed!");
+    }
+
+    // Test 5: Workload v2 Dashboard uses canonical identity and primary/secondary hours.
+    {
+        console.log("Test 5: checking canonical Workload v2 Dashboard semantics...");
+        resetMocks();
+        processConfigList([
+            {
+                uid: "AKRA12123", name: "TRAINEE (SORN)", aliasUids: ["TRAINEE_SORN"], aliasNames: ["SORN"],
+                roles: ["WAREHOUSE"], branches: "AKRA", dept: "", gender: "", status: "Active"
+            }
+        ]);
+        const dateStr = getStartOfWeek(new Date()).toISOString().slice(0, 10);
+        safeStorage.setItem('kpiData_AKRA', JSON.stringify([{
+            date: dateStr,
+            sourceBranch: "AKRA",
+            volume: { transfer: 0, pickup: 0, upcountry: 0, inmarket: 0, outmarket: 0 },
+            workload: [{
+                employeeUid: "TRAINEE_SORN", employee: "SORN", capacity: 10,
+                primaryCore: "คลัง W1", supportDuties: [{ name: "แวะขึ้นของ", hours: 3 }],
+                outbound: 7, inbound: 3, transfer: 0, shared: 0
+            }]
+        }]));
+        currentBranch = "AKRA";
+
+        loadDashboardData();
+
+        const teamHtml = document.getElementById('dash-workload-team').innerHTML;
+        const individualHtml = document.getElementById('dash-workload-individuals').innerHTML;
+        assert.ok(teamHtml.includes("งานหลัก 70%"), "team Dashboard must show primary-work share");
+        assert.ok(teamHtml.includes("งานรอง 30%"), "team Dashboard must show secondary-work share");
+        assert.ok(individualHtml.includes("TRAINEE (SORN)"), "legacy Workload must render under the exact current Main name");
+        assert.ok(individualHtml.includes("งานหลัก 7 | งานรอง 3 (รวม 10/10)"), "individual totals must match the saved 7h + 3h model");
+        assert.ok(!individualHtml.includes(">SORN<"), "the legacy display alias must not render as another employee");
+        console.log("-> Test 5 Passed!");
+    }
+
+    // Test 6: distinct stable UIDs retain separate Workload rows even with the same Main label.
+    {
+        console.log("Test 6: checking same-name Main UIDs remain distinct in the Workload Dashboard...");
+        resetMocks();
+        processConfigList([
+            { uid: "A", name: "Shared Name", roles: ["AKRA"], status: "Active" },
+            { uid: "B", name: "Shared Name", roles: ["AKRA"], status: "Active" }
+        ]);
+        const dateStr = getStartOfWeek(new Date()).toISOString().slice(0, 10);
+        safeStorage.setItem('kpiData_AKRA', JSON.stringify([{
+            date: dateStr,
+            sourceBranch: "AKRA",
+            volume: { transfer: 0, pickup: 0, upcountry: 0, inmarket: 0, outmarket: 0 },
+            workload: [
+                {
+                    employeeUid: "A", employee: "Shared Name", capacity: 10,
+                    primaryCore: "คลัง W1", supportDuties: [],
+                    outbound: 10, inbound: 0, transfer: 0, shared: 0
+                },
+                {
+                    employeeUid: "B", employee: "Shared Name", capacity: 10,
+                    primaryCore: "คลัง W2", supportDuties: [{ name: "ช่วยย้ายของ W2", hours: 5 }],
+                    outbound: 0, inbound: 0, transfer: 10, shared: 0
+                }
+            ]
+        }]));
+        currentBranch = "AKRA";
+
+        loadDashboardData();
+
+        assert.strictEqual(document.getElementById('dash-workload-count').innerText, "2 คน (1 วัน)");
+        const individualHtml = document.getElementById('dash-workload-individuals').innerHTML;
+        assert.strictEqual((individualHtml.match(/Shared Name/g) || []).length, 2,
+            "two stable UIDs with one exact display label must render as two Workload rows");
+        assert.ok(individualHtml.includes("งานหลัก 10 | งานรอง 0"));
+        assert.ok(individualHtml.includes("งานหลัก 5 | งานรอง 5"));
+        console.log("-> Test 6 Passed!");
     }
 
     console.log("=== All Employee Inactive Filter Regression Tests Passed! ===");

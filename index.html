@@ -839,7 +839,7 @@
             <!-- AKRA Workload Dashboard Card -->
             <div id="dash-workload-container" class="hidden bg-white p-3 rounded-xl shadow-sm border border-gray-100 md-colspan-2">
                 <h3 class="font-bold text-gray-800 mb-3 text-sm border-b border-gray-50 pb-2 flex justify-between items-center">
-                    <span><i class="fa-solid fa-business-time text-amber-500 mr-2"></i>สรุปปริมานเวลาทำงาน (Workload) ของทีม</span>
+                    <span><i class="fa-solid fa-business-time text-amber-500 mr-2"></i>สรุปเวลางานหลักและงานรองของทีม</span>
                     <span id="dash-workload-count" class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">0 คน (0 วัน)</span>
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -847,7 +847,7 @@
                         <!-- Team stacked chart will be rendered here -->
                     </div>
                     <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <div class="text-xs font-bold text-gray-700 mb-2">สัดส่วนเวลาทำงานรายบุคคล</div>
+                        <div class="text-xs font-bold text-gray-700 mb-2">เวลางานหลักและงานรองรายบุคคล</div>
                         <div id="dash-workload-individuals" class="space-y-3 max-h-[220px] overflow-y-auto pr-1">
                             <!-- Individual workload bars will be rendered here -->
                         </div>
@@ -858,7 +858,7 @@
             <!-- AKRA Workload Trend Card -->
             <div id="dash-workload-trend-container" class="hidden bg-white p-3 rounded-xl shadow-sm border border-gray-100 md-colspan-2">
                 <h3 class="font-bold text-gray-800 mb-3 text-sm border-b border-gray-50 pb-2 flex justify-between items-center flex-wrap gap-2">
-                    <span><i class="fa-solid fa-chart-bar text-amber-500 mr-2"></i>แนวโน้ม Workload ทีม (สัปดาห์)</span>
+                    <span><i class="fa-solid fa-chart-bar text-amber-500 mr-2"></i>แนวโน้มงานหลักและงานรอง (สัปดาห์)</span>
                     <span class="flex gap-1" role="group" aria-label="เลือกจำนวนสัปดาห์">
                         <button type="button" id="trend-btn-4w" class="px-2.5 py-1 text-[10px] font-bold rounded-md border transition-colors" onclick="setWorkloadTrendWeeks(4)" aria-pressed="false">4 สัปดาห์</button>
                         <button type="button" id="trend-btn-8w" class="px-2.5 py-1 text-[10px] font-bold rounded-md border transition-colors" onclick="setWorkloadTrendWeeks(8)" aria-pressed="true">8 สัปดาห์</button>
@@ -1407,10 +1407,11 @@
             </div>
             <div>
                 <label class="text-[11px] font-bold text-slate-600 block mb-1.5">ระยะเวลาที่ไปช่วย:</label>
-                <div class="grid grid-cols-4 gap-1.5" id="modal-time-grid">
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5" id="modal-time-grid">
                     <button type="button" onclick="selectModalTime(0.5, this)" class="modal-time-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-bold font-num">30 นาที</button>
                     <button type="button" onclick="selectModalTime(1.0, this)" class="modal-time-chip support-chip-active p-2 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-bold font-num">1 ชม.</button>
                     <button type="button" onclick="selectModalTime(2.0, this)" class="modal-time-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-bold font-num">2 ชม.</button>
+                    <button type="button" onclick="selectModalTime(3.0, this)" class="modal-time-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-bold font-num">3 ชม.</button>
                     <button type="button" onclick="selectModalTime(5.0, this)" class="modal-time-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-bold font-num">ครึ่งวัน (5h)</button>
                 </div>
             </div>
@@ -1585,7 +1586,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260823.08</span>
+                <span id="drawer-version-text">KPI Suite v20260824.01</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1602,7 +1603,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260823.08";
+        const CURRENT_VERSION = "20260824.01";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -2021,8 +2022,7 @@
             { uid: "260030", name: "จอนห์นี่", branches: "AKRA", dept: "", gender: "M" },
             { uid: "260029", name: "ปีเตอร์", branches: "AKRA", dept: "", gender: "M" },
             { uid: "260031", name: "ปิ่น", branches: "TRD", dept: "แคชเชียร์", gender: "F" },
-            { uid: "เอส", name: "เอส", branches: "AKRA", dept: "", gender: "M" },
-            { uid: "TRAINEE_SORN", name: "SORN", branches: "AKRA", dept: "", gender: "", status: "Active" }
+            { uid: "เอส", name: "เอส", branches: "AKRA", dept: "", gender: "M" }
         ];
 
         let TRD_DEPARTMENTS = {
@@ -2044,8 +2044,7 @@
             "260030": ["AKRA"], "johnny": ["AKRA"],
             "260029": ["AKRA"], "peter": ["AKRA"],
             "260031": ["TRD"], "pin": ["TRD"],
-            "เอส": ["AKRA"],
-            "TRAINEE_SORN": ["AKRA"], "sorn": ["AKRA"]
+            "เอส": ["AKRA"]
         };
 
         const AKRA_CASE_MARKER = '[AKRA_CASE:';
@@ -2075,7 +2074,7 @@
 
         let BRANCH_CONFIG = {
             "AKRA": {
-                employees: ['หมูหยอง', 'เอี้ยง', 'จอนห์นี่', 'ปีเตอร์', 'เอส', 'SORN'],
+                employees: ['หมูหยอง', 'เอี้ยง', 'จอนห์นี่', 'ปีเตอร์', 'เอส'],
                 showZone2: true,
                 errorTypes: [
                     { group: "1. ขาออก & จัดส่ง", options: AKRA_CORE_CATALOG.filter(i => i.core === 'outbound').map(i => i.type) },
@@ -2161,6 +2160,78 @@
             if (n === "บันเลง") return "บรรเลง";
             if (n === "หยอง") return "หมูหยอง";
             return n;
+        }
+
+        function normalizeWorkloadEntry(workload) {
+            const capacityValue = Number(workload?.capacity);
+            const legacyTotal = ['outbound', 'inbound', 'transfer', 'shared']
+                .reduce((sum, key) => sum + (Number(workload?.[key]) || 0), 0);
+            const capacity = Number.isFinite(capacityValue) && capacityValue > 0
+                ? capacityValue
+                : (legacyTotal > 0 ? legacyTotal : 10);
+            const primaryCore = String(workload?.primaryCore || '').trim();
+            const isLegacy = !primaryCore && !Array.isArray(workload?.supportDuties);
+            const supportDuties = (Array.isArray(workload?.supportDuties) ? workload.supportDuties : [])
+                .map(duty => ({ name: String(duty?.name || '').trim(), hours: Number(duty?.hours) }))
+                .filter(duty => duty.name && Number.isFinite(duty.hours) && duty.hours > 0);
+            const secondaryHours = Math.min(capacity, supportDuties.reduce((sum, duty) => sum + duty.hours, 0));
+            return {
+                primaryHours: isLegacy ? legacyTotal : Math.max(0, capacity - secondaryHours),
+                secondaryHours,
+                capacity,
+                primaryCore: isLegacy ? 'ข้อมูล Workload เดิม' : primaryCore,
+                supportDuties,
+                isLegacy
+            };
+        }
+
+        function resolveWorkloadEmployee(workload, configList) {
+            const uid = String(workload?.employeeUid || '').trim();
+            const name = normalizeEmpName(workload?.employee);
+            const employees = Array.isArray(configList) ? configList : [];
+            const normalizeKey = value => String(value || '').trim().toLowerCase();
+            const uidKey = normalizeKey(uid);
+            const nameKey = normalizeKey(name);
+            const exactUid = uidKey
+                ? employees.find(employee => normalizeKey(employee.uid || employee.username) === uidKey)
+                : null;
+            const aliasedUid = !exactUid && uidKey
+                ? employees.find(employee => (employee.aliasUids || []).some(alias => normalizeKey(alias) === uidKey))
+                : null;
+            const nameMatches = !uidKey && nameKey
+                ? employees.filter(employee => normalizeKey(employee.name) === nameKey
+                    || (employee.aliasNames || []).some(alias => normalizeKey(alias) === nameKey))
+                : [];
+            const nameMatch = nameMatches.length === 1 ? nameMatches[0] : null;
+            const canonical = exactUid || aliasedUid || nameMatch;
+            return canonical
+                ? { uid: String(canonical.uid || canonical.username || ''), name: String(canonical.name || '') }
+                : { uid, name: name || uid };
+        }
+
+        function getCanonicalWorkloadEntry(workload, configList) {
+            return {
+                ...resolveWorkloadEmployee(workload, configList),
+                ...normalizeWorkloadEntry(workload)
+            };
+        }
+
+        function getCanonicalWorkloadEntries(workloadArr, configList) {
+            const latestByIdentity = new Map();
+            (Array.isArray(workloadArr) ? workloadArr : []).forEach(entry => {
+                const normalized = getCanonicalWorkloadEntry(entry, configList);
+                const identityKey = String(normalized.uid || `name:${normalized.name}`).trim().toLowerCase();
+                const candidate = { ...entry, ...normalized, identityKey };
+                const previous = latestByIdentity.get(identityKey);
+                const previousTime = previous ? Date.parse(String(previous.updatedAt || '').replace(' ', 'T')) : NaN;
+                const candidateTime = Date.parse(String(candidate.updatedAt || '').replace(' ', 'T'));
+                if (!previous
+                    || (Number.isFinite(candidateTime) && (!Number.isFinite(previousTime) || candidateTime >= previousTime))
+                    || (!Number.isFinite(candidateTime) && !Number.isFinite(previousTime))) {
+                    latestByIdentity.set(identityKey, candidate);
+                }
+            });
+            return Array.from(latestByIdentity.values());
         }
 
         function getAkraCatalogItem(type) {
@@ -2330,7 +2401,7 @@
          * Uses existing getStartOfWeek() for AKRA Monday-Sunday boundary.
          * @param {Array} rawData - full daily records array from cache
          * @param {number} numWeeks - 4 or 8
-         * @returns {Array} ordered oldest→newest, each: { weekStart, weekEnd, isCurrent, recordedDays, capacity, outbound, inbound, transfer, shared }
+         * @returns {Array} ordered oldest→newest, each: { weekStart, weekEnd, isCurrent, recordedDays, capacity, primaryHours, secondaryHours }
          */
         function computeWorkloadTrend(rawData, numWeeks) {
             const today = new Date();
@@ -2350,10 +2421,8 @@
                     isCurrent: i === 0,
                     recordedDays: 0,
                     capacity: 0,
-                    outbound: 0,
-                    inbound: 0,
-                    transfer: 0,
-                    shared: 0,
+                    primaryHours: 0,
+                    secondaryHours: 0,
                     _dates: new Set()
                 });
             }
@@ -2368,12 +2437,10 @@
                     const we = new Date(wk.weekEnd); we.setHours(23, 59, 59, 999);
                     if (dayDate >= ws && dayDate <= we) {
                         wk._dates.add(day.date);
-                        day.workload.forEach(wl => {
-                            wk.capacity += wl.capacity !== undefined ? wl.capacity : 10;
-                            wk.outbound += wl.outbound || 0;
-                            wk.inbound += wl.inbound || 0;
-                            wk.transfer += wl.transfer || 0;
-                            wk.shared += wl.shared || 0;
+                        getCanonicalWorkloadEntries(day.workload, GLOBAL_CONFIG_LIST).forEach(normalized => {
+                            wk.capacity += normalized.capacity;
+                            wk.primaryHours += normalized.primaryHours;
+                            wk.secondaryHours += normalized.secondaryHours;
                         });
                         break;
                     }
@@ -2421,7 +2488,7 @@
             // Find max total for bar scaling
             let maxTotal = 0;
             buckets.forEach(b => {
-                const t = b.outbound + b.inbound + b.transfer + b.shared;
+                const t = b.primaryHours + b.secondaryHours;
                 if (t > maxTotal) maxTotal = t;
             });
             if (maxTotal === 0) maxTotal = 1;
@@ -2430,12 +2497,10 @@
             const fmtWeek = (d) => { const dd = new Date(d); return `${String(dd.getDate()).padStart(2, '0')}/${String(dd.getMonth() + 1).padStart(2, '0')}`; };
             let barsHtml = '<div class="flex items-end gap-1" style="min-height: 110px;">';
             buckets.forEach(b => {
-                const total = b.outbound + b.inbound + b.transfer + b.shared;
+                const total = b.primaryHours + b.secondaryHours;
                 const barH = total > 0 ? Math.max(8, Math.round((total / maxTotal) * 90)) : 0;
-                const pO = total > 0 ? Math.round((b.outbound / total) * 100) : 0;
-                const pI = total > 0 ? Math.round((b.inbound / total) * 100) : 0;
-                const pT = total > 0 ? Math.round((b.transfer / total) * 100) : 0;
-                const pS = total > 0 ? Math.round((b.shared / total) * 100) : 0;
+                const pPrimary = total > 0 ? Math.round((b.primaryHours / total) * 100) : 0;
+                const pSecondary = total > 0 ? Math.round((b.secondaryHours / total) * 100) : 0;
                 const label = fmtWeek(b.weekStart);
                 const currentTag = b.isCurrent ? '<span class="text-amber-600">*</span>' : '';
 
@@ -2449,10 +2514,8 @@
                     barsHtml += `<div class="flex-1 flex flex-col items-center min-w-[32px]" title="${fmtWeek(b.weekStart)}–${fmtWeek(b.weekEnd)}: รวม ${total} (${b.recordedDays} วัน, ศักยภาพ ${b.capacity})">
                         <div class="text-[9px] text-gray-500 font-bold mb-1">${total}</div>
                         <div class="w-full rounded-sm overflow-hidden flex flex-col-reverse border border-gray-200" style="height: ${barH}px;">
-                            <div class="bg-blue-500" style="height: ${pO}%"></div>
-                            <div class="bg-emerald-500" style="height: ${pI}%"></div>
-                            <div class="bg-amber-500" style="height: ${pT}%"></div>
-                            <div class="bg-purple-500" style="height: ${pS}%"></div>
+                            <div class="bg-blue-600" style="height: ${pPrimary}%"></div>
+                            <div class="bg-amber-500" style="height: ${pSecondary}%"></div>
                         </div>
                         <div class="text-[9px] text-gray-500 mt-1 leading-tight text-center">${label}${currentTag}</div>
                         <div class="text-[8px] text-gray-400">${b.recordedDays}d</div>
@@ -2463,10 +2526,8 @@
 
             // Legend
             barsHtml += `<div class="flex flex-wrap gap-2 mt-2 text-[9px] text-gray-500 font-semibold justify-center">
-                <span class="flex items-center"><span class="w-2 h-2 bg-blue-500 rounded-full mr-1"></span>ขาออก</span>
-                <span class="flex items-center"><span class="w-2 h-2 bg-emerald-500 rounded-full mr-1"></span>ขาเข้า</span>
-                <span class="flex items-center"><span class="w-2 h-2 bg-amber-500 rounded-full mr-1"></span>ย้าย</span>
-                <span class="flex items-center"><span class="w-2 h-2 bg-purple-500 rounded-full mr-1"></span>อื่น ๆ</span>
+                <span class="flex items-center"><span class="w-2 h-2 bg-blue-600 rounded-full mr-1"></span>งานหลัก</span>
+                <span class="flex items-center"><span class="w-2 h-2 bg-amber-500 rounded-full mr-1"></span>งานรอง</span>
                 <span class="text-gray-400 ml-1">* = สัปดาห์ปัจจุบัน (ยังไม่ครบ)</span>
             </div>`;
             chartEl.innerHTML = barsHtml;
@@ -2474,21 +2535,19 @@
             // Accessible table
             let tblHtml = '<table class="w-full border-collapse text-gray-700"><thead><tr class="border-b border-gray-200">';
             tblHtml += '<th class="text-left py-1 px-1">สัปดาห์</th><th class="text-right py-1 px-1">วัน</th><th class="text-right py-1 px-1">ศักยภาพ</th>';
-            tblHtml += '<th class="text-right py-1 px-1">ขาออก</th><th class="text-right py-1 px-1">ขาเข้า</th><th class="text-right py-1 px-1">ย้าย</th><th class="text-right py-1 px-1">อื่น ๆ</th>';
+            tblHtml += '<th class="text-right py-1 px-1">งานหลัก</th><th class="text-right py-1 px-1">งานรอง</th>';
             tblHtml += '<th class="text-right py-1 px-1">รวม</th></tr></thead><tbody>';
             buckets.forEach(b => {
-                const total = b.outbound + b.inbound + b.transfer + b.shared;
+                const total = b.primaryHours + b.secondaryHours;
                 const label = `${fmtWeek(b.weekStart)}–${fmtWeek(b.weekEnd)}${b.isCurrent ? ' *' : ''}`;
                 if (b.recordedDays === 0) {
-                    tblHtml += `<tr class="border-b border-gray-100 text-gray-300"><td class="py-1 px-1">${label}</td><td colspan="7" class="text-center py-1">ไม่มีข้อมูล</td></tr>`;
+                    tblHtml += `<tr class="border-b border-gray-100 text-gray-300"><td class="py-1 px-1">${label}</td><td colspan="5" class="text-center py-1">ไม่มีข้อมูล</td></tr>`;
                 } else {
-                    const pO = total > 0 ? Math.round((b.outbound / total) * 100) : 0;
-                    const pI = total > 0 ? Math.round((b.inbound / total) * 100) : 0;
-                    const pT = total > 0 ? Math.round((b.transfer / total) * 100) : 0;
-                    const pS = total > 0 ? Math.round((b.shared / total) * 100) : 0;
+                    const pPrimary = total > 0 ? Math.round((b.primaryHours / total) * 100) : 0;
+                    const pSecondary = total > 0 ? Math.round((b.secondaryHours / total) * 100) : 0;
 
                     tblHtml += `<tr class="border-b border-gray-100"><td class="py-1 px-1">${label}</td><td class="text-right py-1 px-1">${b.recordedDays}</td><td class="text-right py-1 px-1">${b.capacity}</td>`;
-                    tblHtml += `<td class="text-right py-1 px-1">${b.outbound} (${pO}%)</td><td class="text-right py-1 px-1">${b.inbound} (${pI}%)</td><td class="text-right py-1 px-1">${b.transfer} (${pT}%)</td><td class="text-right py-1 px-1">${b.shared} (${pS}%)</td>`;
+                    tblHtml += `<td class="text-right py-1 px-1">${b.primaryHours} (${pPrimary}%)</td><td class="text-right py-1 px-1">${b.secondaryHours} (${pSecondary}%)</td>`;
                     tblHtml += `<td class="text-right py-1 px-1 font-bold">${total}</td></tr>`;
                 }
             });
@@ -3649,20 +3708,40 @@
                 return { state: 'unavailable', label: 'ยังตรวจสอบ Workload ไม่ได้' };
             }
             const employeeName = normalizeEmpName(employee?.name);
+            const employeeUid = String(employee?.uid || employee?.username || '').trim().toLowerCase();
             const previousRecorded = new Set((workloadStatus?.previousRecordedEmployees || []).map(name => normalizeEmpName(name)));
-            if (workloadStatus?.previousDate && !previousRecorded.has(employeeName)) {
+            const previousRecordedUids = new Set((workloadStatus?.previousRecordedEmployeeUids || []).map(uid => String(uid).trim().toLowerCase()));
+            const wasPreviouslyRecorded = Array.isArray(workloadStatus?.previousRecordedEmployeeUids) && employeeUid
+                ? previousRecordedUids.has(employeeUid)
+                : previousRecorded.has(employeeName);
+            if (workloadStatus?.previousDate && !wasPreviouslyRecorded) {
                 return { state: 'missing', label: `ไม่ได้บันทึก Workload วันที่ ${workloadStatus.previousDate}` };
             }
             const recorded = new Set((workloadStatus?.recordedEmployees || []).map(name => normalizeEmpName(name)));
-            if (recorded.has(employeeName)) return { state: 'recorded', label: 'บันทึก Workload วันนี้แล้ว' };
+            const recordedUids = new Set((workloadStatus?.recordedEmployeeUids || []).map(uid => String(uid).trim().toLowerCase()));
+            const isRecorded = Array.isArray(workloadStatus?.recordedEmployeeUids) && employeeUid
+                ? recordedUids.has(employeeUid)
+                : recorded.has(employeeName);
+            if (isRecorded) return { state: 'recorded', label: 'บันทึก Workload วันนี้แล้ว' };
             return { state: 'pending', label: 'รอบันทึกภายในวันนี้ ก่อน 23:59' };
         }
 
         function dedupeConfigList(configList) {
+            const canonicalByAlias = new Map();
+            configList.forEach(user => {
+                const canonicalKey = String(user.uid || user.username || user.name || '').trim().toLowerCase();
+                if (!canonicalKey || !Array.isArray(user.aliasUids)) return;
+                user.aliasUids.forEach(alias => {
+                    const aliasKey = String(alias || '').trim().toLowerCase();
+                    if (aliasKey) canonicalByAlias.set(aliasKey, canonicalKey);
+                });
+            });
             const seen = new Map();
             configList.forEach(user => {
                 const key = String(user.uid || user.name || '').trim().toLowerCase();
                 if (!key) return;
+                const canonicalKey = canonicalByAlias.get(key);
+                if (canonicalKey && canonicalKey !== key) return;
                 seen.set(key, user);
             });
             return [...seen.values()];
@@ -3674,6 +3753,15 @@
             if (normalized === 'active') return 'Active';
             if (normalized === 'inactive' || !normalized) return 'Inactive';
             return value;
+        }
+
+        function getBranchRosterEmployees(branch) {
+            const branchKey = String(branch || '').trim().toUpperCase();
+            return GLOBAL_CONFIG_LIST.filter(user => {
+                const roles = Array.isArray(user.roles) ? user.roles.map(role => String(role).toUpperCase()) : [];
+                const branches = String(user.branches || '').split(',').map(value => value.trim().toUpperCase()).filter(Boolean);
+                return user.status === 'Active' && !roles.includes('ADMIN') && branches.includes(branchKey);
+            }).map(user => ({ uid: String(user.uid || user.username || ''), name: String(user.name || '') }));
         }
 
         function processConfigList(configList) {
@@ -3721,13 +3809,13 @@
                 // กรองเฉพาะพนักงานที่ไม่ใช่ Admin เพื่อแสดงในหน้าบันทึก KPI และ Dashboard
                 if (user.name && !isSystemAdmin && isActive) {
                     if (branches.includes('AKRA')) {
-                        if (!BRANCH_CONFIG["AKRA"].employees.includes(user.name)) BRANCH_CONFIG["AKRA"].employees.push(user.name);
+                        BRANCH_CONFIG["AKRA"].employees.push(user.name);
                     }
                     if (branches.includes('TRD')) {
-                        if (!BRANCH_CONFIG["TRD"].employees.includes(user.name)) BRANCH_CONFIG["TRD"].employees.push(user.name);
+                        BRANCH_CONFIG["TRD"].employees.push(user.name);
                         if (dept) {
                             if (!TRD_DEPARTMENTS[dept]) TRD_DEPARTMENTS[dept] = [];
-                            if (!TRD_DEPARTMENTS[dept].includes(user.name)) TRD_DEPARTMENTS[dept].push(user.name);
+                            TRD_DEPARTMENTS[dept].push(user.name);
                         }
                     }
                 }
@@ -3762,10 +3850,12 @@
         }
 
         function akraRosterChipHtml(emp, id, className, checked = false) {
+            const uid = typeof emp === 'object' && emp !== null ? String(emp.uid || '') : '';
+            const name = typeof emp === 'object' && emp !== null ? String(emp.name || '') : String(emp || '');
             return `
                 <div class="relative">
-                    <input type="checkbox" id="${id}" value="${esc(emp)}" class="hidden peer ${className}" ${checked ? 'checked' : ''} onchange="handleAkraRosterChange()">
-                    <label for="${id}" class="emp-label inline-block bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-gray-600 cursor-pointer peer-checked:bg-amber-500 peer-checked:text-white peer-checked:border-amber-500 shadow-sm hover:bg-gray-50 peer-checked:shadow-md select-none">${esc(emp)}</label>
+                    <input type="checkbox" id="${id}" value="${esc(uid || name)}" data-name="${esc(name)}" class="hidden peer ${className}" ${checked ? 'checked' : ''} onchange="handleAkraRosterChange()">
+                    <label for="${id}" class="emp-label inline-block bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-gray-600 cursor-pointer peer-checked:bg-amber-500 peer-checked:text-white peer-checked:border-amber-500 shadow-sm hover:bg-gray-50 peer-checked:shadow-md select-none">${esc(name)}</label>
                 </div>
             `;
         }
@@ -3778,7 +3868,7 @@
                 return;
             }
 
-            const emps = BRANCH_CONFIG.AKRA.employees || [];
+            const emps = getBranchRosterEmployees('AKRA');
             card.classList.remove('hidden');
             const dutyRosterEl = document.getElementById('akra-duty-roster');
             if (dutyRosterEl) dutyRosterEl.innerHTML = emps.map((emp, i) => akraRosterChipHtml(emp, `akra-duty-${i}`, 'akra-duty-cb', true)).join('');
@@ -3791,18 +3881,15 @@
         }
 
         function getAkraOnDutyEmployees() {
-            const checked = getCheckedValues('.akra-duty-cb');
-            if (checked && checked.length > 0) return checked;
-            if (typeof BRANCH_CONFIG !== 'undefined' && BRANCH_CONFIG['AKRA'] && Array.isArray(BRANCH_CONFIG['AKRA'].employees) && BRANCH_CONFIG['AKRA'].employees.length > 0) {
-                return BRANCH_CONFIG['AKRA'].employees;
-            }
-            if (typeof GLOBAL_CONFIG_LIST !== 'undefined' && Array.isArray(GLOBAL_CONFIG_LIST)) {
-                const akraConfig = GLOBAL_CONFIG_LIST
-                    .filter(c => (c.branches ? c.branches.includes('AKRA') : (c.branch === 'AKRA')) && c.dept !== 'Admin' && c.status !== 'Inactive')
-                    .map(c => c.name);
-                if (akraConfig.length > 0) return akraConfig;
-            }
-            return ['หมูหยอง', 'เอี้ยง', 'จอนห์นี่', 'ปีเตอร์', 'เอส'];
+            return getAkraOnDutyRoster().map(employee => employee.name);
+        }
+
+        function getAkraOnDutyRoster() {
+            const checked = Array.from(document.querySelectorAll('.akra-duty-cb:checked'))
+                .map(cb => ({ uid: String(cb.value || ''), name: String(cb.dataset?.name || '') }))
+                .filter(employee => employee.uid && employee.name);
+            if (checked.length > 0) return checked;
+            return getBranchRosterEmployees('AKRA');
         }
 
         function getAkraCoreRoster() {
@@ -4138,7 +4225,7 @@
         function renderTeamWorkloadPreview() {
             const previewContainer = document.getElementById('wl-team-preview');
             if (!previewContainer) return;
-            const onDuty = getAkraOnDutyEmployees();
+            const onDuty = getAkraOnDutyRoster();
             const dutyCountEl = document.getElementById('akra-duty-count');
             if (dutyCountEl) dutyCountEl.textContent = `${onDuty.length} คน`;
 
@@ -4147,15 +4234,20 @@
                 return;
             }
 
-            previewContainer.innerHTML = onDuty.map(emp => {
-                const isMe = normalizeEmpName(emp) === normalizeEmpName(displayUserName) || normalizeEmpName(emp) === normalizeEmpName(currentUser);
+            const currentIdentity = resolveWorkloadEmployee(
+                { employeeUid: currentUser, employee: displayUserName },
+                GLOBAL_CONFIG_LIST
+            );
+            const currentUid = String(currentIdentity.uid || currentUser || '').trim().toLowerCase();
+            previewContainer.innerHTML = onDuty.map(employee => {
+                const isMe = String(employee.uid || '').trim().toLowerCase() === currentUid;
                 const core = isMe ? (workloadState.core || 'คลัง W1') : 'คลัง W1';
                 const hasSupp = isMe ? ((workloadState.support || []).length > 0) : false;
                 return `
                     <div class="p-2 rounded-xl border ${isMe ? 'border-blue-300 bg-blue-50/50' : 'border-slate-100 bg-slate-50'} flex items-center justify-between text-xs">
                         <div class="flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full ${isMe ? 'bg-blue-600' : 'bg-slate-400'}"></span>
-                            <span class="font-bold text-slate-800">${esc(emp)}</span>
+                            <span class="font-bold text-slate-800">${esc(employee.name)}</span>
                             ${isMe ? '<span class="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded font-bold">คุณ</span>' : ''}
                         </div>
                         <div class="flex items-center gap-2">
@@ -4208,13 +4300,16 @@
 
         function renderAkraWorkloadEditor(savedData = null, forceReset = false) {
             if (currentBranch !== 'AKRA') return;
-            if (forceReset || !savedData || (Array.isArray(savedData) && savedData.length === 0)) {
+            const resetEditor = () => {
                 workloadState.core = 'คลัง W1';
                 workloadState.coreLabel = 'คลังหลัก W1';
                 workloadState.support = [];
-            }
+            };
+            if (forceReset || !savedData || (Array.isArray(savedData) && savedData.length === 0)) resetEditor();
             if (savedData && Array.isArray(savedData) && savedData.length > 0) {
-                const meItem = savedData.find(item => normalizeEmpName(item.employee) === normalizeEmpName(displayUserName) || normalizeEmpName(item.employee) === normalizeEmpName(currentUser)) || savedData[0];
+                const currentUid = String(currentUser || '').trim().toLowerCase();
+                const meItem = getCanonicalWorkloadEntries(savedData, GLOBAL_CONFIG_LIST)
+                    .find(item => String(item.uid || '').trim().toLowerCase() === currentUid);
                 if (meItem) {
                     workloadState.core = meItem.primaryCore || 'คลัง W1';
                     workloadState.coreLabel = meItem.primaryCore || 'คลัง W1';
@@ -4223,7 +4318,7 @@
                     } else {
                         workloadState.support = [];
                     }
-                }
+                } else resetEditor();
             }
             renderWorkload();
             renderErrSeverity();
@@ -5796,18 +5891,20 @@
             let categorizedNotes = {};
 
             let hasWorkloadData = false;
-            let teamWorkload = { outbound: 0, inbound: 0, transfer: 0, shared: 0, totalCapacity: 0, employeeCount: 0, recordedDays: 0 };
+            let teamWorkload = { primaryHours: 0, secondaryHours: 0, totalCapacity: 0, employeeCount: 0, recordedDays: 0, legacyEntries: 0 };
             let individualWorkload = {};
             let workloadDates = new Set();
             let workloadEmployees = new Set();
+            const branchRosterEmployees = getBranchRosterEmployees(currentBranch);
 
             BRANCH_CONFIG[currentBranch].employees.forEach(emp => {
                 empErrCount[emp] = 0;
                 empHP[emp] = 100;
                 categorizedNotes[emp] = {};
-                if (currentBranch === 'AKRA') {
-                    individualWorkload[emp] = { outbound: 0, inbound: 0, transfer: 0, shared: 0, capacity: 0, notes: [] };
-                }
+            });
+            if (currentBranch === 'AKRA') branchRosterEmployees.forEach(employee => {
+                const key = String(employee.uid || `name:${normalizeEmpName(employee.name)}`).trim().toLowerCase();
+                individualWorkload[key] = { uid: employee.uid, name: employee.name, primaryHours: 0, secondaryHours: 0, capacity: 0, notes: [], legacyEntries: 0 };
             });
 
             let allCustomerNotesHtml = '';
@@ -5892,25 +5989,23 @@
                 if (currentBranch === 'AKRA' && day.workload && Array.isArray(day.workload) && day.workload.length > 0) {
                     hasWorkloadData = true;
                     workloadDates.add(day.date);
-                    day.workload.forEach(wl => {
-                        const empName = normalizeEmpName(wl.employee);
-                        teamWorkload.outbound += wl.outbound || 0;
-                        teamWorkload.inbound += wl.inbound || 0;
-                        teamWorkload.transfer += wl.transfer || 0;
-                        teamWorkload.shared += wl.shared || 0;
-                        teamWorkload.totalCapacity += wl.capacity !== undefined ? wl.capacity : 10;
+                    getCanonicalWorkloadEntries(day.workload, GLOBAL_CONFIG_LIST).forEach(normalized => {
+                        const identityKey = normalized.identityKey;
+                        teamWorkload.primaryHours += normalized.primaryHours;
+                        teamWorkload.secondaryHours += normalized.secondaryHours;
+                        teamWorkload.totalCapacity += normalized.capacity;
+                        if (normalized.isLegacy) teamWorkload.legacyEntries++;
 
-                        if (individualWorkload[empName] !== undefined) {
-                            workloadEmployees.add(empName);
-                            individualWorkload[empName].outbound += wl.outbound || 0;
-                            individualWorkload[empName].inbound += wl.inbound || 0;
-                            individualWorkload[empName].transfer += wl.transfer || 0;
-                            individualWorkload[empName].shared += wl.shared || 0;
-                            individualWorkload[empName].capacity += wl.capacity !== undefined ? wl.capacity : 10;
-                            if (wl.note && wl.note.trim() !== '') {
+                        if (individualWorkload[identityKey] !== undefined) {
+                            workloadEmployees.add(identityKey);
+                            individualWorkload[identityKey].primaryHours += normalized.primaryHours;
+                            individualWorkload[identityKey].secondaryHours += normalized.secondaryHours;
+                            individualWorkload[identityKey].capacity += normalized.capacity;
+                            if (normalized.isLegacy) individualWorkload[identityKey].legacyEntries++;
+                            if (normalized.note && normalized.note.trim() !== '') {
                                 const dayObj = new Date(day.date);
                                 const dayStr = `${String(dayObj.getDate()).padStart(2, '0')}/${String(dayObj.getMonth()+1).padStart(2, '0')}`;
-                                individualWorkload[empName].notes.push(`[${dayStr}] ${wl.note}`);
+                                individualWorkload[identityKey].notes.push(`[${dayStr}] ${normalized.note}`);
                             }
                         }
                     });
@@ -5918,7 +6013,7 @@
             });
 
             // --- TEAM KPI RENDER LOGIC ---
-            let branchStartHP = BRANCH_CONFIG[currentBranch].employees.length * 100;
+            let branchStartHP = branchRosterEmployees.length * 100;
             let branchCurrentHP = Math.max(0, branchStartHP - teamLostHP);
             let branchHPPercent = branchStartHP > 0 ? (branchCurrentHP / branchStartHP) * 100 : 0;
 
@@ -6065,32 +6160,33 @@
                         document.getElementById('dash-workload-team').innerHTML = `<div class="text-center text-gray-400 text-xs py-4">ยังไม่มีข้อมูล Workload ในสัปดาห์นี้</div>`;
                         document.getElementById('dash-workload-individuals').innerHTML = `<div class="text-center text-gray-400 text-xs py-4">ยังไม่มีข้อมูล Workload ในสัปดาห์นี้</div>`;
                     } else {
-                        const teamTotal = teamWorkload.outbound + teamWorkload.inbound + teamWorkload.transfer + teamWorkload.shared;
-                        const pctOutbound = teamTotal > 0 ? Math.round((teamWorkload.outbound / teamTotal) * 100) : 0;
-                        const pctInbound = teamTotal > 0 ? Math.round((teamWorkload.inbound / teamTotal) * 100) : 0;
-                        const pctTransfer = teamTotal > 0 ? Math.round((teamWorkload.transfer / teamTotal) * 100) : 0;
-                        const pctShared = teamTotal > 0 ? Math.round((teamWorkload.shared / teamTotal) * 100) : 0;
+                        const teamTotal = teamWorkload.primaryHours + teamWorkload.secondaryHours;
+                        const pctPrimary = teamTotal > 0 ? Math.round((teamWorkload.primaryHours / teamTotal) * 100) : 0;
+                        const pctSecondary = teamTotal > 0 ? Math.round((teamWorkload.secondaryHours / teamTotal) * 100) : 0;
+                        const legacyNote = teamWorkload.legacyEntries > 0
+                            ? `<div class="text-[9px] text-gray-400 mt-2">รวมข้อมูลรูปแบบเดิม ${teamWorkload.legacyEntries} รายการ โดยไม่คาดเดางานรองย้อนหลัง</div>`
+                            : '';
 
                         document.getElementById('dash-workload-team').innerHTML = `
                             <div class="text-xs font-bold text-gray-700 mb-2">เวลาทำงานรวมของทีมทั้งหมด</div>
                             <div class="w-full h-4 rounded-full overflow-hidden flex border border-gray-200 bg-gray-100 shadow-inner">
-                                <div class="bg-blue-500 h-full" style="width: ${pctOutbound}%"></div>
-                                <div class="bg-emerald-500 h-full" style="width: ${pctInbound}%"></div>
-                                <div class="bg-amber-500 h-full" style="width: ${pctTransfer}%"></div>
-                                <div class="bg-purple-500 h-full" style="width: ${pctShared}%"></div>
+                                <div class="bg-blue-600 h-full" style="width: ${pctPrimary}%"></div>
+                                <div class="bg-amber-500 h-full" style="width: ${pctSecondary}%"></div>
                             </div>
-                            <div class="grid grid-cols-4 gap-1 text-[10px] text-gray-600 mt-2 font-semibold">
-                                <div class="flex items-center justify-center"><span class="w-2 h-2 bg-blue-500 rounded-full mr-1"></span>ขาออก ${pctOutbound}%</div>
-                                <div class="flex items-center justify-center"><span class="w-2 h-2 bg-emerald-500 rounded-full mr-1"></span>ขาเข้า ${pctInbound}%</div>
-                                <div class="flex items-center justify-center"><span class="w-2 h-2 bg-amber-500 rounded-full mr-1"></span>ย้าย ${pctTransfer}%</div>
-                                <div class="flex items-center justify-center"><span class="w-2 h-2 bg-purple-500 rounded-full mr-1"></span>อื่น ๆ ${pctShared}%</div>
+                            <div class="grid grid-cols-2 gap-2 text-[10px] text-gray-600 mt-2 font-semibold">
+                                <div class="flex items-center justify-center"><span class="w-2 h-2 bg-blue-600 rounded-full mr-1"></span>งานหลัก ${pctPrimary}%</div>
+                                <div class="flex items-center justify-center"><span class="w-2 h-2 bg-amber-500 rounded-full mr-1"></span>งานรอง ${pctSecondary}%</div>
                             </div>
+                            <div class="text-center text-[10px] text-gray-500 mt-1 font-medium">บันทึก ${teamTotal}/${teamWorkload.totalCapacity} ชม.</div>
+                            ${legacyNote}
                         `;
 
                         let indHtml = '';
-                        BRANCH_CONFIG.AKRA.employees.forEach(emp => {
-                            const wl = individualWorkload[emp];
-                            const total = wl.outbound + wl.inbound + wl.transfer + wl.shared;
+                        branchRosterEmployees.forEach(employee => {
+                            const emp = employee.name;
+                            const identityKey = String(employee.uid || `name:${normalizeEmpName(emp)}`).trim().toLowerCase();
+                            const wl = individualWorkload[identityKey];
+                            const total = wl.primaryHours + wl.secondaryHours;
 
                             if (wl.capacity === 0) {
                                 indHtml += `
@@ -6102,10 +6198,8 @@
                                     </div>
                                 `;
                             } else {
-                                const pctOut = wl.capacity > 0 ? (wl.outbound / wl.capacity) * 100 : 0;
-                                const pctIn = wl.capacity > 0 ? (wl.inbound / wl.capacity) * 100 : 0;
-                                const pctTr = wl.capacity > 0 ? (wl.transfer / wl.capacity) * 100 : 0;
-                                const pctSh = wl.capacity > 0 ? (wl.shared / wl.capacity) * 100 : 0;
+                                const pctPrimary = wl.capacity > 0 ? (wl.primaryHours / wl.capacity) * 100 : 0;
+                                const pctSecondary = wl.capacity > 0 ? (wl.secondaryHours / wl.capacity) * 100 : 0;
 
                                 let noteHtml = '';
                                 if (wl.notes.length > 0) {
@@ -6116,14 +6210,13 @@
                                     <div class="border-b border-gray-100/50 pb-2.5 last:border-0 last:pb-0">
                                         <div class="flex justify-between items-center text-xs mb-1">
                                             <span class="font-bold text-gray-700">${esc(emp)}</span>
-                                            <span class="text-[10px] text-gray-500 font-bold bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 shadow-sm">ขาออก ${wl.outbound} | ขาเข้า ${wl.inbound} | ย้าย ${wl.transfer} | อื่น ๆ ${wl.shared} (รวม ${total}/${wl.capacity})</span>
+                                            <span class="text-[10px] text-gray-500 font-bold bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 shadow-sm">งานหลัก ${wl.primaryHours} | งานรอง ${wl.secondaryHours} (รวม ${total}/${wl.capacity})</span>
                                         </div>
                                         <div class="w-full h-2.5 rounded-full overflow-hidden flex border border-gray-100 bg-gray-50 shadow-inner">
-                                            <div class="bg-blue-500 h-full" style="width: ${pctOut}%"></div>
-                                            <div class="bg-emerald-500 h-full" style="width: ${pctIn}%"></div>
-                                            <div class="bg-amber-500 h-full" style="width: ${pctTr}%"></div>
-                                            <div class="bg-purple-500 h-full" style="width: ${pctSh}%"></div>
+                                            <div class="bg-blue-600 h-full" style="width: ${pctPrimary}%"></div>
+                                            <div class="bg-amber-500 h-full" style="width: ${pctSecondary}%"></div>
                                         </div>
+                                        ${wl.legacyEntries > 0 ? '<div class="text-[9px] text-gray-400 mt-1">มีข้อมูลรูปแบบเดิมที่แสดงเป็นงานหลัก</div>' : ''}
                                         ${noteHtml}
                                     </div>
                                 `;
@@ -6408,7 +6501,8 @@
                 }
                 if (day.sourceBranch === 'AKRA' && Array.isArray(day.workload) && day.workload.length) {
                     workloadDates.add(String(day.date).slice(0, 10));
-                    day.workload.forEach(item => { workloadCapacity += item.capacity !== undefined ? Number(item.capacity) || 0 : 10; });
+                    getCanonicalWorkloadEntries(day.workload, GLOBAL_CONFIG_LIST)
+                        .forEach(item => { workloadCapacity += item.capacity; });
                 }
             });
             workloadDays = workloadDates.size;
@@ -8337,7 +8431,7 @@
         function collectRecordDraft() {
             const draft = { date: document.getElementById('record-date').value, errors: [], tasks: [], volume: {}, notes: {}, endOfShift: collectEndOfShiftBrief(), actions: localActionsDraft };
             if (currentBranch === 'AKRA') {
-                draft.akraRoster = { onDuty: getAkraOnDutyEmployees(), cores: getAkraCoreRoster() };
+                draft.akraRoster = { onDuty: getAkraOnDutyEmployees(), onDutyRoster: getAkraOnDutyRoster(), cores: getAkraCoreRoster() };
                 draft.akraWorkload = getAkraWorkloadValues();
             }
             document.querySelectorAll('.error-entry').forEach(entry => {
@@ -8394,7 +8488,7 @@
             // Workload draft
             if (currentBranch === 'AKRA') {
                 const workloadDraft = {
-                    akraRoster: { onDuty: getAkraOnDutyEmployees(), cores: getAkraCoreRoster() },
+                    akraRoster: { onDuty: getAkraOnDutyEmployees(), onDutyRoster: getAkraOnDutyRoster(), cores: getAkraCoreRoster() },
                     akraWorkload: getAkraWorkloadValues()
                 };
                 const hasWorkload = workloadDraft.akraWorkload.some(w => w.capacity !== 0 || w.outbound > 0 || w.inbound > 0 || w.transfer > 0 || w.shared > 0 || (w.note || '').trim() !== '');
@@ -8525,7 +8619,16 @@
 
         function applyAkraRosterDraft(roster) {
             if (currentBranch !== 'AKRA' || !roster) return;
-            setCheckedValues('.akra-duty-cb', roster.onDuty || []);
+            const uidRoster = Array.isArray(roster.onDutyRoster)
+                ? roster.onDutyRoster.filter(employee => String(employee?.uid || '').trim())
+                : [];
+            const selectedUids = new Set(uidRoster.map(employee => String(employee.uid)));
+            const selectedNames = new Set(roster.onDuty || []);
+            document.querySelectorAll('.akra-duty-cb').forEach(cb => {
+                cb.checked = uidRoster.length > 0
+                    ? selectedUids.has(String(cb.value || ''))
+                    : selectedNames.has(String(cb.dataset?.name || ''));
+            });
             const cores = roster.cores || {};
             setCheckedValues('.akra-core-inbound-cb', cores.inbound || []);
             setCheckedValues('.akra-core-outbound-cb', cores.outbound || []);
@@ -8987,6 +9090,7 @@
                             penalty,
                             participants: participantNames,
                             onDuty: getAkraOnDutyEmployees(),
+                            onDutyRoster: getAkraOnDutyRoster(),
                             coreRoster: getAkraCoreRoster(),
                             updatedBy: currentUser,
                             updatedAt: new Date().toISOString()
@@ -9120,12 +9224,15 @@
                 let latestTimestamp = -Infinity;
                 dayData.errors.forEach(err => {
                     const parsed = parseAkraCaseNote(err.note);
-                    if (parsed && parsed.meta && Array.isArray(parsed.meta.onDuty) && parsed.meta.onDuty.length > 0) {
-                        legacyFallback = parsed.meta.onDuty;
+                    const roster = Array.isArray(parsed?.meta?.onDutyRoster) && parsed.meta.onDutyRoster.length > 0
+                        ? parsed.meta.onDutyRoster
+                        : parsed?.meta?.onDuty;
+                    if (Array.isArray(roster) && roster.length > 0) {
+                        legacyFallback = roster;
                         const timestamp = Date.parse(String(parsed.meta.updatedAt || '').replace(' ', 'T'));
                         if (Number.isFinite(timestamp) && timestamp > latestTimestamp) {
                             latestTimestamp = timestamp;
-                            latestRoster = parsed.meta.onDuty;
+                            latestRoster = roster;
                         }
                     }
                 });
@@ -9134,26 +9241,19 @@
             return null;
         }
 
-        function getDailyWorkloadState(workloadArr, expectedRoster) {
+        function getDailyWorkloadState(workloadArr, expectedRoster, configList = (typeof GLOBAL_CONFIG_LIST !== 'undefined' ? GLOBAL_CONFIG_LIST : [])) {
             const rosterSet = new Set();
             (expectedRoster || []).forEach(emp => {
-                const normalized = normalizeEmpName(emp);
-                if (isEmployeeActive(normalized)) rosterSet.add(normalized);
+                const source = typeof emp === 'object' && emp !== null
+                    ? { employeeUid: emp.uid || emp.employeeUid || '', employee: emp.name || emp.employee || '' }
+                    : { employee: emp };
+                const identity = resolveWorkloadEmployee(source, configList);
+                const identityKey = String(identity.uid || `name:${identity.name}`).trim().toLowerCase();
+                if (isEmployeeActive(identity.name)) rosterSet.add(identityKey);
             });
 
-            const workloadByEmployee = new Map();
-            (workloadArr || []).forEach(entry => {
-                const normalized = normalizeEmpName(entry.employee);
-                if (!rosterSet.has(normalized) || !isEmployeeActive(normalized)) return;
-                const previous = workloadByEmployee.get(normalized);
-                const previousTime = previous ? Date.parse(String(previous.updatedAt || '').replace(' ', 'T')) : NaN;
-                const entryTime = Date.parse(String(entry.updatedAt || '').replace(' ', 'T'));
-                if (!previous || !Number.isFinite(previousTime) || (Number.isFinite(entryTime) && entryTime >= previousTime)) {
-                    workloadByEmployee.set(normalized, entry);
-                }
-            });
-
-            const workload = Array.from(workloadByEmployee.values());
+            const workload = getCanonicalWorkloadEntries(workloadArr, configList)
+                .filter(entry => rosterSet.has(entry.identityKey) && isEmployeeActive(entry.name));
             const expectedCount = rosterSet.size;
             const recordedCount = workload.length;
             return {
@@ -9328,36 +9428,49 @@
 
                 const authoritativeRoster = getAuthoritativeRoster(dayData);
                 const rosterNames = authoritativeRoster || fallbackRoster;
+                const workloadConfigList = Array.isArray(options.configList)
+                    ? options.configList
+                    : (typeof GLOBAL_CONFIG_LIST !== 'undefined' ? GLOBAL_CONFIG_LIST : []);
+                const canonicalRosterEntries = rosterNames
+                    .map(item => {
+                        const source = typeof item === 'object' && item !== null
+                            ? { employeeUid: item.uid || item.employeeUid || '', employee: item.name || item.employee || '' }
+                            : { employee: item };
+                        const identity = resolveWorkloadEmployee(source, workloadConfigList);
+                        return {
+                            ...identity,
+                            identityKey: String(identity.uid || `name:${identity.name}`).trim().toLowerCase()
+                        };
+                    })
+                    .filter((entry, index, list) => entry.name
+                        && list.findIndex(candidate => candidate.identityKey === entry.identityKey) === index);
                 roster = {
-                    state: rosterNames.length > 0 ? 'confirmed' : 'missing',
-                    names: rosterNames.map(normalizeEmpName).filter((name, index, list) => name && list.indexOf(name) === index),
+                    state: canonicalRosterEntries.length > 0 ? 'confirmed' : 'missing',
+                    names: canonicalRosterEntries.map(entry => normalizeEmpName(entry.name)),
                     source: authoritativeRoster ? 'บันทึกทีมเข้ากะของวันที่เลือก' : (fallbackRoster.length ? 'แบบฟอร์มทีมเข้ากะของวันที่เลือก' : '')
                 };
 
-                const expectedRoster = roster.names.length ? roster.names : activeEmployees;
-                const workloadState = getDailyWorkloadState(dayData?.workload || [], expectedRoster);
+                const expectedRoster = canonicalRosterEntries.length ? canonicalRosterEntries : activeEmployees;
+                const workloadState = getDailyWorkloadState(dayData?.workload || [], expectedRoster, workloadConfigList);
                 workload = {
                     state: workloadState.recordedCount === 0 ? 'missing' : (workloadState.isComplete ? 'complete' : 'partial'),
                     expectedCount: workloadState.expectedCount,
                     recordedCount: workloadState.recordedCount,
-                    entries: workloadState.workload.map(entry => {
-                        const outbound = Number(entry.outbound) || 0;
-                        const inbound = Number(entry.inbound) || 0;
-                        const transfer = Number(entry.transfer) || 0;
-                        const shared = Number(entry.shared) || 0;
-                        return {
-                            employee: normalizeEmpName(entry.employee),
-                            capacity: entry.capacity !== undefined ? Number(entry.capacity) || 0 : 10,
-                            outbound,
-                            inbound,
-                            transfer,
-                            shared,
-                            total: outbound + inbound + transfer + shared,
-                            note: entry.note || '',
-                            updatedBy: entry.updatedBy || '',
-                            updatedAt: entry.updatedAt || ''
-                        };
-                    })
+                    entries: workloadState.workload.map(entry => ({
+                        employeeUid: entry.uid,
+                        employee: entry.name,
+                        capacity: entry.capacity,
+                        primaryHours: entry.primaryHours,
+                        secondaryHours: entry.secondaryHours,
+                        total: entry.primaryHours + entry.secondaryHours,
+                        primaryCore: entry.primaryCore,
+                        supportDuties: entry.supportDuties,
+                        isLegacy: entry.isLegacy,
+                        compatibilityLabel: entry.isLegacy ? 'ข้อมูล Workload เดิม · แสดงเวลาที่บันทึกไว้เป็นงานหลัก' : '',
+                        note: entry.note || '',
+                        updatedBy: entry.updatedBy || '',
+                        updatedAt: entry.updatedAt || ''
+                    }))
                 };
 
                 const rawVendorBills = dayData?.endOfShift?.vendorBills || {};
@@ -9524,14 +9637,13 @@
                         <article class="min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
                             <header class="flex flex-wrap items-baseline justify-between gap-2">
                                 <h4 class="font-black text-slate-900">${esc(entry.employee)}</h4>
-                                <span class="text-xs font-bold text-blue-700">${entry.total.toLocaleString('th-TH')} / ${entry.capacity.toLocaleString('th-TH')} คะแนน</span>
+                                <span class="text-xs font-bold text-blue-700">${entry.total.toLocaleString('th-TH')} / ${entry.capacity.toLocaleString('th-TH')} ชม.</span>
                             </header>
-                            <dl class="mt-1.5 grid grid-cols-4 gap-2 text-[11px]">
-                                <div><dt class="text-slate-500">จ่ายออก</dt><dd class="font-bold text-slate-900">${entry.outbound}</dd></div>
-                                <div><dt class="text-slate-500">รับเข้า</dt><dd class="font-bold text-slate-900">${entry.inbound}</dd></div>
-                                <div><dt class="text-slate-500">ย้าย</dt><dd class="font-bold text-slate-900">${entry.transfer}</dd></div>
-                                <div><dt class="text-slate-500">ร่วม</dt><dd class="font-bold text-slate-900">${entry.shared}</dd></div>
+                            <dl class="mt-1.5 grid grid-cols-2 gap-2 text-[11px]">
+                                <div><dt class="text-slate-500">งานหลัก${entry.primaryCore ? ` · ${esc(entry.primaryCore)}` : ''}</dt><dd class="font-bold text-slate-900">${entry.primaryHours} ชม.</dd></div>
+                                <div><dt class="text-slate-500">งานรอง</dt><dd class="font-bold text-slate-900">${entry.secondaryHours} ชม.</dd></div>
                             </dl>
+                            ${entry.isLegacy ? `<p class="mt-1.5 text-[11px] text-amber-700">${esc(entry.compatibilityLabel)}</p>` : ''}
                             ${entry.note ? `<p class="mt-1.5 whitespace-pre-wrap break-words border-t border-slate-200 pt-1.5 text-xs leading-relaxed text-slate-800">${esc(entry.note)}</p>` : ''}
                         </article>
                     `).join('')}</div>`
@@ -9665,7 +9777,9 @@
                 actionsError: _actionsLoadError,
                 dailyDataLoading: _dailyDataLoading,
                 dailyDataError: _dailyDataLoadError,
-                activeEmployees: BRANCH_CONFIG[currentBranch]?.employees || [],
+                activeEmployees: currentBranch === 'AKRA'
+                    ? getBranchRosterEmployees(currentBranch)
+                    : (BRANCH_CONFIG[currentBranch]?.employees || []),
                 fallbackRoster: [],
                 cacheTimestamp: safeStorage.getItem('kpiData_' + currentBranch + '_ts')
             });
@@ -9725,6 +9839,7 @@
                             penalty,
                             participants: participantNames,
                             onDuty: getAkraOnDutyEmployees(),
+                            onDutyRoster: getAkraOnDutyRoster(),
                             coreRoster: getAkraCoreRoster()
                         };
                         note = `${encodeAkraCaseMeta(meta)} ${rawNote}`;

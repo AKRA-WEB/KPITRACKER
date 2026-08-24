@@ -38,13 +38,17 @@ async function runTests() {
       ok: true,
       json: async () => ({
         status: 'success',
-        employees: [{ uid: 'TRAINEE_SORN', name: 'SORN', roles: ['WAREHOUSE'], branches: 'AKRA', status: 'Active' }],
+        employees: [{
+          uid: 'AKRA12123', name: 'TRAINEE (SORN)', roles: ['AKRA'], branches: 'AKRA', status: 'Active',
+          aliasUids: ['TRAINEE_SORN'], aliasNames: ['SORN']
+        }],
         workload: { date: '2026-08-23', hour: 18, recordedEmployees: [] }
       })
     };
   };
   const result = await kpiClient.getConfig('signed-main-token');
-  assert.strictEqual(result.employees[0].name, 'SORN');
+  assert.strictEqual(result.employees[0].uid, 'AKRA12123');
+  assert.strictEqual(result.employees[0].name, 'TRAINEE (SORN)');
   assert.ok(capturedRequest.url.endsWith('/functions/v1/kpi-api'));
   assert.deepStrictEqual(JSON.parse(capturedRequest.init.body), { action: 'getConfig', token: 'signed-main-token' });
   await kpiClient.getAdminStatus('signed-main-token');

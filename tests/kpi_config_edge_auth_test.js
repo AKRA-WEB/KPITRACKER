@@ -145,7 +145,9 @@ async function callPayload(handler, body, origin = 'https://akra-web.github.io')
         if (table === 'users') {
           return [{ username: 'not-migrated', name: 'Current Main User', roles: ['WAREHOUSE'], status: 'Active' }];
         }
-        if (table === 'kpi_employees') return [];
+        if (table === 'kpi_employees') return [
+          { legacy_uid: 'OLD_SHARED', canonical_uid: 'A', name: 'Shared Name', role: 'Legacy', branch: 'AKRA' }
+        ];
         throw new Error(`unexpected table ${table}`);
       }
     };
@@ -189,6 +191,39 @@ async function callPayload(handler, body, origin = 'https://akra-web.github.io')
       [['kpi-api request rejected', { action: 'getConfig', status: 403, stage: 'current_user_missing' }]],
       'safe diagnostics must identify the rejection stage without logging token or identity data'
     );
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [], rpcCalls: [],
+      now: new Date('2026-08-23T12:00:00.000Z'),
+      verifyMainJwt: async () => ({ id: 'ADMIN1', roles: ['ADMIN'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async (table, query) => {
+        fixtures.dbCalls.push({ table, query });
+        if (table === 'users' && query.includes('username=eq.ADMIN1')) {
+          return [{ username: 'ADMIN1', name: 'Admin', roles: ['ADMIN'], status: 'Active' }];
+        }
+        if (table === 'users') return [
+          { username: 'ADMIN1', name: 'Admin', roles: ['ADMIN'], status: 'Active' },
+          { username: '250007', name: 'หมูหยอง', roles: ['AKRA'], status: 'Active' },
+          { username: 'A', name: 'Shared Name', roles: ['AKRA'], status: 'Active' },
+          { username: 'B', name: 'Shared Name', roles: ['AKRA'], status: 'Active' }
+        ];
+        if (table === 'kpi_employees') return [];
+        if (table === 'kpi_daily_records') return [
+          { record_date: '2026-08-22', workload_data: [{ employee: 'หมูหยอง' }] },
+          { record_date: '2026-08-23', workload_data: [{ employee: 'Shared Name' }] }
+        ];
+        return [];
+      }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await call(runtime.handler, 'token', 'getAdminStatus');
+    assert.strictEqual(result.status, 200);
+    assert.deepStrictEqual(Array.from(result.body.workload.previousRecordedEmployeeUids), ['250007'],
+      'a unique exact Main name must recover the stable UID for legacy name-only history');
+    assert.deepStrictEqual(Array.from(result.body.workload.recordedEmployeeUids), [],
+      'an ambiguous duplicate Main name must not be assigned to an arbitrary UID');
   }
 
   {
@@ -323,7 +358,77 @@ async function callPayload(handler, body, origin = 'https://akra-web.github.io')
 
   {
     const fixtures = {
+      dbCalls: [],
+      now: new Date('2026-08-23T12:00:00.000Z'),
+      verifyMainJwt: async () => ({ id: 'admin', roles: ['ADMIN'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async (table, query) => {
+        fixtures.dbCalls.push({ table, query });
+        if (table === 'users' && query.includes('username=eq.admin')) {
+          return [{ username: 'admin', name: 'Admin', roles: ['ADMIN'], status: 'Active' }];
+        }
+        if (table === 'users') return [
+          { username: 'admin', name: 'Admin', roles: ['ADMIN'], status: 'Active' },
+          { username: 'AKRA12123', name: 'TRAINEE (SORN)', roles: ['AKRA'], status: 'Active' }
+        ];
+        if (table === 'kpi_employees') return [
+          { legacy_uid: 'TRAINEE_SORN', canonical_uid: 'AKRA12123', name: 'SORN', role: 'Trainee', branch: 'AKRA' }
+        ];
+        if (table === 'kpi_daily_records') return [
+          { record_date: '2026-08-22', workload_data: [{ employeeUid: 'TRAINEE_SORN', employee: 'SORN' }] },
+          { record_date: '2026-08-23', workload_data: [{ employeeUid: 'AKRA12123', employee: 'TRAINEE (SORN)' }] }
+        ];
+        return [];
+      }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await call(runtime.handler, 'token', 'getAdminStatus');
+    assert.strictEqual(result.status, 200);
+    const frontline = result.body.employees.filter(employee => !employee.roles.includes('ADMIN'));
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(frontline)), [{
+      uid: 'AKRA12123', name: 'TRAINEE (SORN)', roles: ['AKRA'], branches: 'AKRA',
+      dept: 'Trainee', gender: '', status: 'Active', aliasUids: ['TRAINEE_SORN'], aliasNames: ['SORN']
+    }], 'the Edge roster must project only the current Main identity while retaining historical reconciliation metadata');
+    assert.deepStrictEqual(Array.from(result.body.workload.previousRecordedEmployeeUids), ['AKRA12123']);
+    assert.deepStrictEqual(Array.from(result.body.workload.recordedEmployeeUids), ['AKRA12123']);
+  }
+
+  {
+    const fixtures = {
       dbCalls: [], rpcCalls: [],
+      verifyMainJwt: async () => ({ id: '250007', roles: ['AKRA'], apps: ['app-kpi'], exp: 9999999999 }),
+      dbRows: async (table, query) => {
+        fixtures.dbCalls.push({ table, query });
+        if (table === 'users' && query.includes('username=eq.250007')) {
+          return [{ username: '250007', name: 'หมูหยอง', roles: ['AKRA'], status: 'Active' }];
+        }
+        if (table === 'users') {
+          const users = [
+            { username: '250007', name: 'หมูหยอง', roles: ['AKRA'], status: 'Active' },
+            { username: 'TRAINEE_SORN', name: 'SORN', roles: ['WAREHOUSE'], status: 'Active' },
+            { username: 'AKRA12123', name: 'TRAINEE (SORN)', roles: ['AKRA'], status: 'Inactive' }
+          ];
+          return query.includes('status=eq.Active') ? users.filter(user => user.status === 'Active') : users;
+        }
+        if (table === 'kpi_employees') return [
+          { legacy_uid: 'TRAINEE_SORN', canonical_uid: 'AKRA12123', name: 'SORN', role: 'Trainee', branch: 'AKRA' }
+        ];
+        return [];
+      }
+    };
+    const runtime = loadHandler(fixtures);
+    const result = await call(runtime.handler, 'token', 'getConfig');
+    assert.strictEqual(result.status, 200);
+    assert.deepStrictEqual(
+      Array.from(result.body.employees, employee => employee.uid),
+      ['250007'],
+      'an inactive canonical Main identity must not allow its Active legacy placeholder to reappear in the frontline roster'
+    );
+  }
+
+  {
+    const fixtures = {
+      dbCalls: [], rpcCalls: [],
+      now: new Date('2026-08-23T12:00:00.000Z'),
       verifyMainJwt: async () => ({ id: '250007', roles: ['AKRA'], apps: ['app-kpi'], exp: 9999999999 }),
       dbRows: async (table, query) => {
         fixtures.dbCalls.push({ table, query });
@@ -342,8 +447,9 @@ async function callPayload(handler, body, origin = 'https://akra-web.github.io')
       action: 'saveWorkload', token: 'valid-worker-token', employeeUid: '250007', date: '2026-08-23',
       workload: {
         employee: 'ชื่อจาก Main ที่ต่างจาก roster', capacity: 10,
-        outbound: 7, inbound: 1, transfer: 1, shared: 1,
-        note: '', primaryCore: 'คลัง W1', supportDuties: []
+        outbound: 7, inbound: 3, transfer: 0, shared: 0,
+        note: '', primaryCore: 'คลัง W1',
+        supportDuties: [{ id: 123, icon: 'fa-test', name: 'แวะขึ้นของ', hours: 3 }]
       }
     });
     assert.strictEqual(result.status, 200, 'the same stable Main identity must be able to save its own Workload');
@@ -354,8 +460,8 @@ async function callPayload(handler, body, origin = 'https://akra-web.github.io')
       p_username: '250007',
       p_entry: {
         employeeUid: '250007', employee: 'หมูหยอง', capacity: 10,
-        outbound: 7, inbound: 1, transfer: 1, shared: 1,
-        note: '', primaryCore: 'คลัง W1', supportDuties: [], updatedBy: '250007'
+        outbound: 7, inbound: 3, transfer: 0, shared: 0,
+        note: '', primaryCore: 'คลัง W1', supportDuties: [{ name: 'แวะขึ้นของ', hours: 3 }], updatedBy: '250007'
       }
     }, 'the server must bind the mutation to the current user and canonical roster name');
   }
@@ -363,6 +469,7 @@ async function callPayload(handler, body, origin = 'https://akra-web.github.io')
   {
     const fixtures = {
       dbCalls: [], rpcCalls: [],
+      now: new Date('2026-08-23T12:00:00.000Z'),
       verifyMainJwt: async () => ({ id: '250007', roles: ['AKRA'], apps: ['app-kpi'], exp: 9999999999 }),
       dbRows: async () => { fixtures.dbCalls.push('unexpected'); return []; },
       dbRpc: async () => { fixtures.rpcCalls.push('unexpected'); return {}; }
@@ -370,7 +477,10 @@ async function callPayload(handler, body, origin = 'https://akra-web.github.io')
     const runtime = loadHandler(fixtures);
     const crossEmployee = await callPayload(runtime.handler, {
       action: 'saveWorkload', token: 'valid-worker-token', employeeUid: '250008', date: '2026-08-23',
-      workload: { capacity: 10, outbound: 10, inbound: 0, transfer: 0, shared: 0 }
+      workload: {
+        capacity: 10, outbound: 10, inbound: 0, transfer: 0, shared: 0,
+        primaryCore: 'คลัง W1', supportDuties: []
+      }
     });
     assert.strictEqual(crossEmployee.status, 403);
     assert.strictEqual(crossEmployee.body.reason, 'permission_denied');
@@ -394,6 +504,45 @@ async function callPayload(handler, body, origin = 'https://akra-web.github.io')
     assert.strictEqual(futureDate.body.reason, 'invalid_workload');
     assert.strictEqual(fixtures.dbCalls.length, 0, 'future Workload must make zero database queries');
     assert.strictEqual(fixtures.rpcCalls.length, 0, 'future Workload must make zero mutation calls');
+
+    const invalidDuty = await callPayload(runtime.handler, {
+      action: 'saveWorkload', token: 'valid-worker-token', employeeUid: '250007', date: '2026-08-23',
+      workload: {
+        capacity: 10, outbound: 6, inbound: 4, transfer: 0, shared: 0,
+        primaryCore: 'คลัง W1', supportDuties: [{ name: 'แวะขึ้นของ', hours: 4 }]
+      }
+    });
+    assert.strictEqual(invalidDuty.status, 400);
+    assert.strictEqual(invalidDuty.body.reason, 'invalid_workload');
+    assert.strictEqual(fixtures.dbCalls.length, 0, 'invalid v2 duty duration must make zero database queries');
+    assert.strictEqual(fixtures.rpcCalls.length, 0, 'invalid v2 duty duration must make zero mutation calls');
+
+    const excessiveSecondary = await callPayload(runtime.handler, {
+      action: 'saveWorkload', token: 'valid-worker-token', employeeUid: '250007', date: '2026-08-23',
+      workload: {
+        capacity: 10, outbound: 0, inbound: 10, transfer: 0, shared: 0,
+        primaryCore: 'คลัง W1',
+        supportDuties: [
+          { name: 'แวะขึ้นของ', hours: 5 },
+          { name: 'แวะไปส่งของ', hours: 5 },
+          { name: 'ช่วยยกสินค้า', hours: 1 }
+        ]
+      }
+    });
+    assert.strictEqual(excessiveSecondary.status, 400);
+    assert.strictEqual(fixtures.dbCalls.length, 0, 'secondary hours above capacity must make zero database queries');
+    assert.strictEqual(fixtures.rpcCalls.length, 0, 'secondary hours above capacity must make zero mutation calls');
+
+    const invalidCore = await callPayload(runtime.handler, {
+      action: 'saveWorkload', token: 'valid-worker-token', employeeUid: '250007', date: '2026-08-23',
+      workload: {
+        capacity: 10, outbound: 10, inbound: 0, transfer: 0, shared: 0,
+        primaryCore: 'UNRECOGNIZED', supportDuties: []
+      }
+    });
+    assert.strictEqual(invalidCore.status, 400);
+    assert.strictEqual(fixtures.dbCalls.length, 0, 'invalid primary core must make zero database queries');
+    assert.strictEqual(fixtures.rpcCalls.length, 0, 'invalid primary core must make zero mutation calls');
   }
 
   {
@@ -413,7 +562,10 @@ async function callPayload(handler, body, origin = 'https://akra-web.github.io')
     const runtime = loadHandler(fixtures);
     const result = await callPayload(runtime.handler, {
       action: 'saveWorkload', token: 'valid-worker-token', employeeUid: '250007', date: '2026-08-23',
-      workload: { capacity: 10, outbound: 10, inbound: 0, transfer: 0, shared: 0 }
+      workload: {
+        capacity: 10, outbound: 10, inbound: 0, transfer: 0, shared: 0,
+        primaryCore: 'คลัง W1', supportDuties: []
+      }
     });
     assert.strictEqual(result.status, 500);
     assert.strictEqual(result.body.reason, 'database_error', 'malformed RPC success must fail closed');

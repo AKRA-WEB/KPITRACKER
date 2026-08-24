@@ -30,6 +30,7 @@ const BRANCH_CONFIG = {
 };
 const TRD_DEPARTMENTS = { 'แคชเชียร์/แอดมิน': ['ท็อป'], 'หน้าร้าน / ในร้าน': ['บอย'] };
 let activeNames = new Set(['A', 'B', 'ท็อป', 'บอย']);
+let GLOBAL_CONFIG_LIST = [];
 
 function isEmployeeActive(name) {
     return activeNames.has(normalizeEmpName(name));
@@ -48,6 +49,10 @@ const dashboardFunctionNames = [
     'getErrorDetail',
     'getErrorProcess',
     'getTRDDept',
+    'normalizeWorkloadEntry',
+    'resolveWorkloadEmployee',
+    'getCanonicalWorkloadEntry',
+    'getCanonicalWorkloadEntries',
     'getAuthoritativeRoster',
     'getDailyWorkloadState',
     'normalizeVendorBills',
@@ -153,6 +158,9 @@ console.log('=== Running Detailed Daily Dashboard Tests ===');
     assert.strictEqual(model.completeness.isComplete, true);
     assert.deepStrictEqual(model.roster.names, ['A', 'B']);
     assert.strictEqual(model.workload.entries[0].total, 8);
+    assert.strictEqual(model.workload.entries[0].primaryHours, 8);
+    assert.strictEqual(model.workload.entries[0].secondaryHours, 0);
+    assert.strictEqual(model.workload.entries[0].isLegacy, true);
     assert.strictEqual(model.workload.entries[0].note, longText, 'long Workload notes must remain intact');
     assert.strictEqual(model.errors.cases.length, 1, 'participant rows sharing a case ID must render as one real case');
     assert.deepStrictEqual(model.errors.cases[0].employees, ['A', 'B']);
@@ -172,6 +180,100 @@ console.log('=== Running Detailed Daily Dashboard Tests ===');
     assert.strictEqual(rendered.includes('บันทึกโดย'), false);
     assert.strictEqual(rendered.includes('อัปเดตโดย'), false);
     assert.ok(rendered.includes('ทีมเข้ากะ &amp; Workload'), 'roster and Workload must share one section');
+    assert.ok(rendered.includes('ข้อมูล Workload เดิม'), 'legacy Workload must expose its compatibility path');
+}
+
+{
+    GLOBAL_CONFIG_LIST = [{
+        uid: 'AKRA12123',
+        name: 'TRAINEE (SORN)',
+        status: 'Active',
+        aliasUids: ['TRAINEE_SORN'],
+        aliasNames: ['SORN']
+    }];
+    activeNames.add('TRAINEE (SORN)');
+    const zeroMeta = {
+        v: 1,
+        caseId: 'NO_ERRORS',
+        onDuty: ['SORN'],
+        updatedBy: 'AKRA12123',
+        updatedAt: '2026-07-18T08:00:00Z'
+    };
+    const model = buildDailyDashboardViewModel({
+        branch: 'AKRA',
+        date: selectedDate,
+        configList: GLOBAL_CONFIG_LIST,
+        dayData: {
+            date: selectedDate,
+            volume: { transfer: 0, pickup: 0, upcountry: 0, inmarket: 0, outmarket: 0 },
+            workload: [{
+                employeeUid: 'TRAINEE_SORN',
+                employee: 'SORN',
+                capacity: 10,
+                primaryCore: 'คลัง W1',
+                supportDuties: [{ name: 'แวะขึ้นของ', hours: 3 }]
+            }],
+            errors: [{ emp: 'SYSTEM', type: 'ไม่มีความผิดพลาด', note: akraNote(zeroMeta, 'ยืนยัน 0') }],
+            endOfShift: { summary: 'ปิดงานครบ', vendorBills: { totalToday: 0, entryStatus: 'completed' } }
+        },
+        actions: [],
+        actionsLoaded: true,
+        activeEmployees: ['TRAINEE (SORN)'],
+        fallbackRoster: [],
+        cacheTimestamp: 1
+    });
+
+    assert.deepStrictEqual(model.roster.names, ['TRAINEE (SORN)'], 'the selected-day roster must use the exact canonical Main label');
+    assert.strictEqual(model.workload.recordedCount, 1, 'the legacy UID must count once against its canonical roster row');
+    assert.strictEqual(model.workload.entries[0].employeeUid, 'AKRA12123');
+    assert.strictEqual(model.workload.entries[0].employee, 'TRAINEE (SORN)');
+    assert.strictEqual(model.workload.entries[0].primaryHours, 7);
+    assert.strictEqual(model.workload.entries[0].secondaryHours, 3);
+    assert.strictEqual(model.workload.entries[0].total, 10);
+    renderDetailedDailyDashboard(model);
+    const rendered = dashboardElements.get('daily-dashboard-content').innerHTML;
+    assert.ok(rendered.includes('งานหลัก · คลัง W1'));
+    assert.ok(rendered.includes('7 ชม.'));
+    assert.ok(rendered.includes('งานรอง'));
+    assert.ok(rendered.includes('3 ชม.'));
+    assert.ok(rendered.includes('10 / 10 ชม.'));
+    assert.strictEqual(rendered.includes('จ่ายออก'), false, 'the selected-day card must not present the obsolete four-bucket model');
+    GLOBAL_CONFIG_LIST = [];
+}
+
+{
+    GLOBAL_CONFIG_LIST = [
+        { uid: 'A', name: 'Shared Name', roles: ['AKRA'], branches: 'AKRA', status: 'Active' },
+        { uid: 'B', name: 'Shared Name', roles: ['AKRA'], branches: 'AKRA', status: 'Active' }
+    ];
+    activeNames.add('Shared Name');
+    const rosterMeta = {
+        v: 1,
+        caseId: 'NO_ERRORS',
+        onDuty: ['Shared Name', 'Shared Name'],
+        onDutyRoster: [{ uid: 'A', name: 'Shared Name' }, { uid: 'B', name: 'Shared Name' }],
+        updatedAt: '2026-07-18T08:00:00Z'
+    };
+    const model = buildDailyDashboardViewModel({
+        branch: 'AKRA', date: selectedDate, configList: GLOBAL_CONFIG_LIST,
+        dayData: {
+            date: selectedDate,
+            volume: { transfer: 0, pickup: 0, upcountry: 0, inmarket: 0, outmarket: 0 },
+            workload: [
+                { employeeUid: 'A', employee: 'Shared Name', capacity: 10, primaryCore: 'คลัง W1', supportDuties: [] },
+                { employeeUid: 'B', employee: 'Shared Name', capacity: 10, primaryCore: 'คลัง W2', supportDuties: [] }
+            ],
+            errors: [{ emp: 'SYSTEM', type: 'ไม่มีความผิดพลาด', note: akraNote(rosterMeta, 'ยืนยัน 0') }],
+            endOfShift: { summary: 'ปิดงานครบ', vendorBills: { totalToday: 0, entryStatus: 'completed' } }
+        },
+        actions: [], actionsLoaded: true, activeEmployees: GLOBAL_CONFIG_LIST, fallbackRoster: [], cacheTimestamp: 1
+    });
+    assert.deepStrictEqual(model.roster.names, ['Shared Name', 'Shared Name'],
+        'selected-day roster labels may repeat when their stable Main UIDs are distinct');
+    assert.strictEqual(model.workload.expectedCount, 2);
+    assert.strictEqual(model.workload.recordedCount, 2);
+    assert.strictEqual(model.workload.entries.length, 2);
+    GLOBAL_CONFIG_LIST = [];
 }
 
 {

@@ -88,7 +88,7 @@ async function verifyAuthenticatedSupabaseInitialization(page, origin) {
                 viewer: { uid: '250001', name: 'Somchai', roles: ['WAREHOUSE'], status: 'Active' },
                 employees: [
                     { uid: '250001', name: 'Somchai', roles: ['WAREHOUSE'], branches: 'AKRA', status: 'Active' },
-                    { uid: '250018', name: 'SORN', roles: ['WAREHOUSE'], branches: 'AKRA', status: 'Active' }
+                    { uid: 'AKRA12123', name: 'TRAINEE (SORN)', aliasUids: ['TRAINEE_SORN'], aliasNames: ['SORN'], roles: ['AKRA'], branches: 'AKRA', status: 'Active' }
                 ],
                 workload: { date: '2026-08-23', hour: 12, recordedEmployees: [] }
             })
@@ -111,8 +111,8 @@ async function verifyAuthenticatedSupabaseInitialization(page, origin) {
     assert.equal(await page.evaluate(() => typeof window.AkraSupabaseKPI?.getConfig), 'function');
     assert.deepEqual(
         await page.evaluate(() => GLOBAL_CONFIG_LIST.map(employee => employee.name)),
-        ['Somchai', 'SORN'],
-        'Authenticated initialization must populate the Main roster from the Edge response'
+        ['Somchai', 'TRAINEE (SORN)'],
+        'Authenticated initialization must keep the exact Main name and suppress its verified legacy alias'
     );
     assert.equal(await page.locator('#custom-modal').evaluate(element => element.classList.contains('hidden')), true);
     await page.evaluate(() => localStorage.clear());
@@ -261,15 +261,16 @@ async function verifyBranchDashboardIsolation(page) {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.evaluate(() => {
         const now = String(Date.now());
+        const currentWeekDate = formatDateKeyLocal(getStartOfWeek(new Date()));
         localStorage.setItem('kpiData_AKRA', JSON.stringify([{
-            date: '2026-08-23',
+            date: currentWeekDate,
             volume: { transfer: 111, pickup: 0, upcountry: 0, inmarket: 0, outmarket: 0 },
             errors: [{ emp: 'เอส', type: 'AKRA_ONLY_CASE', note: 'AKRA_ONLY_NOTE' }],
             tasks: [{ taskName: 'AKRA_ONLY_TASK', status: 'กำลังทำ', assignee: 'เอส' }],
             workload: []
         }]));
         localStorage.setItem('kpiData_TRD', JSON.stringify([{
-            date: '2026-08-23',
+            date: currentWeekDate,
             errors: [{ emp: 'ท็อป', type: 'TRD_ONLY_CASE', note: 'TRD_ONLY_NOTE' }],
             tasks: [{ taskName: 'TRD_ONLY_TASK', status: 'กำลังทำ', assignee: 'ท็อป' }]
         }]));
@@ -335,6 +336,32 @@ async function verifyFocusedUiDefects(page) {
     assert.notEqual(iconState.content, 'none', 'W2 must use an icon available in the loaded Font Awesome asset');
     assert.notEqual(iconState.content, '""', 'W2 icon glyph must not be blank');
     assert.ok(iconState.width > 0 && iconState.height > 0, 'W2 icon must occupy visible pixels');
+}
+
+async function verifyWorkloadDurationChoices(page) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.evaluate(() => {
+        currentBranch = 'AKRA';
+        workloadState.core = 'คลัง W1';
+        workloadState.coreLabel = 'คลังหลัก W1';
+        workloadState.support = [];
+        renderWorkload();
+        openSupportModal();
+    });
+
+    const durationButtons = page.locator('#modal-time-grid .modal-time-chip');
+    assert.deepEqual(
+        await durationButtons.allTextContents().then(values => values.map(value => value.trim())),
+        ['30 นาที', '1 ชม.', '2 ชม.', '3 ชม.', 'ครึ่งวัน (5h)'],
+        'secondary-work duration choices must expose exactly 0.5, 1, 2, 3, and 5 hours'
+    );
+    await page.getByRole('button', { name: '3 ชม.', exact: true }).click();
+    await page.getByRole('button', { name: 'ยืนยันเพิ่มงาน', exact: true }).click();
+
+    const workload = await page.evaluate(() => getAkraWorkloadValues()[0]);
+    assert.equal(workload.supportDuties.length, 1);
+    assert.equal(workload.supportDuties[0].hours, 3, 'the 3-hour control must add a 3-hour secondary duty');
+    assert.equal(workload.outbound, 7, 'a 3-hour secondary duty must recalculate primary work to 7 hours');
 }
 
 async function verifyBoundedLiveBillList(page) {
@@ -404,6 +431,7 @@ async function verifyBoundedLiveBillList(page) {
         await verifyVisualHierarchy(page);
         await verifyBranchDashboardIsolation(page);
         await verifyFocusedUiDefects(page);
+        await verifyWorkloadDurationChoices(page);
         await verifyBoundedLiveBillList(page);
         assert.deepEqual(pageErrors, [], `Browser runtime must have zero page errors: ${pageErrors.join(' | ')}`);
         assert.deepEqual(consoleErrors, [], `Browser runtime must have zero console errors: ${consoleErrors.join(' | ')}`);
@@ -411,6 +439,7 @@ async function verifyBoundedLiveBillList(page) {
         console.log('PASS: light application canvas and contained dark surfaces');
         console.log('PASS: active-branch Dashboard isolation without fixed sample metrics');
         console.log('PASS: visible W2 icon and non-clipped Incident QC categories');
+        console.log('PASS: exact Workload duration choices and 3-hour recalculation');
         console.log('PASS: bounded, keyboard-scrollable Live Bill list');
     } finally {
         await browser.close();

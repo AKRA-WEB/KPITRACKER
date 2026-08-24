@@ -24,6 +24,10 @@ eval(extractFunction(backend, 'getAkraErrorCaseId'));
 eval(extractFunction(backend, 'mergeAkraErrorEntries'));
 
 eval(extractFunction(html, 'normalizeEmpName'));
+eval(extractFunction(html, 'normalizeWorkloadEntry'));
+eval(extractFunction(html, 'resolveWorkloadEmployee'));
+eval(extractFunction(html, 'getCanonicalWorkloadEntry'));
+eval(extractFunction(html, 'getCanonicalWorkloadEntries'));
 eval(extractFunction(html, 'parseAkraCaseNote'));
 eval(extractFunction(html, 'getAuthoritativeRoster'));
 eval(extractFunction(html, 'getDailyWorkloadState'));
