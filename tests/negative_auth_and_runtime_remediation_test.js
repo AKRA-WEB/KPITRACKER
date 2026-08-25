@@ -578,10 +578,10 @@ console.log('\n[8/8] Testing Drawer Runtime, Accessibility State & Version Parit
 
     // Metadata and content lint checks
     const versionJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../version.json'), 'utf8'));
-    assert.strictEqual(versionJson.version, '20260825.03', 'version.json must be 20260825.03');
-    assert.match(htmlContent, /const CURRENT_VERSION = "20260825\.03";/, 'CURRENT_VERSION in index.html must be 20260825.03');
-    assert.match(htmlContent, /id="drawer-version-text">KPI Suite v20260825\.03<\/span>/, 'Drawer footer must display 20260825.03');
-    assert.match(htmlContent, /supabase-kpi-client\.js\?v=20260825\.03/, 'Incident client asset cache key must match 20260825.03');
+    assert.strictEqual(versionJson.version, '20260825.04', 'version.json must be 20260825.04');
+    assert.match(htmlContent, /const CURRENT_VERSION = "20260825\.04";/, 'CURRENT_VERSION in index.html must be 20260825.04');
+    assert.match(htmlContent, /id="drawer-version-text">KPI Suite v20260825\.04<\/span>/, 'Drawer footer must display 20260825.04');
+    assert.match(htmlContent, /supabase-kpi-client\.js\?v=20260825\.04/, 'Incident client asset cache key must match 20260825.04');
 
     // Check Zero emojis in key areas
     assert.doesNotMatch(htmlContent, /⚡ บิลด่วน \(แป้ง/, 'No raw lightning emoji in live bill title');

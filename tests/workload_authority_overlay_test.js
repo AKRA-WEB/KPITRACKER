@@ -28,7 +28,8 @@ function extractFunction(name) {
   throw new Error(`Unable to extract ${name}`);
 }
 
-const context = vm.createContext({ structuredClone });
+const context = vm.createContext({ structuredClone, Intl, Date });
+vm.runInContext(extractFunction('getTodayBangkokDateStr'), context);
 vm.runInContext(extractFunction('normalizeEmpName'), context);
 vm.runInContext(extractFunction('mergeAuthoritativeWorkloadData'), context);
 

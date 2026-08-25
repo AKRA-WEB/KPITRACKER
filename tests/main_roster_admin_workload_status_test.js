@@ -259,6 +259,8 @@ async function verifyWorkloadRoleAuthority() {
     },
     showToast: () => {}, showModal: () => {}, sendAppLog: () => {},
     safeStorage: { removeItem: () => {} },
+    applyWorkloadSaveResultToCache: () => {},
+    renderTeamWorkloadPreview: () => {},
     syncDataFromSheet: async () => {}, loadDashboardData: () => {}, updateDailyDashboard: () => {}
   });
   vm.runInContext(extractFunction('saveWorkloadCard'), context);
@@ -266,11 +268,10 @@ async function verifyWorkloadRoleAuthority() {
   assert.strictEqual(edgeSaves.length, 1, 'a non-admin must save its own Workload through the authenticated Edge boundary');
   assert.strictEqual(edgeSaves[0].employeeUid, '250013');
   assert.strictEqual(edgeSaves[0].workload.employee, '250013');
-  assert.strictEqual(context.savedAdminWorkloads, undefined, 'a non-admin self-save must not call the legacy team mutation');
+  assert.strictEqual(context.savedAdminWorkloads, undefined, 'workload save must go through Supabase rather than legacy GAS');
   context.currentRoles = ['ADMIN'];
   await context.saveWorkloadCard();
-  assert.strictEqual(edgeSaves.length, 1, 'ADMIN team save remains on its existing contained path in this focused cutover');
-  assert.strictEqual(context.savedAdminWorkloads.length, 2, 'current Main ADMIN role may submit the team Workload');
+  assert.strictEqual(edgeSaves.length, 2, 'all users save workload through authenticated Supabase path');
 }
 
 verifyAdminStatusRefresh().then(() => {
