@@ -1529,7 +1529,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260825.02</span>
+                <span id="drawer-version-text">KPI Suite v20260825.03</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1541,12 +1541,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260825.02"></script>
+    <script src="js/supabase-kpi-client.js?v=20260825.03"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260825.02";
+        const CURRENT_VERSION = "20260825.03";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -4484,17 +4484,20 @@
                     merged.push(day);
                     byDate.set(date, day);
                 }
-                const authoritativeUids = new Set(authoritative.map(item => String(item.employeeUid || '').trim()).filter(Boolean));
-                const authoritativeNames = new Set(authoritative.map(item => normalizeEmpName(item.employee)).filter(Boolean));
-                const legacyPeers = (Array.isArray(day.workload) ? day.workload : []).filter(item => {
-                    const uid = String(item.employeeUid || '').trim();
-                    const name = normalizeEmpName(item.employee);
-                    if (uid) return !authoritativeUids.has(uid);
-                    return !name || !authoritativeNames.has(name);
-                });
-                day.workload = [...legacyPeers, ...authoritative];
+                day.workload = authoritative;
             });
             return merged;
+        }
+
+        function applyWorkloadSaveResultToCache(date, branch, result) {
+            const key = `kpiData_${branch}`;
+            const current = JSON.parse(safeStorage.getItem(key) || '[]');
+            const merged = mergeAuthoritativeWorkloadData(current, [{
+                date,
+                workload: Array.isArray(result?.workload) ? result.workload : []
+            }], branch);
+            safeStorage.setItem(key, JSON.stringify(merged));
+            safeStorage.setItem(`${key}_ts`, String(Date.now()));
         }
 
         function mergeAuthoritativeIncidentData(dailyData, incidentRecords, branch) {
@@ -8301,6 +8304,10 @@
                     showToast("บันทึก Workload สำเร็จ!");
                     sendAppLog("บันทึก Workload", `บันทึก Workload สาขา ${currentBranch} (วันที่ ${date})`);
                     safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_workload`);
+                    if (res.workload) {
+                        applyWorkloadSaveResultToCache(date, currentBranch, res);
+                        renderTeamWorkloadPreview();
+                    }
                     try {
                         await syncDataFromSheet();
                         loadDashboardData();
@@ -8346,7 +8353,10 @@
                 if (res && res.status === 'success') {
                     showToast('ล้างข้อมูล Workload ของคุณเรียบร้อยแล้ว');
                     safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date || todayBangkok}_workload`);
+                    applyWorkloadSaveResultToCache(date || todayBangkok, currentBranch, res);
                     renderAkraWorkloadEditor([], true);
+                    renderTeamWorkloadPreview();
+                    updateDailyDashboard();
                     try {
                         await syncDataFromSheet();
                         loadDashboardData();
