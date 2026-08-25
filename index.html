@@ -289,10 +289,16 @@
                             <div id="wl-s-breakdown" class="space-y-1 text-slate-300"></div>
                         </div>
 
-                        <button type="button" onclick="saveWorkloadCard()" id="btn-save-workload" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 mt-2">
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
-                            <span>บันทึก Workload ประจำวัน</span>
-                        </button>
+                        <div class="flex gap-2 mt-2">
+                            <button type="button" onclick="saveWorkloadCard()" id="btn-save-workload" class="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span>บันทึก Workload ประจำวัน</span>
+                            </button>
+                            <button type="button" onclick="clearWorkloadCard()" id="btn-clear-workload" class="py-3 px-3 rounded-xl bg-slate-700 hover:bg-red-600 text-slate-200 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md" title="ล้างข้อมูล Workload วันนี้ของฉัน">
+                                <i class="fa-solid fa-trash-can"></i>
+                                <span>ล้างข้อมูล</span>
+                            </button>
+                        </div>
                     </section>
 
                     <!-- PC Team Capacity Preview -->
@@ -1523,7 +1529,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260825.01</span>
+                <span id="drawer-version-text">KPI Suite v20260825.02</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1535,12 +1541,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260825.01"></script>
+    <script src="js/supabase-kpi-client.js?v=20260825.02"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260825.01";
+        const CURRENT_VERSION = "20260825.02";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3611,10 +3617,15 @@
             }
 
             container.innerHTML = recordedErrorCases.map(item => `
-                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1 text-xs">
-                    <div class="flex justify-between font-bold">
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1 text-xs relative group">
+                    <div class="flex justify-between items-center font-bold">
                         <span>${item.time || '10:30 น.'} • ${esc(item.worker)}</span>
-                        <span class="text-red-600 font-num">-${item.penalty}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-red-600 font-num">-${item.penalty}</span>
+                            <button type="button" onclick="deleteErrorCase('${esc(item.caseId)}')" title="ยกเลิก/ลบเคสนี้" class="text-slate-400 hover:text-red-600 p-1 rounded transition-colors text-xs cursor-pointer">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
                     </div>
                     <p class="text-slate-700 font-medium">${esc(item.type)}</p>
                     ${item.note ? `<p class="text-[11px] text-slate-500">${esc(item.note)}</p>` : ''}
@@ -3746,6 +3757,37 @@
             } finally {
                 incidentSaveInFlight = false;
                 if (button) button.disabled = false;
+            }
+        }
+
+        async function deleteErrorCase(caseId) {
+            if (!caseId) return;
+            const dateInput = document.getElementById('record-date-error');
+            const date = dateInput ? dateInput.value : '';
+            const todayBangkok = (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().slice(0, 10));
+            if (date && date !== todayBangkok) {
+                return showModal('ไม่สามารถยกเลิกได้', 'ระบบอนุญาตให้ยกเลิกหรือลบรายการความผิดพลาดเฉพาะวันปัจจุบันเท่านั้น', 'error');
+            }
+            if (typeof window.confirm === 'function' && !window.confirm('ต้องการยกเลิก/ลบรายการความผิดพลาดนี้ใช่หรือไม่? (คะแนน HP จะถูกคืนกลับทันที)')) {
+                return;
+            }
+            if (!sessionToken || !window.AkraSupabaseKPI?.deleteIncident) {
+                return showModal('ดำเนินการไม่สำเร็จ', 'ระบบยังไม่พร้อม กรุณาโหลดหน้าใหม่', 'error');
+            }
+            try {
+                showToast('กำลังยกเลิกรายการ...', false);
+                const result = await AkraSupabaseKPI.deleteIncident(sessionToken, currentBranch, date || todayBangkok, caseId);
+                recordedErrorCases = result.incidents || [];
+                incidentZeroConfirmed = result.zeroConfirmed || false;
+                applyIncidentSaveResultToCache(date || todayBangkok, currentBranch, result);
+                renderErrTimeline();
+                renderErrTeamHp();
+                showToast('ยกเลิกรายการความผิดพลาดเรียบร้อยแล้ว');
+                loadDashboardData();
+                updateDailyDashboard();
+            } catch (err) {
+                console.error('Failed to delete incident case:', err);
+                showModal('ยกเลิกไม่สำเร็จ', err?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล', 'error');
             }
         }
 
@@ -8275,6 +8317,54 @@
             } finally {
                 btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> บันทึก Workload';
                 btn.disabled = false;
+            }
+        }
+
+        async function clearWorkloadCard() {
+            if (await AppVersionGuard.blockIfStale()) return;
+            const dateInput = document.getElementById('record-date');
+            const date = dateInput ? dateInput.value : '';
+            const todayBangkok = (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().slice(0, 10));
+            if (date && date !== todayBangkok) {
+                return showModal('ไม่สามารถล้างข้อมูลได้', 'ระบบอนุญาตให้ล้างหรือยกเลิกข้อมูลภาระงานเฉพาะวันปัจจุบันเท่านั้น', 'error');
+            }
+            if (typeof window.confirm === 'function' && !window.confirm('ต้องการล้างข้อมูลภาระงาน (Workload) ของคุณในวันนี้ใช่หรือไม่?')) {
+                return;
+            }
+            if (!sessionToken || !window.AkraSupabaseKPI?.clearWorkload) {
+                return showModal('ดำเนินการไม่สำเร็จ', 'ระบบยังไม่พร้อม กรุณาโหลดหน้าใหม่', 'error');
+            }
+
+            const btn = document.getElementById('btn-clear-workload');
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                btn.disabled = true;
+            }
+
+            try {
+                const res = await AkraSupabaseKPI.clearWorkload(sessionToken, currentUser, date || todayBangkok);
+                if (res && res.status === 'success') {
+                    showToast('ล้างข้อมูล Workload ของคุณเรียบร้อยแล้ว');
+                    safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date || todayBangkok}_workload`);
+                    renderAkraWorkloadEditor([], true);
+                    try {
+                        await syncDataFromSheet();
+                        loadDashboardData();
+                        updateDailyDashboard();
+                    } catch (syncErr) {
+                        console.warn('Post-clear UI refresh warning:', syncErr);
+                    }
+                } else {
+                    showModal('ล้างข้อมูลไม่สำเร็จ', res?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showModal('ล้างข้อมูลไม่สำเร็จ', e.message || 'เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้', 'error');
+            } finally {
+                if (btn) {
+                    btn.innerHTML = '<i class="fa-solid fa-trash-can"></i><span>ล้างข้อมูล</span>';
+                    btn.disabled = false;
+                }
             }
         }
 
