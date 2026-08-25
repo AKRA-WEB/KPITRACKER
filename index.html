@@ -1523,7 +1523,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260824.04</span>
+                <span id="drawer-version-text">KPI Suite v20260825.01</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1535,12 +1535,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260824.04"></script>
+    <script src="js/supabase-kpi-client.js?v=20260825.01"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260824.04";
+        const CURRENT_VERSION = "20260825.01";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -1959,7 +1959,6 @@
             { uid: "260030", name: "จอนห์นี่", branches: "AKRA", dept: "", gender: "M" },
             { uid: "260029", name: "ปีเตอร์", branches: "AKRA", dept: "", gender: "M" },
             { uid: "260031", name: "ปิ่น", branches: "TRD", dept: "แคชเชียร์", gender: "F" },
-            { uid: "เอส", name: "เอส", branches: "AKRA", dept: "", gender: "M" }
         ];
 
         let TRD_DEPARTMENTS = {
@@ -1980,8 +1979,7 @@
             "250023": ["TRD"], "maprang": ["TRD"],
             "260030": ["AKRA"], "johnny": ["AKRA"],
             "260029": ["AKRA"], "peter": ["AKRA"],
-            "260031": ["TRD"], "pin": ["TRD"],
-            "เอส": ["AKRA"]
+            "260031": ["TRD"], "pin": ["TRD"]
         };
 
         const AKRA_CASE_MARKER = '[AKRA_CASE:';
@@ -2011,7 +2009,7 @@
 
         let BRANCH_CONFIG = {
             "AKRA": {
-                employees: ['หมูหยอง', 'เอี้ยง', 'จอนห์นี่', 'ปีเตอร์', 'เอส'],
+                employees: ['หมูหยอง', 'เอี้ยง', 'จอนห์นี่', 'ปีเตอร์'],
                 showZone2: true,
                 errorTypes: [
                     { group: "1. ขาออก & จัดส่ง", options: AKRA_CORE_CATALOG.filter(i => i.core === 'outbound').map(i => i.type) },

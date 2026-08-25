@@ -1,17 +1,17 @@
 const fs = require('fs');
 const assert = require('assert');
 const vm = require('node:vm');
+const path = require('path');
 
 console.log('=== VERIFYING KPITRACKER VERSION PARITY & SCRIPT SYNTAX ===\n');
 
 // 1. Version Parity
-const path = require('path');
 const indexPath = path.join(__dirname, '../index.html');
 const versionPath = path.join(__dirname, '../version.json');
 const indexContent = fs.readFileSync(indexPath, 'utf8');
 const versionJson = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
 
-const expectedVersion = "20260824.04";
+const expectedVersion = "20260825.01";
 assert(indexContent.includes(`const CURRENT_VERSION = "${expectedVersion}";`), `CURRENT_VERSION in index.html must be ${expectedVersion}`);
 assert.strictEqual(versionJson.version, expectedVersion, `version.json must be ${expectedVersion}`);
 console.log(`  [PASS] Version parity verified: ${expectedVersion}`);
