@@ -12,10 +12,10 @@ const versionJson = JSON.parse(fs.readFileSync(versionJsonPath, 'utf8'));
 const clientJsContent = fs.readFileSync(clientJsPath, 'utf8');
 
 // 1. Verify Version Parity
-assert.strictEqual(versionJson.version, '20260825.06', 'version.json must be 20260825.06');
-assert.ok(htmlContent.includes('const CURRENT_VERSION = "20260825.06";'), 'index.html must have CURRENT_VERSION 20260825.06');
-assert.ok(htmlContent.includes('KPI Suite v20260825.06'), 'index.html drawer must show KPI Suite v20260825.06');
-assert.ok(htmlContent.includes('supabase-kpi-client.js?v=20260825.06'), 'index.html script tag must have v=20260825.06');
+assert.strictEqual(versionJson.version, '20260825.07', 'version.json must be 20260825.07');
+assert.ok(htmlContent.includes('const CURRENT_VERSION = "20260825.07";'), 'index.html must have CURRENT_VERSION 20260825.07');
+assert.ok(htmlContent.includes('KPI Suite v20260825.07'), 'index.html drawer must show KPI Suite v20260825.07');
+assert.ok(htmlContent.includes('supabase-kpi-client.js?v=20260825.07'), 'index.html script tag must have v=20260825.07');
 
 // 2. Verify HTML Buttons
 assert.ok(htmlContent.includes('id="btn-clear-workload"'), 'Workload HTML must include btn-clear-workload');
