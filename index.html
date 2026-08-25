@@ -1529,7 +1529,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260825.04</span>
+                <span id="drawer-version-text">KPI Suite v20260825.05</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1541,12 +1541,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260825.04"></script>
+    <script src="js/supabase-kpi-client.js?v=20260825.05"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260825.04";
+        const CURRENT_VERSION = "20260825.05";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3416,9 +3416,9 @@
                 const totalHours = saved ? saved.primaryHours + saved.secondaryHours : 0;
                 const hasSupp = saved ? saved.secondaryHours > 0 : false;
                 return `
-                    <div class="p-2 rounded-xl border ${isMe ? 'border-blue-300 bg-blue-50/50' : (saved ? 'border-slate-100 bg-slate-50' : 'border-amber-200 bg-amber-50/60')} flex items-center justify-between gap-2 text-xs">
+                    <div class="p-2 rounded-xl border ${isMe ? (saved ? 'border-blue-400 bg-blue-50/70' : 'border-amber-300 bg-amber-50/40') : (saved ? 'border-slate-100 bg-slate-50' : 'border-amber-200 bg-amber-50/60')} flex items-center justify-between gap-2 text-xs">
                         <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full ${isMe ? 'bg-blue-600' : (saved ? 'bg-emerald-500' : 'bg-amber-500')}"></span>
+                            <span class="w-2 h-2 rounded-full ${isMe ? (saved ? 'bg-blue-600' : 'bg-amber-500') : (saved ? 'bg-emerald-500' : 'bg-amber-500')}"></span>
                             <span class="font-bold text-slate-800">${esc(employee.name)}</span>
                             ${isMe ? '<span class="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded font-bold">คุณ</span>' : ''}
                         </div>
@@ -4483,13 +4483,13 @@
 
             const today = (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().slice(0, 10));
             const recordsWithToday = Array.isArray(workloadRecords) ? [...workloadRecords] : [];
-            if (!recordsWithToday.some(r => String(r?.date || '').slice(0, 10) === today)) {
+            if (!recordsWithToday.some(r => (normalizeClientDateKey(r?.date) || String(r?.date || '').slice(0, 10)) === today)) {
                 recordsWithToday.push({ date: today, workload: [] });
             }
 
-            const byDate = new Map(merged.map(day => [String(day.date || '').slice(0, 10), day]));
+            const byDate = new Map(merged.map(day => [normalizeClientDateKey(day.date) || String(day.date || '').slice(0, 10), day]));
             recordsWithToday.forEach(record => {
-                const date = String(record?.date || '').slice(0, 10);
+                const date = normalizeClientDateKey(record?.date) || String(record?.date || '').slice(0, 10);
                 if (!date) return;
                 const authoritative = Array.isArray(record.workload) ? record.workload.map(item => ({ ...item })) : [];
                 let day = byDate.get(date);
@@ -4499,15 +4499,17 @@
                     byDate.set(date, day);
                 }
                 day.workload = authoritative;
+                day.date = date;
             });
             return merged;
         }
 
         function applyWorkloadSaveResultToCache(date, branch, result) {
             const key = `kpiData_${branch}`;
+            const canonicalDate = normalizeClientDateKey(date) || String(date || '').slice(0, 10);
             const current = JSON.parse(safeStorage.getItem(key) || '[]');
             const merged = mergeAuthoritativeWorkloadData(current, [{
-                date,
+                date: canonicalDate,
                 workload: Array.isArray(result?.workload) ? result.workload : []
             }], branch);
             safeStorage.setItem(key, JSON.stringify(merged));
@@ -4517,9 +4519,9 @@
         function mergeAuthoritativeIncidentData(dailyData, incidentRecords, branch) {
             const normalizedBranch = String(branch || '').toUpperCase();
             const merged = (Array.isArray(dailyData) ? dailyData : []).map(day => ({ ...day }));
-            const byDate = new Map(merged.map(day => [String(day.date || '').slice(0, 10), day]));
+            const byDate = new Map(merged.map(day => [normalizeClientDateKey(day.date) || String(day.date || '').slice(0, 10), day]));
             (Array.isArray(incidentRecords) ? incidentRecords : []).forEach(record => {
-                const date = String(record?.date || '').slice(0, 10);
+                const date = normalizeClientDateKey(record?.date) || String(record?.date || '').slice(0, 10);
                 if (!date) return;
                 let day = byDate.get(date);
                 if (!day) {
@@ -4530,6 +4532,7 @@
                 day.errors = Array.isArray(record.errors) ? record.errors.map(item => ({ ...item })) : [];
                 day.incidentCases = Array.isArray(record.incidents) ? record.incidents.map(item => ({ ...item })) : [];
                 day.zeroErrorsConfirmed = record.zeroConfirmed === true;
+                day.date = date;
             });
             return merged;
         }

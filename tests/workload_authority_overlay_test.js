@@ -30,6 +30,9 @@ function extractFunction(name) {
 
 const context = vm.createContext({ structuredClone, Intl, Date });
 vm.runInContext(extractFunction('getTodayBangkokDateStr'), context);
+vm.runInContext(extractFunction('formatDateKeyLocal'), context);
+vm.runInContext(extractFunction('parseDateKeyLocal'), context);
+vm.runInContext(extractFunction('normalizeClientDateKey'), context);
 vm.runInContext(extractFunction('normalizeEmpName'), context);
 vm.runInContext(extractFunction('mergeAuthoritativeWorkloadData'), context);
 
