@@ -40,7 +40,7 @@ function makeToken(username, name, roles = ['WAREHOUSE', 'AKRA']) {
     }
     if (parsedUrl.pathname === '/version.json') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ version: '20260826.04' }));
+      return res.end(JSON.stringify({ version: '20260826.05' }));
     }
     if (parsedUrl.pathname === '/' || parsedUrl.pathname === '/index.html') {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });

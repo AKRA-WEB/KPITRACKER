@@ -119,6 +119,16 @@
             if (!Array.isArray(data.skills)) throw new Error('invalid_get_skill_catalog_response');
             return data;
         },
+        saveSkillCatalogItem: async (token, skill) => {
+            const data = await fetchKpiAction('saveSkillCatalogItem', token, { skill });
+            if (data.status !== 'success' || !Array.isArray(data.skills)) throw new Error('invalid_save_skill_catalog_response');
+            return data;
+        },
+        deleteSkillCatalogItem: async (token, skillCode) => {
+            const data = await fetchKpiAction('deleteSkillCatalogItem', token, { skillCode });
+            if (data.status !== 'success' || !Array.isArray(data.skills)) throw new Error('invalid_delete_skill_catalog_response');
+            return data;
+        },
         getEmployeeSkills: async (token, employeeUid = null) => {
             const data = await fetchKpiAction('getEmployeeSkills', token, { employeeUid });
             if (!Array.isArray(data.skills)) throw new Error('invalid_get_employee_skills_response');
