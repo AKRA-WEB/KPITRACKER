@@ -2455,7 +2455,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260826.06</span>
+                <span id="drawer-version-text">KPI Suite v20260826.07</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2467,12 +2467,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260826.06"></script>
+    <script src="js/supabase-kpi-client.js?v=20260826.07"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260826.06";
+        const CURRENT_VERSION = "20260826.07";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -5460,12 +5460,17 @@
             }
 
             const currentUid = String(currentUser || currentUserId || '').trim();
-            const currentObj = GLOBAL_CONFIG_LIST.find(e => e.uid === currentUid || e.name === currentUser) || {
+            const currentObj = GLOBAL_CONFIG_LIST.find(e =>
+                (e.uid && e.uid.toLowerCase() === currentUid.toLowerCase()) ||
+                (e.name && e.name.toLowerCase() === currentUid.toLowerCase()) ||
+                (e.name && currentUser && e.name.toLowerCase() === currentUser.toLowerCase())
+            ) || {
                 uid: currentUid,
                 name: currentUser || currentUid || 'พนักงาน',
                 roles: [],
                 dept: 'คลังสินค้า',
-                branches: currentBranch || 'AKRA'
+                branches: currentBranch || 'AKRA',
+                avatarUrl: ''
             };
 
             // Set initial header info
@@ -5473,6 +5478,8 @@
             const branchEl = document.getElementById('my-profile-branch-badge');
             const deptEl = document.getElementById('my-profile-dept-badge');
             const rolesEl = document.getElementById('my-profile-roles');
+            const avatarImg = document.getElementById('my-profile-avatar-img');
+            const avatarIcon = document.getElementById('my-profile-avatar');
 
             if (nameEl) nameEl.textContent = currentObj.name || currentUid;
             if (branchEl) branchEl.textContent = currentBranch || 'AKRA';
@@ -5481,10 +5488,24 @@
                 ? currentObj.roles.join(', ')
                 : (currentObj.dept || 'พนักงานปฏิบัติการ');
 
+            // Render initial avatar immediately from currentObj or previous cache
+            const initialAvatar = currentObj.avatarUrl || (MY_PROFILE_DATA && MY_PROFILE_DATA.avatarUrl) || '';
+            if (avatarImg && avatarIcon) {
+                if (initialAvatar) {
+                    avatarImg.src = initialAvatar;
+                    avatarImg.classList.remove('hidden');
+                    avatarIcon.classList.add('hidden');
+                } else {
+                    avatarImg.src = '';
+                    avatarImg.classList.add('hidden');
+                    avatarIcon.classList.remove('hidden');
+                }
+            }
+
             try {
                 let profile = null;
                 if (sessionToken && window.AkraSupabaseKPI?.getMyProfileSummary) {
-                    const res = await AkraSupabaseKPI.getMyProfileSummary(sessionToken, MY_PROFILE_MONTH, currentUid).catch(() => null);
+                    const res = await AkraSupabaseKPI.getMyProfileSummary(sessionToken, MY_PROFILE_MONTH, currentObj.uid || currentUid).catch(() => null);
                     if (res && res.profile) profile = res.profile;
                 }
 
@@ -5522,6 +5543,7 @@
                         roles: currentObj.roles || [],
                         dept: currentObj.dept || '',
                         status: currentObj.status || 'Active',
+                        avatarUrl: currentObj.avatarUrl || '',
                         month: MY_PROFILE_MONTH,
                         qualityHp: 100,
                         incidentCount: 0,
@@ -5550,6 +5572,14 @@
                             isMultiSkillStar: false
                         }
                     };
+                }
+
+                if (profile) {
+                    if (!profile.avatarUrl && currentObj.avatarUrl) {
+                        profile.avatarUrl = currentObj.avatarUrl;
+                    } else if (profile.avatarUrl && !currentObj.avatarUrl) {
+                        currentObj.avatarUrl = profile.avatarUrl;
+                    }
                 }
 
                 MY_PROFILE_DATA = profile;
@@ -5584,9 +5614,10 @@
             if (rolesEl) rolesEl.textContent = (Array.isArray(p.roles) && p.roles.length > 0) ? p.roles.join(', ') : (p.dept || 'พนักงานปฏิบัติการ');
             if (monthInput && p.month) monthInput.value = p.month;
 
+            const effectiveAvatar = p.avatarUrl || (MY_PROFILE_DATA && MY_PROFILE_DATA.avatarUrl) || '';
             if (avatarImg && avatarIcon) {
-                if (p.avatarUrl) {
-                    avatarImg.src = p.avatarUrl;
+                if (effectiveAvatar) {
+                    avatarImg.src = effectiveAvatar;
                     avatarImg.classList.remove('hidden');
                     avatarIcon.classList.add('hidden');
                 } else {

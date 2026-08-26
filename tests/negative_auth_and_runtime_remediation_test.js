@@ -578,7 +578,7 @@ console.log('\n[8/8] Testing Drawer Runtime, Accessibility State & Version Parit
 
     // Metadata and content lint checks
     const versionJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../version.json'), 'utf8'));
-    assert.strictEqual(versionJson.version, '20260826.06', 'version.json must be 20260826.06');
+    assert.strictEqual(versionJson.version, '20260826.07', 'version.json must be 20260826.07');
     assert.match(htmlContent, new RegExp(`const CURRENT_VERSION = "${versionJson.version}";`), 'CURRENT_VERSION in index.html must match version.json');
     assert.match(htmlContent, new RegExp(`id="drawer-version-text">KPI Suite v${versionJson.version}<\\/span>`), 'Drawer footer must display version.json');
     assert.match(htmlContent, new RegExp(`supabase-kpi-client\\.js\\?v=${versionJson.version}`), 'Incident client asset cache key must match version.json');
