@@ -154,6 +154,11 @@
             if (data.status !== 'success' || !data.profile) throw new Error('invalid_get_my_profile_response');
             return data;
         },
+        uploadProfileAvatar: async (token, avatarData, employeeUid = null) => {
+            const data = await fetchKpiAction('uploadProfileAvatar', token, { avatarData, employeeUid });
+            if (data.status !== 'success' || !data.avatarUrl) throw new Error('invalid_upload_avatar_response');
+            return data;
+        },
         getActions: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
         saveAction: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); }
     };

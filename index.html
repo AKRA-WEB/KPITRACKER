@@ -1126,8 +1126,15 @@
                 <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                     <div class="flex items-center gap-4 min-w-0">
-                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-2xl shadow-lg border border-white/20 shrink-0">
-                            <span id="my-profile-avatar"><i class="fa-solid fa-user-astronaut"></i></span>
+                        <div class="relative group cursor-pointer shrink-0" onclick="triggerProfilePhotoUpload()" title="คลิกเพื่ออัปโหลดรูปโปรไฟล์">
+                            <div id="my-profile-avatar-container" class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-2xl shadow-lg border-2 border-white/20 overflow-hidden relative">
+                                <span id="my-profile-avatar"><i class="fa-solid fa-user-astronaut"></i></span>
+                                <img id="my-profile-avatar-img" class="w-full h-full object-cover hidden" alt="รูปโปรไฟล์">
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-blue-600 text-white border-2 border-slate-900 flex items-center justify-center text-[10px] shadow group-hover:scale-110 group-hover:bg-blue-500 transition-transform">
+                                <i class="fa-solid fa-camera"></i>
+                            </div>
+                            <input type="file" id="my-profile-photo-input" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange="handleProfilePhotoSelected(event)">
                         </div>
                         <div class="min-w-0">
                             <div class="flex items-center gap-2 flex-wrap">
@@ -2169,8 +2176,9 @@
             <!-- Header -->
             <div class="flex items-start justify-between border-b border-slate-800 pb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-xl font-black text-white shadow-lg shrink-0">
-                        <i class="fa-solid fa-user-astronaut"></i>
+                    <div id="emp-profile-avatar-container" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-xl font-black text-white shadow-lg shrink-0 overflow-hidden relative border border-white/20">
+                        <span id="emp-profile-avatar-icon"><i class="fa-solid fa-user-astronaut"></i></span>
+                        <img id="emp-profile-avatar-img" class="w-full h-full object-cover hidden" alt="รูปโปรไฟล์">
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
@@ -2447,7 +2455,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260826.05</span>
+                <span id="drawer-version-text">KPI Suite v20260826.06</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2459,12 +2467,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260826.05"></script>
+    <script src="js/supabase-kpi-client.js?v=20260826.06"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260826.05";
+        const CURRENT_VERSION = "20260826.06";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -5296,11 +5304,32 @@
             if (totalHoursEl) totalHoursEl.textContent = '0 ชม. รวม';
             if (skillsList) skillsList.innerHTML = '<div class="col-span-2 text-center text-xs text-slate-400 py-3">กำลังโหลดข้อมูลทักษะและสถิติ…</div>';
 
+            const modalAvatarImg = document.getElementById('emp-profile-avatar-img');
+            const modalAvatarIcon = document.getElementById('emp-profile-avatar-icon');
+            if (modalAvatarImg && modalAvatarIcon) {
+                const initialAvatar = empObj.avatarUrl || '';
+                if (initialAvatar) {
+                    modalAvatarImg.src = initialAvatar;
+                    modalAvatarImg.classList.remove('hidden');
+                    modalAvatarIcon.classList.add('hidden');
+                } else {
+                    modalAvatarImg.src = '';
+                    modalAvatarImg.classList.add('hidden');
+                    modalAvatarIcon.classList.remove('hidden');
+                }
+            }
+
             try {
                 let profileData = null;
                 if (sessionToken && window.AkraSupabaseKPI?.getEmployeeProfileSummary) {
                     const res = await AkraSupabaseKPI.getEmployeeProfileSummary(sessionToken, empObj.uid || empObj.name).catch(() => null);
                     if (res && res.profile) profileData = res.profile;
+                }
+
+                if (profileData && profileData.avatarUrl && modalAvatarImg && modalAvatarIcon) {
+                    modalAvatarImg.src = profileData.avatarUrl;
+                    modalAvatarImg.classList.remove('hidden');
+                    modalAvatarIcon.classList.add('hidden');
                 }
 
                 // Fallback computation from local memory if API fails or offline
@@ -5540,18 +5569,32 @@
         function renderMyProfileView(p) {
             if (!p) return;
 
-            // Update Header
+            // Update Header & Avatar
             const nameEl = document.getElementById('my-profile-name');
             const branchEl = document.getElementById('my-profile-branch-badge');
             const deptEl = document.getElementById('my-profile-dept-badge');
             const rolesEl = document.getElementById('my-profile-roles');
             const monthInput = document.getElementById('my-profile-month-input');
+            const avatarImg = document.getElementById('my-profile-avatar-img');
+            const avatarIcon = document.getElementById('my-profile-avatar');
 
             if (nameEl) nameEl.textContent = p.name || 'พนักงาน';
             if (branchEl) branchEl.textContent = currentBranch || 'AKRA';
             if (deptEl) deptEl.textContent = p.dept || 'คลังสินค้า';
             if (rolesEl) rolesEl.textContent = (Array.isArray(p.roles) && p.roles.length > 0) ? p.roles.join(', ') : (p.dept || 'พนักงานปฏิบัติการ');
             if (monthInput && p.month) monthInput.value = p.month;
+
+            if (avatarImg && avatarIcon) {
+                if (p.avatarUrl) {
+                    avatarImg.src = p.avatarUrl;
+                    avatarImg.classList.remove('hidden');
+                    avatarIcon.classList.add('hidden');
+                } else {
+                    avatarImg.src = '';
+                    avatarImg.classList.add('hidden');
+                    avatarIcon.classList.remove('hidden');
+                }
+            }
 
             // Quality Cards
             const scoreEl = document.getElementById('my-profile-quality-score');
@@ -5705,6 +5748,111 @@
                     recommendedStep.textContent = `เป้าหมายถัดไป: พัฒนาต่อเนื่องสู่ระดับ Master Trainer และถ่ายทอดทักษะแก่ทีม`;
                 }
             }
+        }
+
+        // ================= PROFILE PHOTO UPLOAD CONTROLLER =================
+        function triggerProfilePhotoUpload() {
+            const input = document.getElementById('my-profile-photo-input');
+            if (input) input.click();
+        }
+
+        async function handleProfilePhotoSelected(event) {
+            const file = event?.target?.files?.[0];
+            if (!file) return;
+
+            // Reset input value so same file can be re-selected if needed
+            event.target.value = '';
+
+            if (!file.type.startsWith('image/')) {
+                showToast('กรุณาเลือกไฟล์รูปภาพ (PNG, JPG, WebP)', true);
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('ขนาดไฟล์ภาพใหญ่เกิน 10MB กรุณาเลือกภาพขนาดเล็กลง', true);
+                return;
+            }
+
+            const avatarContainer = document.getElementById('my-profile-avatar-container');
+            if (avatarContainer) {
+                avatarContainer.classList.add('opacity-50', 'animate-pulse');
+            }
+
+            try {
+                // Compress & resize image to 256x256 max
+                const base64Data = await resizeImageToMaxDimension(file, 256, 0.85);
+
+                // Call Supabase KPI API
+                const currentUid = String(currentUser || currentUserId || '').trim();
+                const res = await AkraSupabaseKPI.uploadProfileAvatar(sessionToken, base64Data, currentUid);
+
+                if (res.status === 'success' && res.avatarUrl) {
+                    if (MY_PROFILE_DATA) MY_PROFILE_DATA.avatarUrl = res.avatarUrl;
+                    const avatarImg = document.getElementById('my-profile-avatar-img');
+                    const avatarIcon = document.getElementById('my-profile-avatar');
+                    if (avatarImg && avatarIcon) {
+                        avatarImg.src = res.avatarUrl;
+                        avatarImg.classList.remove('hidden');
+                        avatarIcon.classList.add('hidden');
+                    }
+                    // Update current user in GLOBAL_CONFIG_LIST if present
+                    const emp = GLOBAL_CONFIG_LIST.find(e => e.uid === currentUid || e.name === currentUser);
+                    if (emp) emp.avatarUrl = res.avatarUrl;
+
+                    showToast('อัปเดตรูปโปรไฟล์สำเร็จแล้ว');
+                } else {
+                    throw new Error('บันทึกรูปภาพไม่สำเร็จ');
+                }
+            } catch (err) {
+                console.error('Failed to upload profile avatar:', err);
+                showToast('อัปโหลดรูปภาพไม่สำเร็จ: ' + (err.message || ''), true);
+            } finally {
+                if (avatarContainer) {
+                    avatarContainer.classList.remove('opacity-50', 'animate-pulse');
+                }
+            }
+        }
+
+        function resizeImageToMaxDimension(file, maxDim = 256, quality = 0.85) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+
+                            if (width > height) {
+                                if (width > maxDim) {
+                                    height = Math.round((height * maxDim) / width);
+                                    width = maxDim;
+                                }
+                            } else {
+                                if (height > maxDim) {
+                                    width = Math.round((width * maxDim) / height);
+                                    height = maxDim;
+                                }
+                            }
+
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                            resolve(dataUrl);
+                        } catch (canvasErr) {
+                            reject(canvasErr);
+                        }
+                    };
+                    img.onerror = () => reject(new Error('โหลดไฟล์ภาพล้มเหลว'));
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => reject(new Error('อ่านไฟล์ภาพล้มเหลว'));
+                reader.readAsDataURL(file);
+            });
         }
 
         function switchAdminIncidentBranch(branch) {
