@@ -413,8 +413,20 @@
                         </div>
 
                         <div class="pt-1">
-                            <label class="text-[11px] font-bold text-slate-700 block mb-1">เลือกผู้รับผิดชอบ:</label>
+                            <label class="text-[11px] font-bold text-slate-700 block mb-1">เลือกผู้รับผิดชอบ / ผู้จัด (Caused by):</label>
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-emp-chips"></div>
+                        </div>
+
+                        <!-- Dual Attribution: Good Catch Hero -->
+                        <div class="pt-2.5 border-t border-slate-100 space-y-1">
+                            <div class="flex items-center justify-between">
+                                <label class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                                    <span class="text-amber-500 font-bold">🔎</span>
+                                    <span>ผู้ตรวจพบ / สกัดข้อผิดพลาดได้ทัน (Good Catch by):</span>
+                                </label>
+                                <span class="text-[9px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200"><i class="fa-solid fa-star text-amber-400 mr-0.5"></i>+1 Good Catch</span>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-catcher-chips"></div>
                         </div>
                     </section>
 
@@ -2455,7 +2467,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260826.07</span>
+                <span id="drawer-version-text">KPI Suite v20260826.08</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2467,12 +2479,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260826.07"></script>
+    <script src="js/supabase-kpi-client.js?v=20260826.08"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260826.07";
+        const CURRENT_VERSION = "20260826.08";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -4149,6 +4161,7 @@
 
         let errCategory = 'outbound';
         let selectedErrWorker = 'ทุกคนในกะ';
+        let selectedErrCatcher = '(ไม่มี / ตรวจพบเอง)';
         let selectedIncidentResponsibility = 'individual';
         let recordedErrorCases = [];
         let incidentZeroConfirmed = false;
@@ -6278,27 +6291,55 @@
 
         function renderErrEmpChips() {
             const container = document.getElementById('pc-err-emp-chips');
-            if (!container) return;
+            const catcherContainer = document.getElementById('pc-err-catcher-chips');
             const emps = getBranchActiveRoster(currentBranch);
-            const options = ['ทุกคนในกะ', ...emps];
-            if (!selectedErrWorker || !options.includes(selectedErrWorker)) {
-                selectedErrWorker = options[0] || 'ทุกคนในกะ';
+
+            if (container) {
+                const options = ['ทุกคนในกะ', ...emps];
+                if (!selectedErrWorker || !options.includes(selectedErrWorker)) {
+                    selectedErrWorker = options[0] || 'ทุกคนในกะ';
+                }
+
+                container.innerHTML = options.map(emp => {
+                    const isSelected = selectedErrWorker === emp;
+                    return `
+                        <button type="button" onclick="toggleErrEmp('${esc(emp)}', this)" class="emp-chip ${isSelected ? 'emp-chip-active' : ''} p-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 transition-all text-center">
+                            ${esc(emp)}
+                        </button>
+                    `;
+                }).join('');
             }
 
-            container.innerHTML = options.map(emp => {
-                const isSelected = selectedErrWorker === emp;
-                return `
-                    <button type="button" onclick="toggleErrEmp('${esc(emp)}', this)" class="emp-chip ${isSelected ? 'emp-chip-active' : ''} p-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 transition-all text-center">
-                        ${esc(emp)}
-                    </button>
-                `;
-            }).join('');
+            if (catcherContainer) {
+                const catcherOptions = ['(ไม่มี / ตรวจพบเอง)', ...emps];
+                if (!selectedErrCatcher || !catcherOptions.includes(selectedErrCatcher)) {
+                    selectedErrCatcher = catcherOptions[0];
+                }
+
+                catcherContainer.innerHTML = catcherOptions.map(emp => {
+                    const isSelected = selectedErrCatcher === emp;
+                    const isNone = emp === '(ไม่มี / ตรวจพบเอง)';
+                    return `
+                        <button type="button" onclick="toggleErrCatcher('${esc(emp)}', this)" class="emp-chip ${isSelected ? 'emp-chip-active bg-emerald-600 text-white border-emerald-600' : ''} p-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 transition-all text-center">
+                            ${isNone ? '<span class="text-slate-400 font-normal">(ไม่มี / ตรวจพบเอง)</span>' : `<i class="fa-solid fa-user-check text-emerald-500 mr-1"></i>${esc(emp)}`}
+                        </button>
+                    `;
+                }).join('');
+            }
         }
 
         function toggleErrEmp(name, btn) {
             selectedErrWorker = name;
             document.querySelectorAll('#pc-err-emp-chips .emp-chip').forEach(el => el.classList.remove('emp-chip-active'));
             if (btn) btn.classList.add('emp-chip-active');
+        }
+
+        function toggleErrCatcher(name, btn) {
+            selectedErrCatcher = name;
+            document.querySelectorAll('#pc-err-catcher-chips .emp-chip').forEach(el => {
+                el.classList.remove('emp-chip-active', 'bg-emerald-600', 'text-white', 'border-emerald-600');
+            });
+            if (btn) btn.classList.add('emp-chip-active', 'bg-emerald-600', 'text-white', 'border-emerald-600');
         }
 
         function renderErrTimeline() {
@@ -6324,6 +6365,11 @@
                 else if (resp === 'team') respBadge = '<span class="text-[9px] bg-purple-100 text-purple-800 border border-purple-200 font-bold px-1.5 py-0.5 rounded">👥 ทีมทั้งกะ</span>';
                 else respBadge = '<span class="text-[9px] bg-red-50 text-red-700 border border-red-200 font-bold px-1.5 py-0.5 rounded">👤 รายบุคคล</span>';
 
+                let catcherBadge = '';
+                if (item.detectedBy && item.detectedBy !== '(ไม่มี / ตรวจพบเอง)' && item.detectedBy !== item.worker) {
+                    catcherBadge = `<span class="text-[9px] bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold px-1.5 py-0.5 rounded flex items-center gap-1"><i class="fa-solid fa-magnifying-glass text-amber-500"></i> Good Catch: ${esc(item.detectedBy)}</span>`;
+                }
+
                 const penaltyText = (resp === 'process' || resp === 'pending' || item.penalty === 0)
                     ? '<span class="text-slate-500 font-num font-bold text-[11px]">0 HP</span>'
                     : `<span class="text-red-600 font-num font-bold">-${item.penalty}</span>`;
@@ -6332,8 +6378,9 @@
                     <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5 text-xs relative group">
                         <div class="flex justify-between items-center font-bold">
                             <div class="flex items-center gap-1.5 flex-wrap">
-                                <span>${item.time || '10:30 น.'} • ${esc(item.worker)}</span>
+                                <span>${item.time || '10:30 น.'} • ผู้จัด: ${esc(item.worker)}</span>
                                 ${respBadge}
+                                ${catcherBadge}
                             </div>
                             <div class="flex items-center gap-2 shrink-0">
                                 ${penaltyText}
@@ -6401,6 +6448,7 @@
 
             const now = new Date();
             const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
+            const detectedBy = (selectedErrCatcher && selectedErrCatcher !== '(ไม่มี / ตรวจพบเอง)') ? selectedErrCatcher : '';
 
             const newCase = {
                 kind: 'case',
@@ -6416,6 +6464,8 @@
                 responsibility: resp,
                 stage: 'warehouse',
                 incidentType: sevName,
+                detectedBy: detectedBy,
+                goodCatchBy: detectedBy,
                 note: note,
                 time: timeStr
             };
