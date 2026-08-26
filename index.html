@@ -168,6 +168,9 @@
                 <button type="button" onclick="switchTab('dashboard')" id="dtab-dashboard" class="desktop-tab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
                     <i class="fa-solid fa-chart-pie text-amber-400"></i><span>Dashboard</span>
                 </button>
+                <button type="button" onclick="switchTab('my-profile')" id="dtab-my-profile" class="desktop-tab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-id-badge text-emerald-400"></i><span>โปรไฟล์ฉัน</span>
+                </button>
             </nav>
 
             <div class="ml-auto flex items-center gap-2 shrink-0">
@@ -1116,6 +1119,184 @@
             <div class="h-4"></div>
         </div>
 
+        <!-- ================= VIEW: MY PROFILE & PERSONAL PASSPORT (โปรไฟล์ของฉัน) ================= -->
+        <div id="view-my-profile" class="ops-view hidden space-y-4 max-w-5xl mx-auto">
+            <!-- Header Card -->
+            <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-5 rounded-3xl border border-slate-700/60 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                    <div class="flex items-center gap-4 min-w-0">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-2xl shadow-lg border border-white/20 shrink-0">
+                            <span id="my-profile-avatar"><i class="fa-solid fa-user-astronaut"></i></span>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h2 id="my-profile-name" class="text-xl font-black text-white tracking-tight truncate">กำลังโหลด...</h2>
+                                <span id="my-profile-branch-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase">AKRA</span>
+                                <span id="my-profile-dept-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-400/20 text-blue-300 border border-blue-400/30">คลังสินค้า</span>
+                            </div>
+                            <p id="my-profile-roles" class="text-xs text-slate-300 font-medium mt-0.5">พนักงานคลังสินค้า</p>
+                        </div>
+                    </div>
+
+                    <!-- Month Selector & Refresh -->
+                    <div class="flex items-center gap-2 self-start sm:self-center">
+                        <div class="bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                            <i class="fa-solid fa-calendar text-blue-400 text-xs"></i>
+                            <input type="month" id="my-profile-month-input" onchange="changeMyProfileMonth(this.value)" class="bg-transparent text-white text-xs font-bold outline-none cursor-pointer">
+                        </div>
+                        <button type="button" onclick="loadMyProfileData(true)" title="รีเฟรชข้อมูล" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs transition-colors">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Quality Highlights (3 Positive KPIs) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <!-- 1. Quality Score Card -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Quality Score</span>
+                        <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center text-xs"><i class="fa-solid fa-star"></i></span>
+                    </div>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="my-profile-quality-score" class="text-3xl font-black text-slate-900 font-num">100</span>
+                        <span class="text-xs font-bold text-slate-400">/ 100</span>
+                    </div>
+                    <div id="my-profile-incident-hint" class="mt-1 text-[11px] text-slate-500 flex items-center gap-1">
+                        <i class="fa-solid fa-shield-halved text-emerald-500"></i>
+                        <span>ไม่มีข้อผิดพลาดในเดือนนี้</span>
+                    </div>
+                </div>
+
+                <!-- 2. Good Catch Card -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Good Catch 🔎</span>
+                        <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    </div>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="my-profile-good-catch-count" class="text-3xl font-black text-emerald-600 font-num">0</span>
+                        <span class="text-xs font-bold text-slate-400">ครั้ง</span>
+                    </div>
+                    <p class="mt-1 text-[11px] text-slate-500">ตรวจพบและสกัดข้อผิดพลาดได้ทัน</p>
+                </div>
+
+                <!-- 3. Safe Working Streak Card -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Safe Streak 🛡️</span>
+                        <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-shield-check"></i></span>
+                    </div>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="my-profile-safe-streak" class="text-3xl font-black text-blue-600 font-num">0</span>
+                        <span class="text-xs font-bold text-slate-400">วันต่อเนื่อง</span>
+                    </div>
+                    <p class="mt-1 text-[11px] text-slate-500">ไม่มีเคสกระทบถึงหน้าร้านหรือลูกค้า</p>
+                </div>
+            </div>
+
+            <!-- Workload Allocation & Multi-Skilling Section -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-simple text-blue-600"></i>
+                        <span>สัดส่วนเวลาการทำงานประจำเดือน (Workload Distribution)</span>
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <span id="my-profile-multi-skill-badge" class="hidden text-xs px-2.5 py-1 rounded-full font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Multi-Skill Star
+                        </span>
+                        <span id="my-profile-total-hours-badge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">0 ชม. รวม</span>
+                    </div>
+                </div>
+
+                <!-- Stacked Progress Bar -->
+                <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden flex shadow-inner">
+                    <div id="my-bar-outbound" style="width: 0%" class="bg-blue-500 h-full transition-all duration-500" title="ขาออก"></div>
+                    <div id="my-bar-inbound" style="width: 0%" class="bg-emerald-500 h-full transition-all duration-500" title="ขารับเข้า"></div>
+                    <div id="my-bar-transfer" style="width: 0%" class="bg-amber-500 h-full transition-all duration-500" title="โอนย้าย W2"></div>
+                    <div id="my-bar-shared" style="width: 0%" class="bg-purple-500 h-full transition-all duration-500" title="ไปช่วยแผนกอื่น"></div>
+                </div>
+
+                <!-- 4 Duty Columns -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-xs">
+                    <div class="p-2.5 rounded-xl bg-blue-50/50 border border-blue-100">
+                        <div class="flex items-center gap-1.5 text-blue-700 font-bold">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>ขาออก (Outbound)
+                        </div>
+                        <div class="mt-1 flex items-baseline justify-between">
+                            <span id="my-val-outbound" class="font-bold text-slate-800 font-num">0 ชม.</span>
+                            <span id="my-pct-outbound" class="text-[10px] text-blue-600 font-semibold font-num">0%</span>
+                        </div>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-emerald-50/50 border border-emerald-100">
+                        <div class="flex items-center gap-1.5 text-emerald-700 font-bold">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>ขารับเข้า (Inbound)
+                        </div>
+                        <div class="mt-1 flex items-baseline justify-between">
+                            <span id="my-val-inbound" class="font-bold text-slate-800 font-num">0 ชม.</span>
+                            <span id="my-pct-inbound" class="text-[10px] text-emerald-600 font-semibold font-num">0%</span>
+                        </div>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-amber-50/50 border border-amber-100">
+                        <div class="flex items-center gap-1.5 text-amber-700 font-bold">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>โอนย้าย W2
+                        </div>
+                        <div class="mt-1 flex items-baseline justify-between">
+                            <span id="my-val-transfer" class="font-bold text-slate-800 font-num">0 ชม.</span>
+                            <span id="my-pct-transfer" class="text-[10px] text-amber-600 font-semibold font-num">0%</span>
+                        </div>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-purple-50/50 border border-purple-100">
+                        <div class="flex items-center gap-1.5 text-purple-700 font-bold">
+                            <span class="w-2 h-2 rounded-full bg-purple-500"></span>งานช่วย (Support)
+                        </div>
+                        <div class="mt-1 flex items-baseline justify-between">
+                            <span id="my-val-shared" class="font-bold text-slate-800 font-num">0 ชม.</span>
+                            <span id="my-pct-shared" class="text-[10px] text-purple-600 font-semibold font-num">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skill Matrix & Competency Roadmap -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-award text-amber-500"></i>
+                        <span>ทักษะและความชำนาญ (Skill &amp; Competency Matrix)</span>
+                    </h3>
+                    <span id="my-profile-certified-count" class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">0 ทักษะ</span>
+                </div>
+                <p class="text-xs text-slate-500">แสดงทักษะที่ผ่านการรับรองแล้ว (✅) และทักษะเป้าหมายสำหรับพัฒนาต่อยอด (🔒)</p>
+
+                <!-- Skill Roadmap Grid -->
+                <div id="my-profile-skills-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+                    <div class="text-center text-slate-400 text-xs py-4 col-span-full">กำลังโหลดข้อมูลทักษะ...</div>
+                </div>
+            </div>
+
+            <!-- Monthly Momentum & Progress Trend -->
+            <div class="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 p-5 rounded-2xl border border-blue-200/70 shadow-sm space-y-2">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-trend-up text-blue-600"></i>
+                        <span>พัฒนาการและการเติบโต (Monthly Momentum)</span>
+                    </h3>
+                    <span id="my-profile-momentum-badge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-600 text-white shadow-sm font-num">+0% vs เดือนก่อน</span>
+                </div>
+                <div class="text-xs text-slate-700 space-y-1.5 pt-1">
+                    <p id="my-profile-momentum-desc" class="font-medium">• คะแนนคุณภาพและชั่วโมงงานปฏิบัติการเพิ่มขึ้นเมื่อเทียบกับเดือนที่แล้ว</p>
+                    <div class="flex items-center gap-2 text-indigo-700 font-bold bg-white/80 p-2.5 rounded-xl border border-indigo-100">
+                        <i class="fa-solid fa-lightbulb text-amber-500"></i>
+                        <span id="my-profile-recommended-step">เป้าหมายถัดไป: ฝึกอบรมทักษะเพิ่มเติมเพื่อขยับระดับความชำนาญ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- ================= VIEW: ADMIN DASHBOARD (ภาพรวมผู้บริหาร) ================= -->
         <div id="view-admin-dash" class="hidden space-y-4 pb-6 md-grid-2">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 md-colspan-2">
@@ -1743,6 +1924,10 @@
                 <i class="fa-solid fa-chart-pie text-xl mb-1 mt-0.5"></i>
                 <span class="text-[10px] font-bold tracking-wide">แดชบอร์ด</span>
             </button>
+            <button onclick="switchTab('my-profile')" id="tab-my-profile" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-emerald-50 text-slate-500">
+                <i class="fa-solid fa-id-badge text-xl mb-1 mt-0.5 text-emerald-600"></i>
+                <span class="text-[10px] font-bold tracking-wide">โปรไฟล์ฉัน</span>
+            </button>
         </div>
     </nav>
 
@@ -2129,6 +2314,11 @@
                     <span>เปลี่ยนสาขา</span>
                 </button>
 
+                <button id="drawer-my-profile-btn" onclick="drawerNavigate('my-profile')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-emerald-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-id-badge text-emerald-400 w-4 text-center text-sm"></i>
+                    <span>โปรไฟล์ของฉัน (My Passport)</span>
+                </button>
+
                 <button id="drawer-audit-btn" onclick="drawerNavigate('audit')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-teal-300 hover:text-white hover:bg-slate-800 transition-all text-left">
                     <i class="fa-solid fa-clipboard-list text-teal-400 w-4 text-center text-sm"></i>
                     <span>ตรวจ 5S คลัง &amp; หน้าร้าน (5S Walk)</span>
@@ -2151,7 +2341,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260826.03</span>
+                <span id="drawer-version-text">KPI Suite v20260826.04</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2163,12 +2353,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260826.03"></script>
+    <script src="js/supabase-kpi-client.js?v=20260826.04"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260826.03";
+        const CURRENT_VERSION = "20260826.04";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -4915,6 +5105,296 @@
         function closeEmployeeProfileModal() {
             const modal = document.getElementById('modal-employee-profile');
             if (modal) modal.classList.add('hidden');
+        }
+
+        // ================= MY PROFILE & PERSONAL PASSPORT CONTROLLER =================
+        let MY_PROFILE_MONTH = (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr().slice(0, 7) : new Date().toISOString().slice(0, 7));
+        let MY_PROFILE_DATA = null;
+
+        async function loadMyProfileData(force = false) {
+            const container = document.getElementById('view-my-profile');
+            if (!container) return;
+
+            const monthInput = document.getElementById('my-profile-month-input');
+            if (monthInput && !monthInput.value) {
+                monthInput.value = MY_PROFILE_MONTH;
+            }
+
+            const currentUid = String(currentUser || currentUserId || '').trim();
+            const currentObj = GLOBAL_CONFIG_LIST.find(e => e.uid === currentUid || e.name === currentUser) || {
+                uid: currentUid,
+                name: currentUser || currentUid || 'พนักงาน',
+                roles: [],
+                dept: 'คลังสินค้า',
+                branches: currentBranch || 'AKRA'
+            };
+
+            // Set initial header info
+            const nameEl = document.getElementById('my-profile-name');
+            const branchEl = document.getElementById('my-profile-branch-badge');
+            const deptEl = document.getElementById('my-profile-dept-badge');
+            const rolesEl = document.getElementById('my-profile-roles');
+
+            if (nameEl) nameEl.textContent = currentObj.name || currentUid;
+            if (branchEl) branchEl.textContent = currentBranch || 'AKRA';
+            if (deptEl) deptEl.textContent = currentObj.dept || 'คลังสินค้า';
+            if (rolesEl) rolesEl.textContent = (Array.isArray(currentObj.roles) && currentObj.roles.length > 0)
+                ? currentObj.roles.join(', ')
+                : (currentObj.dept || 'พนักงานปฏิบัติการ');
+
+            try {
+                let profile = null;
+                if (sessionToken && window.AkraSupabaseKPI?.getMyProfileSummary) {
+                    const res = await AkraSupabaseKPI.getMyProfileSummary(sessionToken, MY_PROFILE_MONTH, currentUid).catch(() => null);
+                    if (res && res.profile) profile = res.profile;
+                }
+
+                if (!profile) {
+                    // Fallback synthesis
+                    const mySkills = GLOBAL_EMPLOYEE_SKILLS.filter(s => s.employeeUid === currentObj.uid || s.employeeName === currentObj.name);
+                    const catalog = (GLOBAL_SKILL_CATALOG && GLOBAL_SKILL_CATALOG.length > 0) ? GLOBAL_SKILL_CATALOG : [
+                        { code: 'PICK_W1', name: 'จัดและแพ็กสินค้า W1', category: 'warehouse', icon: 'fa-boxes-packing' },
+                        { code: 'STORE_W2', name: 'จัดเก็บและโอนย้าย W2', category: 'warehouse', icon: 'fa-cubes-stacked' },
+                        { code: 'INBOUND_QC', name: 'ตรวจรับสินค้าเข้า (QC)', category: 'warehouse', icon: 'fa-clipboard-check' },
+                        { code: 'FORKLIFT', name: 'ขับรถยก / โฟล์คลิฟต์', category: 'warehouse', icon: 'fa-truck-ramp-box' },
+                        { code: 'POS_CASHIER', name: 'ระบบแคชเชียร์ & บิลขาย', category: 'storefront', icon: 'fa-cash-register' },
+                        { code: 'STORE_MERCH', name: 'จัดเรียงและดูแลหน้าร้าน', category: 'storefront', icon: 'fa-store' },
+                        { code: 'DELIVERY', name: 'ขับรถส่งของด่วน', category: 'logistics', icon: 'fa-motorcycle' },
+                        { code: 'AUDIT_5S', name: 'หัวหน้าตรวจมาตรฐาน 5S', category: 'safety', icon: 'fa-list-check' },
+                        { code: 'MAINTENANCE', name: 'บำรุงรักษาอุปกรณ์ & รถเข็น', category: 'general', icon: 'fa-wrench' }
+                    ];
+                    const certMap = new Map(mySkills.map(s => [s.skillCode, s]));
+                    const roadmap = catalog.map(cat => {
+                        const cert = certMap.get(cat.code);
+                        return {
+                            code: cat.code,
+                            name: cat.name,
+                            category: cat.category,
+                            icon: cat.icon,
+                            isCertified: !!cert,
+                            level: cert ? (cert.level || 1) : 0,
+                            levelLabel: cert ? (cert.level === 3 ? 'Lv.3 (Master Trainer)' : cert.level === 2 ? 'Lv.2 (ชำนาญการ)' : 'Lv.1 (พื้นฐาน)') : 'ยังไม่ได้รับการรับรอง'
+                        };
+                    });
+
+                    profile = {
+                        uid: currentObj.uid,
+                        name: currentObj.name,
+                        roles: currentObj.roles || [],
+                        dept: currentObj.dept || '',
+                        status: currentObj.status || 'Active',
+                        month: MY_PROFILE_MONTH,
+                        qualityHp: 100,
+                        incidentCount: 0,
+                        goodCatchCount: 0,
+                        safeStreakDays: 14,
+                        skills: mySkills,
+                        roadmap,
+                        momentum: {
+                            qualityDelta: 0,
+                            qualityImprovementText: '+0% vs เดือนก่อน',
+                            prevMonthHours: 0,
+                            supportHoursChange: 0
+                        },
+                        workloadStats: {
+                            recordedDays: 0,
+                            totalHours: 0,
+                            outboundHours: 0,
+                            outboundPct: 0,
+                            inboundHours: 0,
+                            inboundPct: 0,
+                            transferHours: 0,
+                            transferPct: 0,
+                            sharedHours: 0,
+                            sharedPct: 0,
+                            flexibilityIndex: 0,
+                            isMultiSkillStar: false
+                        }
+                    };
+                }
+
+                MY_PROFILE_DATA = profile;
+                renderMyProfileView(profile);
+
+            } catch (err) {
+                console.error('loadMyProfileData error:', err);
+            }
+        }
+
+        function changeMyProfileMonth(monthStr) {
+            if (!monthStr) return;
+            MY_PROFILE_MONTH = monthStr;
+            loadMyProfileData(true);
+        }
+
+        function renderMyProfileView(p) {
+            if (!p) return;
+
+            // Update Header
+            const nameEl = document.getElementById('my-profile-name');
+            const branchEl = document.getElementById('my-profile-branch-badge');
+            const deptEl = document.getElementById('my-profile-dept-badge');
+            const rolesEl = document.getElementById('my-profile-roles');
+            const monthInput = document.getElementById('my-profile-month-input');
+
+            if (nameEl) nameEl.textContent = p.name || 'พนักงาน';
+            if (branchEl) branchEl.textContent = currentBranch || 'AKRA';
+            if (deptEl) deptEl.textContent = p.dept || 'คลังสินค้า';
+            if (rolesEl) rolesEl.textContent = (Array.isArray(p.roles) && p.roles.length > 0) ? p.roles.join(', ') : (p.dept || 'พนักงานปฏิบัติการ');
+            if (monthInput && p.month) monthInput.value = p.month;
+
+            // Quality Cards
+            const scoreEl = document.getElementById('my-profile-quality-score');
+            const goodCatchEl = document.getElementById('my-profile-good-catch-count');
+            const safeStreakEl = document.getElementById('my-profile-safe-streak');
+            const incidentHint = document.getElementById('my-profile-incident-hint');
+
+            if (scoreEl) scoreEl.textContent = p.qualityHp !== undefined ? p.qualityHp : 100;
+            if (goodCatchEl) goodCatchEl.textContent = p.goodCatchCount || 0;
+            if (safeStreakEl) safeStreakEl.textContent = p.safeStreakDays || 0;
+
+            if (incidentHint) {
+                if (p.incidentCount && p.incidentCount > 0) {
+                    incidentHint.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-500"></i><span class="text-slate-600">พบ Incident ${p.incidentCount} ครั้งในเดือนนี้</span>`;
+                } else {
+                    incidentHint.innerHTML = `<i class="fa-solid fa-shield-halved text-emerald-500"></i><span>ไม่มีข้อผิดพลาดในเดือนนี้</span>`;
+                }
+            }
+
+            // Workload Allocation
+            const wl = p.workloadStats || {};
+            const totalHoursBadge = document.getElementById('my-profile-total-hours-badge');
+            const multiSkillBadge = document.getElementById('my-profile-multi-skill-badge');
+
+            if (totalHoursBadge) totalHoursBadge.textContent = `${wl.totalHours || 0} ชม. รวม`;
+            if (multiSkillBadge) {
+                if (wl.isMultiSkillStar || (wl.flexibilityIndex && wl.flexibilityIndex >= 20)) {
+                    multiSkillBadge.classList.remove('hidden');
+                } else {
+                    multiSkillBadge.classList.add('hidden');
+                }
+            }
+
+            // Stacked Bar
+            const barOut = document.getElementById('my-bar-outbound');
+            const barIn = document.getElementById('my-bar-inbound');
+            const barTrans = document.getElementById('my-bar-transfer');
+            const barShared = document.getElementById('my-bar-shared');
+
+            if (barOut) barOut.style.width = `${wl.outboundPct || 0}%`;
+            if (barIn) barIn.style.width = `${wl.inboundPct || 0}%`;
+            if (barTrans) barTrans.style.width = `${wl.transferPct || 0}%`;
+            if (barShared) barShared.style.width = `${wl.sharedPct || 0}%`;
+
+            // 4 Column values
+            const valOut = document.getElementById('my-val-outbound');
+            const pctOut = document.getElementById('my-pct-outbound');
+            const valIn = document.getElementById('my-val-inbound');
+            const pctIn = document.getElementById('my-pct-inbound');
+            const valTrans = document.getElementById('my-val-transfer');
+            const pctTrans = document.getElementById('my-pct-transfer');
+            const valShared = document.getElementById('my-val-shared');
+            const pctShared = document.getElementById('my-pct-shared');
+
+            if (valOut) valOut.textContent = `${wl.outboundHours || 0} ชม.`;
+            if (pctOut) pctOut.textContent = `${wl.outboundPct || 0}%`;
+            if (valIn) valIn.textContent = `${wl.inboundHours || 0} ชม.`;
+            if (pctIn) pctIn.textContent = `${wl.inboundPct || 0}%`;
+            if (valTrans) valTrans.textContent = `${wl.transferHours || 0} ชม.`;
+            if (pctTrans) pctTrans.textContent = `${wl.transferPct || 0}%`;
+            if (valShared) valShared.textContent = `${wl.sharedHours || 0} ชม.`;
+            if (pctShared) pctShared.textContent = `${wl.sharedPct || 0}%`;
+
+            // Skill Roadmap Grid
+            const skillsGrid = document.getElementById('my-profile-skills-grid');
+            const certCountEl = document.getElementById('my-profile-certified-count');
+            const roadmapList = Array.isArray(p.roadmap) ? p.roadmap : [];
+            const certifiedCount = roadmapList.filter(s => s.isCertified).length;
+
+            if (certCountEl) certCountEl.textContent = `${certifiedCount} ทักษะ`;
+
+            if (skillsGrid) {
+                if (roadmapList.length === 0) {
+                    skillsGrid.innerHTML = '<div class="text-xs text-slate-400 text-center py-4 col-span-full">ไม่พบรายการทักษะในระบบ</div>';
+                } else {
+                    skillsGrid.innerHTML = roadmapList.map(skill => {
+                        if (skill.isCertified) {
+                            const stars = skill.level === 3 ? '⭐⭐⭐' : skill.level === 2 ? '⭐⭐' : '⭐';
+                            const badgeStyle = skill.level === 3
+                                ? 'bg-purple-50 border-purple-200 text-purple-800'
+                                : skill.level === 2
+                                ? 'bg-blue-50 border-blue-200 text-blue-800'
+                                : 'bg-teal-50 border-teal-200 text-teal-800';
+
+                            return `
+                                <div class="p-3 rounded-xl border ${badgeStyle} flex items-start gap-2.5 shadow-sm transition-all hover:scale-[1.01]">
+                                    <div class="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-emerald-600 text-sm shrink-0 border border-emerald-100">
+                                        <i class="fa-solid ${esc(skill.icon || 'fa-award')}"></i>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center justify-between gap-1">
+                                            <span class="font-bold text-xs truncate">${esc(skill.name)}</span>
+                                            <span class="text-xs font-black shrink-0 font-num">${stars}</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-600 font-semibold mt-0.5">${esc(skill.levelLabel)}</p>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            return `
+                                <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-400 flex items-start gap-2.5 shadow-sm opacity-75">
+                                    <div class="w-8 h-8 rounded-lg bg-slate-200/60 flex items-center justify-center text-slate-400 text-sm shrink-0">
+                                        <i class="fa-solid fa-lock"></i>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center justify-between gap-1">
+                                            <span class="font-bold text-xs text-slate-500 truncate">${esc(skill.name)}</span>
+                                            <span class="text-[10px] text-slate-400 shrink-0 font-bold">🔒</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">ยังไม่ได้รับการรับรอง</p>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }).join('');
+                }
+            }
+
+            // Monthly Momentum
+            const momentumBadge = document.getElementById('my-profile-momentum-badge');
+            const momentumDesc = document.getElementById('my-profile-momentum-desc');
+            const recommendedStep = document.getElementById('my-profile-recommended-step');
+            const m = p.momentum || {};
+
+            if (momentumBadge) {
+                momentumBadge.textContent = m.qualityImprovementText || '+0% vs เดือนก่อน';
+                if ((m.qualityDelta || 0) > 0) {
+                    momentumBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-600 text-white shadow-sm font-num';
+                } else if ((m.qualityDelta || 0) < 0) {
+                    momentumBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-amber-600 text-white shadow-sm font-num';
+                } else {
+                    momentumBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-blue-600 text-white shadow-sm font-num';
+                }
+            }
+
+            if (momentumDesc) {
+                if ((m.qualityDelta || 0) > 0) {
+                    momentumDesc.textContent = `🚀 คะแนนคุณภาพเพิ่มขึ้น +${m.qualityDelta} คะแนนเมื่อเทียบกับเดือนก่อนหน้า เยี่ยมมาก!`;
+                } else if ((m.qualityDelta || 0) < 0) {
+                    momentumDesc.textContent = `คะแนนคุณภาพลดลง ${m.qualityDelta} คะแนน มุ่งเน้นการตรวจเช็คก่อนส่งมอบเพื่อผลงานที่ยอดเยี่ยมยิ่งขึ้น`;
+                } else {
+                    momentumDesc.textContent = `คะแนนคุณภาพและสถิติเวลาทำงานรักษามาตรฐานได้ยอดเยี่ยมต่อเนื่อง`;
+                }
+            }
+
+            if (recommendedStep) {
+                const nextUncertified = roadmapList.find(s => !s.isCertified);
+                if (nextUncertified) {
+                    recommendedStep.textContent = `เป้าหมายถัดไป: สอบวัดระดับหรืออบรม "${nextUncertified.name}" เพื่อเพิ่มพูนทักษะ`;
+                } else {
+                    recommendedStep.textContent = `เป้าหมายถัดไป: พัฒนาต่อเนื่องสู่ระดับ Master Trainer และถ่ายทอดทักษะแก่ทีม`;
+                }
+            }
         }
 
         function switchAdminIncidentBranch(branch) {
@@ -8908,9 +9388,9 @@
                 return false;
             }
 
-            const views = ['view-workload', 'view-error', 'view-audit', 'view-billcount', 'view-dashboard', 'view-admin-dash', 'view-admin', 'view-record'];
-            const mobileTabs = ['tab-workload', 'tab-error', 'tab-audit', 'tab-billcount', 'tab-dashboard', 'tab-record'];
-            const desktopTabs = ['dtab-workload', 'dtab-error', 'dtab-audit', 'dtab-billcount', 'dtab-dashboard'];
+            const views = ['view-workload', 'view-error', 'view-audit', 'view-billcount', 'view-dashboard', 'view-my-profile', 'view-admin-dash', 'view-admin', 'view-record'];
+            const mobileTabs = ['tab-workload', 'tab-error', 'tab-audit', 'tab-billcount', 'tab-dashboard', 'tab-my-profile', 'tab-record'];
+            const desktopTabs = ['dtab-workload', 'dtab-error', 'dtab-audit', 'dtab-billcount', 'dtab-dashboard', 'dtab-my-profile'];
 
             views.forEach(v => {
                 const el = document.getElementById(v);
@@ -8920,7 +9400,7 @@
             mobileTabs.forEach(t => {
                 const el = document.getElementById(t);
                 if (el) {
-                    el.classList.remove('tab-active', 'bg-blue-50', 'text-blue-700', 'bg-red-50', 'text-red-700', 'bg-indigo-50', 'text-indigo-700', 'bg-teal-50', 'text-teal-700');
+                    el.classList.remove('tab-active', 'bg-blue-50', 'text-blue-700', 'bg-red-50', 'text-red-700', 'bg-indigo-50', 'text-indigo-700', 'bg-teal-50', 'text-teal-700', 'bg-emerald-50', 'text-emerald-700');
                     el.classList.add('tab-inactive', 'text-slate-500');
                 }
             });
@@ -8955,6 +9435,7 @@
                 'audit': '5S Audit',
                 'billcount': 'Live Sync',
                 'dashboard': 'Dashboard',
+                'my-profile': 'โปรไฟล์ฉัน',
                 'admin-dash': 'Executive Cockpit',
                 'admin': 'Settings'
             };
@@ -8968,6 +9449,8 @@
             if (tab === 'dashboard') {
                 loadDashboardData();
                 updateDailyDashboard();
+            } else if (tab === 'my-profile') {
+                if (typeof loadMyProfileData === 'function') loadMyProfileData();
             } else if (tab === 'audit') {
                 if (typeof load5SAuditData === 'function') load5SAuditData();
             } else if (tab === 'error') {

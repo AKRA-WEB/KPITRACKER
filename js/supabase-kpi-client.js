@@ -134,9 +134,14 @@
             if (data.status !== 'success') throw new Error('invalid_delete_employee_skill_response');
             return data;
         },
-        getEmployeeProfileSummary: async (token, employeeUid = null) => {
-            const data = await fetchKpiAction('getEmployeeProfileSummary', token, { employeeUid });
+        getEmployeeProfileSummary: async (token, employeeUid = null, month = null) => {
+            const data = await fetchKpiAction('getEmployeeProfileSummary', token, { employeeUid, month });
             if (data.status !== 'success' || !data.profile) throw new Error('invalid_get_employee_profile_response');
+            return data;
+        },
+        getMyProfileSummary: async (token, month = null, employeeUid = null) => {
+            const data = await fetchKpiAction('getMyProfileSummary', token, { month, employeeUid });
+            if (data.status !== 'success' || !data.profile) throw new Error('invalid_get_my_profile_response');
             return data;
         },
         getActions: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },

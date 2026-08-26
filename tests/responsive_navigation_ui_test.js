@@ -99,6 +99,9 @@ async function verifyAuthenticatedSupabaseInitialization(page, origin) {
         if (payload.action === 'getAuditData') {
             return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'success', audits: [], findings: [] }) });
         }
+        if (payload.action === 'getEmployeeProfileSummary' || payload.action === 'getMyProfileSummary') {
+            return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'success', profile: null }) });
+        }
         assert.equal(payload.action, 'getConfig');
         getConfigCalls++;
         await route.fulfill({
