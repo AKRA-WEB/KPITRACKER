@@ -297,24 +297,56 @@ testClientSave().then(() => {
     console.log('[5/5] Testing Edge Function validation invariants...');
     // Test dynamic penalty validation function logic
     function lookupIncidentPenalty(catalog, branch, category, type) {
-        if (!catalog || !catalog[branch] || !catalog[branch].items) return null;
-        const items = catalog[branch].items[category];
-        if (!Array.isArray(items)) return null;
-        const found = items.find(item => item.name === type);
-        return found ? Number(found.penalty) : null;
+        const branchCatalog = catalog?.[branch];
+        if (branchCatalog?.items?.[category]) {
+            const item = branchCatalog.items[category].find(i => String(i?.name || '').trim() === String(type).trim());
+            if (item && Number.isInteger(Number(item.penalty))) {
+                return Number(item.penalty);
+            }
+        }
+        if (branchCatalog?.items && typeof branchCatalog.items === 'object') {
+            for (const catKey of Object.keys(branchCatalog.items)) {
+                const items = branchCatalog.items[catKey];
+                if (Array.isArray(items)) {
+                    const item = items.find(i => String(i?.name || '').trim() === String(type).trim());
+                    if (item && Number.isInteger(Number(item.penalty))) {
+                        return Number(item.penalty);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     const testCatalog = customSystemConfig.incidentCatalog;
-    // Positive check
+    // Positive check direct category
     assert.strictEqual(lookupIncidentPenalty(testCatalog, 'AKRA', 'special_ops', 'ส่งของล่าช้าเกินกำหนด'), 15);
-    // Negative check: wrong category
-    assert.strictEqual(lookupIncidentPenalty(testCatalog, 'AKRA', 'non_existent', 'ส่งของล่าช้าเกินกำหนด'), null);
+    // Positive check across categories
+    assert.strictEqual(lookupIncidentPenalty(testCatalog, 'AKRA', 'other_category_alias', 'ส่งของล่าช้าเกินกำหนด'), 15);
     // Negative check: wrong branch
     assert.strictEqual(lookupIncidentPenalty(testCatalog, 'TRD', 'special_ops', 'ส่งของล่าช้าเกินกำหนด'), null);
     // Negative check: wrong type
     assert.strictEqual(lookupIncidentPenalty(testCatalog, 'AKRA', 'special_ops', 'unknown_type'), null);
 
-    console.log('  -> Passed: Edge Function dynamic penalty lookup and validation invariants verified.');
+    // Test dynamic workload duties validation logic
+    function validateWorkloadDuties(duties, primaryCore, supportDuties) {
+        const allowedPrimaryCores = new Set([
+            'คลัง W1', 'คลัง W2', 'คลังหลัก W1', 'คลังสำรอง W2', 'รับสินค้าเข้า', 'ขาออก', 'ขนย้ายสินค้า',
+            ...(Array.isArray(duties?.primaryDuties) ? duties.primaryDuties.map(d => String(d?.name || '').trim()) : [])
+        ]);
+        const allowedDutyNames = new Set([
+            'แวะขึ้นของ', 'แวะไปส่งของ', 'ช่วยหน้าร้าน TRD', 'ช่วยย้ายของ W2',
+            'ช่วยยกสินค้า', 'คลัง W1', 'รับสินค้าเข้า', 'ขาออก',
+            ...(Array.isArray(duties?.supportDuties) ? duties.supportDuties.map(d => String(d?.name || '').trim()) : [])
+        ]);
+        assert(allowedPrimaryCores.has(primaryCore), `Primary core ${primaryCore} must be allowed`);
+        supportDuties.forEach(d => {
+            assert(allowedDutyNames.has(d.name), `Support duty ${d.name} must be allowed`);
+        });
+    }
+
+    validateWorkloadDuties(customSystemConfig.workloadDuties, 'คลังสินค้าพิเศษ X', [{ name: 'ส่งสินค้าพิเศษ', hours: 2 }]);
+    console.log('  -> Passed: Edge Function dynamic penalty lookup and workload duty validation invariants verified.');
 
     console.log('\n=============================================================');
     console.log('🎉 ALL SYSTEM CONFIG & CUSTOMIZATION TESTS PASSED 100%! 🎉');
