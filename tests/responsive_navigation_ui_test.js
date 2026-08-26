@@ -87,6 +87,18 @@ async function verifyAuthenticatedSupabaseInitialization(page, origin) {
                 body: JSON.stringify({ status: 'success', records: [] })
             });
         }
+        if (payload.action === 'getSkillCatalog') {
+            return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'success', skills: [] }) });
+        }
+        if (payload.action === 'getEmployeeSkills') {
+            return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'success', skills: [] }) });
+        }
+        if (payload.action === 'getShiftRoster') {
+            return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'success', shiftRoster: null }) });
+        }
+        if (payload.action === 'getAuditData') {
+            return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'success', audits: [], findings: [] }) });
+        }
         assert.equal(payload.action, 'getConfig');
         getConfigCalls++;
         await route.fulfill({

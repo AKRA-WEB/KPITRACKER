@@ -89,6 +89,56 @@
             if (!Array.isArray(data.records)) throw new Error('invalid_kpi_incident_response');
             return data;
         },
+        saveShiftRoster: async (token, branch, date, shiftLead, roster) => {
+            const data = await fetchKpiAction('saveShiftRoster', token, { branch, date, shiftLead, roster });
+            if (data.status !== 'success') throw new Error('invalid_save_shift_roster_response');
+            return data;
+        },
+        getShiftRoster: async (token, branch, date) => {
+            const data = await fetchKpiAction('getShiftRoster', token, { branch, date });
+            if (data.status !== 'success') throw new Error('invalid_get_shift_roster_response');
+            return data;
+        },
+        saveAuditRecord: async (token, branch, date, auditType, totalScore, sectionScores, notes, findings) => {
+            const data = await fetchKpiAction('saveAuditRecord', token, { branch, date, auditType, totalScore, sectionScores, notes, findings });
+            if (data.status !== 'success') throw new Error('invalid_save_audit_record_response');
+            return data;
+        },
+        getAuditData: async (token, branch, months) => {
+            const data = await fetchKpiAction('getAuditData', token, { branch, months });
+            if (!Array.isArray(data.audits)) throw new Error('invalid_get_audit_data_response');
+            return data;
+        },
+        updateAuditFinding: async (token, findingId, status, afterPhotoUrl, resolutionNote) => {
+            const data = await fetchKpiAction('updateAuditFinding', token, { findingId, status, afterPhotoUrl, resolutionNote });
+            if (data.status !== 'success') throw new Error('invalid_update_audit_finding_response');
+            return data;
+        },
+        getSkillCatalog: async (token) => {
+            const data = await fetchKpiAction('getSkillCatalog', token, {});
+            if (!Array.isArray(data.skills)) throw new Error('invalid_get_skill_catalog_response');
+            return data;
+        },
+        getEmployeeSkills: async (token, employeeUid = null) => {
+            const data = await fetchKpiAction('getEmployeeSkills', token, { employeeUid });
+            if (!Array.isArray(data.skills)) throw new Error('invalid_get_employee_skills_response');
+            return data;
+        },
+        saveEmployeeSkill: async (token, employeeUid, employeeName, skillCode, level, notes = '') => {
+            const data = await fetchKpiAction('saveEmployeeSkill', token, { employeeUid, employeeName, skillCode, level, notes });
+            if (data.status !== 'success') throw new Error('invalid_save_employee_skill_response');
+            return data;
+        },
+        deleteEmployeeSkill: async (token, employeeUid, skillCode) => {
+            const data = await fetchKpiAction('deleteEmployeeSkill', token, { employeeUid, skillCode });
+            if (data.status !== 'success') throw new Error('invalid_delete_employee_skill_response');
+            return data;
+        },
+        getEmployeeProfileSummary: async (token, employeeUid = null) => {
+            const data = await fetchKpiAction('getEmployeeProfileSummary', token, { employeeUid });
+            if (data.status !== 'success' || !data.profile) throw new Error('invalid_get_employee_profile_response');
+            return data;
+        },
         getActions: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
         saveAction: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); }
     };

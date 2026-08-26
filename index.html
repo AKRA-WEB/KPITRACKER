@@ -159,6 +159,9 @@
                 <button type="button" onclick="switchTab('error')" id="dtab-error" class="desktop-tab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
                     <i class="fa-solid fa-clipboard-check text-red-400"></i><span>Incident QC</span>
                 </button>
+                <button type="button" onclick="switchTab('audit')" id="dtab-audit" class="desktop-tab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-clipboard-list text-teal-400"></i><span>5S Audit</span>
+                </button>
                 <button type="button" onclick="switchTab('billcount')" id="dtab-billcount" class="desktop-tab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
                     <i class="fa-solid fa-file-invoice text-indigo-400"></i><span>Live Bill Sync</span>
                 </button>
@@ -192,10 +195,17 @@
                         <i class="fa-solid fa-business-time text-blue-600"></i>
                         สัดส่วนเวลาทำงานประจำวัน (Workload Capacity Allocation)
                     </h2>
-                    <p class="text-xs text-slate-500">บันทึกง่ายภายใน 10 วินาที • ระบบทอนเวลางานหลักและคำนวณ 10 ชม. ให้อัตโนมัติ</p>
+                    <p class="text-xs text-slate-500">บันทึกง่ายภายใน 10 วินาที • ติดตามสัดส่วนภาระงาน (Outbound / Inbound / Transfer / Support) ข้ามแผนก</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-xs bg-blue-100 text-blue-800 font-bold px-3 py-1.5 rounded-xl">เต็มวัน 10 ชม. (100%)</span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <select id="wl-capacity-select" onchange="changeWorkloadCapacity(Number(this.value))" class="p-2 bg-blue-50 border border-blue-200 rounded-xl text-xs font-bold text-blue-900 outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="10">🟢 เต็มวัน 10 ชม. (มาตรฐาน)</option>
+                        <option value="5">🌓 ครึ่งวัน 5 ชม.</option>
+                        <option value="11">🟠 OT 1 ชม. (11 ชม.)</option>
+                        <option value="12">🟠 OT 2 ชม. (12 ชม.)</option>
+                        <option value="13">🟠 OT 3 ชม. (13 ชม.)</option>
+                        <option value="0">⚪ วันหยุด / ลา (0 ชม.)</option>
+                    </select>
                     <input type="date" id="record-date" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
@@ -301,6 +311,32 @@
                         </div>
                     </section>
 
+                    <!-- Section Workload Breakdown & Capacity Heatmap -->
+                    <section id="wl-section-analytics-card" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                            <span class="text-xs font-bold text-slate-800 block"><i class="fa-solid fa-chart-column text-indigo-600 mr-1.5"></i>สถิติภาระงานแยกตามแผนก (Section Capacity)</span>
+                            <span class="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full" id="wl-total-manhours-badge">0 ชม. รวม</span>
+                        </div>
+                        <div class="space-y-2 text-xs" id="wl-section-bars-container">
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px]"><span class="font-semibold text-slate-700"><i class="fa-solid fa-truck text-blue-500 mr-1"></i>ขาออก &amp; จัดส่ง</span><b class="text-slate-900 font-num" id="wl-sec-outbound-val">0 ชม. (0%)</b></div>
+                                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div id="wl-sec-outbound-bar" class="h-full bg-blue-500 rounded-full" style="width: 0%;"></div></div>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px]"><span class="font-semibold text-slate-700"><i class="fa-solid fa-truck-ramp-box text-emerald-500 mr-1"></i>รับสินค้าเข้า</span><b class="text-slate-900 font-num" id="wl-sec-inbound-val">0 ชม. (0%)</b></div>
+                                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div id="wl-sec-inbound-bar" class="h-full bg-emerald-500 rounded-full" style="width: 0%;"></div></div>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px]"><span class="font-semibold text-slate-700"><i class="fa-solid fa-arrows-rotate text-purple-500 mr-1"></i>โอนย้าย W2</span><b class="text-slate-900 font-num" id="wl-sec-transfer-val">0 ชม. (0%)</b></div>
+                                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div id="wl-sec-transfer-bar" class="h-full bg-purple-500 rounded-full" style="width: 0%;"></div></div>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px]"><span class="font-semibold text-slate-700"><i class="fa-solid fa-store text-amber-500 mr-1"></i>สนับสนุน / ส่วนกลาง</span><b class="text-slate-900 font-num" id="wl-sec-shared-val">0 ชม. (0%)</b></div>
+                                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div id="wl-sec-shared-bar" class="h-full bg-amber-500 rounded-full" style="width: 0%;"></div></div>
+                            </div>
+                        </div>
+                    </section>
+
                     <!-- PC Team Capacity Preview -->
                     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
                         <div class="flex items-center justify-between">
@@ -323,7 +359,7 @@
                         <i class="fa-solid fa-triangle-exclamation text-red-600"></i>
                         บันทึกความผิดพลาดหน้างาน (Multi-Category Incident Log)
                     </h2>
-                    <p class="text-xs text-slate-500">บันทึกเคสขาออก, คลังหน้าร้าน/ตกเบิกสต๊อก, ขารับเข้า, โอนย้าย • คิดคะแนน Daily Cap</p>
+                    <p class="text-xs text-slate-500">บันทึกเคสตามระดับผลกระทบ • แยกปัญหากระบวนการ (0 HP) และปัญหาบุคคล • คิดคะแนน Daily Cap</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-xs bg-red-100 text-red-800 font-bold px-3 py-1.5 rounded-xl">Checker / Lead</span>
@@ -344,26 +380,48 @@
                         <span class="text-[10px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-md font-bold">ยืนยัน Zero Error</span>
                     </button>
 
-                    <!-- Step 1: Worker select -->
-                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                    <!-- Step 1: Responsibility Dimension & Worker Select -->
+                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
                         <div class="flex items-center justify-between">
                             <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
                                 <span class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
-                                ผู้รับผิดชอบในเคสนี้:
+                                มิติความรับผิดชอบ (Responsibility Dimension):
                             </label>
-                            <span class="text-[11px] text-red-600 font-semibold">แตะเลือกชื่อ</span>
                         </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-emp-chips"></div>
+
+                        <!-- 4 Responsibility Options -->
+                        <div class="grid grid-cols-2 gap-1.5" id="err-resp-grid">
+                            <button type="button" onclick="selectIncidentResponsibility('individual', this)" class="resp-btn p-2 rounded-xl border border-red-300 bg-red-50 text-left text-xs font-bold text-red-900 transition-all flex items-center gap-1.5 active:scale-98">
+                                <i class="fa-solid fa-user text-red-600"></i>
+                                <span>👤 รายบุคคล</span>
+                            </button>
+                            <button type="button" onclick="selectIncidentResponsibility('team', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
+                                <i class="fa-solid fa-users text-purple-600"></i>
+                                <span>👥 ทีมทั้งกะ (On-Duty)</span>
+                            </button>
+                            <button type="button" onclick="selectIncidentResponsibility('process', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
+                                <i class="fa-solid fa-gears text-blue-600"></i>
+                                <span>⚙️ ข้อผิดพลาดระบบ (0 HP)</span>
+                            </button>
+                            <button type="button" onclick="selectIncidentResponsibility('pending', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
+                                <i class="fa-solid fa-circle-question text-amber-600"></i>
+                                <span>❓ รอตรวจสอบ (0 HP)</span>
+                            </button>
+                        </div>
+
+                        <div class="pt-1">
+                            <label class="text-[11px] font-bold text-slate-700 block mb-1">เลือกผู้รับผิดชอบ:</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-emp-chips"></div>
+                        </div>
                     </section>
 
-                    <!-- Step 2: Category & Severity -->
+                    <!-- Step 2: Category & Detection Stage Severity -->
                     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
                         <div class="flex items-center justify-between">
                             <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
                                 <span class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
-                                หมวดหมู่และประเภทปัญหา:
+                                หมวดหมู่และระดับความรุนแรง / จุดที่พบ:
                             </label>
-                            <span class="text-[11px] text-slate-500">แตะเปลี่ยนหมวด</span>
                         </div>
                         <div class="incident-category-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5" id="err-cat-pills">
                             <button type="button" onclick="switchErrCategory('outbound', this)" class="cat-chip cat-chip-active shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-truck-fast text-blue-500 mr-1"></i><span>ขาออก</span></button>
@@ -402,6 +460,182 @@
                             <span class="text-[10px] text-slate-500" id="err-case-count">0 เคส</span>
                         </div>
                         <div id="pc-err-timeline" class="space-y-2"></div>
+                    </section>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= VIEW: 5S WAREHOUSE WALK AUDIT (ตรวจประเมิน 5S) ================= -->
+        <div id="view-audit" class="ops-view hidden space-y-4 max-w-5xl mx-auto">
+            <!-- Title & Date Row -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-list text-teal-600"></i>
+                        ตรวจประเมิน 5S คลัง &amp; หน้าร้าน (Monday 5S Warehouse Walk)
+                    </h2>
+                    <p class="text-xs text-slate-500">ประเมินพื้นที่และอุปกรณ์เป็นคะแนนรวม (เต็ม 100) • ไม่หักคะแนน HP รายบุคคล • ติดตาม Action Items</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs bg-teal-100 text-teal-800 font-bold px-3 py-1.5 rounded-xl">Area Quality Audit</span>
+                    <input type="date" id="record-date-audit" onchange="load5SAuditData(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-teal-500">
+                </div>
+            </div>
+
+            <!-- Scorecard & Finding Form Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- Col 1: 5S Audit Scorecard -->
+                <div class="space-y-3.5">
+                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                            <h3 class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-star text-amber-500"></i>
+                                แบบฟอร์มประเมิน 6 มิติ (คะแนนรวม 100 คะแนน)
+                            </h3>
+                            <span id="audit-score-badge" class="text-xs font-black px-3 py-1 rounded-full bg-teal-600 text-white shadow-sm font-num">
+                                100 / 100
+                            </span>
+                        </div>
+
+                        <!-- 6 Core 5S Dimensions -->
+                        <div class="space-y-2.5 text-xs">
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+                                <div>
+                                    <p class="font-bold text-slate-800">1. ความปลอดภัย &amp; ทางเดิน (Safety)</p>
+                                    <p class="text-[10px] text-slate-500">ทางเดินโล่ง ไม่มีสิ่งกีดขวาง ถังดับเพลิงพร้อมใช้</p>
+                                </div>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <input type="number" id="audit-s1" min="0" max="25" value="25" onchange="calc5STotalScore()" class="w-14 p-1.5 text-center font-bold font-num bg-white border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                                    <span class="text-[10px] text-slate-400 font-medium">/ 25</span>
+                                </div>
+                            </div>
+
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+                                <div>
+                                    <p class="font-bold text-slate-800">2. ความสะอาด &amp; ขยะ (Cleanliness)</p>
+                                    <p class="text-[10px] text-slate-500">พื้นสะอาด ไม่มีเศษกล่อง/พลาสติก/เทปกาวตกค้าง</p>
+                                </div>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <input type="number" id="audit-s2" min="0" max="20" value="20" onchange="calc5STotalScore()" class="w-14 p-1.5 text-center font-bold font-num bg-white border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                                    <span class="text-[10px] text-slate-400 font-medium">/ 20</span>
+                                </div>
+                            </div>
+
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+                                <div>
+                                    <p class="font-bold text-slate-800">3. การจัดเก็บ &amp; ความเป็นระเบียบ (Storage)</p>
+                                    <p class="text-[10px] text-slate-500">วางของบนชั้น/พาเลทเรียบร้อย ซ้อนไม่เอียง</p>
+                                </div>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <input type="number" id="audit-s3" min="0" max="20" value="20" onchange="calc5STotalScore()" class="w-14 p-1.5 text-center font-bold font-num bg-white border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                                    <span class="text-[10px] text-slate-400 font-medium">/ 20</span>
+                                </div>
+                            </div>
+
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+                                <div>
+                                    <p class="font-bold text-slate-800">4. ป้ายบ่งชี้ &amp; Location (Labeling)</p>
+                                    <p class="text-[10px] text-slate-500">ป้ายชื่อสินค้า/รหัสชัดเจน ตรงช่องจัดเก็บ</p>
+                                </div>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <input type="number" id="audit-s4" min="0" max="15" value="15" onchange="calc5STotalScore()" class="w-14 p-1.5 text-center font-bold font-num bg-white border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                                    <span class="text-[10px] text-slate-400 font-medium">/ 15</span>
+                                </div>
+                            </div>
+
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+                                <div>
+                                    <p class="font-bold text-slate-800">5. FIFO / FEFO การหมุนเวียน (Stock Rotation)</p>
+                                    <p class="text-[10px] text-slate-500">สินค้าเข้าก่อน/หมดอายุก่อนอยู่ด้านหน้า</p>
+                                </div>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <input type="number" id="audit-s5" min="0" max="10" value="10" onchange="calc5STotalScore()" class="w-14 p-1.5 text-center font-bold font-num bg-white border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                                    <span class="text-[10px] text-slate-400 font-medium">/ 10</span>
+                                </div>
+                            </div>
+
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+                                <div>
+                                    <p class="font-bold text-slate-800">6. สภาพอุปกรณ์ส่วนกลาง (Equipment &amp; Tools)</p>
+                                    <p class="text-[10px] text-slate-500">แฮนด์ลิฟท์/รถเข็น/เทปตัด/บันได อยู่ในสภาพดี</p>
+                                </div>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <input type="number" id="audit-s6" min="0" max="10" value="10" onchange="calc5STotalScore()" class="w-14 p-1.5 text-center font-bold font-num bg-white border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                                    <span class="text-[10px] text-slate-400 font-medium">/ 10</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- General Audit Notes -->
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 block mb-1">ข้อเสนอแนะภาพรวม:</label>
+                            <input type="text" id="audit-general-notes" placeholder="เช่น ตรวจคลัง W1 และ W2 ช่วงเช้า สะอาดเรียบร้อยดี" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                        </div>
+
+                        <button type="button" onclick="save5SAuditScorecard()" id="btn-save-audit" class="w-full py-3 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all active:scale-95">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>บันทึกผลการตรวจ 5S วันนี้</span>
+                        </button>
+                    </section>
+
+                    <!-- Add Finding Action Item Box -->
+                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+                        <h3 class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-camera text-blue-600"></i>
+                            เพิ่มจุดที่ต้องแก้ไข (5S Action Item Finding)
+                        </h3>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label class="text-[11px] font-bold text-slate-700 block mb-1">จุดที่พบ / โซน:</label>
+                                <input type="text" id="audit-finding-area" placeholder="เช่น W1 แร็ค A3" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-slate-700 block mb-1">ผู้รับผิดชอบแก้ไข:</label>
+                                <input type="text" id="audit-finding-resp" placeholder="เช่น หมูหยอง / ทีมกะเช้า" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-slate-700 block mb-1">รายละเอียดสิ่งที่ต้องแก้ไข:</label>
+                            <input type="text" id="audit-finding-text" placeholder="เช่น พบเศษเทปกาวและขวดน้ำวางบนชั้นวางสินค้า" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label class="text-[11px] font-bold text-slate-700 block mb-1">หมวดหมู่:</label>
+                                <select id="audit-finding-cat" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg font-semibold text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="cleanliness">ความสะอาด (Cleanliness)</option>
+                                    <option value="safety">ความปลอดภัย (Safety)</option>
+                                    <option value="storage">การจัดเก็บ (Storage)</option>
+                                    <option value="label">ป้ายบ่งชี้ (Label)</option>
+                                    <option value="equipment">อุปกรณ์ (Equipment)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-slate-700 block mb-1">กำหนดเสร็จ (Due):</label>
+                                <input type="text" id="audit-finding-due" placeholder="เช่น 12:00 น. / วันนี้" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <button type="button" onclick="add5SFindingItem()" class="w-full py-2.5 px-3 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-98">
+                            <i class="fa-solid fa-plus-circle text-blue-600"></i>
+                            <span>เพิ่มรายการสิ่งที่ต้องปรับปรุง</span>
+                        </button>
+                    </section>
+                </div>
+
+                <!-- Col 2: Findings List & History -->
+                <div class="space-y-3.5">
+                    <section class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-2xl border border-slate-700 shadow-md space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-200 flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-teal-400"></i>
+                                รายการสิ่งที่ต้องปรับปรุง (Action Items)
+                            </span>
+                            <span id="audit-findings-badge" class="text-[10px] bg-teal-950 text-teal-300 border border-teal-500/30 px-2 py-0.5 rounded font-bold">0 รายการ</span>
+                        </div>
+                        <div id="audit-findings-list" class="space-y-2 text-xs max-h-[35rem] overflow-y-auto pr-1">
+                            <div class="text-slate-400 text-center py-6 text-xs">ยังไม่มีรายการสิ่งที่ต้องปรับปรุงในวันนี้</div>
+                        </div>
                     </section>
                 </div>
 
@@ -1305,6 +1539,9 @@
                     <button type="button" onclick="switchAdminSubTab('incidents')" id="btn-adm-tab-incidents" class="admin-subtab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
                         <i class="fa-solid fa-triangle-exclamation text-red-400"></i><span>ตั้งค่าปัญหา &amp; คะแนน</span>
                     </button>
+                    <button type="button" onclick="switchAdminSubTab('skills')" id="btn-adm-tab-skills" class="admin-subtab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-award text-teal-400"></i><span>ทักษะพนักงาน (Skill Matrix)</span>
+                    </button>
                 </div>
             </section>
 
@@ -1414,6 +1651,71 @@
                 <!-- Categories & Items List Container -->
                 <div id="admin-incident-categories-list" class="space-y-4">
                     <!-- Dynamic Category accordions & item cards injected here -->
+                </div>
+            </div>
+
+            <!-- SUB-PANEL 4: SKILL MATRIX & CERTIFICATION -->
+            <div id="admin-panel-skills" class="hidden space-y-4">
+                <!-- Certify Skill Form -->
+                <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-certificate text-teal-600"></i>
+                                <span>บันทึกรับรองทักษะพนักงาน (Skill Certification)</span>
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">ประเมินและให้ป้ายทักษะความชำนาญ (Level 1-3) แก่พนักงาน</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label for="admin-skill-emp-select" class="block text-xs font-bold text-slate-700 mb-1">เลือกพนักงาน: <span class="text-red-500">*</span></label>
+                            <select id="admin-skill-emp-select" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-teal-500">
+                                <!-- Injected from GLOBAL_CONFIG_LIST -->
+                            </select>
+                        </div>
+                        <div>
+                            <label for="admin-skill-code-select" class="block text-xs font-bold text-slate-700 mb-1">เลือกทักษะ: <span class="text-red-500">*</span></label>
+                            <select id="admin-skill-code-select" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-teal-500">
+                                <!-- Injected from skill catalog -->
+                            </select>
+                        </div>
+                        <div>
+                            <label for="admin-skill-level-select" class="block text-xs font-bold text-slate-700 mb-1">ระดับความชำนาญ: <span class="text-red-500">*</span></label>
+                            <select id="admin-skill-level-select" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-teal-500">
+                                <option value="1">⭐ ระดับ 1: Basic (พื้นฐาน/ปฏิบัติได้)</option>
+                                <option value="2">⭐⭐ ระดับ 2: Proficient (ชำนาญการ/แม่นยำ)</option>
+                                <option value="3">⭐⭐⭐ ระดับ 3: Trainer / Master (ครูฝึก/เชี่ยวชาญ)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="admin-skill-notes-input" class="block text-xs font-bold text-slate-700 mb-1">หมายเหตุการประเมิน / ใบอนุญาต:</label>
+                        <input type="text" id="admin-skill-notes-input" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:ring-2 focus:ring-teal-500" placeholder="เช่น ผ่านการทดสอบขับรถยกพื้นที่แคบ / ใบขับขี่ชนิดที่ 2">
+                    </div>
+
+                    <div class="flex justify-end pt-1">
+                        <button type="button" onclick="confirmAssignSkill()" id="btn-save-admin-skill" class="py-2.5 px-5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-bold text-xs shadow-md flex items-center gap-2 transition-all">
+                            <i class="fa-solid fa-award"></i>
+                            <span>บันทึกการรับรองทักษะ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Certified Skills List -->
+                <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-blue-600"></i>
+                            <span>รายการทักษะที่ได้รับการรับรองแล้วในระบบ</span>
+                        </h3>
+                        <span id="admin-certified-skills-count" class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-num">0 รายการ</span>
+                    </div>
+                    <div id="admin-certified-skills-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                        <!-- Injected here -->
+                    </div>
                 </div>
             </div>
 
@@ -1570,6 +1872,116 @@
         </div>
     </div>
 
+    <!-- Employee Competency Profile Modal (Phase 3) -->
+    <div id="modal-employee-profile" role="dialog" aria-modal="true" aria-labelledby="emp-profile-name" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[90] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-3xl p-5 sm:p-6 shadow-2xl text-white space-y-5 my-auto max-h-[90vh] overflow-y-auto">
+            <!-- Header -->
+            <div class="flex items-start justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-xl font-black text-white shadow-lg shrink-0">
+                        <i class="fa-solid fa-user-astronaut"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 id="emp-profile-name" class="text-base sm:text-lg font-black text-white">ชื่อพนักงาน</h3>
+                            <span id="emp-profile-uid" class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700">UID</span>
+                        </div>
+                        <p id="emp-profile-role" class="text-xs text-slate-400 font-medium">ตำแหน่ง • สาขา</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeEmployeeProfileModal()" aria-label="ปิดหน้าต่างโปรไฟล์" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- KPI & Multi-Skill Key Metrics -->
+            <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                <div class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-center">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">Quality HP</p>
+                    <p id="emp-profile-hp" class="text-base sm:text-lg font-black text-emerald-400 font-num mt-0.5">100%</p>
+                </div>
+                <div class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-center">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">ทักษะที่ผ่าน</p>
+                    <p id="emp-profile-skill-count" class="text-base sm:text-lg font-black text-teal-400 font-num mt-0.5">0 ทักษะ</p>
+                </div>
+                <div class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-center">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">Multi-Skill</p>
+                    <p id="emp-profile-flex" class="text-base sm:text-lg font-black text-amber-400 font-num mt-0.5">0%</p>
+                </div>
+            </div>
+
+            <!-- Certified Skills Badges -->
+            <div class="space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-award text-amber-400"></i>
+                        <span>ป้ายทักษะที่ได้รับการรับรอง (Certified Badges)</span>
+                    </h4>
+                    <span id="emp-profile-tier-badge" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-bold">Standard</span>
+                </div>
+                <div id="emp-profile-skills-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <!-- Badges injected here -->
+                </div>
+            </div>
+
+            <!-- Monthly Workload Breakdown -->
+            <div class="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/80 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-pie text-blue-400"></i>
+                        <span>สถิติเวลาทำงานย้อนหลัง 30 วัน</span>
+                    </h4>
+                    <span id="emp-profile-total-hours" class="text-[10px] font-bold text-blue-300 font-num">0 ชม. รวม</span>
+                </div>
+                <div class="space-y-2 text-xs">
+                    <div>
+                        <div class="flex justify-between text-[11px] mb-1">
+                            <span class="text-slate-400">📦 ขาออก &amp; จัดส่ง</span>
+                            <span id="emp-prof-wl-out" class="font-bold text-blue-400 font-num">0 ชม. (0%)</span>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                            <div id="emp-prof-bar-out" class="bg-blue-500 h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] mb-1">
+                            <span class="text-slate-400">📥 ขารับเข้า</span>
+                            <span id="emp-prof-wl-in" class="font-bold text-emerald-400 font-num">0 ชม. (0%)</span>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                            <div id="emp-prof-bar-in" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] mb-1">
+                            <span class="text-slate-400">🔀 โอนย้าย W2</span>
+                            <span id="emp-prof-wl-trans" class="font-bold text-purple-400 font-num">0 ชม. (0%)</span>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                            <div id="emp-prof-bar-trans" class="bg-purple-500 h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] mb-1">
+                            <span class="text-slate-400">🤝 งานช่วยสนับสนุน (Cross-Section Support)</span>
+                            <span id="emp-prof-wl-supp" class="font-bold text-amber-400 font-num">0 ชม. (0%)</span>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                            <div id="emp-prof-bar-supp" class="bg-amber-500 h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Close button -->
+            <div class="pt-2">
+                <button type="button" onclick="closeEmployeeProfileModal()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-xs text-slate-300 transition-all">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Modal -->
     <div id="custom-modal" class="hidden fixed inset-0 bg-gray-900/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-200">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-200" id="custom-modal-content">
@@ -1717,6 +2129,11 @@
                     <span>เปลี่ยนสาขา</span>
                 </button>
 
+                <button id="drawer-audit-btn" onclick="drawerNavigate('audit')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-teal-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-clipboard-list text-teal-400 w-4 text-center text-sm"></i>
+                    <span>ตรวจ 5S คลัง &amp; หน้าร้าน (5S Walk)</span>
+                </button>
+
                 <div id="drawer-admin-heading" class="hidden pt-3 px-3 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">สำหรับผู้ดูแลระบบ</div>
 
                 <button id="drawer-admin-dash-btn" onclick="drawerNavigate('admin-dash')" class="drawer-nav-item hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-purple-300 hover:text-white hover:bg-slate-800 transition-all text-left">
@@ -1734,7 +2151,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260826.01</span>
+                <span id="drawer-version-text">KPI Suite v20260826.03</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1746,12 +2163,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260826.01"></script>
+    <script src="js/supabase-kpi-client.js?v=20260826.03"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260826.01";
+        const CURRENT_VERSION = "20260826.03";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3428,10 +3845,268 @@
 
         let errCategory = 'outbound';
         let selectedErrWorker = 'ทุกคนในกะ';
+        let selectedIncidentResponsibility = 'individual';
         let recordedErrorCases = [];
         let incidentZeroConfirmed = false;
         let incidentSaveInFlight = false;
         let pendingIncidentCaseId = '';
+
+        let currentAuditScorecard = {
+            s1: 25, s2: 20, s3: 20, s4: 15, s5: 10, s6: 10,
+            totalScore: 100, notes: '', findings: []
+        };
+
+        function changeWorkloadCapacity(capacity) {
+            workloadState.totalHours = Number(capacity) || 10;
+            const selectEl = document.getElementById('wl-capacity-select');
+            if (selectEl) selectEl.value = String(workloadState.totalHours);
+            renderWorkload();
+            saveRecordDraftDebounced();
+        }
+
+        function selectIncidentResponsibility(resp, btn) {
+            selectedIncidentResponsibility = resp;
+            document.querySelectorAll('#err-resp-grid .resp-btn').forEach(el => {
+                el.classList.remove('border-red-300', 'bg-red-50', 'text-red-900', 'border-purple-300', 'bg-purple-50', 'text-purple-900', 'border-blue-300', 'bg-blue-50', 'text-blue-900', 'border-amber-300', 'bg-amber-50', 'text-amber-900');
+                el.classList.add('border-slate-200', 'bg-white', 'text-slate-700');
+            });
+            if (btn) {
+                btn.classList.remove('border-slate-200', 'bg-white', 'text-slate-700');
+                if (resp === 'individual') btn.classList.add('border-red-300', 'bg-red-50', 'text-red-900');
+                else if (resp === 'team') {
+                    btn.classList.add('border-purple-300', 'bg-purple-50', 'text-purple-900');
+                    selectedErrWorker = 'ทุกคนในกะ';
+                    renderErrEmpChips();
+                } else if (resp === 'process') btn.classList.add('border-blue-300', 'bg-blue-50', 'text-blue-900');
+                else if (resp === 'pending') btn.classList.add('border-amber-300', 'bg-amber-50', 'text-amber-900');
+            }
+        }
+
+        function calc5STotalScore() {
+            const s1 = Math.min(25, Math.max(0, parseInt(document.getElementById('audit-s1')?.value, 10) || 0));
+            const s2 = Math.min(20, Math.max(0, parseInt(document.getElementById('audit-s2')?.value, 10) || 0));
+            const s3 = Math.min(20, Math.max(0, parseInt(document.getElementById('audit-s3')?.value, 10) || 0));
+            const s4 = Math.min(15, Math.max(0, parseInt(document.getElementById('audit-s4')?.value, 10) || 0));
+            const s5 = Math.min(10, Math.max(0, parseInt(document.getElementById('audit-s5')?.value, 10) || 0));
+            const s6 = Math.min(10, Math.max(0, parseInt(document.getElementById('audit-s6')?.value, 10) || 0));
+
+            const total = s1 + s2 + s3 + s4 + s5 + s6;
+            currentAuditScorecard.s1 = s1;
+            currentAuditScorecard.s2 = s2;
+            currentAuditScorecard.s3 = s3;
+            currentAuditScorecard.s4 = s4;
+            currentAuditScorecard.s5 = s5;
+            currentAuditScorecard.s6 = s6;
+            currentAuditScorecard.totalScore = total;
+
+            const badge = document.getElementById('audit-score-badge');
+            if (badge) {
+                badge.textContent = `${total} / 100`;
+                if (total >= 90) badge.className = 'text-xs font-black px-3 py-1 rounded-full bg-teal-600 text-white shadow-sm font-num';
+                else if (total >= 75) badge.className = 'text-xs font-black px-3 py-1 rounded-full bg-amber-500 text-white shadow-sm font-num';
+                else badge.className = 'text-xs font-black px-3 py-1 rounded-full bg-red-600 text-white shadow-sm font-num';
+            }
+            return total;
+        }
+
+        async function save5SAuditScorecard() {
+            const date = document.getElementById('record-date-audit')?.value || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().slice(0, 10));
+            const notes = document.getElementById('audit-general-notes')?.value || '';
+            const totalScore = calc5STotalScore();
+            const sectionScores = {
+                safety: currentAuditScorecard.s1,
+                cleanliness: currentAuditScorecard.s2,
+                storage: currentAuditScorecard.s3,
+                label: currentAuditScorecard.s4,
+                fifo: currentAuditScorecard.s5,
+                equipment: currentAuditScorecard.s6
+            };
+            if (!sessionToken || !window.AkraSupabaseKPI?.saveAuditRecord) {
+                return showToast('บันทึกสำเร็จ (โหมดสาธิต)');
+            }
+            const btn = document.getElementById('btn-save-audit');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>กำลังบันทึก...</span>';
+            }
+            try {
+                await AkraSupabaseKPI.saveAuditRecord(sessionToken, currentBranch, date, 'Monday 5S', totalScore, sectionScores, notes, currentAuditScorecard.findings);
+                showToast('บันทึกผลการตรวจ 5S ประจำสัปดาห์สำเร็จ!');
+            } catch (err) {
+                console.error('save5SAuditScorecard failed:', err);
+                showModal('บันทึกไม่สำเร็จ', err?.message || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i><span>บันทึกผลการตรวจ 5S วันนี้</span>';
+                }
+            }
+        }
+
+        function add5SFindingItem() {
+            const area = (document.getElementById('audit-finding-area')?.value || '').trim();
+            const text = (document.getElementById('audit-finding-text')?.value || '').trim();
+            const resp = (document.getElementById('audit-finding-resp')?.value || '').trim();
+            const cat = (document.getElementById('audit-finding-cat')?.value || 'cleanliness').trim();
+            const due = (document.getElementById('audit-finding-due')?.value || '').trim();
+
+            if (!text) {
+                return showToast('กรุณาระบุสิ่งที่ต้องแก้ไข', true);
+            }
+            const newFinding = {
+                id: 'finding-' + Date.now(),
+                area: area || 'พื้นที่ทั่วไป',
+                finding_text: text,
+                category: cat,
+                responsible_person: resp || 'ทีมประจำพื้นที่',
+                due_time: due || 'วันนี้',
+                status: 'Open'
+            };
+            if (!currentAuditScorecard.findings) currentAuditScorecard.findings = [];
+            currentAuditScorecard.findings.unshift(newFinding);
+
+            // clear inputs
+            if (document.getElementById('audit-finding-area')) document.getElementById('audit-finding-area').value = '';
+            if (document.getElementById('audit-finding-text')) document.getElementById('audit-finding-text').value = '';
+            if (document.getElementById('audit-finding-resp')) document.getElementById('audit-finding-resp').value = '';
+            if (document.getElementById('audit-finding-due')) document.getElementById('audit-finding-due').value = '';
+
+            render5SFindingsList();
+            showToast('เพิ่ม Action Item เรียบร้อย');
+        }
+
+        function render5SFindingsList() {
+            const container = document.getElementById('audit-findings-list');
+            const badge = document.getElementById('audit-findings-badge');
+            if (!container) return;
+            const findings = currentAuditScorecard.findings || [];
+            if (badge) badge.textContent = `${findings.length} รายการ`;
+            if (findings.length === 0) {
+                container.innerHTML = '<div class="text-slate-400 text-center py-6 text-xs">ยังไม่มีรายการสิ่งที่ต้องปรับปรุงในวันนี้</div>';
+                return;
+            }
+
+            container.innerHTML = findings.map(f => {
+                const isResolved = f.status === 'Resolved' || f.status === 'Closed';
+                const statusBadge = isResolved
+                    ? '<span class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded font-bold">แก้ไขแล้ว</span>'
+                    : '<span class="text-[10px] bg-amber-950 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded font-bold">รอดำเนินการ</span>';
+                return `
+                    <div class="p-3 rounded-xl ${isResolved ? 'bg-slate-900/40 border border-slate-800 opacity-75' : 'bg-slate-900/90 border border-slate-700'} space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-teal-400 text-xs"><i class="fa-solid fa-location-dot mr-1"></i>${esc(f.area)}</span>
+                            ${statusBadge}
+                        </div>
+                        <p class="text-slate-200 font-medium text-xs">${esc(f.finding_text || f.findingText || '')}</p>
+                        <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800">
+                            <span>ผู้รับผิดชอบ: <b class="text-slate-300">${esc(f.responsible_person || f.responsiblePerson || '-')}</b> (กำหนด: ${esc(f.due_time || f.dueTime || '-')})</span>
+                            ${!isResolved ? `<button type="button" onclick="resolve5SFinding('${esc(f.id)}')" class="px-2 py-1 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-lg transition-all active:scale-95"><i class="fa-solid fa-check mr-1"></i>แก้แล้ว</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function resolve5SFinding(findingId) {
+            const target = (currentAuditScorecard.findings || []).find(f => f.id === findingId);
+            if (target) {
+                target.status = 'Resolved';
+                render5SFindingsList();
+            }
+            if (sessionToken && window.AkraSupabaseKPI?.updateAuditFinding) {
+                try {
+                    await AkraSupabaseKPI.updateAuditFinding(sessionToken, findingId, 'Resolved', '', 'แก้ไขเรียบร้อย');
+                } catch (e) {
+                    console.warn('updateAuditFinding error:', e);
+                }
+            }
+            showToast('อัปเดตสถานะเป็นแก้ไขแล้ว!');
+        }
+
+        async function load5SAuditData(date) {
+            const targetDate = date || (document.getElementById('record-date-audit')?.value) || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().slice(0, 10));
+            const dateInput = document.getElementById('record-date-audit');
+            if (dateInput && dateInput.value !== targetDate) dateInput.value = targetDate;
+            if (!sessionToken || !window.AkraSupabaseKPI?.getAuditData) {
+                render5SFindingsList();
+                return;
+            }
+            try {
+                const data = await AkraSupabaseKPI.getAuditData(sessionToken, currentBranch, 1);
+                if (data && Array.isArray(data.audits)) {
+                    const todayAudit = data.audits.find(a => a.auditDate === targetDate);
+                    if (todayAudit && todayAudit.sectionScores) {
+                        const s = todayAudit.sectionScores;
+                        if (document.getElementById('audit-s1')) document.getElementById('audit-s1').value = s.safety ?? 25;
+                        if (document.getElementById('audit-s2')) document.getElementById('audit-s2').value = s.cleanliness ?? 20;
+                        if (document.getElementById('audit-s3')) document.getElementById('audit-s3').value = s.storage ?? 20;
+                        if (document.getElementById('audit-s4')) document.getElementById('audit-s4').value = s.label ?? 15;
+                        if (document.getElementById('audit-s5')) document.getElementById('audit-s5').value = s.fifo ?? 10;
+                        if (document.getElementById('audit-s6')) document.getElementById('audit-s6').value = s.equipment ?? 10;
+                        if (document.getElementById('audit-general-notes')) document.getElementById('audit-general-notes').value = todayAudit.notes || '';
+                        calc5STotalScore();
+                    }
+                }
+                if (data && Array.isArray(data.findings)) {
+                    currentAuditScorecard.findings = data.findings.filter(f => f.auditDate === targetDate);
+                    render5SFindingsList();
+                }
+            } catch (err) {
+                console.warn('load5SAuditData error:', err);
+            }
+        }
+
+        function renderSectionWorkloadAnalytics() {
+            let outH = 0, inH = 0, transH = 0, shareH = 0, totalH = 0;
+            const coreName = workloadState.core || '';
+            const totalHours = typeof workloadState.totalHours === 'number' ? workloadState.totalHours : 10.0;
+            const totalS = (workloadState.support || []).reduce((sum, t) => sum + (parseFloat(t.hours) || 0), 0);
+            const coreH = Math.max(0, totalHours - totalS);
+            
+            if (coreName.includes('ขาออก')) outH += coreH;
+            else if (coreName.includes('รับสินค้าเข้า')) inH += coreH;
+            else if (coreName.includes('W2') || coreName.includes('ขนย้าย')) transH += coreH;
+            else outH += coreH;
+            
+            (workloadState.support || []).forEach(s => {
+                const sName = String(s.name || '');
+                const hrs = parseFloat(s.hours) || 0;
+                if (sName.includes('ออก') || sName.includes('ส่ง')) outH += hrs;
+                else if (sName.includes('รับ')) inH += hrs;
+                else if (sName.includes('ย้าย') || sName.includes('W2')) transH += hrs;
+                else shareH += hrs;
+            });
+            totalH = outH + inH + transH + shareH;
+            if (totalH === 0) totalH = 10;
+
+            const outPct = Math.round((outH / totalH) * 100);
+            const inPct = Math.round((inH / totalH) * 100);
+            const transPct = Math.round((transH / totalH) * 100);
+            const sharePct = Math.round((shareH / totalH) * 100);
+
+            const badge = document.getElementById('wl-total-manhours-badge');
+            if (badge) badge.textContent = `${totalH.toFixed(1)} ชม. รวม`;
+
+            const outVal = document.getElementById('wl-sec-outbound-val');
+            const outBar = document.getElementById('wl-sec-outbound-bar');
+            if (outVal) outVal.textContent = `${outH.toFixed(1)} ชม. (${outPct}%)`;
+            if (outBar) outBar.style.width = `${outPct}%`;
+
+            const inVal = document.getElementById('wl-sec-inbound-val');
+            const inBar = document.getElementById('wl-sec-inbound-bar');
+            if (inVal) inVal.textContent = `${inH.toFixed(1)} ชม. (${inPct}%)`;
+            if (inBar) inBar.style.width = `${inPct}%`;
+
+            const transVal = document.getElementById('wl-sec-transfer-val');
+            const transBar = document.getElementById('wl-sec-transfer-bar');
+            if (transVal) transVal.textContent = `${transH.toFixed(1)} ชม. (${transPct}%)`;
+            if (transBar) transBar.style.width = `${transPct}%`;
+
+            const shareVal = document.getElementById('wl-sec-shared-val');
+            const shareBar = document.getElementById('wl-sec-shared-bar');
+            if (shareVal) shareVal.textContent = `${shareH.toFixed(1)} ชม. (${sharePct}%)`;
+            if (shareBar) shareBar.style.width = `${sharePct}%`;
+        }
 
         let ERROR_CATALOG = {
             outbound: [
@@ -3441,6 +4116,8 @@
                 { name: 'จำนวนไม่ครบ / ขาดเกิน', penalty: 5, desc: 'ยอดสินค้าในบิลไม่ตรงกับที่จัด', dot: 'bg-amber-500' }
             ],
             store_stock: [
+                { name: 'พบสินค้าใกล้หมดแต่ไม่แจ้งตามจุด Reorder', penalty: 5, desc: 'สินค้าถึงจุดเตือนแต่ไม่ส่งสัญญาณเติมของ', dot: 'bg-amber-500' },
+                { name: 'มีสต็อกหลังร้านแต่ไม่เติมตามมาตรฐานเวลา', penalty: 5, desc: 'หน้าร้านชั้นวางโล่งโดยมีสต็อกพร้อมเติม', dot: 'bg-amber-500' },
                 { name: 'ตกเบิกสต๊อก / ของหมดไม่แจ้ง', penalty: 5, desc: 'สินค้าหมดไม่ส่งสัญญาณเตือนเติมของ', dot: 'bg-amber-500' },
                 { name: 'ปล่อยชั้นวางว่าง / เติมของช้า', penalty: 5, desc: 'หน้าร้านชั้นวางโล่ง ลูกค้ารอสินค้านาน', dot: 'bg-amber-500' },
                 { name: 'สต๊อกสินค้าไม่พอใช้ / สั่งของช้า', penalty: 10, desc: 'สต๊อกขาดช่วง ไม่สั่งของล่วงหน้า', dot: 'bg-red-500' }
@@ -3452,36 +4129,41 @@
             ],
             transfer: [
                 { name: 'โอน W2→W1 จำนวนไม่ตรง', penalty: 5, desc: 'ย้ายของข้ามคลังยอดไม่ตรงกับใบเบิก', dot: 'bg-amber-500' },
+                { name: 'โอน W2 ผิดรายการ', penalty: 5, desc: 'รายการสินค้าที่โอนไม่ตรงกับใบสั่งโอน', dot: 'bg-amber-500' },
+                { name: 'ไม่ลงบันทึกการโอน', penalty: 5, desc: 'ขนย้ายสินค้าโดยไม่มีการบันทึกเอกสาร', dot: 'bg-amber-500' },
                 { name: 'สินค้าหมด ต้องเบิกด่วน', penalty: 5, desc: 'ไม่ได้วางแผนเบิกตามรอบ', dot: 'bg-amber-500' }
             ],
             shared: [
                 { name: 'ร่วมรับผิดชอบทั้งกะ (ความผิดพลาดรวม)', penalty: 5, desc: 'หักคะแนน HP เฉลี่ยทุกคนในกะ', dot: 'bg-purple-500' }
             ],
             trd_store: [
+                { name: 'จัดสินค้าผิด (ตรวจพบและแก้ทัน)', penalty: 5, desc: 'จัดสินค้าไม่ตรงตามบิลแต่ตรวจพบก่อน', dot: 'bg-emerald-500' },
+                { name: 'จัดสินค้าผิด (ออกจากร้านแต่ยังไม่ถึงลูกค้า)', penalty: 10, desc: 'สินค้าออกจากร้านแล้วแต่ดักทัน', dot: 'bg-amber-500' },
+                { name: 'จัดสินค้าผิด (ถึงลูกค้า / ร้องเรียน)', penalty: 20, desc: 'สินค้าผิดหลุดถึงมือลูกค้า', dot: 'bg-red-600' },
+                { name: 'จำนวนไม่ครบ / ขาดเกิน', penalty: 5, desc: 'นับจำนวนสินค้าขาดหรือเกิน', dot: 'bg-amber-500' },
+                { name: 'บริการไม่สุภาพ (มี Complaint/หัวหน้าพบ)', penalty: 15, desc: 'กิริยาหรือวาจาไม่เหมาะสมกับลูกค้า', dot: 'bg-red-500' },
+                { name: 'บริการล่าช้าเกินมาตรฐาน', penalty: 10, desc: 'ให้บริการล่าช้าเกิน SLA ที่กำหนด', dot: 'bg-amber-500' },
+                { name: 'มีสต็อกหน้าร้านแต่ไม่เติมตามมาตรฐาน', penalty: 5, desc: 'ไม่เติมสินค้าบนชั้นวางให้เต็มตามเวลา', dot: 'bg-amber-500' },
                 { name: 'จัดบิลผิด', penalty: 5, desc: 'จัดสินค้าไม่ตรงตามบิลขาย', dot: 'bg-amber-500' },
-                { name: 'หยิบของผิด', penalty: 5, desc: 'หยิบสินค้าผิดรุ่น/ผิดขนาด', dot: 'bg-amber-500' },
-                { name: 'จำนวนไม่ครบ', penalty: 5, desc: 'นับจำนวนสินค้าขาดหรือเกิน', dot: 'bg-amber-500' },
-                { name: 'ลูกค้ารอสินค้านานเกิน 15 นาที', penalty: 10, desc: 'จัดของช้า ส่งผลให้ลูกค้ารอนาน', dot: 'bg-amber-500' },
-                { name: 'ปล่อยของผิดถึงลูกค้า (Checker)', penalty: 30, desc: 'สินค้าผิดหลุดถึงมือลูกค้า', dot: 'bg-red-600' },
-                { name: 'ไม่ช่วยใส่ถุง', penalty: 5, desc: 'ไม่บริการบรรจุสินค้าให้ลูกค้า', dot: 'bg-blue-500' },
-                { name: 'ไม่แนะนำสินค้า', penalty: 5, desc: 'ไม่แนะนำโปรโมชั่นหรือสินค้าขายดี', dot: 'bg-blue-500' },
-                { name: 'ไม่เดินดูแลลูกค้าเดินช้อป', penalty: 5, desc: 'ไม่ดูแลและอำนวยความสะดวกให้ลูกค้า', dot: 'bg-blue-500' },
-                { name: 'บริการไม่สุภาพ', penalty: 20, desc: 'กิริยาหรือวาจาไม่เหมาะสมกับลูกค้า', dot: 'bg-red-500' },
-                { name: 'ปล่อยชั้นวางว่าง (เรียงของเติม)', penalty: 10, desc: 'ไม่เติมสินค้าบนชั้นวางให้เต็ม', dot: 'bg-amber-500' }
+                { name: 'หยิบของผิด', penalty: 5, desc: 'หยิบสินค้าผิดรุ่น/ผิดขนาด', dot: 'bg-amber-500' }
             ],
             trd_cashier: [
+                { name: 'คิดเงิน/ทอนเงินผิด (แก้ทันก่อนลูกค้าออก)', penalty: 3, desc: 'ยอดเงินไม่ตรงแต่ทักท้วงและแก้ทัน', dot: 'bg-emerald-500' },
+                { name: 'คิดเงิน/ทอนเงินผิด (ลูกค้าร้องเรียน/แก้ย้อนหลัง)', penalty: 10, desc: 'ลูกค้ากลับมาทักท้วงหรือแก้ย้อนหลัง', dot: 'bg-amber-500' },
+                { name: 'เกิดความเสียหายทางการเงินจริง', penalty: 20, desc: 'ยอดเงินขาดบัญชีจริง', dot: 'bg-red-600' },
+                { name: 'ตอบแชทช้าเกินมาตรฐาน', penalty: 5, desc: 'ไม่ตอบคำถามลูกค้าตามเวลาที่กำหนด', dot: 'bg-amber-500' },
+                { name: 'ให้ข้อมูลสินค้าผิดพลาด', penalty: 5, desc: 'แจ้งราคาหรือรายละเอียดสินค้าผิด', dot: 'bg-amber-500' },
+                { name: 'เปิดบิลผิดรายการ', penalty: 10, desc: 'ออกใบเสร็จ/ใบกำกับภาษีผิดรายการ', dot: 'bg-amber-500' },
                 { name: 'คิดเงินทอนเงินผิด', penalty: 15, desc: 'ยอดเงินไม่ตรง ทอนเงินผิดพลาด', dot: 'bg-red-500' },
-                { name: 'ตอบแชทช้า', penalty: 10, desc: 'ไม่ตอบคำถามลูกค้าตามเวลาที่กำหนด', dot: 'bg-amber-500' },
-                { name: 'ให้ข้อมูลสินค้าผิด', penalty: 5, desc: 'แจ้งราคาหรือรายละเอียดสินค้าผิด', dot: 'bg-amber-500' },
-                { name: 'เปิดบิลผิด', penalty: 10, desc: 'ออกใบเสร็จ/ใบกำกับภาษีผิดรายการ', dot: 'bg-amber-500' },
-                { name: 'คิดเงินพลาด', penalty: 15, desc: 'ยิงบาร์โค้ดไม่ครบหรือซ้ำซ้อน', dot: 'bg-red-500' },
-                { name: 'ของหมดไม่แจ้ง (เห็นผ่านหน้าระบบ)', penalty: 5, desc: 'สต๊อกในระบบหมดแต่ไม่แจ้งสั่งเติม', dot: 'bg-amber-500' }
+                { name: 'เปิดบิลผิด', penalty: 10, desc: 'ออกใบเสร็จ/ใบกำกับภาษีผิดรายการ', dot: 'bg-amber-500' }
             ],
             trd_stock: [
-                { name: 'สต๊อคสินค้าไม่พอใช้', penalty: 10, desc: 'สต๊อกหน้าร้านขาดแคลน', dot: 'bg-amber-500' },
-                { name: 'ของหมดไม่แจ้ง', penalty: 10, desc: 'สินค้าหมดชั้นแต่ไม่แจ้งคลัง', dot: 'bg-red-500' }
+                { name: 'พบสินค้าใกล้หมดแต่ไม่แจ้งสั่งเติม', penalty: 5, desc: 'สต๊อกหน้าร้านใกล้หมดแต่ไม่ส่งสัญญาณ', dot: 'bg-amber-500' },
+                { name: 'สต๊อกสินค้าขาดช่วงโดยไม่แจ้งล่วงหน้า', penalty: 10, desc: 'สินค้าหมดชั้นโดยไม่มีการวางแผน', dot: 'bg-red-500' },
+                { name: 'สต๊อคสินค้าไม่พอใช้', penalty: 10, desc: 'สต๊อกหน้าร้านขาดแคลน', dot: 'bg-amber-500' }
             ],
             trd_other: [
+                { name: 'ความผิดพลาดอื่น ๆ (ระบุในหมายเหตุ)', penalty: 5, desc: 'ระบุรายละเอียดในช่องหมายเหตุ', dot: 'bg-slate-500' },
                 { name: 'ความผิดอื่น ๆ', penalty: 10, desc: 'ระบุรายละเอียดในช่องหมายเหตุ', dot: 'bg-slate-500' }
             ]
         };
@@ -3749,8 +4431,9 @@
         function getAkraWorkloadValues() {
             if (currentBranch !== 'AKRA') return [];
             const targetEmp = (typeof displayUserName !== 'undefined' && displayUserName) ? displayUserName : (currentUser || 'หมูหยอง');
+            const totalHours = typeof workloadState.totalHours === 'number' ? workloadState.totalHours : 10.0;
             const totalS = (workloadState.support || []).reduce((sum, t) => sum + (parseFloat(t.hours) || 0), 0);
-            const primaryHours = Math.max(0, 10.0 - totalS);
+            const primaryHours = Math.max(0, totalHours - totalS);
             
             let outbound = 0, inbound = 0, transfer = 0, shared = 0;
             const primaryCore = workloadState.core || 'คลัง W1';
@@ -3772,7 +4455,7 @@
 
             return [{
                 employee: targetEmp,
-                capacity: 10,
+                capacity: totalHours,
                 outbound: Math.round(outbound * 10) / 10,
                 inbound: Math.round(inbound * 10) / 10,
                 transfer: Math.round(transfer * 10) / 10,
@@ -3894,9 +4577,40 @@
             }
         }
 
+        let GLOBAL_SKILL_CATALOG = [
+            { code: 'FORKLIFT', name: 'ขับรถยก / โฟล์คลิฟต์', category: 'warehouse', icon: 'fa-truck-ramp-box', description: 'ขับขี่และควบคุมรถยกไฟฟ้า/โฟล์คลิฟต์ได้อย่างปลอดภัยตามมาตรฐานความปลอดภัย', levels: ['ระดับ 1: ขับขี่ทั่วไปในคลัง', 'ระดับ 2: คล่องแคล่ว ยกของสูงและพื้นที่แคบ', 'ระดับ 3: ครูฝึกและตรวจสอบความปลอดภัย'] },
+            { code: 'PICK_W1', name: 'จัดและแพ็กสินค้า W1', category: 'warehouse', icon: 'fa-boxes-packing', description: 'หยิบและตรวจนับสินค้าในคลังหลัก W1 ได้อย่างถูกต้อง รวดเร็ว 100%', levels: ['ระดับ 1: หยิบตามใบเบิกพื้นฐาน', 'ระดับ 2: หยิบแม่นยำสูง อัตราผิด 0%', 'ระดับ 3: ผู้วางแผนเส้นทางหยิบและเทรนเนอร์'] },
+            { code: 'STORE_W2', name: 'จัดเก็บและโอนย้าย W2', category: 'warehouse', icon: 'fa-cubes-stacked', description: 'บริหารจัดการสต็อก คลังสำรอง W2 และเติมของเข้า W1 อย่างเป็นระบบ', levels: ['ระดับ 1: เติมของตามรอบ', 'ระดับ 2: จัดวางพื้นที่แบบ FIFO/FEFO คล่องแคล่ว', 'ระดับ 3: วางผังคลังและจัดการพื้นที่'] },
+            { code: 'INBOUND_QC', name: 'ตรวจรับสินค้าเข้า (QC)', category: 'warehouse', icon: 'fa-clipboard-check', description: 'ตรวจเช็คสินค้าชำรุด ตรวจนับจำนวน และลงบันทึกรับเข้าในระบบอย่างแม่นยำ', levels: ['ระดับ 1: ตรวจรับสินค้าทั่วไป', 'ระดับ 2: ตรวจตำหนิละเอียดและลงแอป', 'ระดับ 3: ผู้อนุมัติเคลมและประสานซัพพลายเออร์'] },
+            { code: 'POS_CASHIER', name: 'ระบบแคชเชียร์ & บิลขาย', category: 'storefront', icon: 'fa-cash-register', description: 'เปิดบิลขาย คิดเงิน ทอนเงิน และจัดการระบบ POS หน้าร้าน TRD', levels: ['ระดับ 1: คิดเงินบิลทั่วไป', 'ระดับ 2: จัดการบิลซับซ้อนและเครดิต', 'ระดับ 3: ปิดกะและตรวจสอบยอดบัญชี'] },
+            { code: 'STORE_MERCH', name: 'จัดเรียงและดูแลหน้าร้าน', category: 'storefront', icon: 'fa-store', description: 'จัดเรียงสินค้าบนชั้นวาง เติมของทันเวลา และดูแลความเรียบร้อยหน้าร้าน', levels: ['ระดับ 1: เติมของตามชั้นวาง', 'ระดับ 2: วางสินค้าตาม Planogram ดึงดูดลูกค้า', 'ระดับ 3: วางแผนสต็อกหน้าร้าน'] },
+            { code: 'DELIVERY', name: 'ขับรถส่งของด่วน', category: 'logistics', icon: 'fa-motorcycle', description: 'มีใบขับขี่และชำนาญเส้นทางจัดส่งสินค้าถึงมือลูกค้าอย่างรวดเร็วและปลอดภัย', levels: ['ระดับ 1: วิ่งส่งสินค้าใกล้เคียง', 'ระดับ 2: วิ่งระยะไกลและจัดคิวส่งเร็ว', 'ระดับ 3: วางแผน Route ขนส่งประจำวัน'] },
+            { code: 'AUDIT_5S', name: 'หัวหน้าตรวจมาตรฐาน 5S', category: 'safety', icon: 'fa-list-check', description: 'ตรวจประเมิน 5S ในคลังและหน้าร้าน ชี้เป้า Action Items เพื่อการพัฒนาต่อเนื่อง', levels: ['ระดับ 1: ผู้ร่วมตรวจ 5S', 'ระดับ 2: ตรวจเดี่ยวและออก Action Items', 'ระดับ 3: Auditor วางมาตรฐาน 5S องค์กร'] },
+            { code: 'MAINTENANCE', name: 'บำรุงรักษาอุปกรณ์ & รถเข็น', category: 'general', icon: 'fa-wrench', description: 'ตรวจเช็คสภาพเครื่องมือ ชาร์จแบตเตอรี่รถยก และดูแลความพร้อมของเครื่องมือ', levels: ['ระดับ 1: ตรวจสภาพเบื้องต้น', 'ระดับ 2: ซ่อมบำรุงขั้นต้นและเปลี่ยนอะไหล่', 'ระดับ 3: วางรอบบำรุงรักษาเชิงป้องกัน (PM)'] }
+        ];
+        let GLOBAL_EMPLOYEE_SKILLS = [];
+
+        async function loadSkillsData() {
+            if (!sessionToken || !window.AkraSupabaseKPI?.getSkillCatalog) return;
+            try {
+                const [catRes, empSkillsRes] = await Promise.all([
+                    AkraSupabaseKPI.getSkillCatalog(sessionToken).catch(() => ({ skills: GLOBAL_SKILL_CATALOG })),
+                    AkraSupabaseKPI.getEmployeeSkills(sessionToken).catch(() => ({ skills: [] }))
+                ]);
+                if (Array.isArray(catRes?.skills) && catRes.skills.length > 0) {
+                    GLOBAL_SKILL_CATALOG = catRes.skills;
+                }
+                if (Array.isArray(empSkillsRes?.skills)) {
+                    GLOBAL_EMPLOYEE_SKILLS = empSkillsRes.skills;
+                }
+            } catch (err) {
+                console.warn('Failed to load skills data:', err);
+            }
+        }
+
         function switchAdminSubTab(subTab) {
             ADMIN_SETTINGS_STATE.activeTab = subTab;
-            const subtabs = ['emp', 'workload', 'incidents'];
+            const subtabs = ['emp', 'workload', 'incidents', 'skills'];
             subtabs.forEach(t => {
                 const btn = document.getElementById(`btn-adm-tab-${t}`);
                 const panel = document.getElementById(`admin-panel-${t}`);
@@ -3916,6 +4630,291 @@
             initAdminSettingsState();
             if (subTab === 'workload') renderAdminWorkloadSettings();
             else if (subTab === 'incidents') renderAdminIncidentSettings();
+            else if (subTab === 'skills') renderAdminSkillsSettings();
+        }
+
+        function renderAdminSkillsSettings() {
+            const empSelect = document.getElementById('admin-skill-emp-select');
+            const skillSelect = document.getElementById('admin-skill-code-select');
+            const listContainer = document.getElementById('admin-certified-skills-list');
+            const countEl = document.getElementById('admin-certified-skills-count');
+
+            if (empSelect) {
+                empSelect.innerHTML = GLOBAL_CONFIG_LIST.map(emp => `
+                    <option value="${esc(emp.uid || emp.name)}">${esc(emp.name)} (${esc(emp.uid || 'No ID')})</option>
+                `).join('') || '<option value="">ไม่พบรายชื่อพนักงาน</option>';
+            }
+
+            if (skillSelect) {
+                skillSelect.innerHTML = GLOBAL_SKILL_CATALOG.map(s => `
+                    <option value="${esc(s.code)}">${esc(s.name)} [${esc(s.category)}]</option>
+                `).join('');
+            }
+
+            if (countEl) {
+                countEl.textContent = `${GLOBAL_EMPLOYEE_SKILLS.length} รายการ`;
+            }
+
+            if (listContainer) {
+                if (GLOBAL_EMPLOYEE_SKILLS.length === 0) {
+                    listContainer.innerHTML = '<div class="text-xs text-slate-400 text-center py-6">ยังไม่มีการบันทึกรับรองทักษะพนักงาน</div>';
+                    return;
+                }
+
+                const levelBadge = (lvl) => {
+                    if (lvl === 3) return '<span class="px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 text-[10px] font-black border border-purple-200">⭐⭐⭐ ครูฝึก / Master</span>';
+                    if (lvl === 2) return '<span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-black border border-blue-200">⭐⭐ ชำนาญการ (Proficient)</span>';
+                    return '<span class="px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 text-[10px] font-black border border-teal-200">⭐ พื้นฐาน (Basic)</span>';
+                };
+
+                listContainer.innerHTML = GLOBAL_EMPLOYEE_SKILLS.map(item => `
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div class="flex items-start gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-base shrink-0 font-bold">
+                                <i class="fa-solid ${esc(item.icon || 'fa-award')}"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <button type="button" onclick="openEmployeeProfileModal('${esc(item.employeeUid)}', '${esc(item.employeeName)}')" class="font-bold text-slate-800 hover:text-blue-600 underline cursor-pointer">${esc(item.employeeName)}</button>
+                                    ${levelBadge(item.level)}
+                                </div>
+                                <p class="text-slate-600 font-semibold mt-0.5">${esc(item.skillName || item.skillCode)}</p>
+                                ${item.notes ? `<p class="text-[11px] text-slate-500 italic mt-0.5">"${esc(item.notes)}"</p>` : ''}
+                                <p class="text-[10px] text-slate-400 mt-1">รับรองโดย: ${esc(item.certifiedBy || '-')} • ${esc(item.certifiedAt || '')}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-end gap-2 shrink-0">
+                            <button type="button" onclick="revokeEmployeeSkill('${esc(item.employeeUid)}', '${esc(item.skillCode)}')" class="p-2 text-red-600 hover:bg-red-50 rounded-xl border border-red-200 text-xs font-bold flex items-center gap-1.5 transition-all" title="เพิกถอนทักษะ">
+                                <i class="fa-solid fa-trash-can"></i><span>ลบ</span>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function confirmAssignSkill() {
+            if (!sessionToken || !IS_ADMIN) {
+                showToast('ต้องการสิทธิ์ Admin หรือหัวหน้ากะในการบันทึกทักษะ', true);
+                return;
+            }
+            const empSelect = document.getElementById('admin-skill-emp-select');
+            const skillSelect = document.getElementById('admin-skill-code-select');
+            const levelSelect = document.getElementById('admin-skill-level-select');
+            const notesInput = document.getElementById('admin-skill-notes-input');
+
+            const employeeUid = empSelect ? empSelect.value.trim() : '';
+            const skillCode = skillSelect ? skillSelect.value.trim() : '';
+            const level = levelSelect ? parseInt(levelSelect.value, 10) : 1;
+            const notes = notesInput ? notesInput.value.trim() : '';
+
+            if (!employeeUid || !skillCode) {
+                alert('กรุณาเลือกพนักงานและทักษะ');
+                return;
+            }
+
+            const empObj = GLOBAL_CONFIG_LIST.find(e => e.uid === employeeUid || e.name === employeeUid);
+            const employeeName = empObj ? empObj.name : employeeUid;
+
+            const btn = document.getElementById('btn-save-admin-skill');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>กำลังบันทึก…</span>';
+            }
+
+            try {
+                const res = await AkraSupabaseKPI.saveEmployeeSkill(sessionToken, employeeUid, employeeName, skillCode, level, notes);
+                if (res.status === 'success') {
+                    GLOBAL_EMPLOYEE_SKILLS = res.skills || [];
+                    renderAdminSkillsSettings();
+                    if (notesInput) notesInput.value = '';
+                    showToast('บันทึกการรับรองทักษะสำเร็จแล้ว');
+                }
+            } catch (err) {
+                console.error('Failed to save employee skill:', err);
+                showToast('บันทึกทักษะไม่สำเร็จ: ' + (err.message || ''), true);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-award"></i><span>บันทึกการรับรองทักษะ</span>';
+                }
+            }
+        }
+
+        async function revokeEmployeeSkill(employeeUid, skillCode) {
+            if (!sessionToken || !IS_ADMIN) {
+                showToast('ต้องการสิทธิ์ Admin ในการลบการรับรองทักษะ', true);
+                return;
+            }
+            if (!confirm(`ต้องการเพิกถอนทักษะ ${skillCode} ของพนักงานรายนี้ใช่หรือไม่?`)) return;
+
+            try {
+                const res = await AkraSupabaseKPI.deleteEmployeeSkill(sessionToken, employeeUid, skillCode);
+                if (res.status === 'success') {
+                    GLOBAL_EMPLOYEE_SKILLS = res.skills || [];
+                    renderAdminSkillsSettings();
+                    showToast('เพิกถอนทักษะเรียบร้อยแล้ว');
+                }
+            } catch (err) {
+                console.error('Failed to revoke skill:', err);
+                showToast('ลบทักษะไม่สำเร็จ: ' + (err.message || ''), true);
+            }
+        }
+
+        // ================= EMPLOYEE PROFILE MODAL CONTROLLER =================
+        async function openEmployeeProfileModal(employeeUid, employeeName) {
+            const modal = document.getElementById('modal-employee-profile');
+            if (!modal) return;
+
+            const nameEl = document.getElementById('emp-profile-name');
+            const uidEl = document.getElementById('emp-profile-uid');
+            const roleEl = document.getElementById('emp-profile-role');
+            const hpEl = document.getElementById('emp-profile-hp');
+            const skillCountEl = document.getElementById('emp-profile-skill-count');
+            const flexEl = document.getElementById('emp-profile-flex');
+            const skillsList = document.getElementById('emp-profile-skills-list');
+            const tierBadge = document.getElementById('emp-profile-tier-badge');
+            const totalHoursEl = document.getElementById('emp-profile-total-hours');
+
+            const empObj = GLOBAL_CONFIG_LIST.find(e => e.uid === employeeUid || e.name === employeeName || e.name === employeeUid) || {
+                uid: employeeUid,
+                name: employeeName || employeeUid,
+                roles: [],
+                branches: 'AKRA'
+            };
+
+            if (nameEl) nameEl.textContent = empObj.name;
+            if (uidEl) uidEl.textContent = `ID: ${empObj.uid || 'N/A'}`;
+            if (roleEl) roleEl.textContent = `${empObj.dept || (empObj.roles || []).join(', ') || 'พนักงาน'} • สาขา ${empObj.branches || 'AKRA'}`;
+
+            modal.classList.remove('hidden');
+
+            // Default stats
+            if (hpEl) hpEl.textContent = '100%';
+            if (skillCountEl) skillCountEl.textContent = '0 ทักษะ';
+            if (flexEl) flexEl.textContent = '0%';
+            if (totalHoursEl) totalHoursEl.textContent = '0 ชม. รวม';
+            if (skillsList) skillsList.innerHTML = '<div class="col-span-2 text-center text-xs text-slate-400 py-3">กำลังโหลดข้อมูลทักษะและสถิติ…</div>';
+
+            try {
+                let profileData = null;
+                if (sessionToken && window.AkraSupabaseKPI?.getEmployeeProfileSummary) {
+                    const res = await AkraSupabaseKPI.getEmployeeProfileSummary(sessionToken, empObj.uid || empObj.name).catch(() => null);
+                    if (res && res.profile) profileData = res.profile;
+                }
+
+                // Fallback computation from local memory if API fails or offline
+                if (!profileData) {
+                    const mySkills = GLOBAL_EMPLOYEE_SKILLS.filter(s => s.employeeUid === empObj.uid || s.employeeName === empObj.name);
+                    profileData = {
+                        skills: mySkills,
+                        qualityHp: 100,
+                        workloadStats: {
+                            recordedDays: 0,
+                            totalHours: 0,
+                            outboundHours: 0,
+                            inboundHours: 0,
+                            transferHours: 0,
+                            sharedHours: 0,
+                            flexibilityIndex: 0
+                        }
+                    };
+                }
+
+                const skills = profileData.skills || [];
+                const ws = profileData.workloadStats || {};
+                const hp = profileData.qualityHp !== undefined ? profileData.qualityHp : 100;
+
+                if (hpEl) {
+                    hpEl.textContent = `${hp}%`;
+                    hpEl.className = hp >= 90 ? 'text-base sm:text-lg font-black text-emerald-400 font-num mt-0.5' : (hp >= 75 ? 'text-base sm:text-lg font-black text-amber-400 font-num mt-0.5' : 'text-base sm:text-lg font-black text-red-400 font-num mt-0.5');
+                }
+                if (skillCountEl) skillCountEl.textContent = `${skills.length} ทักษะ`;
+                if (flexEl) flexEl.textContent = `${ws.flexibilityIndex || 0}%`;
+                if (totalHoursEl) totalHoursEl.textContent = `${ws.totalHours || 0} ชม. รวม (${ws.recordedDays || 0} วัน)`;
+
+                if (tierBadge) {
+                    const hasMaster = skills.some(s => s.level === 3);
+                    const hasProficient = skills.some(s => s.level === 2);
+                    if (hasMaster) {
+                        tierBadge.textContent = '🌟 Master / Trainer';
+                        tierBadge.className = 'text-[10px] bg-purple-600/30 text-purple-300 border border-purple-500/50 px-2 py-0.5 rounded-full font-bold';
+                    } else if (hasProficient || skills.length >= 2) {
+                        tierBadge.textContent = '⭐ Multi-Skilled';
+                        tierBadge.className = 'text-[10px] bg-blue-600/30 text-blue-300 border border-blue-500/50 px-2 py-0.5 rounded-full font-bold';
+                    } else {
+                        tierBadge.textContent = '🟢 Standard Specialist';
+                        tierBadge.className = 'text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-bold';
+                    }
+                }
+
+                // Render Skill Badges
+                if (skillsList) {
+                    if (skills.length === 0) {
+                        skillsList.innerHTML = '<div class="col-span-2 text-center text-xs text-slate-500 py-3 bg-slate-800/40 rounded-xl border border-slate-700/50">ยังไม่มีการบันทึกรับรองทักษะ</div>';
+                    } else {
+                        skillsList.innerHTML = skills.map(s => {
+                            const stars = s.level === 3 ? '⭐⭐⭐' : (s.level === 2 ? '⭐⭐' : '⭐');
+                            return `
+                                <div class="p-2.5 rounded-xl bg-slate-800/90 border border-slate-700 flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center text-sm shrink-0">
+                                        <i class="fa-solid ${esc(s.icon || 'fa-award')}"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-1">
+                                            <p class="text-xs font-bold text-slate-200 truncate">${esc(s.skillName || s.skillCode)}</p>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 mt-0.5">
+                                            <span class="text-[10px] text-amber-400 font-bold">${stars}</span>
+                                            <span class="text-[10px] text-slate-400">${esc(s.levelLabel || `Level ${s.level}`)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                // Workload Breakdown Bars
+                const tot = Number(ws.totalHours) || 1;
+                const outH = Number(ws.outboundHours) || 0;
+                const inH = Number(ws.inboundHours) || 0;
+                const transH = Number(ws.transferHours) || 0;
+                const suppH = Number(ws.sharedHours) || 0;
+
+                const outPct = Math.round((outH / tot) * 100);
+                const inPct = Math.round((inH / tot) * 100);
+                const transPct = Math.round((transH / tot) * 100);
+                const suppPct = Math.round((suppH / tot) * 100);
+
+                const outEl = document.getElementById('emp-prof-wl-out');
+                const outBar = document.getElementById('emp-prof-bar-out');
+                if (outEl) outEl.textContent = `${outH} ชม. (${outPct}%)`;
+                if (outBar) outBar.style.width = `${Math.min(100, outPct)}%`;
+
+                const inEl = document.getElementById('emp-prof-wl-in');
+                const inBar = document.getElementById('emp-prof-bar-in');
+                if (inEl) inEl.textContent = `${inH} ชม. (${inPct}%)`;
+                if (inBar) inBar.style.width = `${Math.min(100, inPct)}%`;
+
+                const transEl = document.getElementById('emp-prof-wl-trans');
+                const transBar = document.getElementById('emp-prof-bar-trans');
+                if (transEl) transEl.textContent = `${transH} ชม. (${transPct}%)`;
+                if (transBar) transBar.style.width = `${Math.min(100, transPct)}%`;
+
+                const suppEl = document.getElementById('emp-prof-wl-supp');
+                const suppBar = document.getElementById('emp-prof-bar-supp');
+                if (suppEl) suppEl.textContent = `${suppH} ชม. (${suppPct}%)`;
+                if (suppBar) suppBar.style.width = `${Math.min(100, suppPct)}%`;
+
+            } catch (e) {
+                console.error('Failed to render employee profile modal:', e);
+            }
+        }
+
+        function closeEmployeeProfileModal() {
+            const modal = document.getElementById('modal-employee-profile');
+            if (modal) modal.classList.add('hidden');
         }
 
         function switchAdminIncidentBranch(branch) {
@@ -4348,21 +5347,37 @@
                 return;
             }
 
-            container.innerHTML = recordedErrorCases.map(item => `
-                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1 text-xs relative group">
-                    <div class="flex justify-between items-center font-bold">
-                        <span>${item.time || '10:30 น.'} • ${esc(item.worker)}</span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-red-600 font-num">-${item.penalty}</span>
-                            <button type="button" onclick="deleteErrorCase('${esc(item.caseId)}')" title="ยกเลิก/ลบเคสนี้" class="text-slate-400 hover:text-red-600 p-1 rounded transition-colors text-xs cursor-pointer">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+            container.innerHTML = recordedErrorCases.map(item => {
+                const resp = item.responsibility || 'individual';
+                let respBadge = '';
+                if (resp === 'process') respBadge = '<span class="text-[9px] bg-blue-100 text-blue-800 border border-blue-200 font-bold px-1.5 py-0.5 rounded">⚙️ ระบบ/กระบวนการ (0 HP)</span>';
+                else if (resp === 'pending') respBadge = '<span class="text-[9px] bg-amber-100 text-amber-800 border border-amber-200 font-bold px-1.5 py-0.5 rounded">❓ รอตรวจสอบ (0 HP)</span>';
+                else if (resp === 'team') respBadge = '<span class="text-[9px] bg-purple-100 text-purple-800 border border-purple-200 font-bold px-1.5 py-0.5 rounded">👥 ทีมทั้งกะ</span>';
+                else respBadge = '<span class="text-[9px] bg-red-50 text-red-700 border border-red-200 font-bold px-1.5 py-0.5 rounded">👤 รายบุคคล</span>';
+
+                const penaltyText = (resp === 'process' || resp === 'pending' || item.penalty === 0)
+                    ? '<span class="text-slate-500 font-num font-bold text-[11px]">0 HP</span>'
+                    : `<span class="text-red-600 font-num font-bold">-${item.penalty}</span>`;
+
+                return `
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5 text-xs relative group">
+                        <div class="flex justify-between items-center font-bold">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span>${item.time || '10:30 น.'} • ${esc(item.worker)}</span>
+                                ${respBadge}
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                ${penaltyText}
+                                <button type="button" onclick="deleteErrorCase('${esc(item.caseId)}')" title="ยกเลิก/ลบเคสนี้" class="text-slate-400 hover:text-red-600 p-1 rounded transition-colors text-xs cursor-pointer">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
                         </div>
+                        <p class="text-slate-700 font-medium">${esc(item.type)}</p>
+                        ${item.note ? `<p class="text-[11px] text-slate-500">${esc(item.note)}</p>` : ''}
                     </div>
-                    <p class="text-slate-700 font-medium">${esc(item.type)}</p>
-                    ${item.note ? `<p class="text-[11px] text-slate-500">${esc(item.note)}</p>` : ''}
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function renderErrTeamHp() {
@@ -4373,6 +5388,7 @@
             grid.innerHTML = emps.map(emp => {
                 let penaltySum = 0;
                 recordedErrorCases.forEach(c => {
+                    if (c.responsibility === 'process' || c.responsibility === 'pending') return;
                     if (c.worker === 'ทุกคนในกะ' || c.worker === emp) {
                         penaltySum += (c.penalty || 0);
                     }
@@ -4402,7 +5418,12 @@
             const date = document.getElementById('record-date-error')?.value || '';
             const note = noteInput ? noteInput.value.trim() : '';
             const sevName = activeSev ? activeSev.dataset.name : 'หยิบผิด แก้ทันก่อนจัดส่ง';
-            const penalty = activeSev ? (parseInt(activeSev.dataset.penalty, 10) || 5) : 5;
+            let penalty = activeSev ? (parseInt(activeSev.dataset.penalty, 10) || 5) : 5;
+
+            const resp = selectedIncidentResponsibility || 'individual';
+            if (resp === 'process' || resp === 'pending') {
+                penalty = 0;
+            }
 
             if (!date) return showToast('กรุณาเลือกวันที่บันทึก', true);
             if (!sessionToken || !window.AkraSupabaseKPI?.saveIncident) {
@@ -4423,6 +5444,9 @@
                 category: errCategory,
                 type: sevName,
                 penalty: penalty,
+                responsibility: resp,
+                stage: 'warehouse',
+                incidentType: sevName,
                 note: note,
                 time: timeStr
             };
@@ -5142,6 +6166,7 @@
             restoreRecordDraft();
             hydrateIncidentPreview(document.getElementById('record-date-error')?.value || _lastRecordDate);
             updateDailyDashboard();
+            loadSkillsData();
             // Cached-first: แสดงข้อมูลจาก cache ทันที แล้วค่อย sync เบื้องหลังเมื่อ cache เก่า
             if (isKpiCacheStale(currentBranch)) syncDataFromSheet();
         }
@@ -7839,11 +8864,13 @@
                 const mainStatus = String(emp.status || 'Inactive');
 
                 html += `
-                    <article class="mb-2 rounded-xl border border-gray-200 bg-gray-50/50 p-3 shadow-sm">
+                    <article class="mb-2 rounded-xl border border-gray-200 bg-gray-50/50 p-3 shadow-sm hover:border-blue-200 transition-all">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div class="min-w-0">
                                 <h4 class="flex min-w-0 flex-wrap items-center gap-1.5 text-sm font-bold text-gray-800">
-                                ${esc(emp.name)} <span class="text-[10px] text-gray-400 font-medium ml-1.5 bg-white px-1 border border-gray-100 rounded">ID: ${esc(emp.uid)}</span>
+                                    <button type="button" onclick="openEmployeeProfileModal('${esc(emp.uid)}', '${esc(emp.name)}')" class="hover:text-blue-600 underline font-bold cursor-pointer text-left">${esc(emp.name)}</button>
+                                    <span class="text-[10px] text-gray-400 font-medium ml-1.5 bg-white px-1 border border-gray-100 rounded">ID: ${esc(emp.uid)}</span>
+                                    <button type="button" onclick="openEmployeeProfileModal('${esc(emp.uid)}', '${esc(emp.name)}')" class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-bold border border-blue-200 hover:bg-blue-100"><i class="fa-solid fa-id-card mr-1"></i>โปรไฟล์</button>
                                 </h4>
                                 <div class="mt-1.5 flex flex-wrap gap-1 text-[10px] text-gray-600">${rolesBadge}${branchesBadge}</div>
                                 <p class="mt-1.5 text-[11px] text-slate-600">สถานะจาก Main: <strong>${esc(mainStatus)}</strong></p>
@@ -7875,14 +8902,15 @@
             if (tab === 'record') tab = (currentBranch === 'TRD' ? 'error' : 'workload');
             if (tab === 'errors') tab = 'error';
             if (tab === 'bills') tab = 'billcount';
+            if (tab === 'audits') tab = 'audit';
             if (tab === 'admin' && !IS_ADMIN) {
                 showToast('เมนูตั้งค่าระบบและพนักงานใช้ได้เฉพาะ Admin', true);
                 return false;
             }
 
-            const views = ['view-workload', 'view-error', 'view-billcount', 'view-dashboard', 'view-admin-dash', 'view-admin', 'view-record'];
-            const mobileTabs = ['tab-workload', 'tab-error', 'tab-billcount', 'tab-dashboard', 'tab-record'];
-            const desktopTabs = ['dtab-workload', 'dtab-error', 'dtab-billcount', 'dtab-dashboard'];
+            const views = ['view-workload', 'view-error', 'view-audit', 'view-billcount', 'view-dashboard', 'view-admin-dash', 'view-admin', 'view-record'];
+            const mobileTabs = ['tab-workload', 'tab-error', 'tab-audit', 'tab-billcount', 'tab-dashboard', 'tab-record'];
+            const desktopTabs = ['dtab-workload', 'dtab-error', 'dtab-audit', 'dtab-billcount', 'dtab-dashboard'];
 
             views.forEach(v => {
                 const el = document.getElementById(v);
@@ -7892,7 +8920,7 @@
             mobileTabs.forEach(t => {
                 const el = document.getElementById(t);
                 if (el) {
-                    el.classList.remove('tab-active', 'bg-blue-50', 'text-blue-700', 'bg-red-50', 'text-red-700', 'bg-indigo-50', 'text-indigo-700');
+                    el.classList.remove('tab-active', 'bg-blue-50', 'text-blue-700', 'bg-red-50', 'text-red-700', 'bg-indigo-50', 'text-indigo-700', 'bg-teal-50', 'text-teal-700');
                     el.classList.add('tab-inactive', 'text-slate-500');
                 }
             });
@@ -7924,6 +8952,7 @@
             const badgeTitles = {
                 'workload': 'Workload',
                 'error': 'Incident QC',
+                'audit': '5S Audit',
                 'billcount': 'Live Sync',
                 'dashboard': 'Dashboard',
                 'admin-dash': 'Executive Cockpit',
@@ -7939,6 +8968,8 @@
             if (tab === 'dashboard') {
                 loadDashboardData();
                 updateDailyDashboard();
+            } else if (tab === 'audit') {
+                if (typeof load5SAuditData === 'function') load5SAuditData();
             } else if (tab === 'error') {
                 renderErrSeverity();
                 renderErrEmpChips();
