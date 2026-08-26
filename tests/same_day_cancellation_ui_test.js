@@ -12,10 +12,10 @@ const versionJson = JSON.parse(fs.readFileSync(versionJsonPath, 'utf8'));
 const clientJsContent = fs.readFileSync(clientJsPath, 'utf8');
 
 // 1. Verify Version Parity
-assert.strictEqual(versionJson.version, '20260825.07', 'version.json must be 20260825.07');
-assert.ok(htmlContent.includes('const CURRENT_VERSION = "20260825.07";'), 'index.html must have CURRENT_VERSION 20260825.07');
-assert.ok(htmlContent.includes('KPI Suite v20260825.07'), 'index.html drawer must show KPI Suite v20260825.07');
-assert.ok(htmlContent.includes('supabase-kpi-client.js?v=20260825.07'), 'index.html script tag must have v=20260825.07');
+assert.strictEqual(versionJson.version, '20260826.01', 'version.json must be 20260826.01');
+assert.ok(htmlContent.includes(`const CURRENT_VERSION = "${versionJson.version}";`), 'index.html must have CURRENT_VERSION matching version.json');
+assert.ok(htmlContent.includes(`KPI Suite v${versionJson.version}`), 'index.html drawer must show KPI Suite matching version.json');
+assert.ok(htmlContent.includes(`supabase-kpi-client.js?v=${versionJson.version}`), 'index.html script tag must match version.json');
 
 // 2. Verify HTML Buttons
 assert.ok(htmlContent.includes('id="btn-clear-workload"'), 'Workload HTML must include btn-clear-workload');
@@ -137,29 +137,32 @@ vm.runInContext(lastScript, context);
   assert.strictEqual(typeof context.deleteErrorCase, 'function');
   assert.strictEqual(typeof context.clearWorkloadCard, 'function');
 
+  const todayStr = context.getTodayBangkokDateStr();
+  const yesterdayStr = '2020-01-01';
+
   // Test successful same-day deleteErrorCase
-  mockDates['record-date-error'] = '2026-08-25';
-  await context.deleteErrorCase('ERR-2026-08-25-12345');
+  mockDates['record-date-error'] = todayStr;
+  await context.deleteErrorCase(`ERR-${todayStr}-12345`);
   assert.strictEqual(clientCalls.length, 1);
   assert.strictEqual(clientCalls[0].action, 'deleteIncident');
-  assert.strictEqual(clientCalls[0].caseId, 'ERR-2026-08-25-12345');
+  assert.strictEqual(clientCalls[0].caseId, `ERR-${todayStr}-12345`);
 
   // Test past date rejection on deleteErrorCase
-  mockDates['record-date-error'] = '2026-08-24';
+  mockDates['record-date-error'] = yesterdayStr;
   modalArgs = null;
-  await context.deleteErrorCase('ERR-2026-08-24-12345');
+  await context.deleteErrorCase(`ERR-${yesterdayStr}-12345`);
   assert.strictEqual(clientCalls.length, 1, 'past-date deleteIncident must NOT call client API');
   assert.ok(modalArgs && modalArgs.title.includes('ไม่สามารถยกเลิกได้'));
 
   // Test successful same-day clearWorkloadCard
-  mockDates['record-date'] = '2026-08-25';
+  mockDates['record-date'] = todayStr;
   clientCalls = [];
   await context.clearWorkloadCard();
   assert.strictEqual(clientCalls.length, 1);
   assert.strictEqual(clientCalls[0].action, 'clearWorkload');
 
   // Test past date rejection on clearWorkloadCard
-  mockDates['record-date'] = '2026-08-24';
+  mockDates['record-date'] = yesterdayStr;
   modalArgs = null;
   await context.clearWorkloadCard();
   assert.strictEqual(clientCalls.length, 1, 'past-date clearWorkload must NOT call client API');

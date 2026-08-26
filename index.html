@@ -1277,24 +1277,146 @@
             </div>
             <div class="h-6"></div>
         </div>
-<!-- ================= VIEW: ADMIN PANEL (สถานะพนักงานจาก Main) ================= -->
-        <div id="view-admin" class="hidden space-y-4 pb-6 md-grid-2">
-            <section class="bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-800 text-white md-colspan-2" aria-labelledby="employee-status-title">
-                <h2 id="employee-status-title" class="text-lg font-bold"><i class="fa-solid fa-user-shield text-blue-300 mr-2"></i>ตั้งค่าระบบ &amp; สถานะพนักงาน</h2>
-                <p class="mt-1 text-xs leading-relaxed text-slate-300">อ่านรายชื่อและสาขาจาก Role ใน Main โดยตรง หน้านี้สำหรับ ADMIN เท่านั้น และไม่ใช้แก้ไขข้อมูลพนักงาน</p>
-                <p id="admin-workload-summary" class="mt-3 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-semibold" role="status" aria-live="polite">กำลังตรวจสอบ Workload วันนี้…</p>
-            </section>
-
-            <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md-colspan-2" aria-labelledby="employee-list-title">
-                <div class="flex justify-between items-center border-b border-gray-50 pb-2 mb-3">
-                     <h3 id="employee-list-title" class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-users text-purple-500 mr-2"></i>รายชื่อผู้ใช้งานจาก Main ทั้งหมด</h3>
-                     <span id="admin-emp-count" class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold">0 คน</span>
+<!-- ================= VIEW: ADMIN PANEL (ตั้งค่าระบบ & สถานะพนักงาน) ================= -->
+        <div id="view-admin" class="hidden space-y-4 pb-6 max-w-5xl mx-auto">
+            <!-- Admin Header & Navigation Tabs -->
+            <section class="bg-slate-900 p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-800 text-white space-y-3" aria-labelledby="admin-panel-title">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h2 id="admin-panel-title" class="text-lg font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-blue-400"></i>
+                            <span>ตั้งค่าระบบ &amp; จัดการข้อมูล</span>
+                        </h2>
+                        <p class="mt-1 text-xs text-slate-300">ปรับแต่งหัวข้องาน Workload, หมวดหมู่ความผิดพลาด, และคะแนนหัก HP (สำหรับ ADMIN)</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="admin-active-badge" class="px-2.5 py-1 rounded-lg bg-blue-600/30 border border-blue-500/50 text-blue-300 text-[11px] font-bold">ADMIN MODE</span>
+                    </div>
                 </div>
 
-                <div id="admin-employee-list" class="space-y-2 max-h-96 overflow-y-auto pr-1">
-                    <!-- Employee cards will be injected here -->
+                <!-- Sub-tab Bar -->
+                <div class="flex flex-wrap gap-1.5 pt-2 border-t border-slate-800" role="tablist">
+                    <button type="button" onclick="switchAdminSubTab('emp')" id="btn-adm-tab-emp" class="admin-subtab admin-subtab-active px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-blue-600 text-white shadow">
+                        <i class="fa-solid fa-users"></i><span>สถานะพนักงาน</span>
+                    </button>
+                    <button type="button" onclick="switchAdminSubTab('workload')" id="btn-adm-tab-workload" class="admin-subtab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-business-time text-amber-400"></i><span>ตั้งค่า Workload</span>
+                    </button>
+                    <button type="button" onclick="switchAdminSubTab('incidents')" id="btn-adm-tab-incidents" class="admin-subtab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-triangle-exclamation text-red-400"></i><span>ตั้งค่าปัญหา &amp; คะแนน</span>
+                    </button>
                 </div>
             </section>
+
+            <!-- SUB-PANEL 1: EMPLOYEE STATUS (Main SSO) -->
+            <div id="admin-panel-emp" class="space-y-4">
+                <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-slate-200">
+                    <p id="admin-workload-summary" class="text-xs font-semibold" role="status" aria-live="polite">กำลังตรวจสอบ Workload วันนี้…</p>
+                </section>
+
+                <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200" aria-labelledby="employee-list-title">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-3">
+                         <h3 id="employee-list-title" class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                             <i class="fa-solid fa-users text-purple-600"></i><span>รายชื่อผู้ใช้งานจาก Main ทั้งหมด</span>
+                         </h3>
+                         <span id="admin-emp-count" class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold">0 คน</span>
+                    </div>
+
+                    <div id="admin-employee-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                        <!-- Employee cards injected here -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- SUB-PANEL 2: WORKLOAD DUTIES SETTINGS -->
+            <div id="admin-panel-workload" class="hidden space-y-4">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-briefcase text-amber-500"></i>
+                            <span>กำหนดหัวข้องาน Workload (AKRA)</span>
+                        </h3>
+                        <p class="text-xs text-slate-500">แก้ไขรายละเอียดงานหลัก (Primary Core) และงานรอง/งานแทรก (Support Duties)</p>
+                    </div>
+                    <button type="button" onclick="saveAdminWorkloadSettings()" id="btn-save-admin-workload" class="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center gap-2 transition-all active:scale-95">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>บันทึกการตั้งค่า Workload</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Col A: Primary Duties (งานหลัก) -->
+                    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                            <h4 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">1</span>
+                                <span>งานหลัก (Primary Core Duties)</span>
+                            </h4>
+                            <button type="button" onclick="openAddDutyModal('primary')" class="py-1 px-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] flex items-center gap-1">
+                                <i class="fa-solid fa-plus"></i><span>เพิ่มงานหลัก</span>
+                            </button>
+                        </div>
+                        <div id="admin-primary-duties-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                            <!-- Primary duties cards injected here -->
+                        </div>
+                    </section>
+
+                    <!-- Col B: Support Duties (งานรอง/งานแทรก) -->
+                    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                            <h4 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-[10px]">2</span>
+                                <span>งานรอง / งานแทรก (Support Duties)</span>
+                            </h4>
+                            <button type="button" onclick="openAddDutyModal('support')" class="py-1 px-2.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-[11px] flex items-center gap-1">
+                                <i class="fa-solid fa-plus"></i><span>เพิ่มงานรอง</span>
+                            </button>
+                        </div>
+                        <div id="admin-support-duties-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                            <!-- Support duties cards injected here -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- SUB-PANEL 3: INCIDENT CATEGORIES & PENALTIES SETTINGS -->
+            <div id="admin-panel-incidents" class="hidden space-y-4">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
+                            <span>ตั้งค่าหมวดหมู่ &amp; คะแนนความผิดพลาด (Incident QC)</span>
+                        </h3>
+                        <p class="text-xs text-slate-500">เพิ่ม/ลด หัวข้อความผิดพลาด ปรับคะแนน HP และเพิ่มหมวดหมู่ใหม่</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="openAddCategoryModal()" class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center gap-1.5 transition-all">
+                            <i class="fa-solid fa-folder-plus text-blue-600"></i>
+                            <span>เพิ่มหมวดหมู่ใหม่</span>
+                        </button>
+                        <button type="button" onclick="saveAdminIncidentSettings()" id="btn-save-admin-incidents" class="py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md flex items-center gap-2 transition-all active:scale-95">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>บันทึกการตั้งค่าปัญหา &amp; คะแนน</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Branch Switcher for Incident Configuration -->
+                <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit">
+                    <button type="button" onclick="switchAdminIncidentBranch('AKRA')" id="btn-inc-branch-akra" class="px-4 py-2 rounded-xl text-xs font-black transition-all bg-white text-slate-900 shadow">
+                        <i class="fa-solid fa-warehouse text-amber-500 mr-1.5"></i>AKRA WAREHOUSE
+                    </button>
+                    <button type="button" onclick="switchAdminIncidentBranch('TRD')" id="btn-inc-branch-trd" class="px-4 py-2 rounded-xl text-xs font-black transition-all text-slate-600 hover:text-slate-900">
+                        <i class="fa-solid fa-store text-blue-500 mr-1.5"></i>TRD STORE
+                    </button>
+                </div>
+
+                <!-- Categories & Items List Container -->
+                <div id="admin-incident-categories-list" class="space-y-4">
+                    <!-- Dynamic Category accordions & item cards injected here -->
+                </div>
+            </div>
+
             <div class="h-6"></div>
         </div>
 
@@ -1338,14 +1460,7 @@
             <div>
                 <label class="text-[11px] font-bold text-slate-600 block mb-1.5">เลือกงานที่ไปช่วย:</label>
                 <div class="grid grid-cols-2 gap-1.5" id="modal-task-grid">
-                    <button type="button" onclick="selectModalTask('แวะขึ้นของ', 'fa-truck-ramp-box', this)" class="modal-task-chip support-chip-active p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold"><i class="fa-solid fa-truck-ramp-box mr-1.5 text-slate-600"></i> แวะขึ้นของ</button>
-                    <button type="button" onclick="selectModalTask('แวะไปส่งของ', 'fa-motorcycle', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold"><i class="fa-solid fa-motorcycle mr-1.5 text-slate-600"></i> แวะไปส่งของ</button>
-                    <button type="button" onclick="selectModalTask('ช่วยหน้าร้าน TRD', 'fa-store', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold"><i class="fa-solid fa-store mr-1.5 text-slate-600"></i> ช่วยหน้าร้าน</button>
-                    <button type="button" onclick="selectModalTask('ช่วยย้ายของ W2', 'fa-arrows-rotate', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold"><i class="fa-solid fa-arrows-rotate mr-1.5 text-slate-600"></i> ช่วยย้ายของ W2</button>
-                    <button type="button" onclick="selectModalTask('ช่วยยกสินค้า', 'fa-dolly', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold"><i class="fa-solid fa-dolly mr-1.5 text-slate-600"></i> ช่วยยกสินค้า</button>
-                    <button type="button" onclick="selectModalTask('คลัง W1', 'fa-warehouse', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold"><i class="fa-solid fa-warehouse mr-1.5 text-slate-600"></i> คลัง W1</button>
-                    <button type="button" onclick="selectModalTask('รับสินค้าเข้า', 'fa-inbox', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold"><i class="fa-solid fa-inbox mr-1.5 text-slate-600"></i> รับสินค้าเข้า</button>
-                    <button type="button" onclick="selectModalTask('ขาออก', 'fa-arrow-up-from-bracket', this)" class="modal-task-chip p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold"><i class="fa-solid fa-arrow-up-from-bracket mr-1.5 text-slate-600"></i> ขาออก</button>
+                    <!-- Tasks injected dynamically from AKRA_SUPPORT_DUTIES -->
                 </div>
             </div>
             <div>
@@ -1361,6 +1476,96 @@
             <div class="flex gap-2 pt-2 border-t border-slate-100">
                 <button type="button" onclick="closeSupportModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-600 transition-colors">ยกเลิก</button>
                 <button type="button" onclick="confirmAddSupportTask()" class="flex-[2] py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-xs font-bold text-slate-950 shadow-md transition-all">ยืนยันเพิ่มงาน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Duty Edit/Add Modal -->
+    <div id="duty-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[80] flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-md bg-white rounded-2xl p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <h3 id="duty-modal-title" class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-briefcase text-blue-600"></i><span>เพิ่ม / แก้ไขหัวข้องาน</span>
+                </h3>
+                <button type="button" onclick="closeDutyModal()" aria-label="ปิด" class="w-6 h-6 rounded-full bg-slate-100 text-slate-500 text-xs hover:bg-slate-200 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3">
+                <input type="hidden" id="duty-modal-kind" value="primary">
+                <input type="hidden" id="duty-modal-idx" value="-1">
+                <div>
+                    <label class="text-xs font-bold text-slate-700 block mb-1">ชื่อหัวข้องาน: <span class="text-red-500">*</span></label>
+                    <input type="text" id="duty-modal-name" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500" placeholder="เช่น คลัง W1, ช่วยยกของ">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-700 block mb-1">คำอธิบายสั้น:</label>
+                    <input type="text" id="duty-modal-desc" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:ring-2 focus:ring-blue-500" placeholder="เช่น จัดเตรียม & แพ็กของ">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-700 block mb-1">ไอคอน (FontAwesome Class):</label>
+                    <select id="duty-modal-icon" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="fa-boxes-stacked">fa-boxes-stacked (กล่องสต๊อก)</option>
+                        <option value="fa-cubes-stacked">fa-cubes-stacked (กองสินค้า)</option>
+                        <option value="fa-truck-fast">fa-truck-fast (รถส่งของด่วน)</option>
+                        <option value="fa-truck-ramp-box">fa-truck-ramp-box (ตรวจรับสินค้า)</option>
+                        <option value="fa-dolly">fa-dolly (รถเข็นย้ายของ)</option>
+                        <option value="fa-truck-loading">fa-truck-loading (ยกสินค้าขึ้นรถ)</option>
+                        <option value="fa-store">fa-store (หน้าร้าน)</option>
+                        <option value="fa-motorcycle">fa-motorcycle (มอเตอร์ไซค์ส่งของ)</option>
+                        <option value="fa-warehouse">fa-warehouse (คลังสินค้า)</option>
+                        <option value="fa-clipboard-check">fa-clipboard-check (เช็คสต๊อก)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeDutyModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-600 transition-colors">ยกเลิก</button>
+                <button type="button" onclick="confirmSaveDutyModal()" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-xs font-bold text-white shadow-md transition-all">บันทึกรายการ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Category Edit/Add Modal -->
+    <div id="category-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[80] flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-md bg-white rounded-2xl p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <h3 id="cat-modal-title" class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-folder-plus text-blue-600"></i><span>เพิ่มหมวดหมู่ความผิดพลาด</span>
+                </h3>
+                <button type="button" onclick="closeCategoryModal()" aria-label="ปิด" class="w-6 h-6 rounded-full bg-slate-100 text-slate-500 text-xs hover:bg-slate-200 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-slate-700 block mb-1">ชื่อหมวดหมู่: <span class="text-red-500">*</span></label>
+                    <input type="text" id="cat-modal-label" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500" placeholder="เช่น ขาออก & จัดส่ง">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-700 block mb-1">ไอคอน (FontAwesome Class):</label>
+                    <select id="cat-modal-icon" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="fa-truck-fast">fa-truck-fast (จัดส่ง/ขาออก)</option>
+                        <option value="fa-store">fa-store (หน้าร้าน)</option>
+                        <option value="fa-box-archive">fa-box-archive (คลัง/จัดเก็บ)</option>
+                        <option value="fa-arrows-rotate">fa-arrows-rotate (โอนย้าย)</option>
+                        <option value="fa-handshake">fa-handshake (รับผิดชอบร่วม)</option>
+                        <option value="fa-cash-register">fa-cash-register (แคชเชียร์)</option>
+                        <option value="fa-boxes-stacked">fa-boxes-stacked (สต๊อกสินค้า)</option>
+                        <option value="fa-circle-exclamation">fa-circle-exclamation (อื่น ๆ)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-700 block mb-1">สีของหมวดหมู่:</label>
+                    <select id="cat-modal-color" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="text-blue-500">สีน้ำเงิน (text-blue-500)</option>
+                        <option value="text-amber-500">สีส้ม (text-amber-500)</option>
+                        <option value="text-emerald-500">สีเขียว (text-emerald-500)</option>
+                        <option value="text-purple-500">สีม่วง (text-purple-500)</option>
+                        <option value="text-red-500">สีแดง (text-red-500)</option>
+                        <option value="text-indigo-500">สีคราม (text-indigo-500)</option>
+                        <option value="text-slate-500">สีเทา (text-slate-500)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeCategoryModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-600 transition-colors">ยกเลิก</button>
+                <button type="button" onclick="confirmSaveCategoryModal()" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-xs font-bold text-white shadow-md transition-all">บันทึกหมวดหมู่</button>
             </div>
         </div>
     </div>
@@ -1529,7 +1734,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260825.07</span>
+                <span id="drawer-version-text">KPI Suite v20260826.01</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -1541,12 +1746,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260825.07"></script>
+    <script src="js/supabase-kpi-client.js?v=20260826.01"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260825.07";
+        const CURRENT_VERSION = "20260826.01";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -1998,7 +2203,7 @@
 
         const AKRA_CASE_MARKER = '[AKRA_CASE:';
         const TRD_CASE_MARKER = '[TRD_CASE:';
-        const AKRA_CORE_CATALOG = [
+        let AKRA_CORE_CATALOG = [
             { core: 'outbound', coreLabel: 'ขาออก & จัดส่ง', type: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5 },
             { core: 'outbound', coreLabel: 'ขาออก & จัดส่ง', type: 'หยิบผิด ถึงหน้าร้านแล้ว', penalty: 10 },
             { core: 'outbound', coreLabel: 'ขาออก & จัดส่ง', type: 'หยิบผิด ถึงลูกค้าแล้ว', penalty: 20 },
@@ -2047,7 +2252,7 @@
         };
 
         // ------------------ HP PENALTY ------------------
-        const HP_PENALTY = {
+        let HP_PENALTY = {
             'แก้ไขได้ก่อนจัดส่ง': 5, 'ผิดพลาดในการรับลงสินค้า': 10, 'ส่งถึงหน้าร้านแล้ว': 15, 'ส่งถึงลูกค้าแล้ว': 30,
             'สินค้าขาดสต๊อก': 10,
             'หยิบผิด แก้ทันก่อนจัดส่ง': 5, 'หยิบผิด ถึงหน้าร้านแล้ว': 10, 'หยิบผิด ถึงลูกค้าแล้ว': 20, 'จำนวนไม่ครบ / ขาดเกิน': 5,
@@ -3188,15 +3393,15 @@
         }
 
         // ================= AKRA WORKLOAD EDITOR V2 =================
-        const AKRA_PRIMARY_DUTIES = [
-            { id: 'W1', name: 'คลัง W1', desc: 'จัดเตรียม & แพ็กของ', icon: 'fa-boxes-stacked' },
-            { id: 'W2', name: 'คลัง W2', desc: 'สต๊อกใหญ่ & เติมของ', icon: 'fa-boxes-stacked' },
-            { id: 'OUTBOUND', name: 'ขาออก', desc: 'จัดส่ง & จ่ายออก', icon: 'fa-truck-fast' },
+        let AKRA_PRIMARY_DUTIES = [
+            { id: 'W1', name: 'คลังหลัก W1', desc: 'หยิบ/แพ็ก/จัดเก็บ', icon: 'fa-warehouse' },
+            { id: 'W2', name: 'คลังสำรอง W2', desc: 'สต๊อกใหญ่/เติมของ', icon: 'fa-boxes-stacked' },
             { id: 'INBOUND', name: 'รับสินค้าเข้า', desc: 'ตรวจรับ & ลงสินค้า', icon: 'fa-truck-ramp-box' },
+            { id: 'OUTBOUND', name: 'ขาออก', desc: 'จัดส่ง & จ่ายออก', icon: 'fa-truck' },
             { id: 'MOVE', name: 'ขนย้ายสินค้า', desc: 'โอนย้าย & จัดระเบียบ', icon: 'fa-dolly' }
         ];
 
-        const AKRA_SUPPORT_DUTIES = [
+        let AKRA_SUPPORT_DUTIES = [
             { id: 'SUPP_W1', name: 'คลัง W1', desc: 'ช่วยงานคลัง W1', icon: 'fa-boxes-stacked' },
             { id: 'SUPP_W2', name: 'คลัง W2', desc: 'ช่วยงานคลัง W2', icon: 'fa-cubes-stacked' },
             { id: 'SUPP_OUT', name: 'ขาออก', desc: 'ช่วยจัดส่ง/จ่ายออก', icon: 'fa-truck-fast' },
@@ -3228,7 +3433,7 @@
         let incidentSaveInFlight = false;
         let pendingIncidentCaseId = '';
 
-        const ERROR_CATALOG = {
+        let ERROR_CATALOG = {
             outbound: [
                 { name: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5, desc: 'ตรวจพบที่จุดเช็คก่อนขึ้นรถ', dot: 'bg-emerald-500' },
                 { name: 'หยิบผิด ถึงหน้าร้านแล้ว', penalty: 10, desc: 'ของหลุดไปหน้าร้าน TRD แล้วแจ้งกลับ', dot: 'bg-amber-500' },
@@ -3281,6 +3486,113 @@
             ]
         };
 
+        let KPI_SYSTEM_CONFIG = null;
+        let ADMIN_SETTINGS_STATE = {
+            activeTab: 'emp',
+            incidentBranch: 'AKRA',
+            workloadDuties: null,
+            incidentCatalog: null
+        };
+
+        function cloneConfig(obj) {
+            return JSON.parse(JSON.stringify(obj));
+        }
+
+        function applySystemConfig(systemConfig) {
+            if (!systemConfig || typeof systemConfig !== 'object') return;
+
+            if (systemConfig.workloadDuties) {
+                if (Array.isArray(systemConfig.workloadDuties.primaryDuties) && systemConfig.workloadDuties.primaryDuties.length > 0) {
+                    AKRA_PRIMARY_DUTIES = systemConfig.workloadDuties.primaryDuties;
+                }
+                if (Array.isArray(systemConfig.workloadDuties.supportDuties) && systemConfig.workloadDuties.supportDuties.length > 0) {
+                    AKRA_SUPPORT_DUTIES = systemConfig.workloadDuties.supportDuties;
+                }
+            }
+
+            if (systemConfig.incidentCatalog) {
+                const catalog = systemConfig.incidentCatalog;
+                if (catalog.AKRA && catalog.AKRA.items) {
+                    Object.keys(catalog.AKRA.items).forEach(catKey => {
+                        ERROR_CATALOG[catKey] = catalog.AKRA.items[catKey];
+                    });
+                }
+                if (catalog.TRD && catalog.TRD.items) {
+                    Object.keys(catalog.TRD.items).forEach(catKey => {
+                        ERROR_CATALOG[catKey] = catalog.TRD.items[catKey];
+                    });
+                }
+
+                AKRA_CORE_CATALOG.length = 0;
+                if (catalog.AKRA && Array.isArray(catalog.AKRA.categories)) {
+                    const akraGroups = [];
+                    catalog.AKRA.categories.forEach((cat, idx) => {
+                        const items = (catalog.AKRA.items && catalog.AKRA.items[cat.key]) || [];
+                        const options = [];
+                        items.forEach(item => {
+                            HP_PENALTY[item.name] = Number(item.penalty) || 0;
+                            options.push(item.name);
+                            AKRA_CORE_CATALOG.push({
+                                core: cat.key === 'transfer' ? 'internal' : cat.key,
+                                coreLabel: cat.label,
+                                type: item.name,
+                                penalty: Number(item.penalty) || 0
+                            });
+                        });
+                        akraGroups.push({ group: `${idx + 1}. ${cat.label}`, options });
+                    });
+                    akraGroups.push({ group: `${catalog.AKRA.categories.length + 1}. อื่น ๆ`, options: ["ความผิดอื่น ๆ"] });
+                    if (BRANCH_CONFIG["AKRA"]) BRANCH_CONFIG["AKRA"].errorTypes = akraGroups;
+                }
+
+                if (catalog.TRD && Array.isArray(catalog.TRD.categories)) {
+                    const trdGroups = [];
+                    catalog.TRD.categories.forEach((cat, idx) => {
+                        const items = (catalog.TRD.items && catalog.TRD.items[cat.key]) || [];
+                        const options = [];
+                        items.forEach(item => {
+                            HP_PENALTY[item.name] = Number(item.penalty) || 0;
+                            options.push(item.name);
+                        });
+                        trdGroups.push({ group: `${idx + 1}. ${cat.label}`, options });
+                    });
+                    if (BRANCH_CONFIG["TRD"]) BRANCH_CONFIG["TRD"].errorTypes = trdGroups;
+                }
+            }
+            renderWorkloadCoreGrid();
+            renderSupportModalTasks();
+        }
+
+        function renderWorkloadCoreGrid() {
+            const grid = document.getElementById('wl-core-grid');
+            if (!grid) return;
+            grid.innerHTML = AKRA_PRIMARY_DUTIES.map((duty, idx) => {
+                const isActive = workloadState.core === duty.name;
+                const iconClass = (duty.icon && duty.icon.startsWith('fa-')) ? duty.icon : 'fa-boxes-stacked';
+                const isColSpan2 = (idx === AKRA_PRIMARY_DUTIES.length - 1 && AKRA_PRIMARY_DUTIES.length % 2 !== 0);
+                return `
+                    <button type="button" onclick="selectCore('${esc(duty.name)}', this)" class="core-btn ${isActive ? 'chip-active' : ''} p-3 rounded-xl border border-slate-200 bg-white text-left transition-all active:scale-95 flex items-center gap-2.5 ${isColSpan2 ? 'col-span-2' : ''}">
+                        <div class="w-8 h-8 rounded-lg ${isActive ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'} flex items-center justify-center text-sm shrink-0 font-bold"><i class="fa-solid ${esc(iconClass)}"></i></div>
+                        <div><p class="text-xs font-bold text-slate-800 leading-tight">${esc(duty.name)}</p><p class="text-[10px] text-slate-500">${esc(duty.desc || '')}</p></div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderSupportModalTasks() {
+            const container = document.getElementById('modal-task-grid');
+            if (!container) return;
+            container.innerHTML = AKRA_SUPPORT_DUTIES.map((duty) => {
+                const isSelected = modalTask.name === duty.name;
+                const iconClass = (duty.icon && duty.icon.startsWith('fa-')) ? duty.icon : 'fa-box';
+                return `
+                    <button type="button" onclick="selectModalTask('${esc(duty.name)}', '${esc(iconClass)}', this)" class="modal-task-chip ${isSelected ? 'support-chip-active' : ''} p-2 rounded-xl border border-slate-200 bg-slate-50 text-left text-xs font-semibold">
+                        <i class="fa-solid ${esc(iconClass)} mr-1.5 text-slate-600"></i> ${esc(duty.name)}
+                    </button>
+                `;
+            }).join('');
+        }
+
         let modalTask = { name: 'แวะขึ้นของ', icon: 'fa-truck-ramp-box', hours: 1.0 };
 
         function selectCore(name, btn) {
@@ -3293,6 +3605,7 @@
         }
 
         function renderWorkload() {
+            renderWorkloadCoreGrid();
             const totalS = (workloadState.support || []).reduce((sum, t) => sum + (parseFloat(t.hours) || 0), 0);
             const coreH = Math.max(0, workloadState.totalHours - totalS);
             const coreP = Math.round((coreH / workloadState.totalHours) * 100);
@@ -3502,37 +3815,448 @@
         function renderErrCategoryPills() {
             const container = document.getElementById('err-cat-pills');
             if (!container) return;
-            if (currentBranch === 'TRD') {
-                const trdCats = [
+            const branch = currentBranch || 'AKRA';
+            const catalog = (KPI_SYSTEM_CONFIG && KPI_SYSTEM_CONFIG.incidentCatalog && KPI_SYSTEM_CONFIG.incidentCatalog[branch])
+                ? KPI_SYSTEM_CONFIG.incidentCatalog[branch]
+                : null;
+
+            let cats = [];
+            if (catalog && Array.isArray(catalog.categories) && catalog.categories.length > 0) {
+                cats = catalog.categories.map(c => ({
+                    id: c.key,
+                    name: c.label,
+                    icon: `${c.icon || 'fa-folder'} ${c.color || 'text-blue-500'}`
+                }));
+            } else if (branch === 'TRD') {
+                cats = [
                     { id: 'trd_store', name: 'หน้าร้าน / ในร้าน', icon: 'fa-store text-amber-500' },
                     { id: 'trd_cashier', name: 'แคชเชียร์/แอดมิน', icon: 'fa-cash-register text-blue-500' },
                     { id: 'trd_stock', name: 'คลังหน้าร้าน', icon: 'fa-boxes-stacked text-emerald-500' },
                     { id: 'trd_other', name: 'อื่น ๆ', icon: 'fa-ellipsis text-slate-500' }
                 ];
-                if (!['trd_store', 'trd_cashier', 'trd_stock', 'trd_other'].includes(errCategory)) {
-                    errCategory = 'trd_store';
-                }
-                container.innerHTML = trdCats.map(c => `
-                    <button type="button" onclick="switchErrCategory('${c.id}', this)" class="cat-chip ${errCategory === c.id ? 'cat-chip-active' : ''} shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1">
-                        <i class="fa-solid ${c.icon} mr-1"></i><span>${c.name}</span>
-                    </button>
-                `).join('');
             } else {
-                const akraCats = [
+                cats = [
                     { id: 'outbound', name: 'ขาออก', icon: 'fa-truck-fast text-blue-500' },
                     { id: 'store_stock', name: 'หน้าร้าน/สต๊อก', icon: 'fa-store text-amber-500' },
                     { id: 'inbound', name: 'ขารับเข้า', icon: 'fa-box-archive text-emerald-500' },
                     { id: 'transfer', name: 'โอนย้าย W2', icon: 'fa-arrows-rotate text-purple-500' },
                     { id: 'shared', name: 'ร่วมรับผิดชอบ', icon: 'fa-handshake text-indigo-500' }
                 ];
-                if (!['outbound', 'store_stock', 'inbound', 'transfer', 'shared'].includes(errCategory)) {
-                    errCategory = 'outbound';
+            }
+
+            const validIds = cats.map(c => c.id);
+            if (!validIds.includes(errCategory)) {
+                errCategory = validIds[0] || (branch === 'TRD' ? 'trd_store' : 'outbound');
+            }
+
+            container.innerHTML = cats.map(c => `
+                <button type="button" onclick="switchErrCategory('${c.id}', this)" class="cat-chip ${errCategory === c.id ? 'cat-chip-active' : ''} shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1">
+                    <i class="fa-solid ${c.icon} mr-1"></i><span>${esc(c.name)}</span>
+                </button>
+            `).join('');
+        }
+
+        // ================= ADMIN SYSTEM SETTINGS CONTROLLER =================
+        function initAdminSettingsState() {
+            if (!ADMIN_SETTINGS_STATE.workloadDuties) {
+                ADMIN_SETTINGS_STATE.workloadDuties = (KPI_SYSTEM_CONFIG && KPI_SYSTEM_CONFIG.workloadDuties)
+                    ? cloneConfig(KPI_SYSTEM_CONFIG.workloadDuties)
+                    : {
+                        primaryDuties: cloneConfig(AKRA_PRIMARY_DUTIES),
+                        supportDuties: cloneConfig(AKRA_SUPPORT_DUTIES)
+                    };
+            }
+            if (!ADMIN_SETTINGS_STATE.incidentCatalog) {
+                const akraCategories = [
+                    { key: 'outbound', label: 'ขาออก & จัดส่ง', icon: 'fa-truck-fast', color: 'text-blue-500' },
+                    { key: 'store_stock', label: 'หน้าร้าน/สต๊อก', icon: 'fa-store', color: 'text-amber-500' },
+                    { key: 'inbound', label: 'ขารับเข้า', icon: 'fa-box-archive', color: 'text-emerald-500' },
+                    { key: 'transfer', label: 'โอนย้าย W2', icon: 'fa-arrows-rotate', color: 'text-purple-500' },
+                    { key: 'shared', label: 'รับผิดชอบร่วม', icon: 'fa-handshake', color: 'text-indigo-500' }
+                ];
+                const trdCategories = [
+                    { key: 'trd_store', label: 'หน้าร้าน / ในร้าน', icon: 'fa-store', color: 'text-blue-500' },
+                    { key: 'trd_cashier', label: 'แคชเชียร์/แอดมิน', icon: 'fa-cash-register', color: 'text-amber-500' },
+                    { key: 'trd_stock', label: 'คลังหน้าร้าน', icon: 'fa-boxes-stacked', color: 'text-emerald-500' },
+                    { key: 'trd_other', label: 'อื่น ๆ', icon: 'fa-circle-exclamation', color: 'text-slate-500' }
+                ];
+                const akraItems = {};
+                akraCategories.forEach(c => { akraItems[c.key] = cloneConfig(ERROR_CATALOG[c.key] || []); });
+                const trdItems = {};
+                trdCategories.forEach(c => { trdItems[c.key] = cloneConfig(ERROR_CATALOG[c.key] || []); });
+
+                ADMIN_SETTINGS_STATE.incidentCatalog = (KPI_SYSTEM_CONFIG && KPI_SYSTEM_CONFIG.incidentCatalog)
+                    ? cloneConfig(KPI_SYSTEM_CONFIG.incidentCatalog)
+                    : {
+                        AKRA: { categories: akraCategories, items: akraItems },
+                        TRD: { categories: trdCategories, items: trdItems }
+                    };
+            }
+        }
+
+        function switchAdminSubTab(subTab) {
+            ADMIN_SETTINGS_STATE.activeTab = subTab;
+            const subtabs = ['emp', 'workload', 'incidents'];
+            subtabs.forEach(t => {
+                const btn = document.getElementById(`btn-adm-tab-${t}`);
+                const panel = document.getElementById(`admin-panel-${t}`);
+                if (btn) {
+                    if (t === subTab) {
+                        btn.className = 'admin-subtab admin-subtab-active px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-blue-600 text-white shadow';
+                    } else {
+                        btn.className = 'admin-subtab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800';
+                    }
                 }
-                container.innerHTML = akraCats.map(c => `
-                    <button type="button" onclick="switchErrCategory('${c.id}', this)" class="cat-chip ${errCategory === c.id ? 'cat-chip-active' : ''} shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1">
-                        <i class="fa-solid ${c.icon} mr-1"></i><span>${c.name}</span>
-                    </button>
-                `).join('');
+                if (panel) {
+                    if (t === subTab) panel.classList.remove('hidden');
+                    else panel.classList.add('hidden');
+                }
+            });
+
+            initAdminSettingsState();
+            if (subTab === 'workload') renderAdminWorkloadSettings();
+            else if (subTab === 'incidents') renderAdminIncidentSettings();
+        }
+
+        function switchAdminIncidentBranch(branch) {
+            ADMIN_SETTINGS_STATE.incidentBranch = branch;
+            const akraBtn = document.getElementById('btn-inc-branch-akra');
+            const trdBtn = document.getElementById('btn-inc-branch-trd');
+            if (branch === 'AKRA') {
+                if (akraBtn) akraBtn.className = 'px-4 py-2 rounded-xl text-xs font-black transition-all bg-white text-slate-900 shadow';
+                if (trdBtn) trdBtn.className = 'px-4 py-2 rounded-xl text-xs font-black transition-all text-slate-600 hover:text-slate-900';
+            } else {
+                if (trdBtn) trdBtn.className = 'px-4 py-2 rounded-xl text-xs font-black transition-all bg-white text-slate-900 shadow';
+                if (akraBtn) akraBtn.className = 'px-4 py-2 rounded-xl text-xs font-black transition-all text-slate-600 hover:text-slate-900';
+            }
+            renderAdminIncidentSettings();
+        }
+
+        function renderAdminWorkloadSettings() {
+            initAdminSettingsState();
+            const primaryContainer = document.getElementById('admin-primary-duties-list');
+            const supportContainer = document.getElementById('admin-support-duties-list');
+
+            const pDuties = ADMIN_SETTINGS_STATE.workloadDuties.primaryDuties || [];
+            if (primaryContainer) {
+                primaryContainer.innerHTML = pDuties.map((d, idx) => `
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm shrink-0 font-bold">
+                                <i class="fa-solid ${esc(d.icon || 'fa-boxes-stacked')}"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-bold text-slate-800 leading-tight truncate">${esc(d.name)}</p>
+                                <p class="text-[10px] text-slate-500 truncate">${esc(d.desc || '')}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button type="button" onclick="openAddDutyModal('primary', ${idx})" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg text-xs" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+                            <button type="button" onclick="deleteAdminDuty('primary', ${idx})" class="p-1.5 text-red-600 hover:bg-red-100 rounded-lg text-xs" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('') || '<div class="text-xs text-slate-400 text-center py-3">ไม่มีรายการงานหลัก</div>';
+            }
+
+            const sDuties = ADMIN_SETTINGS_STATE.workloadDuties.supportDuties || [];
+            if (supportContainer) {
+                supportContainer.innerHTML = sDuties.map((d, idx) => `
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-sm shrink-0 font-bold">
+                                <i class="fa-solid ${esc(d.icon || 'fa-boxes-stacked')}"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-bold text-slate-800 leading-tight truncate">${esc(d.name)}</p>
+                                <p class="text-[10px] text-slate-500 truncate">${esc(d.desc || '')}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button type="button" onclick="openAddDutyModal('support', ${idx})" class="p-1.5 text-amber-600 hover:bg-amber-100 rounded-lg text-xs" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+                            <button type="button" onclick="deleteAdminDuty('support', ${idx})" class="p-1.5 text-red-600 hover:bg-red-100 rounded-lg text-xs" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('') || '<div class="text-xs text-slate-400 text-center py-3">ไม่มีรายการงานรอง</div>';
+            }
+        }
+
+        function openAddDutyModal(kind, idx = -1) {
+            initAdminSettingsState();
+            const modal = document.getElementById('duty-modal');
+            const titleEl = document.getElementById('duty-modal-title');
+            const kindInput = document.getElementById('duty-modal-kind');
+            const idxInput = document.getElementById('duty-modal-idx');
+            const nameInput = document.getElementById('duty-modal-name');
+            const descInput = document.getElementById('duty-modal-desc');
+            const iconSelect = document.getElementById('duty-modal-icon');
+
+            if (!modal) return;
+            kindInput.value = kind;
+            idxInput.value = idx;
+
+            const list = kind === 'primary' ? ADMIN_SETTINGS_STATE.workloadDuties.primaryDuties : ADMIN_SETTINGS_STATE.workloadDuties.supportDuties;
+            if (idx >= 0 && list[idx]) {
+                titleEl.innerHTML = `<i class="fa-solid fa-pen text-blue-600"></i><span>แก้ไขหัวข้องาน (${kind === 'primary' ? 'งานหลัก' : 'งานรอง'})</span>`;
+                nameInput.value = list[idx].name || '';
+                descInput.value = list[idx].desc || '';
+                iconSelect.value = list[idx].icon || 'fa-boxes-stacked';
+            } else {
+                titleEl.innerHTML = `<i class="fa-solid fa-plus text-blue-600"></i><span>เพิ่มหัวข้องาน (${kind === 'primary' ? 'งานหลัก' : 'งานรอง'})</span>`;
+                nameInput.value = '';
+                descInput.value = '';
+                iconSelect.value = kind === 'primary' ? 'fa-boxes-stacked' : 'fa-dolly';
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function closeDutyModal() {
+            const modal = document.getElementById('duty-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function confirmSaveDutyModal() {
+            const kind = document.getElementById('duty-modal-kind').value;
+            const idx = parseInt(document.getElementById('duty-modal-idx').value);
+            const name = document.getElementById('duty-modal-name').value.trim();
+            const desc = document.getElementById('duty-modal-desc').value.trim();
+            const icon = document.getElementById('duty-modal-icon').value.trim();
+
+            if (!name) {
+                alert('กรุณาระบุชื่อหัวข้องาน');
+                return;
+            }
+
+            const list = kind === 'primary' ? ADMIN_SETTINGS_STATE.workloadDuties.primaryDuties : ADMIN_SETTINGS_STATE.workloadDuties.supportDuties;
+            if (idx >= 0 && list[idx]) {
+                list[idx].name = name;
+                list[idx].desc = desc;
+                list[idx].icon = icon;
+            } else {
+                const id = kind === 'primary' ? `DUTY_${Date.now()}` : `SUPP_${Date.now()}`;
+                list.push({ id, name, desc, icon });
+            }
+            closeDutyModal();
+            renderAdminWorkloadSettings();
+        }
+
+        function deleteAdminDuty(kind, idx) {
+            const list = kind === 'primary' ? ADMIN_SETTINGS_STATE.workloadDuties.primaryDuties : ADMIN_SETTINGS_STATE.workloadDuties.supportDuties;
+            if (list.length <= 1) {
+                alert('ต้องมีหัวข้องานอย่างน้อย 1 รายการ');
+                return;
+            }
+            if (!confirm(`ยืนยันการลบ "${list[idx].name}" หรือไม่?`)) return;
+            list.splice(idx, 1);
+            renderAdminWorkloadSettings();
+        }
+
+        async function saveAdminWorkloadSettings() {
+            if (!sessionToken || !IS_ADMIN || !window.AkraSupabaseKPI?.saveSystemConfig) {
+                showToast('ต้องการสิทธิ์ Admin ในการบันทึกการตั้งค่า', true);
+                return;
+            }
+            const saveBtn = document.getElementById('btn-save-admin-workload');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>กำลังบันทึก…</span>';
+            }
+            try {
+                const result = await AkraSupabaseKPI.saveSystemConfig(sessionToken, 'workload_duties', ADMIN_SETTINGS_STATE.workloadDuties);
+                if (result.status === 'success') {
+                    if (!KPI_SYSTEM_CONFIG) KPI_SYSTEM_CONFIG = {};
+                    KPI_SYSTEM_CONFIG.workloadDuties = cloneConfig(ADMIN_SETTINGS_STATE.workloadDuties);
+                    applySystemConfig(KPI_SYSTEM_CONFIG);
+                    renderWorkload();
+                    showToast('บันทึกการตั้งค่า Workload สำเร็จแล้ว');
+                }
+            } catch (err) {
+                console.error('Failed to save workload duties:', err);
+                showToast('บันทึกการตั้งค่าไม่สำเร็จ: ' + (err.message || ''), true);
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>บันทึกการตั้งค่า Workload</span>';
+                }
+            }
+        }
+
+        function renderAdminIncidentSettings() {
+            initAdminSettingsState();
+            const branch = ADMIN_SETTINGS_STATE.incidentBranch;
+            const container = document.getElementById('admin-incident-categories-list');
+            if (!container) return;
+
+            const catalog = ADMIN_SETTINGS_STATE.incidentCatalog[branch];
+            if (!catalog || !Array.isArray(catalog.categories)) {
+                container.innerHTML = '<div class="text-center py-4 text-xs text-slate-400">ไม่พบข้อมูลหมวดหมู่</div>';
+                return;
+            }
+
+            container.innerHTML = catalog.categories.map((cat) => {
+                const items = (catalog.items && catalog.items[cat.key]) || [];
+                return `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="w-7 h-7 rounded-xl bg-slate-100 ${cat.color || 'text-blue-500'} flex items-center justify-center text-sm font-bold">
+                                    <i class="fa-solid ${esc(cat.icon || 'fa-folder')}"></i>
+                                </span>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800">${esc(cat.label)}</h4>
+                                    <span class="text-[10px] text-slate-400 font-mono">key: ${esc(cat.key)} · ${items.length} รายการ</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="addAdminIncidentItem('${esc(branch)}', '${esc(cat.key)}')" class="py-1 px-2.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 font-bold text-[11px] flex items-center gap-1">
+                                    <i class="fa-solid fa-plus"></i><span>เพิ่มข้อผิดพลาด</span>
+                                </button>
+                                <button type="button" onclick="deleteAdminCategory('${esc(branch)}', '${esc(cat.key)}')" class="py-1 px-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-slate-100 text-xs" title="ลบหมวดหมู่นี้">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            ${items.map((item, itemIdx) => `
+                                <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                                    <div class="flex-1 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                                        <div class="sm:col-span-5">
+                                            <label class="text-[10px] text-slate-400 font-bold block sm:hidden">ชื่อข้อผิดพลาด:</label>
+                                            <input type="text" value="${esc(item.name)}" onchange="updateAdminIncidentItem('${esc(branch)}', '${esc(cat.key)}', ${itemIdx}, 'name', this.value)" class="w-full p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800" placeholder="ชื่อข้อผิดพลาด">
+                                        </div>
+                                        <div class="sm:col-span-4">
+                                            <label class="text-[10px] text-slate-400 font-bold block sm:hidden">คำอธิบาย:</label>
+                                            <input type="text" value="${esc(item.desc || '')}" onchange="updateAdminIncidentItem('${esc(branch)}', '${esc(cat.key)}', ${itemIdx}, 'desc', this.value)" class="w-full p-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-600" placeholder="คำอธิบายสั้น">
+                                        </div>
+                                        <div class="sm:col-span-3 flex items-center gap-1.5">
+                                            <label class="text-[10px] text-slate-400 font-bold block sm:hidden">หักคะแนน:</label>
+                                            <span class="text-[11px] font-bold text-red-600">-</span>
+                                            <input type="number" min="0" max="100" value="${item.penalty}" onchange="updateAdminIncidentItem('${esc(branch)}', '${esc(cat.key)}', ${itemIdx}, 'penalty', this.value)" class="w-16 p-1.5 bg-white border border-red-200 text-red-700 font-num font-bold rounded-lg text-xs text-center">
+                                            <span class="text-[10px] font-bold text-slate-500">HP</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-end gap-1 shrink-0">
+                                        <button type="button" onclick="deleteAdminIncidentItem('${esc(branch)}', '${esc(cat.key)}', ${itemIdx})" class="p-1.5 text-red-600 hover:bg-red-100 rounded-lg text-xs" title="ลบรายการนี้">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('') || '<div class="text-xs text-slate-400 text-center py-2">ยังไม่มีข้อผิดพลาดในหมวดนี้</div>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openAddCategoryModal() {
+            initAdminSettingsState();
+            const modal = document.getElementById('category-modal');
+            const labelInput = document.getElementById('cat-modal-label');
+            if (modal) {
+                if (labelInput) labelInput.value = '';
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeCategoryModal() {
+            const modal = document.getElementById('category-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function confirmSaveCategoryModal() {
+            const branch = ADMIN_SETTINGS_STATE.incidentBranch;
+            const label = document.getElementById('cat-modal-label').value.trim();
+            const icon = document.getElementById('cat-modal-icon').value.trim();
+            const color = document.getElementById('cat-modal-color').value.trim();
+
+            if (!label) {
+                alert('กรุณาระบุชื่อหมวดหมู่');
+                return;
+            }
+
+            const key = `cat_${Date.now()}`;
+            const catalog = ADMIN_SETTINGS_STATE.incidentCatalog[branch];
+            if (!catalog.categories) catalog.categories = [];
+            if (!catalog.items) catalog.items = {};
+
+            catalog.categories.push({ key, label, icon, color });
+            catalog.items[key] = [];
+
+            closeCategoryModal();
+            renderAdminIncidentSettings();
+        }
+
+        function deleteAdminCategory(branch, catKey) {
+            const catalog = ADMIN_SETTINGS_STATE.incidentCatalog[branch];
+            if (!catalog || !catalog.categories) return;
+            if (catalog.categories.length <= 1) {
+                alert('ต้องมีหมวดหมู่อย่างน้อย 1 หมวด');
+                return;
+            }
+            const found = catalog.categories.find(c => c.key === catKey);
+            if (!confirm(`ยืนยันการลบหมวดหมู่ "${found ? found.label : catKey}" และรายการภายในทั้งหมดหรือไม่?`)) return;
+            catalog.categories = catalog.categories.filter(c => c.key !== catKey);
+            delete catalog.items[catKey];
+            renderAdminIncidentSettings();
+        }
+
+        function addAdminIncidentItem(branch, catKey) {
+            const catalog = ADMIN_SETTINGS_STATE.incidentCatalog[branch];
+            if (!catalog.items) catalog.items = {};
+            if (!catalog.items[catKey]) catalog.items[catKey] = [];
+            catalog.items[catKey].push({
+                name: 'ความผิดพลาดใหม่',
+                desc: 'ระบุรายละเอียด',
+                penalty: 5,
+                dot: 'bg-amber-500'
+            });
+            renderAdminIncidentSettings();
+        }
+
+        function deleteAdminIncidentItem(branch, catKey, itemIdx) {
+            const catalog = ADMIN_SETTINGS_STATE.incidentCatalog[branch];
+            if (!catalog.items || !catalog.items[catKey]) return;
+            catalog.items[catKey].splice(itemIdx, 1);
+            renderAdminIncidentSettings();
+        }
+
+        function updateAdminIncidentItem(branch, catKey, itemIdx, field, val) {
+            const catalog = ADMIN_SETTINGS_STATE.incidentCatalog[branch];
+            if (!catalog.items || !catalog.items[catKey] || !catalog.items[catKey][itemIdx]) return;
+            if (field === 'penalty') {
+                catalog.items[catKey][itemIdx].penalty = Math.max(0, parseInt(val) || 0);
+            } else {
+                catalog.items[catKey][itemIdx][field] = String(val || '').trim();
+            }
+        }
+
+        async function saveAdminIncidentSettings() {
+            if (!sessionToken || !IS_ADMIN || !window.AkraSupabaseKPI?.saveSystemConfig) {
+                showToast('ต้องการสิทธิ์ Admin ในการบันทึกการตั้งค่า', true);
+                return;
+            }
+            const saveBtn = document.getElementById('btn-save-admin-incidents');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>กำลังบันทึก…</span>';
+            }
+            try {
+                const result = await AkraSupabaseKPI.saveSystemConfig(sessionToken, 'incident_catalog', ADMIN_SETTINGS_STATE.incidentCatalog);
+                if (result.status === 'success') {
+                    if (!KPI_SYSTEM_CONFIG) KPI_SYSTEM_CONFIG = {};
+                    KPI_SYSTEM_CONFIG.incidentCatalog = cloneConfig(ADMIN_SETTINGS_STATE.incidentCatalog);
+                    applySystemConfig(KPI_SYSTEM_CONFIG);
+                    renderErrSeverity();
+                    showToast('บันทึกการตั้งค่าหมวดหมู่และคะแนนสำเร็จแล้ว');
+                }
+            } catch (err) {
+                console.error('Failed to save incident catalog:', err);
+                showToast('บันทึกการตั้งค่าไม่สำเร็จ: ' + (err.message || ''), true);
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>บันทึกการตั้งค่าปัญหา &amp; คะแนน</span>';
+                }
             }
         }
 
@@ -3967,6 +4691,10 @@
                         processConfigList(configResult.employees);
                         KPI_MAIN_VIEWER = configResult.viewer || null;
                         KPI_WORKLOAD_STATUS = configResult.workload || KPI_WORKLOAD_STATUS;
+                        if (configResult.systemConfig) {
+                            KPI_SYSTEM_CONFIG = configResult.systemConfig;
+                            applySystemConfig(KPI_SYSTEM_CONFIG);
+                        }
                         loaded = true;
                     }
                 } catch (supaErr) {
@@ -4000,6 +4728,10 @@
                     processConfigList(result.employees);
                     KPI_MAIN_VIEWER = result.viewer || KPI_MAIN_VIEWER;
                     KPI_WORKLOAD_STATUS = result.workload || { date: '', hour: 0, recordedEmployees: [] };
+                    if (result.systemConfig) {
+                        KPI_SYSTEM_CONFIG = result.systemConfig;
+                        applySystemConfig(KPI_SYSTEM_CONFIG);
+                    }
                     renderAdminPanel();
                     return true;
                 } catch (error) {
@@ -7131,6 +7863,9 @@
                     ? `วันนี้ ${bangkokDate} · ตรวจเมื่อวาน ${KPI_WORKLOAD_STATUS.previousDate} · ไม่ได้บันทึก Workload ${missingCount} จาก ${expectedCount} คน`
                     : `วันนี้ ${bangkokDate} · รอบันทึกได้ถึง 23:59 · ผู้ที่ต้องบันทึก Workload ${expectedCount} คน`;
             }
+            if (typeof initAdminSettingsState === 'function') initAdminSettingsState();
+            if (typeof renderAdminWorkloadSettings === 'function') renderAdminWorkloadSettings();
+            if (typeof renderAdminIncidentSettings === 'function') renderAdminIncidentSettings();
             return true;
         }
 

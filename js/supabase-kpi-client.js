@@ -50,6 +50,11 @@
         getEmployees: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
         getConfig: token => fetchConfigAction('getConfig', token),
         getAdminStatus: token => fetchConfigAction('getAdminStatus', token),
+        saveSystemConfig: async (token, configKey, configValue) => {
+            const data = await fetchKpiAction('saveSystemConfig', token, { configKey, configValue });
+            if (data.status !== 'success') throw new Error('invalid_save_system_config_response');
+            return data;
+        },
         saveWorkload: async (token, employeeUid, date, workload) => {
             const data = await fetchKpiAction('saveWorkload', token, { employeeUid, date, workload });
             if (!Array.isArray(data.workload)) throw new Error('invalid_kpi_workload_response');

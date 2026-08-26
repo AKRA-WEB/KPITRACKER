@@ -63,7 +63,9 @@ function extractFunction(name) {
   ].forEach(name => vm.runInContext(extractFunction(name), context));
 
   // Run initial script up to HP_PENALTY
-  const setupBlock = fullScript.slice(0, fullScript.indexOf('const HP_PENALTY ='));
+  const hpPenaltyIndex = fullScript.search(/(?:const|let)\s+HP_PENALTY\s*=/);
+  assert.ok(hpPenaltyIndex > 0, 'HP_PENALTY declaration must exist in script');
+  const setupBlock = fullScript.slice(0, hpPenaltyIndex);
   vm.runInContext(setupBlock, context);
 
   const globalConfigList = vm.runInContext('GLOBAL_CONFIG_LIST', context);
