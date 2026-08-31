@@ -416,18 +416,6 @@
                             <label class="text-[11px] font-bold text-slate-700 block mb-1">เลือกผู้รับผิดชอบ / ผู้จัด (Caused by):</label>
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-emp-chips"></div>
                         </div>
-
-                        <!-- Dual Attribution: Good Catch Hero -->
-                        <div class="pt-2.5 border-t border-slate-100 space-y-1">
-                            <div class="flex items-center justify-between">
-                                <label class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-                                    <span class="text-amber-500 font-bold">🔎</span>
-                                    <span>ผู้ตรวจพบ / สกัดข้อผิดพลาดได้ทัน (Good Catch by):</span>
-                                </label>
-                                <span class="text-[9px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200"><i class="fa-solid fa-star text-amber-400 mr-0.5"></i>+1 Good Catch</span>
-                            </div>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-catcher-chips"></div>
-                        </div>
                     </section>
 
                     <!-- Step 2: Category & Detection Stage Severity -->
@@ -448,11 +436,38 @@
                         <div class="space-y-1.5" id="pc-err-severity-list"></div>
                     </section>
 
-                    <!-- Step 3: Note & Save -->
+                    <!-- Step 3: Good Catch Attribution & Interception Detail -->
+                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">3</span>
+                                <span class="text-slate-800 font-bold">ผู้ตรวจพบ / สกัดข้อผิดพลาดได้ทัน (Good Catch by):</span>
+                            </label>
+                            <span class="text-[9px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
+                                <i class="fa-solid fa-star text-amber-400"></i>+1 Good Catch
+                            </span>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-slate-700 block mb-1">เลือกผู้ตรวจพบ / ฮีโร่ที่ช่วยสกัดข้อผิดพลาด:</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-catcher-chips"></div>
+                        </div>
+                        <div class="pt-1 space-y-1">
+                            <label class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                                <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                                <span>ข้อมูลเพิ่มเติม: ตรวจพบ หรือ สกัดข้อผิดพลาดอันไหนได้ทัน:</span>
+                            </label>
+                            <input type="text" id="pc-err-catcher-note-input" placeholder="เช่น 'ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบเกิน 2 ลัง สกัดได้ทันก่อนจัดส่ง'" class="w-full p-2.5 bg-emerald-50/30 border border-emerald-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400">
+                        </div>
+                    </section>
+
+                    <!-- Step 4: Note & Save -->
                     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-                        <label class="text-xs font-bold text-slate-800 block">3. รายละเอียดสินค้า / เลขที่บิล (สั้นๆ):</label>
+                        <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px] font-bold">4</span>
+                            <span>รายละเอียดสินค้า / เลขที่บิล (สั้นๆ):</span>
+                        </label>
                         <input type="text" id="pc-err-note-input" placeholder="เช่น 'ตกเบิกนมสด 5 ลัง หน้าร้านของหมด'" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-red-500">
-                        <button type="button" id="btn-save-error-preview" onclick="saveErrorCaseFromPreview()" class="w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 mt-2 transition-all active:scale-95">
+                        <button type="button" id="btn-save-error-preview" onclick="saveErrorCaseFromPreview()" class="w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 mt-2 transition-all active:scale-95 cursor-pointer">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
                             <span>บันทึกเคสความผิดพลาดทันที</span>
                         </button>
@@ -2467,7 +2482,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260826.08</span>
+                <span id="drawer-version-text">KPI Suite v20260831.01</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2479,12 +2494,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260826.08"></script>
+    <script src="js/supabase-kpi-client.js?v=20260831.01"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260826.08";
+        const CURRENT_VERSION = "20260831.01";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -6431,8 +6446,10 @@
             if (incidentSaveInFlight) return;
             const activeSev = document.querySelector('#pc-err-severity-list .severity-chip-active');
             const noteInput = document.getElementById('pc-err-note-input');
+            const catcherNoteInput = document.getElementById('pc-err-catcher-note-input');
             const date = document.getElementById('record-date-error')?.value || '';
             const note = noteInput ? noteInput.value.trim() : '';
+            const catcherNote = catcherNoteInput ? catcherNoteInput.value.trim() : '';
             const sevName = activeSev ? activeSev.dataset.name : 'หยิบผิด แก้ทันก่อนจัดส่ง';
             let penalty = activeSev ? (parseInt(activeSev.dataset.penalty, 10) || 5) : 5;
 
@@ -6450,6 +6467,11 @@
             const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
             const detectedBy = (selectedErrCatcher && selectedErrCatcher !== '(ไม่มี / ตรวจพบเอง)') ? selectedErrCatcher : '';
 
+            let fullNote = note;
+            if (catcherNote && detectedBy) {
+                fullNote = note ? `${note} (สกัดได้ทัน: ${catcherNote})` : `(สกัดได้ทัน: ${catcherNote})`;
+            }
+
             const newCase = {
                 kind: 'case',
                 caseId: pendingIncidentCaseId || `ERR-${date}-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
@@ -6466,7 +6488,8 @@
                 incidentType: sevName,
                 detectedBy: detectedBy,
                 goodCatchBy: detectedBy,
-                note: note,
+                goodCatchNote: catcherNote,
+                note: fullNote,
                 time: timeStr
             };
             pendingIncidentCaseId = newCase.caseId;
@@ -6482,6 +6505,7 @@
                 incidentZeroConfirmed = result.zeroConfirmed;
                 pendingIncidentCaseId = '';
                 if (noteInput) noteInput.value = '';
+                if (catcherNoteInput) catcherNoteInput.value = '';
                 applyIncidentSaveResultToCache(date, currentBranch, result);
                 renderErrTimeline();
                 renderErrTeamHp();
