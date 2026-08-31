@@ -375,15 +375,15 @@
                 
                 <!-- Col 1: Error & Good Catch Entry Form -->
                 <div class="space-y-3.5">
-                    <!-- Form Mode Switcher: Incident vs Standalone Good Catch -->
+                    <!-- Form Mode Switcher: Incident vs Standalone Good Catch & Achievements -->
                     <div class="flex items-center gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
                         <button type="button" id="tab-btn-incident-form" onclick="switchIncidentFormMode('incident')" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all bg-white text-red-700 shadow-sm border border-slate-200 flex items-center justify-center gap-1.5 active:scale-98">
                             <i class="fa-solid fa-triangle-exclamation text-red-600"></i>
-                            <span>1. บันทึกความผิดพลาด (Incident)</span>
+                            <span>1. บันทึกข้อผิดพลาด (Incident)</span>
                         </button>
                         <button type="button" id="tab-btn-goodcatch-form" onclick="switchIncidentFormMode('good_catch')" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 flex items-center justify-center gap-1.5 active:scale-98">
-                            <i class="fa-solid fa-shield-halved text-emerald-600"></i>
-                            <span>2. บันทึก Good Catch (เดี่ยว)</span>
+                            <i class="fa-solid fa-star text-amber-500"></i>
+                            <span>2. บันทึกผลงาน &amp; Good Catch</span>
                             <span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full font-bold">+1 Star</span>
                         </button>
                     </div>
@@ -465,52 +465,71 @@
                         </section>
                     </div>
 
-                    <!-- Mode B: Standalone Good Catch Form Container -->
+                    <!-- Mode B: Standalone Good Catch & Positive Achievements Container -->
                     <div id="form-container-goodcatch" class="hidden space-y-3.5">
-                        <div class="p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200 shadow-sm flex items-center justify-between gap-3">
+                        <div class="p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-amber-50/50 rounded-2xl border border-emerald-200 shadow-sm flex items-center justify-between gap-3">
                             <div class="flex items-center gap-2.5">
-                                <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm shrink-0 shadow-sm">
+                                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center text-sm shrink-0 shadow-sm">
                                     <i class="fa-solid fa-star text-amber-300"></i>
                                 </div>
                                 <div>
-                                    <h3 class="text-xs font-bold text-emerald-950">บันทึก Good Catch (ฮีโร่สกัดข้อผิดพลาด)</h3>
-                                    <p class="text-[10px] text-emerald-700">ให้คะแนนการตรวจพบข้อผิดพลาดได้ทันก่อนเกิดผลกระทบ • ไม่หัก HP</p>
+                                    <h3 class="text-xs font-bold text-emerald-950">บันทึกผลงาน &amp; Good Catch (Spotlight &amp; Recognition)</h3>
+                                    <p class="text-[10px] text-emerald-700">บันทึกผลงานดีเด่น, สกัดข้อผิดพลาด, ซัพพอร์ตเพื่อน, ปรับปรุงงาน • เพิ่มดาวผลงาน (+1 Star) ไม่หัก HP</p>
                                 </div>
                             </div>
                             <span class="text-[10px] bg-emerald-200/80 text-emerald-900 px-2.5 py-1 rounded-lg font-bold border border-emerald-300 shrink-0 font-num">
-                                +1 Good Catch
+                                +1 Star
                             </span>
                         </div>
 
-                        <!-- GC Step 1: Catcher Select -->
+                        <!-- GC Step 1: Employee Select -->
                         <section class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm space-y-2.5">
                             <div class="flex items-center justify-between">
                                 <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
                                     <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
-                                    <span>ผู้ตรวจพบ / สกัดข้อผิดพลาดได้ทัน (Good Catch by):</span>
+                                    <span>ผู้สร้างผลงาน / ผู้ตรวจพบ (Achievement &amp; Good Catch by):</span>
                                 </label>
-                                <span class="text-[10px] text-emerald-700 font-bold"><i class="fa-solid fa-award mr-1"></i>Hero Spotlight</span>
+                                <span class="text-[10px] text-emerald-700 font-bold"><i class="fa-solid fa-award mr-1 text-amber-500"></i>Spotlight</span>
                             </div>
                             <div>
-                                <label class="text-[11px] font-bold text-slate-700 block mb-1">เลือกผู้ตรวจพบ:</label>
+                                <label class="text-[11px] font-bold text-slate-700 block mb-1">เลือกผู้ทำผลงาน / สกัดข้อผิดพลาด:</label>
                                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-catcher-chips"></div>
                             </div>
                         </section>
 
-                        <!-- GC Step 2: Detection Point / Stage Category -->
+                        <!-- GC Step 2: Category Select -->
                         <section class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm space-y-2.5">
                             <div class="flex items-center justify-between">
                                 <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
                                     <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
-                                    <span>จุดหรือกระบวนการที่สกัดได้ทัน:</span>
+                                    <span>ประเภทผลงาน / การมีส่วนร่วม (Contribution Category):</span>
                                 </label>
                             </div>
-                            <div class="incident-category-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5" id="gc-cat-pills">
-                                <button type="button" onclick="switchGoodCatchCategory('outbound', this)" class="gc-cat-chip cat-chip-active shrink-0 py-1.5 px-3 rounded-xl border border-emerald-200 bg-emerald-50 text-xs font-bold text-emerald-800 flex items-center gap-1"><i class="fa-solid fa-truck-fast text-emerald-600 mr-1"></i><span>ขาออก</span></button>
-                                <button type="button" onclick="switchGoodCatchCategory('store_stock', this)" class="gc-cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-store text-amber-500 mr-1"></i><span>หน้าร้าน</span></button>
-                                <button type="button" onclick="switchGoodCatchCategory('inbound', this)" class="gc-cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-box-archive text-blue-500 mr-1"></i><span>ขารับเข้า</span></button>
-                                <button type="button" onclick="switchGoodCatchCategory('transfer', this)" class="gc-cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-arrows-rotate text-purple-500 mr-1"></i><span>โอนย้าย W2</span></button>
-                                <button type="button" onclick="switchGoodCatchCategory('shared', this)" class="gc-cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-handshake text-indigo-500 mr-1"></i><span>คลังรวม</span></button>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="gc-cat-pills">
+                                <button type="button" onclick="switchGoodCatchCategory('good_catch', this)" class="gc-cat-chip cat-chip-active py-2 px-2.5 rounded-xl border border-emerald-300 bg-emerald-50 text-xs font-bold text-emerald-900 flex items-center gap-1.5 text-left active:scale-98">
+                                    <i class="fa-solid fa-shield-halved text-emerald-600 shrink-0"></i>
+                                    <span>🛡️ สกัดข้อผิดพลาดได้ทัน</span>
+                                </button>
+                                <button type="button" onclick="switchGoodCatchCategory('team_support', this)" class="gc-cat-chip py-2 px-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 hover:bg-emerald-50/50 flex items-center gap-1.5 text-left active:scale-98">
+                                    <i class="fa-solid fa-hand-holding-heart text-pink-500 shrink-0"></i>
+                                    <span>⚡ ช่วยงาน / ซัพพอร์ตทีม</span>
+                                </button>
+                                <button type="button" onclick="switchGoodCatchCategory('kaizen', this)" class="gc-cat-chip py-2 px-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 hover:bg-emerald-50/50 flex items-center gap-1.5 text-left active:scale-98">
+                                    <i class="fa-solid fa-lightbulb text-amber-500 shrink-0"></i>
+                                    <span>💡 ปรับปรุงงาน / ไคเซ็น</span>
+                                </button>
+                                <button type="button" onclick="switchGoodCatchCategory('special', this)" class="gc-cat-chip py-2 px-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 hover:bg-emerald-50/50 flex items-center gap-1.5 text-left active:scale-98">
+                                    <i class="fa-solid fa-bolt text-indigo-500 shrink-0"></i>
+                                    <span>📦 ผลงานพิเศษ / เกินเป้า</span>
+                                </button>
+                                <button type="button" onclick="switchGoodCatchCategory('service', this)" class="gc-cat-chip py-2 px-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 hover:bg-emerald-50/50 flex items-center gap-1.5 text-left active:scale-98">
+                                    <i class="fa-solid fa-thumbs-up text-blue-500 shrink-0"></i>
+                                    <span>🤝 บริการ &amp; ประสานงานดี</span>
+                                </button>
+                                <button type="button" onclick="switchGoodCatchCategory('5s', this)" class="gc-cat-chip py-2 px-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 hover:bg-emerald-50/50 flex items-center gap-1.5 text-left active:scale-98">
+                                    <i class="fa-solid fa-broom text-teal-600 shrink-0"></i>
+                                    <span>🏬 จัดระเบียบ / 5ส.</span>
+                                </button>
                             </div>
                         </section>
 
@@ -518,12 +537,12 @@
                         <section class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm space-y-2.5">
                             <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
                                 <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">3</span>
-                                <span>รายละเอียดข้อมูลที่ตรวจพบ / สกัดข้อผิดพลาดได้ทัน:</span>
+                                <span>รายละเอียดผลงาน / สิ่งที่ทำได้ดี หรือ สกัดข้อผิดพลาดได้ทัน:</span>
                             </label>
-                            <input type="text" id="pc-err-catcher-note-input" placeholder="ระบุรายละเอียดข้อมูลที่ตรวจพบ เช่น 'ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบสินค้าเกิน 2 ลัง บิล 8891 สกัดได้ทันก่อนจัดส่ง'" class="w-full p-2.5 bg-emerald-50/30 border border-emerald-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400">
+                            <input type="text" id="pc-err-catcher-note-input" placeholder="ระบุรายละเอียดผลงาน เช่น 'ช่วยเคลียร์พาเลทเร่งด่วนทันเวลา', 'ตรวจพบหยิบผิด 2 ลัง บิล 8891 สกัดได้ทัน'" class="w-full p-2.5 bg-emerald-50/30 border border-emerald-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400">
                             <button type="button" id="btn-save-goodcatch-standalone" onclick="saveStandaloneGoodCatch()" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 mt-2 transition-all active:scale-95 cursor-pointer">
                                 <i class="fa-solid fa-star text-amber-300"></i>
-                                <span>บันทึก Good Catch ทันที (+1 Star)</span>
+                                <span>บันทึกผลงาน &amp; Good Catch ทันที (+1 Star)</span>
                             </button>
                         </section>
                     </div>
@@ -2537,7 +2556,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260831.03</span>
+                <span id="drawer-version-text">KPI Suite v20260831.04</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2549,12 +2568,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260831.03"></script>
+    <script src="js/supabase-kpi-client.js?v=20260831.04"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260831.03";
+        const CURRENT_VERSION = "20260831.04";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -6413,7 +6432,16 @@
         }
 
         let currentIncidentFormMode = 'incident';
-        let goodCatchCategory = 'outbound';
+        let goodCatchCategory = 'good_catch';
+
+        const GOOD_CATCH_CAT_CONFIG = {
+            'good_catch': { name: 'สกัดข้อผิดพลาดได้ทัน', icon: 'fa-shield-halved' },
+            'team_support': { name: 'ช่วยงาน / ซัพพอร์ตทีม', icon: 'fa-hand-holding-heart' },
+            'kaizen': { name: 'ปรับปรุงงาน / ไคเซ็น', icon: 'fa-lightbulb' },
+            'special': { name: 'ผลงานพิเศษ / เกินเป้า', icon: 'fa-bolt' },
+            'service': { name: 'บริการ & ประสานงานดี', icon: 'fa-thumbs-up' },
+            '5s': { name: 'จัดระเบียบ / 5ส.', icon: 'fa-broom' }
+        };
 
         function switchIncidentFormMode(mode) {
             currentIncidentFormMode = mode;
@@ -6446,10 +6474,10 @@
         function switchGoodCatchCategory(cat, btn) {
             goodCatchCategory = cat;
             document.querySelectorAll('#gc-cat-pills .gc-cat-chip').forEach(el => {
-                el.className = 'gc-cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1';
+                el.className = 'gc-cat-chip py-2 px-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 hover:bg-emerald-50/50 flex items-center gap-1.5 text-left active:scale-98';
             });
             if (btn) {
-                btn.className = 'gc-cat-chip cat-chip-active shrink-0 py-1.5 px-3 rounded-xl border border-emerald-200 bg-emerald-50 text-xs font-bold text-emerald-800 flex items-center gap-1';
+                btn.className = 'gc-cat-chip cat-chip-active py-2 px-2.5 rounded-xl border border-emerald-300 bg-emerald-50 text-xs font-bold text-emerald-900 flex items-center gap-1.5 text-left active:scale-98';
             }
         }
 
@@ -6470,7 +6498,7 @@
 
             container.innerHTML = recordedErrorCases.map(item => {
                 const resp = item.responsibility || 'individual';
-                const isGoodCatchStandalone = (item.type && item.type.includes('Good Catch')) || (item.detectedBy && item.worker === item.detectedBy && (item.penalty === 0));
+                const isGoodCatchStandalone = (item.type && (item.type.includes('Good Catch') || item.type.includes('ผลงาน:'))) || (item.detectedBy && item.worker === item.detectedBy && (item.penalty === 0));
 
                 if (isGoodCatchStandalone) {
                     return `
@@ -6479,18 +6507,18 @@
                                 <div class="flex items-center gap-1.5 flex-wrap">
                                     <span class="text-emerald-900">${item.time || '10:30 น.'}</span>
                                     <span class="text-[9px] bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                        <i class="fa-solid fa-star text-amber-500"></i> Good Catch: ${esc(item.detectedBy || item.worker)}
+                                        <i class="fa-solid fa-star text-amber-500"></i> ผลงาน / Good Catch: ${esc(item.detectedBy || item.worker)}
                                     </span>
                                 </div>
                                 <div class="flex items-center gap-2 shrink-0">
-                                    <span class="text-emerald-700 font-num font-bold text-[10px] bg-white px-2 py-0.5 rounded border border-emerald-200">+1 Good Catch (0 HP)</span>
+                                    <span class="text-emerald-700 font-num font-bold text-[10px] bg-white px-2 py-0.5 rounded border border-emerald-200">+1 Star (0 HP)</span>
                                     <button type="button" onclick="deleteErrorCase('${esc(item.caseId)}')" title="ยกเลิก/ลบเคสนี้" class="text-slate-400 hover:text-red-600 p-1 rounded transition-colors text-xs cursor-pointer">
                                         <i class="fa-solid fa-trash-can"></i>
                                     </button>
                                 </div>
                             </div>
                             <p class="text-emerald-950 font-bold flex items-center gap-1.5">
-                                <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                                <i class="fa-solid fa-award text-amber-500"></i>
                                 <span>${esc(item.type)}</span>
                             </p>
                             ${item.note ? `<p class="text-[11px] text-emerald-800 bg-white/80 p-2 rounded-lg border border-emerald-100">${esc(item.note)}</p>` : ''}
@@ -6646,10 +6674,10 @@
             const catcherNote = catcherNoteInput ? catcherNoteInput.value.trim() : '';
 
             if (!catcherInput || catcherInput === '(ไม่มี / ตรวจพบเอง)') {
-                return showToast('กรุณาเลือกผู้ตรวจพบ / Good Catch Hero', true);
+                return showToast('กรุณาเลือกผู้ทำผลงาน / Good Catch Hero', true);
             }
             if (!catcherNote) {
-                return showToast('กรุณาระบุรายละเอียดข้อมูลที่ตรวจพบ', true);
+                return showToast('กรุณาระบุรายละเอียดผลงานที่ทำได้ดี หรือ สิ่งที่ตรวจพบ', true);
             }
             if (!date) return showToast('กรุณาเลือกวันที่บันทึก', true);
             if (!sessionToken || !window.AkraSupabaseKPI?.saveIncident) {
@@ -6658,7 +6686,9 @@
 
             const now = new Date();
             const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
-            const fullNote = `สกัดได้ทัน: ${catcherNote}`;
+            const catInfo = GOOD_CATCH_CAT_CONFIG[goodCatchCategory] || { name: 'สกัดข้อผิดพลาดได้ทัน' };
+            const typeTitle = `ผลงาน: ${catInfo.name}`;
+            const fullNote = `${catInfo.name}: ${catcherNote}`;
 
             const newCase = {
                 kind: 'case',
@@ -6666,12 +6696,12 @@
                 worker: catcherInput,
                 participants: [catcherInput],
                 roster: getBranchActiveRoster(currentBranch),
-                category: goodCatchCategory || 'outbound',
-                type: 'Good Catch: สกัดข้อผิดพลาดได้ทัน',
+                category: goodCatchCategory || 'good_catch',
+                type: typeTitle,
                 penalty: 0,
                 responsibility: 'process',
                 stage: 'warehouse',
-                incidentType: 'Good Catch: สกัดข้อผิดพลาดได้ทัน',
+                incidentType: typeTitle,
                 detectedBy: catcherInput,
                 goodCatchBy: catcherInput,
                 goodCatchNote: catcherNote,
@@ -6684,7 +6714,7 @@
             incidentSaveInFlight = true;
             if (button) {
                 button.disabled = true;
-                button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>กำลังบันทึก Good Catch...</span>';
+                button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>กำลังบันทึกผลงาน...</span>';
             }
             try {
                 const result = await AkraSupabaseKPI.saveIncident(sessionToken, currentBranch, date, newCase);
@@ -6695,7 +6725,7 @@
                 applyIncidentSaveResultToCache(date, currentBranch, result);
                 renderErrTimeline();
                 renderErrTeamHp();
-                showToast(`บันทึก Good Catch สำหรับ ${catcherInput} สำเร็จ (+1 Star)!`, false);
+                showToast(`บันทึกผลงานสำหรับ ${catcherInput} สำเร็จ (+1 Star)!`, false);
                 loadDashboardData();
                 updateDailyDashboard();
             } catch (error) {
@@ -6705,7 +6735,7 @@
                 incidentSaveInFlight = false;
                 if (button) {
                     button.disabled = false;
-                    button.innerHTML = '<i class="fa-solid fa-star text-amber-300"></i><span>บันทึก Good Catch ทันที (+1 Star)</span>';
+                    button.innerHTML = '<i class="fa-solid fa-star text-amber-300"></i><span>บันทึกผลงาน &amp; Good Catch ทันที (+1 Star)</span>';
                 }
             }
         }

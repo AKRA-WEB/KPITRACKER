@@ -32,7 +32,7 @@ function makeToken(username, name, roles = ['WAREHOUSE', 'AKRA']) {
 
   // Verify Version Parity
   const versionJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../version.json'), 'utf8'));
-  assert.strictEqual(versionJson.version, '20260831.03', 'version.json must be 20260831.03');
+  assert.strictEqual(versionJson.version, '20260831.04', 'version.json must be 20260831.04');
 
   let savedIncidentCases = [];
 
@@ -45,7 +45,7 @@ function makeToken(username, name, roles = ['WAREHOUSE', 'AKRA']) {
     }
     if (parsedUrl.pathname === '/version.json') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ version: '20260831.03' }));
+      return res.end(JSON.stringify({ version: '20260831.04' }));
     }
     if (parsedUrl.pathname === '/' || parsedUrl.pathname === '/index.html') {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -216,13 +216,13 @@ function makeToken(username, name, roles = ['WAREHOUSE', 'AKRA']) {
   assert.strictEqual(savedIncidentCases[0].worker, 'ปีเตอร์', 'Worker should be ปีเตอร์');
   assert.strictEqual(savedIncidentCases[0].detectedBy, 'ปีเตอร์', 'Good Catch Catcher should be ปีเตอร์');
   assert.strictEqual(savedIncidentCases[0].penalty, 0, 'Standalone Good Catch must have 0 penalty');
-  assert.ok(savedIncidentCases[0].note.includes('สกัดได้ทัน: ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบเกิน 2 ลัง บิล 8891 สกัดได้ทัน'), 'Note should contain interception details');
+  assert.ok(savedIncidentCases[0].note.includes('สกัดข้อผิดพลาดได้ทัน: ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบเกิน 2 ลัง บิล 8891 สกัดได้ทัน'), 'Note should contain interception details');
 
   // Verify timeline rendering standalone Good Catch card
   const timelineHtml = await page.locator('#pc-err-timeline').innerHTML();
   assert.ok(timelineHtml.includes('Good Catch: ปีเตอร์'), 'Timeline must display Good Catch badge for ปีเตอร์');
-  assert.ok(timelineHtml.includes('+1 Good Catch (0 HP)'), 'Timeline must display positive recognition badge');
-  assert.ok(timelineHtml.includes('สกัดได้ทัน: ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบเกิน 2 ลัง บิล 8891 สกัดได้ทัน'), 'Timeline must display interception detail');
+  assert.ok(timelineHtml.includes('+1 Star (0 HP)'), 'Timeline must display positive recognition badge');
+  assert.ok(timelineHtml.includes('สกัดข้อผิดพลาดได้ทัน: ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบเกิน 2 ลัง บิล 8891 สกัดได้ทัน'), 'Timeline must display interception detail');
 
   console.log('[5/5] Verifying Profile Passport displays Good Catch +1 for ปีเตอร์...');
   await page.evaluate(() => switchTab('my-profile'));
