@@ -141,7 +141,11 @@ eval(extractFunction(html, 'aggregateDescriptivePeriod'));
     assert.ok(parsed.note.includes(copied), 'copied marker-like user text must remain ordinary note content');
     assert.ok(!parsed.note.includes(generated), 'the generated identity marker must not leak into displayed evidence');
 
-    const invalidTerminal = `ข้อความ ${copied} [TRD_CASE:${encodeURIComponent(JSON.stringify({ v: 2, caseId: 'INVALID' }))}]`;
+    const validV2Terminal = `ข้อความ ${copied} [TRD_CASE:${encodeURIComponent(JSON.stringify({ v: 2, caseId: 'VALID-V2' }))}]`;
+    assert.strictEqual(parseTrdCaseNote(validV2Terminal).meta.caseId, 'VALID-V2',
+        'a terminal marker with version 2 must be parsed correctly');
+
+    const invalidTerminal = `ข้อความ ${copied} [TRD_CASE:${encodeURIComponent(JSON.stringify({ v: 99, caseId: 'INVALID' }))}]`;
     assert.strictEqual(parseTrdCaseNote(invalidTerminal).meta, null,
         'a terminal marker with an unsupported version must not become identity');
     assert.strictEqual(getAkraErrorCaseId({ type: 'จัดบิลผิด', note: invalidTerminal }, 'TRD'), '',

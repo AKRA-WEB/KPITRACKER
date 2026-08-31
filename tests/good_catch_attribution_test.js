@@ -32,7 +32,7 @@ function makeToken(username, name, roles = ['WAREHOUSE', 'AKRA']) {
 
   // Verify Version Parity
   const versionJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../version.json'), 'utf8'));
-  assert.strictEqual(versionJson.version, '20260831.04', 'version.json must be 20260831.04');
+  assert.strictEqual(versionJson.version, '20260831.05', 'version.json must be 20260831.05');
 
   let savedIncidentCases = [];
 
@@ -45,7 +45,7 @@ function makeToken(username, name, roles = ['WAREHOUSE', 'AKRA']) {
     }
     if (parsedUrl.pathname === '/version.json') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ version: '20260831.04' }));
+      return res.end(JSON.stringify({ version: '20260831.05' }));
     }
     if (parsedUrl.pathname === '/' || parsedUrl.pathname === '/index.html') {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });

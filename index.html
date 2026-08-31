@@ -2556,7 +2556,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260831.04</span>
+                <span id="drawer-version-text">KPI Suite v20260831.05</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2568,12 +2568,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260831.04"></script>
+    <script src="js/supabase-kpi-client.js?v=20260831.05"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260831.04";
+        const CURRENT_VERSION = "20260831.05";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3230,7 +3230,11 @@
             if (end === -1) return { meta: null, note: raw };
             try {
                 const encoded = raw.slice(AKRA_CASE_MARKER.length, end);
-                return { meta: JSON.parse(decodeURIComponent(encoded)), note: raw.slice(end + 1).trim() };
+                const meta = JSON.parse(decodeURIComponent(encoded));
+                if (!meta || typeof meta !== 'object') {
+                    return { meta: null, note: raw };
+                }
+                return { meta, note: raw.slice(end + 1).trim() };
             } catch (e) {
                 return { meta: null, note: raw };
             }
@@ -3250,7 +3254,7 @@
             try {
                 const encoded = trimmed.slice(start + TRD_CASE_MARKER.length, end);
                 const meta = JSON.parse(decodeURIComponent(encoded));
-                if (!meta || meta.v !== 1 || typeof meta.caseId !== 'string' || !meta.caseId.trim()) {
+                if (!meta || (meta.v !== 1 && meta.v !== 2) || typeof meta.caseId !== 'string' || !meta.caseId.trim()) {
                     return { meta: null, note: raw };
                 }
                 return { meta, note: trimmed.slice(0, start).trimEnd() };
@@ -3286,6 +3290,9 @@
                 cleanNote = cleanNote.replace(/^\[แก้ไขได้ก่อนส่ง\]\s*/, '');
             }
 
+            // Strip any remaining case markers so raw JSON never leaks into UI
+            cleanNote = cleanNote.replace(/\[AKRA_CASE:[^\]]*\]\s*/g, '').replace(/\s*\[TRD_CASE:[^\]]*\]/g, '').trim();
+
             if (error.type === 'ความผิดอื่น ๆ') {
                 let match = cleanNote.match(/^\[หัก (\d+) HP\]\s*(.*)/);
                 if (match) {
@@ -3306,10 +3313,13 @@
         function getErrorDetail(error, sourceBranch) {
             if (sourceBranch === 'AKRA') {
                 const parsed = parseAkraCaseNote(error.note);
-                if (parsed.meta && parsed.meta.v === 1) {
+                if (parsed.meta) {
                     const item = getAkraCatalogItem(parsed.meta.type || error.type);
+                    const penalty = parsed.meta.penalty !== undefined
+                        ? (parseInt(parsed.meta.penalty, 10) || 0)
+                        : (item ? item.penalty : 10);
                     return {
-                        penalty: parseInt(parsed.meta.penalty, 10) || (item ? item.penalty : 10),
+                        penalty: penalty,
                         cleanNote: parsed.note,
                         isReachedCustomer: false,
                         isFixedBefore: false,
@@ -3338,9 +3348,15 @@
                     };
                 }
                 const detail = getLegacyPenaltyDetail({ ...error, note: parsed.note });
-                if (parsed.meta && parsed.meta.v === 1) {
+                if (parsed.meta && (parsed.meta.v === 1 || parsed.meta.v === 2)) {
                     detail.caseId = parsed.meta.caseId || '';
                     detail.meta = parsed.meta;
+                    if (parsed.meta.penalty !== undefined) {
+                        detail.penalty = parseInt(parsed.meta.penalty, 10) || 0;
+                    }
+                    if (parsed.meta.type) {
+                        detail.type = parsed.meta.type;
+                    }
                 }
                 return detail;
             }
