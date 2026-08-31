@@ -12,7 +12,7 @@ const versionJson = JSON.parse(fs.readFileSync(versionJsonPath, 'utf8'));
 const clientJsContent = fs.readFileSync(clientJsPath, 'utf8');
 
 // 1. Verify Version Parity
-assert.strictEqual(versionJson.version, '20260831.02', 'version.json must be 20260831.02');
+assert.strictEqual(versionJson.version, '20260831.03', 'version.json must be 20260831.03');
 assert.ok(htmlContent.includes(`const CURRENT_VERSION = "${versionJson.version}";`), 'index.html must have CURRENT_VERSION matching version.json');
 assert.ok(htmlContent.includes(`KPI Suite v${versionJson.version}`), 'index.html drawer must show KPI Suite matching version.json');
 assert.ok(htmlContent.includes(`supabase-kpi-client.js?v=${versionJson.version}`), 'index.html script tag must match version.json');

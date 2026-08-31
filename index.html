@@ -518,12 +518,9 @@
                         <section class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm space-y-2.5">
                             <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
                                 <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">3</span>
-                                <span>ข้อมูลสิ่งที่ตรวจพบ หรือ สกัดข้อผิดพลาดอันไหนได้ทัน:</span>
+                                <span>รายละเอียดข้อมูลที่ตรวจพบ / สกัดข้อผิดพลาดได้ทัน:</span>
                             </label>
-                            <div class="space-y-1.5">
-                                <input type="text" id="pc-err-catcher-note-input" placeholder="เช่น 'ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบสินค้าเกิน 2 ลัง สกัดได้ทันก่อนจัดส่ง'" class="w-full p-2.5 bg-emerald-50/30 border border-emerald-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400">
-                                <input type="text" id="gc-bill-note-input" placeholder="เลขที่บิล / สินค้าที่เกี่ยวข้อง (ถ้ามี เช่น 'บิล TRD-8891 นมสด 5 ลัง')" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400">
-                            </div>
+                            <input type="text" id="pc-err-catcher-note-input" placeholder="ระบุรายละเอียดข้อมูลที่ตรวจพบ เช่น 'ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบสินค้าเกิน 2 ลัง บิล 8891 สกัดได้ทันก่อนจัดส่ง'" class="w-full p-2.5 bg-emerald-50/30 border border-emerald-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400">
                             <button type="button" id="btn-save-goodcatch-standalone" onclick="saveStandaloneGoodCatch()" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 mt-2 transition-all active:scale-95 cursor-pointer">
                                 <i class="fa-solid fa-star text-amber-300"></i>
                                 <span>บันทึก Good Catch ทันที (+1 Star)</span>
@@ -2540,7 +2537,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260831.02</span>
+                <span id="drawer-version-text">KPI Suite v20260831.03</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2552,12 +2549,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260831.02"></script>
+    <script src="js/supabase-kpi-client.js?v=20260831.03"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260831.02";
+        const CURRENT_VERSION = "20260831.03";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -6645,16 +6642,14 @@
             if (incidentSaveInFlight) return;
             const catcherInput = selectedErrCatcher;
             const catcherNoteInput = document.getElementById('pc-err-catcher-note-input');
-            const billNoteInput = document.getElementById('gc-bill-note-input');
             const date = document.getElementById('record-date-error')?.value || '';
             const catcherNote = catcherNoteInput ? catcherNoteInput.value.trim() : '';
-            const billNote = billNoteInput ? billNoteInput.value.trim() : '';
 
             if (!catcherInput || catcherInput === '(ไม่มี / ตรวจพบเอง)') {
                 return showToast('กรุณาเลือกผู้ตรวจพบ / Good Catch Hero', true);
             }
             if (!catcherNote) {
-                return showToast('กรุณาระบุสิ่งที่ตรวจพบหรือสกัดข้อผิดพลาดได้ทัน', true);
+                return showToast('กรุณาระบุรายละเอียดข้อมูลที่ตรวจพบ', true);
             }
             if (!date) return showToast('กรุณาเลือกวันที่บันทึก', true);
             if (!sessionToken || !window.AkraSupabaseKPI?.saveIncident) {
@@ -6663,7 +6658,7 @@
 
             const now = new Date();
             const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
-            const fullNote = billNote ? `สกัดได้ทัน: ${catcherNote} (อ้างอิง: ${billNote})` : `สกัดได้ทัน: ${catcherNote}`;
+            const fullNote = `สกัดได้ทัน: ${catcherNote}`;
 
             const newCase = {
                 kind: 'case',
@@ -6697,7 +6692,6 @@
                 incidentZeroConfirmed = result.zeroConfirmed;
                 pendingIncidentCaseId = '';
                 if (catcherNoteInput) catcherNoteInput.value = '';
-                if (billNoteInput) billNoteInput.value = '';
                 applyIncidentSaveResultToCache(date, currentBranch, result);
                 renderErrTimeline();
                 renderErrTeamHp();
