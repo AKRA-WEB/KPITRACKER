@@ -32,7 +32,7 @@ function makeToken(username, name, roles = ['WAREHOUSE', 'AKRA']) {
 
   // Verify Version Parity
   const versionJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../version.json'), 'utf8'));
-  assert.strictEqual(versionJson.version, '20260831.01', 'version.json must be 20260831.01');
+  assert.strictEqual(versionJson.version, '20260831.02', 'version.json must be 20260831.02');
 
   let savedIncidentCases = [];
 
@@ -45,7 +45,7 @@ function makeToken(username, name, roles = ['WAREHOUSE', 'AKRA']) {
     }
     if (parsedUrl.pathname === '/version.json') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ version: '20260831.01' }));
+      return res.end(JSON.stringify({ version: '20260831.02' }));
     }
     if (parsedUrl.pathname === '/' || parsedUrl.pathname === '/index.html') {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -183,23 +183,22 @@ function makeToken(username, name, roles = ['WAREHOUSE', 'AKRA']) {
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(500);
 
-  console.log('[3/5] Switching to Incident QC Tab...');
-  await page.evaluate(() => switchTab('error'));
+  console.log('[3/5] Switching to Incident QC Tab & Standalone Good Catch Mode...');
+  await page.evaluate(() => {
+    switchTab('error');
+    switchIncidentFormMode('good_catch');
+  });
   await page.waitForTimeout(300);
 
-  // Assert Good Catch Catcher UI is present in Section 3
+  // Assert Standalone Good Catch form is present
   const catcherContainer = await page.locator('#pc-err-catcher-chips').count();
-  assert.strictEqual(catcherContainer, 1, 'Good Catch catcher container must exist in Incident QC');
+  assert.strictEqual(catcherContainer, 1, 'Good Catch catcher container must exist');
   const catcherNoteCount = await page.locator('#pc-err-catcher-note-input').count();
-  assert.strictEqual(catcherNoteCount, 1, 'Good Catch catcher note input must exist in Section 3');
+  assert.strictEqual(catcherNoteCount, 1, 'Good Catch interception note input must exist');
 
-  console.log('[4/5] Recording dual-attribution incident (Operator: พี่เอส, Catcher: ปีเตอร์, Interception note)...');
-  // Select พี่เอส as worker (caused by) and ปีเตอร์ as catcher
+  console.log('[4/5] Recording standalone Good Catch (Catcher: ปีเตอร์, Interception note)...');
+  // Select ปีเตอร์ as catcher and fill interception details
   await page.evaluate(() => {
-    const chips = Array.from(document.querySelectorAll('#pc-err-emp-chips .emp-chip'));
-    const esChip = chips.find(c => c.textContent.includes('พี่เอส'));
-    if (esChip) esChip.click();
-
     const catcherChips = Array.from(document.querySelectorAll('#pc-err-catcher-chips .emp-chip'));
     const peterChip = catcherChips.find(c => c.textContent.includes('ปีเตอร์'));
     if (peterChip) peterChip.click();
@@ -207,24 +206,25 @@ function makeToken(username, name, roles = ['WAREHOUSE', 'AKRA']) {
     const catcherNoteInput = document.getElementById('pc-err-catcher-note-input');
     if (catcherNoteInput) catcherNoteInput.value = 'ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบเกิน 2 ลัง สกัดได้ทัน';
 
-    const noteInput = document.getElementById('pc-err-note-input');
-    if (noteInput) noteInput.value = 'บิล TRD-8891 ขาออก';
+    const billNoteInput = document.getElementById('gc-bill-note-input');
+    if (billNoteInput) billNoteInput.value = 'บิล TRD-8891 ขาออก';
   });
 
-  // Click save
-  await page.evaluate(() => saveErrorCaseFromPreview());
+  // Click save Good Catch standalone
+  await page.evaluate(() => saveStandaloneGoodCatch());
   await page.waitForTimeout(600);
 
   // Verify saved incident
-  assert.strictEqual(savedIncidentCases.length, 1, 'One incident case should be saved');
-  assert.strictEqual(savedIncidentCases[0].worker, 'พี่เอส', 'Worker should be พี่เอส');
+  assert.strictEqual(savedIncidentCases.length, 1, 'One standalone Good Catch case should be saved');
+  assert.strictEqual(savedIncidentCases[0].worker, 'ปีเตอร์', 'Worker should be ปีเตอร์');
   assert.strictEqual(savedIncidentCases[0].detectedBy, 'ปีเตอร์', 'Good Catch Catcher should be ปีเตอร์');
-  assert.ok(savedIncidentCases[0].note.includes('สกัดได้ทัน: ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบเกิน 2 ลัง สกัดได้ทัน'), 'Incident note should contain good catch interception details');
+  assert.strictEqual(savedIncidentCases[0].penalty, 0, 'Standalone Good Catch must have 0 penalty');
+  assert.ok(savedIncidentCases[0].note.includes('สกัดได้ทัน: ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบเกิน 2 ลัง สกัดได้ทัน'), 'Note should contain interception details');
 
-  // Verify timeline rendering badge
+  // Verify timeline rendering standalone Good Catch card
   const timelineHtml = await page.locator('#pc-err-timeline').innerHTML();
   assert.ok(timelineHtml.includes('Good Catch: ปีเตอร์'), 'Timeline must display Good Catch badge for ปีเตอร์');
-  assert.ok(timelineHtml.includes('ผู้จัด: พี่เอส'), 'Timeline must display Operator as พี่เอส');
+  assert.ok(timelineHtml.includes('+1 Good Catch (0 HP)'), 'Timeline must display positive recognition badge');
   assert.ok(timelineHtml.includes('สกัดได้ทัน: ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบเกิน 2 ลัง สกัดได้ทัน'), 'Timeline must display interception detail');
 
   console.log('[5/5] Verifying Profile Passport displays Good Catch +1 for ปีเตอร์...');
@@ -241,7 +241,7 @@ function makeToken(username, name, roles = ['WAREHOUSE', 'AKRA']) {
   await new Promise((resolve) => server.close(resolve));
 
   console.log('\n=============================================================');
-  console.log('🎉 GOOD CATCH DUAL-ATTRIBUTION TESTS PASSED 100%! 🎉');
+  console.log('🎉 GOOD CATCH STANDALONE TESTS PASSED 100%! 🎉');
   console.log('=============================================================\n');
   process.exit(0);
 })().catch(err => {

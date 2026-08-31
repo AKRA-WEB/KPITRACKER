@@ -373,105 +373,163 @@
             <!-- Responsive Layout Grid on PC: 2 Columns -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
-                <!-- Col 1: Error Entry Form -->
+                <!-- Col 1: Error & Good Catch Entry Form -->
                 <div class="space-y-3.5">
-                    <button type="button" id="btn-confirm-zero-errors" onclick="confirmZeroErrors()" class="w-full py-2.5 px-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center justify-between transition-all active:scale-98 shadow-sm">
-                        <div class="flex items-center gap-2">
-                            <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-check"></i></div>
-                            <span>วันนี้ตรวจแล้ว ไม่พบข้อผิดพลาด</span>
-                        </div>
-                        <span class="text-[10px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-md font-bold">ยืนยัน Zero Error</span>
-                    </button>
+                    <!-- Form Mode Switcher: Incident vs Standalone Good Catch -->
+                    <div class="flex items-center gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
+                        <button type="button" id="tab-btn-incident-form" onclick="switchIncidentFormMode('incident')" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all bg-white text-red-700 shadow-sm border border-slate-200 flex items-center justify-center gap-1.5 active:scale-98">
+                            <i class="fa-solid fa-triangle-exclamation text-red-600"></i>
+                            <span>1. บันทึกความผิดพลาด (Incident)</span>
+                        </button>
+                        <button type="button" id="tab-btn-goodcatch-form" onclick="switchIncidentFormMode('good_catch')" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 flex items-center justify-center gap-1.5 active:scale-98">
+                            <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                            <span>2. บันทึก Good Catch (เดี่ยว)</span>
+                            <span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full font-bold">+1 Star</span>
+                        </button>
+                    </div>
 
-                    <!-- Step 1: Responsibility Dimension & Worker Select -->
-                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
-                        <div class="flex items-center justify-between">
+                    <!-- Mode A: Incident Form Container -->
+                    <div id="form-container-incident" class="space-y-3.5">
+                        <button type="button" id="btn-confirm-zero-errors" onclick="confirmZeroErrors()" class="w-full py-2.5 px-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center justify-between transition-all active:scale-98 shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-check"></i></div>
+                                <span>วันนี้ตรวจแล้ว ไม่พบข้อผิดพลาด</span>
+                            </div>
+                            <span class="text-[10px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-md font-bold">ยืนยัน Zero Error</span>
+                        </button>
+
+                        <!-- Step 1: Responsibility Dimension & Worker Select -->
+                        <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                                    มิติความรับผิดชอบ (Responsibility Dimension):
+                                </label>
+                            </div>
+
+                            <!-- 4 Responsibility Options -->
+                            <div class="grid grid-cols-2 gap-1.5" id="err-resp-grid">
+                                <button type="button" onclick="selectIncidentResponsibility('individual', this)" class="resp-btn p-2 rounded-xl border border-red-300 bg-red-50 text-left text-xs font-bold text-red-900 transition-all flex items-center gap-1.5 active:scale-98">
+                                    <i class="fa-solid fa-user text-red-600"></i>
+                                    <span>👤 รายบุคคล</span>
+                                </button>
+                                <button type="button" onclick="selectIncidentResponsibility('team', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
+                                    <i class="fa-solid fa-users text-purple-600"></i>
+                                    <span>👥 ทีมทั้งกะ (On-Duty)</span>
+                                </button>
+                                <button type="button" onclick="selectIncidentResponsibility('process', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
+                                    <i class="fa-solid fa-gears text-blue-600"></i>
+                                    <span>⚙️ ข้อผิดพลาดระบบ (0 HP)</span>
+                                </button>
+                                <button type="button" onclick="selectIncidentResponsibility('pending', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
+                                    <i class="fa-solid fa-circle-question text-amber-600"></i>
+                                    <span>❓ รอตรวจสอบ (0 HP)</span>
+                                </button>
+                            </div>
+
+                            <div class="pt-1">
+                                <label class="text-[11px] font-bold text-slate-700 block mb-1">เลือกผู้รับผิดชอบ / ผู้จัด (Caused by):</label>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-emp-chips"></div>
+                            </div>
+                        </section>
+
+                        <!-- Step 2: Category & Detection Stage Severity -->
+                        <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+                                    หมวดหมู่และระดับความรุนแรง / จุดที่พบ:
+                                </label>
+                            </div>
+                            <div class="incident-category-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5" id="err-cat-pills">
+                                <button type="button" onclick="switchErrCategory('outbound', this)" class="cat-chip cat-chip-active shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-truck-fast text-blue-500 mr-1"></i><span>ขาออก</span></button>
+                                <button type="button" onclick="switchErrCategory('store_stock', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-store text-amber-500 mr-1"></i><span>หน้าร้าน/สต๊อก</span></button>
+                                <button type="button" onclick="switchErrCategory('inbound', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-box-archive text-emerald-500 mr-1"></i><span>ขารับเข้า</span></button>
+                                <button type="button" onclick="switchErrCategory('transfer', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-arrows-rotate text-purple-500 mr-1"></i><span>โอนย้าย W2</span></button>
+                                <button type="button" onclick="switchErrCategory('shared', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-handshake text-indigo-500 mr-1"></i><span>ร่วมรับผิดชอบ</span></button>
+                            </div>
+                            <div class="space-y-1.5" id="pc-err-severity-list"></div>
+                        </section>
+
+                        <!-- Step 3: Note & Save -->
+                        <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                             <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                                <span class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
-                                มิติความรับผิดชอบ (Responsibility Dimension):
+                                <span class="w-5 h-5 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px] font-bold">3</span>
+                                <span>รายละเอียดสินค้า / เลขที่บิล (สั้นๆ):</span>
                             </label>
-                        </div>
-
-                        <!-- 4 Responsibility Options -->
-                        <div class="grid grid-cols-2 gap-1.5" id="err-resp-grid">
-                            <button type="button" onclick="selectIncidentResponsibility('individual', this)" class="resp-btn p-2 rounded-xl border border-red-300 bg-red-50 text-left text-xs font-bold text-red-900 transition-all flex items-center gap-1.5 active:scale-98">
-                                <i class="fa-solid fa-user text-red-600"></i>
-                                <span>👤 รายบุคคล</span>
+                            <input type="text" id="pc-err-note-input" placeholder="เช่น 'ตกเบิกนมสด 5 ลัง หน้าร้านของหมด'" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-red-500">
+                            <button type="button" id="btn-save-error-preview" onclick="saveErrorCaseFromPreview()" class="w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 mt-2 transition-all active:scale-95 cursor-pointer">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span>บันทึกเคสความผิดพลาดทันที</span>
                             </button>
-                            <button type="button" onclick="selectIncidentResponsibility('team', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
-                                <i class="fa-solid fa-users text-purple-600"></i>
-                                <span>👥 ทีมทั้งกะ (On-Duty)</span>
-                            </button>
-                            <button type="button" onclick="selectIncidentResponsibility('process', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
-                                <i class="fa-solid fa-gears text-blue-600"></i>
-                                <span>⚙️ ข้อผิดพลาดระบบ (0 HP)</span>
-                            </button>
-                            <button type="button" onclick="selectIncidentResponsibility('pending', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
-                                <i class="fa-solid fa-circle-question text-amber-600"></i>
-                                <span>❓ รอตรวจสอบ (0 HP)</span>
-                            </button>
-                        </div>
+                        </section>
+                    </div>
 
-                        <div class="pt-1">
-                            <label class="text-[11px] font-bold text-slate-700 block mb-1">เลือกผู้รับผิดชอบ / ผู้จัด (Caused by):</label>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-emp-chips"></div>
-                        </div>
-                    </section>
-
-                    <!-- Step 2: Category & Detection Stage Severity -->
-                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
-                        <div class="flex items-center justify-between">
-                            <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                                <span class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
-                                หมวดหมู่และระดับความรุนแรง / จุดที่พบ:
-                            </label>
-                        </div>
-                        <div class="incident-category-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5" id="err-cat-pills">
-                            <button type="button" onclick="switchErrCategory('outbound', this)" class="cat-chip cat-chip-active shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-truck-fast text-blue-500 mr-1"></i><span>ขาออก</span></button>
-                            <button type="button" onclick="switchErrCategory('store_stock', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-store text-amber-500 mr-1"></i><span>หน้าร้าน/สต๊อก</span></button>
-                            <button type="button" onclick="switchErrCategory('inbound', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-box-archive text-emerald-500 mr-1"></i><span>ขารับเข้า</span></button>
-                            <button type="button" onclick="switchErrCategory('transfer', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-arrows-rotate text-purple-500 mr-1"></i><span>โอนย้าย W2</span></button>
-                            <button type="button" onclick="switchErrCategory('shared', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-handshake text-indigo-500 mr-1"></i><span>ร่วมรับผิดชอบ</span></button>
-                        </div>
-                        <div class="space-y-1.5" id="pc-err-severity-list"></div>
-                    </section>
-
-                    <!-- Step 3: Good Catch Attribution & Interception Detail -->
-                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
-                        <div class="flex items-center justify-between">
-                            <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                                <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">3</span>
-                                <span class="text-slate-800 font-bold">ผู้ตรวจพบ / สกัดข้อผิดพลาดได้ทัน (Good Catch by):</span>
-                            </label>
-                            <span class="text-[9px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
-                                <i class="fa-solid fa-star text-amber-400"></i>+1 Good Catch
+                    <!-- Mode B: Standalone Good Catch Form Container -->
+                    <div id="form-container-goodcatch" class="hidden space-y-3.5">
+                        <div class="p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200 shadow-sm flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm shrink-0 shadow-sm">
+                                    <i class="fa-solid fa-star text-amber-300"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-xs font-bold text-emerald-950">บันทึก Good Catch (ฮีโร่สกัดข้อผิดพลาด)</h3>
+                                    <p class="text-[10px] text-emerald-700">ให้คะแนนการตรวจพบข้อผิดพลาดได้ทันก่อนเกิดผลกระทบ • ไม่หัก HP</p>
+                                </div>
+                            </div>
+                            <span class="text-[10px] bg-emerald-200/80 text-emerald-900 px-2.5 py-1 rounded-lg font-bold border border-emerald-300 shrink-0 font-num">
+                                +1 Good Catch
                             </span>
                         </div>
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-700 block mb-1">เลือกผู้ตรวจพบ / ฮีโร่ที่ช่วยสกัดข้อผิดพลาด:</label>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-catcher-chips"></div>
-                        </div>
-                        <div class="pt-1 space-y-1">
-                            <label class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                                <i class="fa-solid fa-shield-halved text-emerald-600"></i>
-                                <span>ข้อมูลเพิ่มเติม: ตรวจพบ หรือ สกัดข้อผิดพลาดอันไหนได้ทัน:</span>
-                            </label>
-                            <input type="text" id="pc-err-catcher-note-input" placeholder="เช่น 'ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบเกิน 2 ลัง สกัดได้ทันก่อนจัดส่ง'" class="w-full p-2.5 bg-emerald-50/30 border border-emerald-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400">
-                        </div>
-                    </section>
 
-                    <!-- Step 4: Note & Save -->
-                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-                        <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                            <span class="w-5 h-5 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px] font-bold">4</span>
-                            <span>รายละเอียดสินค้า / เลขที่บิล (สั้นๆ):</span>
-                        </label>
-                        <input type="text" id="pc-err-note-input" placeholder="เช่น 'ตกเบิกนมสด 5 ลัง หน้าร้านของหมด'" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-red-500">
-                        <button type="button" id="btn-save-error-preview" onclick="saveErrorCaseFromPreview()" class="w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 mt-2 transition-all active:scale-95 cursor-pointer">
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
-                            <span>บันทึกเคสความผิดพลาดทันที</span>
-                        </button>
-                    </section>
+                        <!-- GC Step 1: Catcher Select -->
+                        <section class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                                    <span>ผู้ตรวจพบ / สกัดข้อผิดพลาดได้ทัน (Good Catch by):</span>
+                                </label>
+                                <span class="text-[10px] text-emerald-700 font-bold"><i class="fa-solid fa-award mr-1"></i>Hero Spotlight</span>
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-slate-700 block mb-1">เลือกผู้ตรวจพบ:</label>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-catcher-chips"></div>
+                            </div>
+                        </section>
+
+                        <!-- GC Step 2: Detection Point / Stage Category -->
+                        <section class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+                                    <span>จุดหรือกระบวนการที่สกัดได้ทัน:</span>
+                                </label>
+                            </div>
+                            <div class="incident-category-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5" id="gc-cat-pills">
+                                <button type="button" onclick="switchGoodCatchCategory('outbound', this)" class="gc-cat-chip cat-chip-active shrink-0 py-1.5 px-3 rounded-xl border border-emerald-200 bg-emerald-50 text-xs font-bold text-emerald-800 flex items-center gap-1"><i class="fa-solid fa-truck-fast text-emerald-600 mr-1"></i><span>ขาออก</span></button>
+                                <button type="button" onclick="switchGoodCatchCategory('store_stock', this)" class="gc-cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-store text-amber-500 mr-1"></i><span>หน้าร้าน</span></button>
+                                <button type="button" onclick="switchGoodCatchCategory('inbound', this)" class="gc-cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-box-archive text-blue-500 mr-1"></i><span>ขารับเข้า</span></button>
+                                <button type="button" onclick="switchGoodCatchCategory('transfer', this)" class="gc-cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-arrows-rotate text-purple-500 mr-1"></i><span>โอนย้าย W2</span></button>
+                                <button type="button" onclick="switchGoodCatchCategory('shared', this)" class="gc-cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-handshake text-indigo-500 mr-1"></i><span>คลังรวม</span></button>
+                            </div>
+                        </section>
+
+                        <!-- GC Step 3: Good Catch Note & Save -->
+                        <section class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm space-y-2.5">
+                            <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">3</span>
+                                <span>ข้อมูลสิ่งที่ตรวจพบ หรือ สกัดข้อผิดพลาดอันไหนได้ทัน:</span>
+                            </label>
+                            <div class="space-y-1.5">
+                                <input type="text" id="pc-err-catcher-note-input" placeholder="เช่น 'ตรวจนับหน้าพาเลทก่อนขึ้นรถ พบหยิบสินค้าเกิน 2 ลัง สกัดได้ทันก่อนจัดส่ง'" class="w-full p-2.5 bg-emerald-50/30 border border-emerald-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400">
+                                <input type="text" id="gc-bill-note-input" placeholder="เลขที่บิล / สินค้าที่เกี่ยวข้อง (ถ้ามี เช่น 'บิล TRD-8891 นมสด 5 ลัง')" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400">
+                            </div>
+                            <button type="button" id="btn-save-goodcatch-standalone" onclick="saveStandaloneGoodCatch()" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 mt-2 transition-all active:scale-95 cursor-pointer">
+                                <i class="fa-solid fa-star text-amber-300"></i>
+                                <span>บันทึก Good Catch ทันที (+1 Star)</span>
+                            </button>
+                        </section>
+                    </div>
                 </div>
 
                 <!-- Col 2: Team HP & Incident Timeline -->
@@ -2482,7 +2540,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260831.01</span>
+                <span id="drawer-version-text">KPI Suite v20260831.02</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2494,12 +2552,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260831.01"></script>
+    <script src="js/supabase-kpi-client.js?v=20260831.02"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260831.01";
+        const CURRENT_VERSION = "20260831.02";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -6357,6 +6415,47 @@
             if (btn) btn.classList.add('emp-chip-active', 'bg-emerald-600', 'text-white', 'border-emerald-600');
         }
 
+        let currentIncidentFormMode = 'incident';
+        let goodCatchCategory = 'outbound';
+
+        function switchIncidentFormMode(mode) {
+            currentIncidentFormMode = mode;
+            const btnInc = document.getElementById('tab-btn-incident-form');
+            const btnGc = document.getElementById('tab-btn-goodcatch-form');
+            const formInc = document.getElementById('form-container-incident');
+            const formGc = document.getElementById('form-container-goodcatch');
+
+            if (mode === 'good_catch') {
+                if (btnInc) {
+                    btnInc.className = 'flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-red-700 hover:bg-red-50/50 flex items-center justify-center gap-1.5 active:scale-98';
+                }
+                if (btnGc) {
+                    btnGc.className = 'flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all bg-emerald-600 text-white shadow-md border border-emerald-600 flex items-center justify-center gap-1.5 active:scale-98';
+                }
+                if (formInc) formInc.classList.add('hidden');
+                if (formGc) formGc.classList.remove('hidden');
+            } else {
+                if (btnInc) {
+                    btnInc.className = 'flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all bg-white text-red-700 shadow-sm border border-slate-200 flex items-center justify-center gap-1.5 active:scale-98';
+                }
+                if (btnGc) {
+                    btnGc.className = 'flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 flex items-center justify-center gap-1.5 active:scale-98';
+                }
+                if (formInc) formInc.classList.remove('hidden');
+                if (formGc) formGc.classList.add('hidden');
+            }
+        }
+
+        function switchGoodCatchCategory(cat, btn) {
+            goodCatchCategory = cat;
+            document.querySelectorAll('#gc-cat-pills .gc-cat-chip').forEach(el => {
+                el.className = 'gc-cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1';
+            });
+            if (btn) {
+                btn.className = 'gc-cat-chip cat-chip-active shrink-0 py-1.5 px-3 rounded-xl border border-emerald-200 bg-emerald-50 text-xs font-bold text-emerald-800 flex items-center gap-1';
+            }
+        }
+
         function renderErrTimeline() {
             const container = document.getElementById('pc-err-timeline');
             const countEl = document.getElementById('err-case-count');
@@ -6374,6 +6473,34 @@
 
             container.innerHTML = recordedErrorCases.map(item => {
                 const resp = item.responsibility || 'individual';
+                const isGoodCatchStandalone = (item.type && item.type.includes('Good Catch')) || (item.detectedBy && item.worker === item.detectedBy && (item.penalty === 0));
+
+                if (isGoodCatchStandalone) {
+                    return `
+                        <div class="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200 space-y-1.5 text-xs relative group">
+                            <div class="flex justify-between items-center font-bold">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="text-emerald-900">${item.time || '10:30 น.'}</span>
+                                    <span class="text-[9px] bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                        <i class="fa-solid fa-star text-amber-500"></i> Good Catch: ${esc(item.detectedBy || item.worker)}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <span class="text-emerald-700 font-num font-bold text-[10px] bg-white px-2 py-0.5 rounded border border-emerald-200">+1 Good Catch (0 HP)</span>
+                                    <button type="button" onclick="deleteErrorCase('${esc(item.caseId)}')" title="ยกเลิก/ลบเคสนี้" class="text-slate-400 hover:text-red-600 p-1 rounded transition-colors text-xs cursor-pointer">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-emerald-950 font-bold flex items-center gap-1.5">
+                                <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                                <span>${esc(item.type)}</span>
+                            </p>
+                            ${item.note ? `<p class="text-[11px] text-emerald-800 bg-white/80 p-2 rounded-lg border border-emerald-100">${esc(item.note)}</p>` : ''}
+                        </div>
+                    `;
+                }
+
                 let respBadge = '';
                 if (resp === 'process') respBadge = '<span class="text-[9px] bg-blue-100 text-blue-800 border border-blue-200 font-bold px-1.5 py-0.5 rounded">⚙️ ระบบ/กระบวนการ (0 HP)</span>';
                 else if (resp === 'pending') respBadge = '<span class="text-[9px] bg-amber-100 text-amber-800 border border-amber-200 font-bold px-1.5 py-0.5 rounded">❓ รอตรวจสอบ (0 HP)</span>';
@@ -6446,10 +6573,8 @@
             if (incidentSaveInFlight) return;
             const activeSev = document.querySelector('#pc-err-severity-list .severity-chip-active');
             const noteInput = document.getElementById('pc-err-note-input');
-            const catcherNoteInput = document.getElementById('pc-err-catcher-note-input');
             const date = document.getElementById('record-date-error')?.value || '';
             const note = noteInput ? noteInput.value.trim() : '';
-            const catcherNote = catcherNoteInput ? catcherNoteInput.value.trim() : '';
             const sevName = activeSev ? activeSev.dataset.name : 'หยิบผิด แก้ทันก่อนจัดส่ง';
             let penalty = activeSev ? (parseInt(activeSev.dataset.penalty, 10) || 5) : 5;
 
@@ -6465,12 +6590,6 @@
 
             const now = new Date();
             const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
-            const detectedBy = (selectedErrCatcher && selectedErrCatcher !== '(ไม่มี / ตรวจพบเอง)') ? selectedErrCatcher : '';
-
-            let fullNote = note;
-            if (catcherNote && detectedBy) {
-                fullNote = note ? `${note} (สกัดได้ทัน: ${catcherNote})` : `(สกัดได้ทัน: ${catcherNote})`;
-            }
 
             const newCase = {
                 kind: 'case',
@@ -6486,10 +6605,9 @@
                 responsibility: resp,
                 stage: 'warehouse',
                 incidentType: sevName,
-                detectedBy: detectedBy,
-                goodCatchBy: detectedBy,
-                goodCatchNote: catcherNote,
-                note: fullNote,
+                detectedBy: '',
+                goodCatchBy: '',
+                note: note,
                 time: timeStr
             };
             pendingIncidentCaseId = newCase.caseId;
@@ -6505,7 +6623,6 @@
                 incidentZeroConfirmed = result.zeroConfirmed;
                 pendingIncidentCaseId = '';
                 if (noteInput) noteInput.value = '';
-                if (catcherNoteInput) catcherNoteInput.value = '';
                 applyIncidentSaveResultToCache(date, currentBranch, result);
                 renderErrTimeline();
                 renderErrTeamHp();
@@ -6520,6 +6637,81 @@
                 if (button) {
                     button.disabled = false;
                     button.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i><span>บันทึกเคสความผิดพลาดทันที</span>';
+                }
+            }
+        }
+
+        async function saveStandaloneGoodCatch() {
+            if (incidentSaveInFlight) return;
+            const catcherInput = selectedErrCatcher;
+            const catcherNoteInput = document.getElementById('pc-err-catcher-note-input');
+            const billNoteInput = document.getElementById('gc-bill-note-input');
+            const date = document.getElementById('record-date-error')?.value || '';
+            const catcherNote = catcherNoteInput ? catcherNoteInput.value.trim() : '';
+            const billNote = billNoteInput ? billNoteInput.value.trim() : '';
+
+            if (!catcherInput || catcherInput === '(ไม่มี / ตรวจพบเอง)') {
+                return showToast('กรุณาเลือกผู้ตรวจพบ / Good Catch Hero', true);
+            }
+            if (!catcherNote) {
+                return showToast('กรุณาระบุสิ่งที่ตรวจพบหรือสกัดข้อผิดพลาดได้ทัน', true);
+            }
+            if (!date) return showToast('กรุณาเลือกวันที่บันทึก', true);
+            if (!sessionToken || !window.AkraSupabaseKPI?.saveIncident) {
+                return showModal('บันทึกไม่สำเร็จ', 'ระบบบันทึก Incident ยังไม่พร้อม กรุณาโหลดหน้าใหม่', 'error');
+            }
+
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
+            const fullNote = billNote ? `สกัดได้ทัน: ${catcherNote} (อ้างอิง: ${billNote})` : `สกัดได้ทัน: ${catcherNote}`;
+
+            const newCase = {
+                kind: 'case',
+                caseId: pendingIncidentCaseId || `ERR-${date}-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+                worker: catcherInput,
+                participants: [catcherInput],
+                roster: getBranchActiveRoster(currentBranch),
+                category: goodCatchCategory || 'outbound',
+                type: 'Good Catch: สกัดข้อผิดพลาดได้ทัน',
+                penalty: 0,
+                responsibility: 'process',
+                stage: 'warehouse',
+                incidentType: 'Good Catch: สกัดข้อผิดพลาดได้ทัน',
+                detectedBy: catcherInput,
+                goodCatchBy: catcherInput,
+                goodCatchNote: catcherNote,
+                note: fullNote,
+                time: timeStr
+            };
+
+            pendingIncidentCaseId = newCase.caseId;
+            const button = document.getElementById('btn-save-goodcatch-standalone');
+            incidentSaveInFlight = true;
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>กำลังบันทึก Good Catch...</span>';
+            }
+            try {
+                const result = await AkraSupabaseKPI.saveIncident(sessionToken, currentBranch, date, newCase);
+                recordedErrorCases = result.incidents;
+                incidentZeroConfirmed = result.zeroConfirmed;
+                pendingIncidentCaseId = '';
+                if (catcherNoteInput) catcherNoteInput.value = '';
+                if (billNoteInput) billNoteInput.value = '';
+                applyIncidentSaveResultToCache(date, currentBranch, result);
+                renderErrTimeline();
+                renderErrTeamHp();
+                showToast(`บันทึก Good Catch สำหรับ ${catcherInput} สำเร็จ (+1 Star)!`, false);
+                loadDashboardData();
+                updateDailyDashboard();
+            } catch (error) {
+                console.error('Good Catch save failed:', error);
+                showModal('บันทึกไม่สำเร็จ', error?.message || 'เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้', 'error');
+            } finally {
+                incidentSaveInFlight = false;
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fa-solid fa-star text-amber-300"></i><span>บันทึก Good Catch ทันที (+1 Star)</span>';
                 }
             }
         }
