@@ -2660,7 +2660,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260902.07</span>
+                <span id="drawer-version-text">KPI Suite v20260902.08</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2672,12 +2672,14 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260902.07"></script>
+    <script src="js/supabase-kpi-client.js?v=20260902.08"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260902.07";
+        const CURRENT_VERSION = "20260902.08";
+        const KPI_LIFF_ID = "2011386176-m5a77Ms9";
+        window.KPI_LIFF_ID = KPI_LIFF_ID;
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -6219,17 +6221,18 @@
             try {
                 if (targetBtn) {
                     targetBtn.disabled = true;
-                    targetBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบการเชื่อมต่อ...';
+                    targetBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเชื่อมต่อ LINE...';
                 }
 
-                // Check if LIFF ID is configured and LIFF SDK is loaded
                 const liffId = String(window.KPI_LIFF_ID || '').trim();
                 if (liffId && typeof liff !== 'undefined' && typeof liff.init === 'function') {
                     await liff.init({ liffId });
+
                     if (!liff.isLoggedIn()) {
-                        liff.login();
+                        liff.login({ redirectUri: window.location.href });
                         return;
                     }
+
                     const profile = await liff.getProfile();
                     if (profile && profile.userId) {
                         const res = await AkraSupabaseKPI.bindLineAccount(
@@ -6242,14 +6245,16 @@
                             closeLineBindingModal();
                             await loadMyProfileData(true);
                             return;
+                        } else {
+                            showModal('เชื่อมต่อไม่สำเร็จ', res?.message || 'ไม่สามารถบันทึกการผูกบัญชีได้', 'error');
+                            return;
                         }
                     }
                 }
 
-                // If LIFF ID is not yet configured or running outside LIFF:
                 showModal(
-                    'วิธีเชื่อมต่อบัญชี LINE',
-                    'ขณะนี้ระบบเตรียมพร้อมสำหรับการผูกบัญชี LINE เรียบร้อย\n\n💡 วิธีผูกบัญชี:\n1. พิมพ์คำว่า "uid" ในแชทไลน์บอทของระบบเพื่อรับรหัส LINE UID\n2. นำมากรอกในช่องด้านล่าง แล้วกด "บันทึก" ได้ทันทีครับ',
+                    'การเชื่อมต่อ LINE',
+                    'กรุณาเปิดจากในแอปพลิเคชัน LINE เพื่อแตะเชื่อมต่ออัตโนมัติใน 1 วินาที\n\n(หรือกรอก LINE User ID ในช่องด้านล่างเพื่อบันทึกด้วยตนเองครับ)',
                     'alert'
                 );
                 const section = document.getElementById('line-manual-section');
@@ -6259,7 +6264,11 @@
 
             } catch (err) {
                 console.error('connectLineOneTap error:', err);
-                showModal('เกิดข้อผิดพลาด', err.message || 'ไม่สามารถดึงข้อมูลจาก LINE ได้', 'error');
+                showModal('การเชื่อมต่อ LINE', 'หากเปิดจากภายนอกแอป LINE กรุณากดยืนยันการเข้าสู่ระบบ หรือกรอกรหัสในช่องด้านล่างได้เลยครับ\n(' + (err.message || '') + ')', 'alert');
+                const section = document.getElementById('line-manual-section');
+                const icon = document.getElementById('line-manual-toggle-icon');
+                if (section) section.classList.remove('hidden');
+                if (icon) icon.className = 'fa-solid fa-chevron-up text-[9px]';
             } finally {
                 if (targetBtn) {
                     targetBtn.disabled = false;
