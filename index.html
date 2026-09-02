@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KPI Tracker - Multi Branch</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -2416,7 +2417,7 @@
         </div>
     </div>
 
-    <!-- LINE Account Binding Modal -->
+    <!-- LINE Account Binding Modal (Phase 1-Tap & Fallback) -->
     <div id="line-binding-modal" role="dialog" aria-modal="true" aria-labelledby="line-modal-title" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[95] flex items-center justify-center p-4">
         <div class="w-full max-w-md bg-white rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -2426,7 +2427,7 @@
                     </div>
                     <div>
                         <h3 id="line-modal-title" class="text-sm font-bold text-slate-800">เชื่อมต่อบัญชี LINE</h3>
-                        <p class="text-[11px] text-slate-500">สำหรับบันทึก Workload ด่วนผ่าน LINE</p>
+                        <p class="text-[11px] text-slate-500">สำหรับรับการ์ดและบันทึก Workload ด่วน</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeLineBindingModal()" aria-label="ปิด" class="w-7 h-7 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-all">
@@ -2434,14 +2435,35 @@
                 </button>
             </div>
 
-            <div class="space-y-3">
-                <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs text-emerald-900 space-y-1">
-                    <p class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-[#06C755]"></i>วิธีดู LINE User ID ของคุณ:</p>
-                    <p class="text-[11px] text-emerald-800">พิมพ์คำว่า <code class="bg-white px-1.5 py-0.5 rounded font-mono font-bold text-emerald-950">uid</code> หรือ <code class="bg-white px-1.5 py-0.5 rounded font-mono font-bold text-emerald-950">id</code> ในแชทไลน์ของบอทระบบ หรือส่ง LINE ID ของคุณ</p>
-                </div>
+            <!-- Option 1: 1-Tap Auto Connect via LIFF (Zero typing) -->
+            <div class="p-4 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl text-center space-y-2.5">
+                <p class="text-xs font-bold text-emerald-950 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles text-[#06C755]"></i>
+                    <span>เชื่อมต่ออัตโนมัติ (ไม่ต้องพิมพ์รหัส)</span>
+                </p>
+                <p class="text-[11px] text-emerald-800 leading-relaxed">
+                    ระบบจะอ่านบัญชี LINE ในเครื่องนี้และบันทึกผูกกับชื่อของคุณให้อัตโนมัติทันที
+                </p>
+                <button type="button" onclick="connectLineOneTap()" id="btn-modal-one-tap" class="w-full py-3 px-4 rounded-xl bg-[#06C755] hover:bg-[#05b34c] active:scale-95 text-white font-bold text-xs shadow flex items-center justify-center gap-2 transition-all">
+                    <i class="fa-brands fa-line text-lg"></i>
+                    <span>แตะเพื่อผูกกับ LINE เครื่องนี้ทันที (1-Tap)</span>
+                </button>
+            </div>
 
+            <!-- Divider -->
+            <div class="flex items-center gap-2">
+                <div class="flex-1 h-px bg-slate-200"></div>
+                <button type="button" onclick="toggleLineManualSection()" class="text-[10px] font-bold text-slate-400 hover:text-slate-600 flex items-center gap-1">
+                    <span>หรือ กำหนดด้วยตนเอง / สำหรับแอดมิน</span>
+                    <i id="line-manual-toggle-icon" class="fa-solid fa-chevron-down text-[9px]"></i>
+                </button>
+                <div class="flex-1 h-px bg-slate-200"></div>
+            </div>
+
+            <!-- Collapsible Manual Input (For Admin fallback) -->
+            <div id="line-manual-section" class="hidden space-y-3 pt-1">
                 <div>
-                    <label for="line-input-user-id" class="block text-xs font-bold text-slate-700 mb-1">LINE User ID (ขึ้นต้นด้วย U...) <span class="text-red-500">*</span></label>
+                    <label for="line-input-user-id" class="block text-xs font-bold text-slate-700 mb-1">LINE User ID (ขึ้นต้นด้วย U...):</label>
                     <input type="text" id="line-input-user-id" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 outline-none focus:ring-2 focus:ring-[#06C755]" placeholder="เช่น U4af4980629c4bc15610852026759c99">
                 </div>
 
@@ -2449,14 +2471,17 @@
                     <label for="line-input-display-name" class="block text-xs font-bold text-slate-700 mb-1">ชื่อบัญชี LINE (ทางเลือก):</label>
                     <input type="text" id="line-input-display-name" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:ring-2 focus:ring-[#06C755]" placeholder="เช่น Peter_Akra, หมูหยอง">
                 </div>
+
+                <div class="flex justify-end pt-1">
+                    <button type="button" onclick="confirmSaveLineBinding()" id="btn-save-line-binding" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-bold text-white shadow transition-all flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-check"></i>
+                        <span>บันทึกด้วยตนเอง</span>
+                    </button>
+                </div>
             </div>
 
-            <div class="flex gap-2 pt-2 border-t border-slate-100">
-                <button type="button" onclick="closeLineBindingModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-600 transition-colors">ยกเลิก</button>
-                <button type="button" onclick="confirmSaveLineBinding()" id="btn-save-line-binding" class="flex-[2] py-2.5 rounded-xl bg-[#06C755] hover:bg-[#05b34c] active:scale-95 text-xs font-bold text-white shadow-md transition-all flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-link"></i>
-                    <span>ยืนยันการเชื่อมต่อ</span>
-                </button>
+            <div class="pt-2 border-t border-slate-100 text-center">
+                <button type="button" onclick="closeLineBindingModal()" class="w-full py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors">ปิดหน้าต่าง</button>
             </div>
         </div>
     </div>
@@ -2635,7 +2660,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260902.04</span>
+                <span id="drawer-version-text">KPI Suite v20260902.05</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2647,12 +2672,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260902.04"></script>
+    <script src="js/supabase-kpi-client.js?v=20260902.05"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260902.04";
+        const CURRENT_VERSION = "20260902.05";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -6166,6 +6191,92 @@
         }
 
         // ================= LINE ACCOUNT BINDING CONTROLLER =================
+        function toggleLineManualSection() {
+            const section = document.getElementById('line-manual-section');
+            const icon = document.getElementById('line-manual-toggle-icon');
+            if (section) {
+                const isHidden = section.classList.toggle('hidden');
+                if (icon) {
+                    icon.className = isHidden ? 'fa-solid fa-chevron-down text-[9px]' : 'fa-solid fa-chevron-up text-[9px]';
+                }
+            }
+        }
+
+        async function connectLineOneTap() {
+            const btnOneTap = document.getElementById('btn-modal-one-tap');
+            const btnBind = document.getElementById('btn-bind-line');
+            const targetBtn = btnOneTap || btnBind;
+
+            if (!sessionToken || !window.AkraSupabaseKPI?.bindLineAccount) {
+                showCustomModal('ข้อผิดพลาด', 'ไม่พบการเชื่อมต่อระบบ KPI กรุณารีเฟรชหน้าจอ');
+                return;
+            }
+
+            try {
+                if (targetBtn) {
+                    targetBtn.disabled = true;
+                    targetBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังดึงข้อมูลจาก LINE...';
+                }
+
+                // Check if running inside LIFF SDK
+                if (typeof liff !== 'undefined') {
+                    if (liff.isLoggedIn && liff.isLoggedIn()) {
+                        const profile = await liff.getProfile();
+                        if (profile && profile.userId) {
+                            const res = await AkraSupabaseKPI.bindLineAccount(
+                                sessionToken,
+                                profile.userId,
+                                profile.displayName || ''
+                            );
+                            if (res && res.status === 'success') {
+                                showToast(`เชื่อมต่อกับ LINE (${profile.displayName || 'สำเร็จ'}) เรียบร้อยแล้ว!`);
+                                closeLineBindingModal();
+                                await loadMyProfileData(true);
+                                return;
+                            }
+                        }
+                    } else if (window.KPI_LIFF_ID && typeof liff.init === 'function') {
+                        await liff.init({ liffId: window.KPI_LIFF_ID });
+                        if (!liff.isLoggedIn()) {
+                            liff.login();
+                            return;
+                        }
+                        const profile = await liff.getProfile();
+                        if (profile && profile.userId) {
+                            const res = await AkraSupabaseKPI.bindLineAccount(
+                                sessionToken,
+                                profile.userId,
+                                profile.displayName || ''
+                            );
+                            if (res && res.status === 'success') {
+                                showToast(`เชื่อมต่อกับ LINE (${profile.displayName || 'สำเร็จ'}) เรียบร้อยแล้ว!`);
+                                closeLineBindingModal();
+                                await loadMyProfileData(true);
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                // If outside LIFF environment (e.g. desktop browser), show prompt and reveal manual helper
+                showCustomModal(
+                    'เปิดผ่านแอปพลิเคชัน LINE',
+                    'หากเปิดเว็บจากในแอป LINE ระบบจะตรวจจับและผูกให้อัตโนมัติใน 1 วินาทีทันที\n\n(หรือเปิดส่วน "กำหนดด้วยตนเอง" ด้านล่างเพื่อให้แอดมินกรอกให้)'
+                );
+                const section = document.getElementById('line-manual-section');
+                if (section) section.classList.remove('hidden');
+
+            } catch (err) {
+                console.error('connectLineOneTap error:', err);
+                showCustomModal('เกิดข้อผิดพลาด', err.message || 'ไม่สามารถดึงข้อมูลจาก LINE ได้');
+            } finally {
+                if (targetBtn) {
+                    targetBtn.disabled = false;
+                    targetBtn.innerHTML = '<i class="fa-brands fa-line text-lg"></i> <span>แตะเพื่อผูกกับ LINE เครื่องนี้ทันที (1-Tap)</span>';
+                }
+            }
+        }
+
         function openLineBindingModal() {
             const modal = document.getElementById('line-binding-modal');
             const uidInput = document.getElementById('line-input-user-id');
