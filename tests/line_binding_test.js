@@ -68,8 +68,9 @@ async function runTests() {
     'my-profile-month-input': { value: '' },
     'my-profile-line-status-badge': { textContent: '', className: '' },
     'my-profile-line-desc': { textContent: '', innerHTML: '' },
+    'btn-bind-line': { classList: { add: (c) => dom['btn-bind-line'].classes.add(c), remove: (c) => dom['btn-bind-line'].classes.delete(c) }, classes: new Set() },
     'btn-bind-line-text': { textContent: '' },
-    'btn-unbind-line': { classList: { add: () => {}, remove: () => {} } },
+    'btn-unbind-line': { classList: { add: (c) => dom['btn-unbind-line'].classes.add(c), remove: (c) => dom['btn-unbind-line'].classes.delete(c) }, classes: new Set(['hidden']) },
     'my-profile-line-status-icon': { className: '' },
     'my-profile-quality-score': { textContent: '' },
     'my-profile-good-catch-count': { textContent: '' },
@@ -102,8 +103,9 @@ async function runTests() {
     workloadStats: {},
     roadmap: []
   });
-  assert.strictEqual(dom['my-profile-line-status-badge'].textContent, 'ยังไม่เชื่อมต่อ');
+  assert(dom['my-profile-line-status-badge'].textContent.includes('ยังไม่เชื่อมต่อ'));
   assert.strictEqual(dom['btn-bind-line-text'].textContent, 'เชื่อมต่อ LINE');
+  assert(!dom['btn-bind-line'].classes.has('hidden'), 'Connect button should be visible when unlinked');
 
   // Case B: Linked profile
   uiSandbox.renderMyProfileView({
@@ -113,8 +115,9 @@ async function runTests() {
     workloadStats: {},
     roadmap: []
   });
-  assert.strictEqual(dom['my-profile-line-status-badge'].textContent, 'เชื่อมต่อแล้ว');
-  assert.strictEqual(dom['btn-bind-line-text'].textContent, 'เปลี่ยนบัญชี LINE');
+  assert(dom['my-profile-line-status-badge'].innerHTML.includes('เชื่อมต่อแล้ว'));
+  assert(dom['btn-bind-line'].classes.has('hidden'), 'Connect button should be hidden when connected');
+  assert(!dom['btn-unbind-line'].classes.has('hidden'), 'Unbind button should be visible when connected');
   assert(dom['my-profile-line-desc'].innerHTML.includes('MooYong_Warehouse'), 'Must display linked LINE name');
   console.log('✓ renderMyProfileView correctly updates connected/disconnected LINE card states.');
 

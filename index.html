@@ -2666,7 +2666,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260902.09</span>
+                <span id="drawer-version-text">KPI Suite v20260902.10</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2690,12 +2690,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260902.09"></script>
+    <script src="js/supabase-kpi-client.js?v=20260902.10"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260902.09";
+        const CURRENT_VERSION = "20260902.10";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -5872,6 +5872,13 @@
                     } else if (profile.avatarUrl && !currentObj.avatarUrl) {
                         currentObj.avatarUrl = profile.avatarUrl;
                     }
+                    if (!profile.lineUserId && currentObj.lineUserId) {
+                        profile.lineUserId = currentObj.lineUserId;
+                        profile.lineDisplayName = currentObj.lineDisplayName || '';
+                    } else if (profile.lineUserId) {
+                        currentObj.lineUserId = profile.lineUserId;
+                        currentObj.lineDisplayName = profile.lineDisplayName || '';
+                    }
                 }
 
                 MY_PROFILE_DATA = profile;
@@ -5922,33 +5929,37 @@
             // Update LINE Binding Status Card
             const lineBadge = document.getElementById('my-profile-line-status-badge');
             const lineDesc = document.getElementById('my-profile-line-desc');
+            const btnBind = document.getElementById('btn-bind-line');
             const btnBindText = document.getElementById('btn-bind-line-text');
             const btnUnbind = document.getElementById('btn-unbind-line');
             const lineIconContainer = document.getElementById('my-profile-line-status-icon');
 
             if (p.lineUserId) {
                 if (lineBadge) {
-                    lineBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200';
-                    lineBadge.textContent = 'เชื่อมต่อแล้ว';
+                    lineBadge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1';
+                    lineBadge.innerHTML = '<i class="fa-solid fa-check"></i> <span>เชื่อมต่อแล้ว</span>';
                 }
                 if (lineDesc) {
                     const shortUid = p.lineUserId.length > 10 ? `${p.lineUserId.slice(0, 6)}...${p.lineUserId.slice(-4)}` : p.lineUserId;
-                    lineDesc.innerHTML = `<span class="font-bold text-slate-700 font-mono">${esc(p.lineDisplayName || 'LINE Account')}</span> <span class="text-slate-400">(${esc(shortUid)})</span> • พร้อมรับการ์ดบันทึกงานด่วน`;
+                    lineDesc.innerHTML = `<span class="font-bold text-slate-800 font-mono">${esc(p.lineDisplayName || 'LINE Account')}</span> <span class="text-slate-400">(${esc(shortUid)})</span> • พร้อมรับการ์ดบันทึกงานด่วน`;
                 }
-                if (btnBindText) btnBindText.textContent = 'เปลี่ยนบัญชี LINE';
+                if (btnBind) btnBind.classList.add('hidden');
                 if (btnUnbind) btnUnbind.classList.remove('hidden');
                 if (lineIconContainer) {
                     lineIconContainer.className = 'w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-xl shrink-0 shadow-sm';
                 }
             } else {
                 if (lineBadge) {
-                    lineBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600';
+                    lineBadge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600';
                     lineBadge.textContent = 'ยังไม่เชื่อมต่อ';
                 }
                 if (lineDesc) {
                     lineDesc.textContent = 'เชื่อมต่อเพื่อรับการ์ด Flex Message และแตะบันทึก Workload ใน LINE ได้ทันทีใน 1 วินาที';
                 }
-                if (btnBindText) btnBindText.textContent = 'เชื่อมต่อ LINE';
+                if (btnBind) {
+                    btnBind.classList.remove('hidden');
+                    if (btnBindText) btnBindText.textContent = 'เชื่อมต่อ LINE';
+                }
                 if (btnUnbind) btnUnbind.classList.add('hidden');
                 if (lineIconContainer) {
                     lineIconContainer.className = 'w-10 h-10 rounded-xl bg-[#06C755]/10 text-[#06C755] flex items-center justify-center text-xl shrink-0';
