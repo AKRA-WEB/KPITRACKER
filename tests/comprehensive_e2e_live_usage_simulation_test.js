@@ -32,6 +32,7 @@ function makeToken(username, name, roles = ['admin', 'supervisor']) {
   console.log('=== RUNNING COMPREHENSIVE END-TO-END LIVE USAGE SIMULATION ===\n');
 
   // 1. Start local HTTP server to serve the real application
+  const versionJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../version.json'), 'utf8'));
   const server = http.createServer((req, res) => {
     const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
     if (parsedUrl.pathname === '/favicon.ico') {
@@ -40,7 +41,7 @@ function makeToken(username, name, roles = ['admin', 'supervisor']) {
     }
     if (parsedUrl.pathname === '/version.json') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ version: '20260831.05' }));
+      return res.end(JSON.stringify(versionJson));
     }
     if (parsedUrl.pathname === '/' || parsedUrl.pathname === '/index.html') {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });

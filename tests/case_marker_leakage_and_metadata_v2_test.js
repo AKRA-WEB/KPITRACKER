@@ -111,11 +111,11 @@ console.log('  -> Passed: Defense-in-depth sanitization strips all stray markers
 // 4. Version Parity Check
 console.log('\n[4/4] Checking version parity between index.html and version.json...');
 const versionJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../version.json'), 'utf8'));
-assert.strictEqual(versionJson.version, '20260831.05');
-assert.match(htmlContent, /const CURRENT_VERSION = "20260831.05";/);
-assert.match(htmlContent, /id="drawer-version-text">KPI Suite v20260831.05<\/span>/);
-assert.match(htmlContent, /supabase-kpi-client\.js\?v=20260831.05/);
-console.log('  -> Passed: Version parity verified at 20260831.05.');
+assert(versionJson.version, 'version.json must have a version string');
+assert(htmlContent.includes(`const CURRENT_VERSION = "${versionJson.version}";`));
+assert(htmlContent.includes(`id="drawer-version-text">KPI Suite v${versionJson.version}</span>`));
+assert(htmlContent.includes(`supabase-kpi-client.js?v=${versionJson.version}`));
+console.log(`  -> Passed: Version parity verified at ${versionJson.version}.`);
 
 console.log('\n=======================================================');
 console.log('🎉 ALL CASE MARKER & METADATA V2 PARSING CHECKS PASSED! 🎉');

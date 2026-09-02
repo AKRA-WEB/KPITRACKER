@@ -31,6 +31,7 @@ function makeToken(username, name, roles = ['ADMIN', 'AKRA']) {
   console.log('=== RUNNING SKILL CATALOG CRUD & ADMIN MANAGEMENT COMPREHENSIVE TESTS ===\n');
 
   // 1. Start local HTTP server
+  const versionJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../version.json'), 'utf8'));
   const server = http.createServer((req, res) => {
     const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
     if (parsedUrl.pathname === '/favicon.ico') {
@@ -39,7 +40,7 @@ function makeToken(username, name, roles = ['ADMIN', 'AKRA']) {
     }
     if (parsedUrl.pathname === '/version.json') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ version: '20260831.05' }));
+      return res.end(JSON.stringify(versionJson));
     }
     if (parsedUrl.pathname === '/' || parsedUrl.pathname === '/index.html') {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });

@@ -2556,7 +2556,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260831.05</span>
+                <span id="drawer-version-text">KPI Suite v20260902.01</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2568,12 +2568,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260831.05"></script>
+    <script src="js/supabase-kpi-client.js?v=20260902.01"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260831.05";
+        const CURRENT_VERSION = "20260902.01";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -4485,17 +4485,17 @@
             const totalS = (workloadState.support || []).reduce((sum, t) => sum + (parseFloat(t.hours) || 0), 0);
             const coreH = Math.max(0, totalHours - totalS);
             
-            if (coreName.includes('ขาออก')) outH += coreH;
-            else if (coreName.includes('รับสินค้าเข้า')) inH += coreH;
-            else if (coreName.includes('W2') || coreName.includes('ขนย้าย')) transH += coreH;
+            if (coreName.includes('ขาออก') || coreName.includes('W1') || coreName.includes('ส่งสินค้า')) outH += coreH;
+            else if (coreName.includes('รับ') || coreName.includes('ยก')) inH += coreH;
+            else if (coreName.includes('W2') || coreName.includes('ขนย้าย') || coreName.includes('ย้าย')) transH += coreH;
             else outH += coreH;
             
             (workloadState.support || []).forEach(s => {
                 const sName = String(s.name || '');
                 const hrs = parseFloat(s.hours) || 0;
-                if (sName.includes('ออก') || sName.includes('ส่ง')) outH += hrs;
-                else if (sName.includes('รับ')) inH += hrs;
-                else if (sName.includes('ย้าย') || sName.includes('W2')) transH += hrs;
+                if (sName.includes('ออก') || sName.includes('ส่ง') || sName.includes('W1') || sName.includes('TRD')) outH += hrs;
+                else if (sName.includes('รับ') || sName.includes('ยก') || sName.includes('ขึ้นของ')) inH += hrs;
+                else if (sName.includes('ย้าย') || sName.includes('W2') || sName.includes('ขนย้าย')) transH += hrs;
                 else shareH += hrs;
             });
             totalH = outH + inH + transH + shareH;
@@ -4860,16 +4860,16 @@
             let outbound = 0, inbound = 0, transfer = 0, shared = 0;
             const primaryCore = workloadState.core || 'คลัง W1';
             
-            if (primaryCore === 'คลัง W1' || primaryCore === 'ขาออก' || primaryCore === 'ส่งสินค้า') outbound += primaryHours;
+            if (primaryCore === 'คลัง W1' || primaryCore === 'คลังหลัก W1' || primaryCore === 'ขาออก' || primaryCore === 'ส่งสินค้า') outbound += primaryHours;
             else if (primaryCore === 'รับสินค้าเข้า' || primaryCore === 'ช่วยยกสินค้า') inbound += primaryHours;
-            else if (primaryCore === 'คลัง W2' || primaryCore === 'ขนย้ายสินค้า') transfer += primaryHours;
+            else if (primaryCore === 'คลัง W2' || primaryCore === 'คลังสำรอง W2' || primaryCore === 'ขนย้ายสินค้า') transfer += primaryHours;
             else shared += primaryHours;
 
             (workloadState.support || []).forEach(d => {
                 const h = parseFloat(d.hours) || 0;
-                if (d.name === 'คลัง W1' || d.name === 'ขาออก' || d.name === 'ส่งสินค้า' || d.name === 'สนับสนุน TRD' || d.name === 'แวะไปส่งของ') outbound += h;
+                if (d.name === 'คลัง W1' || d.name === 'คลังหลัก W1' || d.name === 'ขาออก' || d.name === 'ส่งสินค้า' || d.name === 'สนับสนุน TRD' || d.name === 'ช่วยหน้าร้าน TRD' || d.name === 'แวะไปส่งของ') outbound += h;
                 else if (d.name === 'รับสินค้าเข้า' || d.name === 'ช่วยยกสินค้า' || d.name === 'แวะขึ้นของ') inbound += h;
-                else if (d.name === 'คลัง W2' || d.name === 'ขนย้ายสินค้า' || d.name === 'ช่วยย้ายของ W2') transfer += h;
+                else if (d.name === 'คลัง W2' || d.name === 'คลังสำรอง W2' || d.name === 'ขนย้ายสินค้า' || d.name === 'ช่วยย้ายของ W2') transfer += h;
                 else shared += h;
             });
 
