@@ -2561,7 +2561,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260902.02</span>
+                <span id="drawer-version-text">KPI Suite v20260902.03</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2573,12 +2573,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260902.02"></script>
+    <script src="js/supabase-kpi-client.js?v=20260902.03"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260902.02";
+        const CURRENT_VERSION = "20260902.03";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -4493,31 +4493,68 @@
 
         function renderSectionWorkloadAnalytics() {
             let outH = 0, inH = 0, transH = 0, shareH = 0, totalH = 0;
-            const coreName = workloadState.core || '';
-            const totalHours = typeof workloadState.totalHours === 'number' ? workloadState.totalHours : 10.0;
-            const totalS = (workloadState.support || []).reduce((sum, t) => sum + (parseFloat(t.hours) || 0), 0);
-            const coreH = Math.max(0, totalHours - totalS);
             
-            if (coreName.includes('ขาออก') || coreName.includes('W1') || coreName.includes('ส่งสินค้า')) outH += coreH;
-            else if (coreName.includes('รับ') || coreName.includes('ยก')) inH += coreH;
-            else if (coreName.includes('W2') || coreName.includes('ขนย้าย') || coreName.includes('ย้าย')) transH += coreH;
-            else outH += coreH;
-            
-            (workloadState.support || []).forEach(s => {
-                const sName = String(s.name || '');
-                const hrs = parseFloat(s.hours) || 0;
-                if (sName.includes('ออก') || sName.includes('ส่ง') || sName.includes('W1') || sName.includes('TRD')) outH += hrs;
-                else if (sName.includes('รับ') || sName.includes('ยก') || sName.includes('ขึ้นของ')) inH += hrs;
-                else if (sName.includes('ย้าย') || sName.includes('W2') || sName.includes('ขนย้าย')) transH += hrs;
-                else shareH += hrs;
-            });
-            totalH = outH + inH + transH + shareH;
-            if (totalH === 0) totalH = 10;
+            // 1. Get current user's active draft values
+            const myDraftList = (typeof getAkraWorkloadValues === 'function') ? getAkraWorkloadValues() : [];
+            const myDraft = myDraftList[0] || null;
+            const currentIdentity = (typeof resolveWorkloadEmployee === 'function')
+                ? resolveWorkloadEmployee({ employeeUid: currentUser, employee: displayUserName }, GLOBAL_CONFIG_LIST)
+                : { uid: currentUser, name: displayUserName };
+            const currentKey = String(currentIdentity.uid || `name:${currentIdentity.name || currentUser}`).trim().toLowerCase();
 
-            const outPct = Math.round((outH / totalH) * 100);
-            const inPct = Math.round((inH / totalH) * 100);
-            const transPct = Math.round((transH / totalH) * 100);
-            const sharePct = Math.round((shareH / totalH) * 100);
+            // 2. Get saved workload entries for the selected date
+            const selectedDate = document.getElementById('record-date')?.value || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : '');
+            const selectedDay = (typeof getSelectedServerDay === 'function') ? getSelectedServerDay(selectedDate) : null;
+            const savedEntries = Array.isArray(selectedDay?.workload) ? selectedDay.workload : [];
+
+            const teamMap = new Map();
+
+            // Load saved entries into map
+            savedEntries.forEach(entry => {
+                const ident = (typeof resolveWorkloadEmployee === 'function')
+                    ? resolveWorkloadEmployee({ employeeUid: entry.employeeUid, employee: entry.employee }, GLOBAL_CONFIG_LIST)
+                    : { uid: entry.employeeUid, name: entry.employee };
+                const key = String(ident.uid || `name:${ident.name || entry.employee}`).trim().toLowerCase();
+                teamMap.set(key, {
+                    outbound: Number(entry.outbound) || 0,
+                    inbound: Number(entry.inbound) || 0,
+                    transfer: Number(entry.transfer) || 0,
+                    shared: Number(entry.shared) || 0
+                });
+            });
+
+            // Overlay active user draft
+            if (myDraft) {
+                teamMap.set(currentKey, {
+                    outbound: Number(myDraft.outbound) || 0,
+                    inbound: Number(myDraft.inbound) || 0,
+                    transfer: Number(myDraft.transfer) || 0,
+                    shared: Number(myDraft.shared) || 0
+                });
+            }
+
+            if (teamMap.size === 0 && myDraft) {
+                teamMap.set(currentKey, {
+                    outbound: Number(myDraft.outbound) || 0,
+                    inbound: Number(myDraft.inbound) || 0,
+                    transfer: Number(myDraft.transfer) || 0,
+                    shared: Number(myDraft.shared) || 0
+                });
+            }
+
+            teamMap.forEach(item => {
+                outH += item.outbound;
+                inH += item.inbound;
+                transH += item.transfer;
+                shareH += item.shared;
+            });
+
+            totalH = outH + inH + transH + shareH;
+
+            const outPct = totalH > 0 ? Math.round((outH / totalH) * 100) : 0;
+            const inPct = totalH > 0 ? Math.round((inH / totalH) * 100) : 0;
+            const transPct = totalH > 0 ? Math.round((transH / totalH) * 100) : 0;
+            const sharePct = totalH > 0 ? Math.round((shareH / totalH) * 100) : 0;
 
             const badge = document.getElementById('wl-total-manhours-badge');
             if (badge) badge.textContent = `${totalH.toFixed(1)} ชม. รวม`;
@@ -4861,6 +4898,7 @@
                     </div>
                 `;
             }).join('');
+            if (typeof renderSectionWorkloadAnalytics === 'function') renderSectionWorkloadAnalytics();
         }
 
         function getAkraWorkloadValues() {
@@ -5482,7 +5520,7 @@
                 }
 
                 const skills = profileData.skills || [];
-                const ws = profileData.workloadStats || {};
+                const ws = profileData.rolling30WorkloadStats || profileData.workloadStats || {};
                 const hp = profileData.qualityHp !== undefined ? profileData.qualityHp : 100;
 
                 if (hpEl) {

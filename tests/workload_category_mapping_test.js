@@ -210,8 +210,57 @@ async function runTests() {
   assert.strictEqual(saveWorkloadCalled, true);
   console.log('  ✓ Past date submission is not blocked by 17:30 rule.');
 
-  // 4. Version parity check
-  console.log('\n[4/4] Checking version parity...');
+  // Case F: Test renderSectionWorkloadAnalytics with team entries and user draft
+  console.log('\n[4/5] Testing renderSectionWorkloadAnalytics team capacity calculation...');
+  const renderSectionFn = extractFunction(html, 'renderSectionWorkloadAnalytics');
+  const domElements = {
+    'record-date': { value: '2026-09-02' },
+    'wl-total-manhours-badge': { textContent: '' },
+    'wl-sec-outbound-val': { textContent: '' },
+    'wl-sec-outbound-bar': { style: { width: '' } },
+    'wl-sec-inbound-val': { textContent: '' },
+    'wl-sec-inbound-bar': { style: { width: '' } },
+    'wl-sec-transfer-val': { textContent: '' },
+    'wl-sec-transfer-bar': { style: { width: '' } },
+    'wl-sec-shared-val': { textContent: '' },
+    'wl-sec-shared-bar': { style: { width: '' } }
+  };
+  const secSandbox = {
+    document: { getElementById: (id) => domElements[id] || null },
+    currentUser: '250007',
+    displayUserName: 'หมูหยอง',
+    currentBranch: 'AKRA',
+    GLOBAL_CONFIG_LIST: [
+      { uid: '250007', name: 'หมูหยอง' },
+      { uid: '260029', name: 'ปีเตอร์' },
+      { uid: 'AKRA12123', name: 'TRAINEE (SORN)' }
+    ],
+    getAkraWorkloadValues: () => [{
+      employee: 'หมูหยอง', capacity: 10, outbound: 10, inbound: 0, transfer: 0, shared: 0
+    }],
+    getSelectedServerDay: (date) => ({
+      workload: [
+        { employeeUid: '260029', employee: 'ปีเตอร์', outbound: 9, inbound: 0, transfer: 1, shared: 0 },
+        { employeeUid: 'AKRA12123', employee: 'TRAINEE (SORN)', outbound: 0, inbound: 10, transfer: 0, shared: 0 }
+      ]
+    }),
+    resolveWorkloadEmployee: (emp) => ({ uid: emp.employeeUid, name: emp.employee }),
+    getTodayBangkokDateStr: () => '2026-09-02',
+    console
+  };
+  vm.createContext(secSandbox);
+  vm.runInContext(renderSectionFn, secSandbox);
+  secSandbox.renderSectionWorkloadAnalytics();
+
+  // Expected: หมูหยอง (10h out) + ปีเตอร์ (9h out, 1h trans) + SORN (10h in) = 30h total (19h out 63%, 10h in 33%, 1h trans 3%)
+  assert.strictEqual(domElements['wl-total-manhours-badge'].textContent, '30.0 ชม. รวม');
+  assert(domElements['wl-sec-outbound-val'].textContent.includes('19.0 ชม. (63%)'), 'Outbound should be 19.0h (63%)');
+  assert(domElements['wl-sec-inbound-val'].textContent.includes('10.0 ชม. (33%)'), 'Inbound should be 10.0h (33%)');
+  assert(domElements['wl-sec-transfer-val'].textContent.includes('1.0 ชม. (3%)'), 'Transfer should be 1.0h (3%)');
+  console.log('  ✓ renderSectionWorkloadAnalytics successfully aggregated team capacity to 30.0h.');
+
+  // 5. Version parity check
+  console.log('\n[5/5] Checking version parity...');
   const currentVersionMatch = html.match(/const\s+CURRENT_VERSION\s*=\s*["']([^"']+)["']/);
   assert(currentVersionMatch, 'CURRENT_VERSION must exist in index.html');
   assert.strictEqual(currentVersionMatch[1], versionJson.version, 'CURRENT_VERSION must match version.json');
