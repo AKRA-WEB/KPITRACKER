@@ -2487,7 +2487,7 @@
     </div>
 
     <!-- Custom Modal -->
-    <div id="custom-modal" class="hidden fixed inset-0 bg-gray-900/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-200">
+    <div id="custom-modal" class="hidden fixed inset-0 bg-gray-900/60 z-[150] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-200">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-200" id="custom-modal-content">
             <div class="p-6 text-center">
                 <div id="custom-modal-icon" class="mb-3"></div>
@@ -2660,7 +2660,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260902.06</span>
+                <span id="drawer-version-text">KPI Suite v20260902.07</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2672,12 +2672,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260902.06"></script>
+    <script src="js/supabase-kpi-client.js?v=20260902.07"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260902.06";
+        const CURRENT_VERSION = "20260902.07";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -6219,53 +6219,37 @@
             try {
                 if (targetBtn) {
                     targetBtn.disabled = true;
-                    targetBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังดึงข้อมูลจาก LINE...';
+                    targetBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบการเชื่อมต่อ...';
                 }
 
-                // Check if running inside LIFF SDK
-                if (typeof liff !== 'undefined') {
-                    if (liff.isLoggedIn && liff.isLoggedIn()) {
-                        const profile = await liff.getProfile();
-                        if (profile && profile.userId) {
-                            const res = await AkraSupabaseKPI.bindLineAccount(
-                                sessionToken,
-                                profile.userId,
-                                profile.displayName || ''
-                            );
-                            if (res && res.status === 'success') {
-                                showToast(`เชื่อมต่อกับ LINE (${profile.displayName || 'สำเร็จ'}) เรียบร้อยแล้ว!`);
-                                closeLineBindingModal();
-                                await loadMyProfileData(true);
-                                return;
-                            }
-                        }
-                    } else if (window.KPI_LIFF_ID && typeof liff.init === 'function') {
-                        await liff.init({ liffId: window.KPI_LIFF_ID });
-                        if (!liff.isLoggedIn()) {
-                            liff.login();
+                // Check if LIFF ID is configured and LIFF SDK is loaded
+                const liffId = String(window.KPI_LIFF_ID || '').trim();
+                if (liffId && typeof liff !== 'undefined' && typeof liff.init === 'function') {
+                    await liff.init({ liffId });
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                        return;
+                    }
+                    const profile = await liff.getProfile();
+                    if (profile && profile.userId) {
+                        const res = await AkraSupabaseKPI.bindLineAccount(
+                            sessionToken,
+                            profile.userId,
+                            profile.displayName || ''
+                        );
+                        if (res && res.status === 'success') {
+                            showToast(`เชื่อมต่อกับ LINE (${profile.displayName || 'สำเร็จ'}) เรียบร้อยแล้ว!`);
+                            closeLineBindingModal();
+                            await loadMyProfileData(true);
                             return;
-                        }
-                        const profile = await liff.getProfile();
-                        if (profile && profile.userId) {
-                            const res = await AkraSupabaseKPI.bindLineAccount(
-                                sessionToken,
-                                profile.userId,
-                                profile.displayName || ''
-                            );
-                            if (res && res.status === 'success') {
-                                showToast(`เชื่อมต่อกับ LINE (${profile.displayName || 'สำเร็จ'}) เรียบร้อยแล้ว!`);
-                                closeLineBindingModal();
-                                await loadMyProfileData(true);
-                                return;
-                            }
                         }
                     }
                 }
 
-                // If outside LIFF environment (e.g. desktop browser), show guidance and expand manual section
+                // If LIFF ID is not yet configured or running outside LIFF:
                 showModal(
-                    'การเชื่อมต่อผ่านแอปพลิเคชัน LINE',
-                    '💡 วิธีใช้งาน 1-Tap อัตโนมัติ:\n1. เปิดลิงก์ระบบนี้จากในแอปพลิเคชัน LINE\n2. เมื่อแตะปุ่มนี้ใน LINE ระบบจะอ่านชื่อและผูกบัญชีให้อัตโนมัติทันที 1 วินาที\n\n(หากเปิดบนคอมพิวเตอร์ สามารถกรอก User ID ในช่องด้านล่างเพื่อผูกได้ทันทีครับ)',
+                    'วิธีเชื่อมต่อบัญชี LINE',
+                    'ขณะนี้ระบบเตรียมพร้อมสำหรับการผูกบัญชี LINE เรียบร้อย\n\n💡 วิธีผูกบัญชี:\n1. พิมพ์คำว่า "uid" ในแชทไลน์บอทของระบบเพื่อรับรหัส LINE UID\n2. นำมากรอกในช่องด้านล่าง แล้วกด "บันทึก" ได้ทันทีครับ',
                     'alert'
                 );
                 const section = document.getElementById('line-manual-section');
