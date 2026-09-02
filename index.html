@@ -2660,7 +2660,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260902.05</span>
+                <span id="drawer-version-text">KPI Suite v20260902.06</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2672,12 +2672,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260902.05"></script>
+    <script src="js/supabase-kpi-client.js?v=20260902.06"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260902.05";
+        const CURRENT_VERSION = "20260902.06";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3944,6 +3944,10 @@
                 document.getElementById('modal-btn-cancel').onclick = closeModal;
                 document.getElementById('modal-btn-confirm').onclick = () => { closeModal(); if(onConfirm) onConfirm(); };
             }
+        }
+
+        function showCustomModal(title, message, type = 'alert', onConfirm = null) {
+            return showModal(title, message, type, onConfirm);
         }
 
         function showToast(message, isError = false) {
@@ -6208,7 +6212,7 @@
             const targetBtn = btnOneTap || btnBind;
 
             if (!sessionToken || !window.AkraSupabaseKPI?.bindLineAccount) {
-                showCustomModal('ข้อผิดพลาด', 'ไม่พบการเชื่อมต่อระบบ KPI กรุณารีเฟรชหน้าจอ');
+                showModal('ข้อผิดพลาด', 'ไม่พบการเชื่อมต่อระบบ KPI กรุณารีเฟรชหน้าจอ', 'error');
                 return;
             }
 
@@ -6258,17 +6262,20 @@
                     }
                 }
 
-                // If outside LIFF environment (e.g. desktop browser), show prompt and reveal manual helper
-                showCustomModal(
-                    'เปิดผ่านแอปพลิเคชัน LINE',
-                    'หากเปิดเว็บจากในแอป LINE ระบบจะตรวจจับและผูกให้อัตโนมัติใน 1 วินาทีทันที\n\n(หรือเปิดส่วน "กำหนดด้วยตนเอง" ด้านล่างเพื่อให้แอดมินกรอกให้)'
+                // If outside LIFF environment (e.g. desktop browser), show guidance and expand manual section
+                showModal(
+                    'การเชื่อมต่อผ่านแอปพลิเคชัน LINE',
+                    '💡 วิธีใช้งาน 1-Tap อัตโนมัติ:\n1. เปิดลิงก์ระบบนี้จากในแอปพลิเคชัน LINE\n2. เมื่อแตะปุ่มนี้ใน LINE ระบบจะอ่านชื่อและผูกบัญชีให้อัตโนมัติทันที 1 วินาที\n\n(หากเปิดบนคอมพิวเตอร์ สามารถกรอก User ID ในช่องด้านล่างเพื่อผูกได้ทันทีครับ)',
+                    'alert'
                 );
                 const section = document.getElementById('line-manual-section');
+                const icon = document.getElementById('line-manual-toggle-icon');
                 if (section) section.classList.remove('hidden');
+                if (icon) icon.className = 'fa-solid fa-chevron-up text-[9px]';
 
             } catch (err) {
                 console.error('connectLineOneTap error:', err);
-                showCustomModal('เกิดข้อผิดพลาด', err.message || 'ไม่สามารถดึงข้อมูลจาก LINE ได้');
+                showModal('เกิดข้อผิดพลาด', err.message || 'ไม่สามารถดึงข้อมูลจาก LINE ได้', 'error');
             } finally {
                 if (targetBtn) {
                     targetBtn.disabled = false;
@@ -6279,6 +6286,10 @@
 
         function openLineBindingModal() {
             const modal = document.getElementById('line-binding-modal');
+            if (!modal) {
+                console.error('Modal line-binding-modal not found');
+                return;
+            }
             const uidInput = document.getElementById('line-input-user-id');
             const nameInput = document.getElementById('line-input-display-name');
             if (MY_PROFILE_DATA && MY_PROFILE_DATA.lineUserId && uidInput) {
@@ -6288,12 +6299,16 @@
                 uidInput.value = '';
                 if (nameInput) nameInput.value = '';
             }
-            if (modal) modal.classList.remove('hidden');
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
         }
 
         function closeLineBindingModal() {
             const modal = document.getElementById('line-binding-modal');
-            if (modal) modal.classList.add('hidden');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+            }
         }
 
         async function confirmSaveLineBinding() {
@@ -6304,12 +6319,12 @@
             const lineDisplayName = String(nameInput?.value || '').trim();
 
             if (!lineUserId) {
-                showCustomModal('แจ้งเตือน', 'กรุณากรอก LINE User ID (เช่น U4af4980629...)');
+                showModal('แจ้งเตือน', 'กรุณากรอก LINE User ID (เช่น U4af4980629...)', 'alert');
                 return;
             }
 
             if (!sessionToken || !window.AkraSupabaseKPI?.bindLineAccount) {
-                showCustomModal('ข้อผิดพลาด', 'ไม่พบการเชื่อมต่อ Supabase KPI Client');
+                showModal('ข้อผิดพลาด', 'ไม่พบการเชื่อมต่อ Supabase KPI Client', 'error');
                 return;
             }
 
@@ -6324,11 +6339,11 @@
                     closeLineBindingModal();
                     await loadMyProfileData(true);
                 } else {
-                    showCustomModal('เชื่อมต่อไม่สำเร็จ', res?.message || 'ไม่สามารถเชื่อมต่อบัญชี LINE ได้');
+                    showModal('เชื่อมต่อไม่สำเร็จ', res?.message || 'ไม่สามารถเชื่อมต่อบัญชี LINE ได้', 'error');
                 }
             } catch (err) {
                 console.error('bindLineAccount error:', err);
-                showCustomModal('เกิดข้อผิดพลาด', err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ LINE');
+                showModal('เกิดข้อผิดพลาด', err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ LINE', 'error');
             } finally {
                 if (saveBtn) {
                     saveBtn.disabled = false;
@@ -6347,11 +6362,11 @@
                     showToast('ยกเลิกการเชื่อมต่อ LINE แล้ว');
                     await loadMyProfileData(true);
                 } else {
-                    showCustomModal('ไม่สำเร็จ', res?.message || 'ไม่สามารถยกเลิกการเชื่อมต่อได้');
+                    showModal('ไม่สำเร็จ', res?.message || 'ไม่สามารถยกเลิกการเชื่อมต่อได้', 'error');
                 }
             } catch (err) {
                 console.error('unbindLineAccount error:', err);
-                showCustomModal('เกิดข้อผิดพลาด', err.message || 'เกิดข้อผิดพลาดในการยกเลิกการเชื่อมต่อ LINE');
+                showModal('เกิดข้อผิดพลาด', err.message || 'เกิดข้อผิดพลาดในการยกเลิกการเชื่อมต่อ LINE', 'error');
             }
         }
 
