@@ -50,7 +50,7 @@ assert.strictEqual(normalizeMainEmployeeStatus(''), 'Inactive');
 
 assert.deepStrictEqual(
   getKpiBangkokClock(new Date('2026-08-22T18:00:00.000Z')),
-  { date: '2026-08-23', hour: 1 },
+  { date: '2026-08-23', hour: 1, minute: 0 },
   'Bangkok date must not fall back to the previous UTC date before 07:00'
 );
 
@@ -261,6 +261,7 @@ async function verifyWorkloadRoleAuthority() {
     safeStorage: { removeItem: () => {} },
     applyWorkloadSaveResultToCache: () => {},
     renderTeamWorkloadPreview: () => {},
+    getKpiBangkokClock: () => ({ date: '2026-08-23', hour: 18, minute: 0 }),
     syncDataFromSheet: async () => {}, loadDashboardData: () => {}, updateDailyDashboard: () => {}
   });
   vm.runInContext(extractFunction('saveWorkloadCard'), context);

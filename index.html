@@ -302,6 +302,11 @@
                             <div id="wl-s-breakdown" class="space-y-1 text-slate-300"></div>
                         </div>
 
+                        <div class="mt-3 text-[11px] text-amber-200 bg-amber-950/40 rounded-xl p-2.5 text-center border border-amber-500/30 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-clock text-amber-400"></i>
+                            <span>ระบบเปิดให้บันทึกสรุป Workload ประจำวันตั้งแต่เวลา <b>17:30 น.</b> เป็นต้นไป (หลังเลิกงาน)</span>
+                        </div>
+
                         <div class="flex gap-2 mt-2">
                             <button type="button" onclick="saveWorkloadCard()" id="btn-save-workload" class="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95">
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -2556,7 +2561,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260902.01</span>
+                <span id="drawer-version-text">KPI Suite v20260902.02</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2568,12 +2573,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260902.01"></script>
+    <script src="js/supabase-kpi-client.js?v=20260902.02"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260902.01";
+        const CURRENT_VERSION = "20260902.02";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -3881,11 +3886,15 @@
             const values = {};
             new Intl.DateTimeFormat('en-CA', {
                 timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', hourCycle: 'h23'
+                hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
             }).formatToParts(now).forEach(part => {
                 if (part.type !== 'literal') values[part.type] = part.value;
             });
-            return { date: `${values.year}-${values.month}-${values.day}`, hour: Number(values.hour) };
+            return {
+                date: `${values.year}-${values.month}-${values.day}`,
+                hour: Number(values.hour),
+                minute: Number(values.minute || 0)
+            };
         }
 
         function getPreviousKpiDate(date) {
@@ -3895,7 +3904,7 @@
             return value.toISOString().slice(0, 10);
         }
 
-        function getEmployeeWorkloadStatus(employee, workloadStatus, bangkokDate, bangkokHour) {
+        function getEmployeeWorkloadStatus(employee, workloadStatus, bangkokDate, bangkokHour, bangkokMinute = 0) {
             const status = String(employee?.status || 'Inactive');
             const roles = (Array.isArray(employee?.roles) ? employee.roles : []).map(role => String(role).toUpperCase());
             const branches = String(employee?.branches || '').split(',').map(branch => branch.trim().toUpperCase()).filter(Boolean);
@@ -3923,6 +3932,10 @@
                 ? recordedUids.has(employeeUid)
                 : recorded.has(employeeName);
             if (isRecorded) return { state: 'recorded', label: 'บันทึก Workload วันนี้แล้ว' };
+            const currentMinutes = Number(bangkokHour) * 60 + Number(bangkokMinute || 0);
+            if (currentMinutes < 1050) {
+                return { state: 'pending', label: 'เปิดให้บันทึกเวลา 17:30 น. (หลังเลิกงาน)' };
+            }
             return { state: 'pending', label: 'รอบันทึกภายในวันนี้ ก่อน 23:59' };
         }
 
@@ -10127,7 +10140,7 @@
             GLOBAL_CONFIG_LIST.forEach(emp => {
                 const roles = Array.isArray(emp.roles) ? emp.roles : [];
                 const branches = String(emp.branches || '').split(',').map(branch => branch.trim()).filter(Boolean);
-                const workload = getEmployeeWorkloadStatus(emp, KPI_WORKLOAD_STATUS, bangkokDate, bangkokHour);
+                const workload = getEmployeeWorkloadStatus(emp, KPI_WORKLOAD_STATUS, bangkokDate, bangkokHour, bangkokClock.minute);
                 if (!['not_required', 'inactive'].includes(workload.state)) expectedCount++;
                 if (workload.state === 'missing') missingCount++;
                 const branchesBadge = branches.length
@@ -11267,6 +11280,21 @@
             if (!date) return showToast("กรุณาเลือกวันที่บันทึก", true);
 
             const isUserAdmin = canAccessAdminSettings(currentRoles, sessionToken);
+            const isSupervisor = isUserAdmin || (Array.isArray(currentRoles) ? currentRoles : []).some(r => String(r).toUpperCase() === 'SUPERVISOR');
+            const clock = getKpiBangkokClock();
+
+            if (!isSupervisor && date === clock.date) {
+                const currentMinutes = clock.hour * 60 + (typeof clock.minute === 'number' ? clock.minute : 0);
+                const thresholdMinutes = 17 * 60 + 30; // 17:30 = 1050 minutes
+                if (currentMinutes < thresholdMinutes) {
+                    return showModal(
+                        "ยังไม่ถึงเวลาบันทึก",
+                        "ระบบเปิดให้บันทึกสรุปภาระงานประจำวัน (Workload) ตั้งแต่เวลา 17:30 น. เป็นต้นไป (หลังเลิกงาน) เพื่อให้ข้อมูลสะท้อนการทำงานจริงของทั้งวัน",
+                        "warning"
+                    );
+                }
+            }
+
             let workload = getAkraWorkloadValues();
             if (!isUserAdmin) {
                 workload = workload.filter(w => normalizeEmpName(w.employee) === normalizeEmpName(displayUserName) || normalizeEmpName(w.employee) === normalizeEmpName(currentUser));
