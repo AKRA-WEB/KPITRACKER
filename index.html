@@ -2498,6 +2498,12 @@
         </div>
     </div>
 
+    <!-- Toast Notification (Centered on mobile & desktop) -->
+    <div id="toast" class="toast fixed bottom-20 sm:bottom-8 left-1/2 -translate-x-1/2 z-[200] bg-slate-900/95 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700/80 backdrop-blur-md flex items-center gap-3 max-w-[90vw]">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toast-msg" class="text-xs font-bold leading-tight"></span>
+    </div>
+
     <!-- Action Item Modal -->
     <div id="action-item-modal" role="dialog" aria-modal="true" aria-labelledby="action-modal-title" class="hidden fixed inset-0 bg-gray-900/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-200">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 transition-transform duration-200" id="action-modal-content">
@@ -2660,24 +2666,36 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260902.08</span>
+                <span id="drawer-version-text">KPI Suite v20260902.09</span>
                 <span>AKRA System</span>
             </div>
         </div>
     </aside>
 
     <style>
+        /* Toast notification animation */
+        .toast {
+            opacity: 0;
+            transform: translate(-50%, 16px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1 !important;
+            transform: translate(-50%, 0) !important;
+            pointer-events: auto !important;
+        }
         /* Add safe area support for modern phones like iPhone */
         @supports (padding-bottom: env(safe-area-inset-bottom)) {
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260902.08"></script>
+    <script src="js/supabase-kpi-client.js?v=20260902.09"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260902.08";
+        const CURRENT_VERSION = "20260902.09";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -6241,7 +6259,14 @@
                             profile.displayName || ''
                         );
                         if (res && res.status === 'success') {
-                            showToast(`เชื่อมต่อกับ LINE (${profile.displayName || 'สำเร็จ'}) เรียบร้อยแล้ว!`);
+                            const newUid = res.lineUserId || profile.userId;
+                            const newName = res.lineDisplayName || profile.displayName || '';
+                            if (MY_PROFILE_DATA) {
+                                MY_PROFILE_DATA.lineUserId = newUid;
+                                MY_PROFILE_DATA.lineDisplayName = newName;
+                                renderMyProfileView(MY_PROFILE_DATA);
+                            }
+                            showToast(`เชื่อมต่อกับ LINE (${newName || 'สำเร็จ'}) เรียบร้อยแล้ว!`);
                             closeLineBindingModal();
                             await loadMyProfileData(true);
                             return;
@@ -6328,6 +6353,13 @@
                 }
                 const res = await AkraSupabaseKPI.bindLineAccount(sessionToken, lineUserId, lineDisplayName);
                 if (res && res.status === 'success') {
+                    const newUid = res.lineUserId || lineUserId;
+                    const newName = res.lineDisplayName || lineDisplayName;
+                    if (MY_PROFILE_DATA) {
+                        MY_PROFILE_DATA.lineUserId = newUid;
+                        MY_PROFILE_DATA.lineDisplayName = newName;
+                        renderMyProfileView(MY_PROFILE_DATA);
+                    }
                     showToast('เชื่อมต่อบัญชี LINE สำเร็จแล้ว');
                     closeLineBindingModal();
                     await loadMyProfileData(true);
@@ -6352,6 +6384,11 @@
             try {
                 const res = await AkraSupabaseKPI.unbindLineAccount(sessionToken);
                 if (res && res.status === 'success') {
+                    if (MY_PROFILE_DATA) {
+                        MY_PROFILE_DATA.lineUserId = '';
+                        MY_PROFILE_DATA.lineDisplayName = '';
+                        renderMyProfileView(MY_PROFILE_DATA);
+                    }
                     showToast('ยกเลิกการเชื่อมต่อ LINE แล้ว');
                     await loadMyProfileData(true);
                 } else {
