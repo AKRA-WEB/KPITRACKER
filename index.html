@@ -1265,6 +1265,35 @@
                 </div>
             </div>
 
+            <!-- LINE Account Connection Card (Quick Workload Binding) -->
+            <div id="my-profile-line-card" class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm transition-all">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div id="my-profile-line-status-icon" class="w-10 h-10 rounded-xl bg-[#06C755]/10 text-[#06C755] flex items-center justify-center text-xl shrink-0">
+                            <i class="fa-brands fa-line"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                                    <span>เชื่อมต่อบัญชี LINE</span>
+                                    <span id="my-profile-line-status-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">ยังไม่เชื่อมต่อ</span>
+                                </h3>
+                            </div>
+                            <p id="my-profile-line-desc" class="text-xs text-slate-500 mt-0.5">เชื่อมต่อเพื่อรับการ์ด Flex Message และแตะบันทึก Workload ใน LINE ได้ทันทีใน 1 วินาที</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" id="btn-bind-line" onclick="openLineBindingModal()" class="py-2 px-3.5 rounded-xl bg-[#06C755] hover:bg-[#05b34c] active:scale-95 text-white font-bold text-xs shadow flex items-center gap-1.5 transition-all">
+                            <i class="fa-brands fa-line"></i>
+                            <span id="btn-bind-line-text">เชื่อมต่อ LINE</span>
+                        </button>
+                        <button type="button" id="btn-unbind-line" onclick="confirmUnbindLine()" class="hidden py-2 px-3 rounded-xl bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-600 font-bold text-xs border border-slate-200 transition-all">
+                            <span>ยกเลิกการเชื่อมต่อ</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Monthly Quality Highlights (3 Positive KPIs) -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <!-- 1. Quality Score Card -->
@@ -2387,6 +2416,51 @@
         </div>
     </div>
 
+    <!-- LINE Account Binding Modal -->
+    <div id="line-binding-modal" role="dialog" aria-modal="true" aria-labelledby="line-modal-title" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[95] flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-[#06C755]/15 text-[#06C755] flex items-center justify-center text-base font-black">
+                        <i class="fa-brands fa-line"></i>
+                    </div>
+                    <div>
+                        <h3 id="line-modal-title" class="text-sm font-bold text-slate-800">เชื่อมต่อบัญชี LINE</h3>
+                        <p class="text-[11px] text-slate-500">สำหรับบันทึก Workload ด่วนผ่าน LINE</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeLineBindingModal()" aria-label="ปิด" class="w-7 h-7 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-all">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs text-emerald-900 space-y-1">
+                    <p class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-[#06C755]"></i>วิธีดู LINE User ID ของคุณ:</p>
+                    <p class="text-[11px] text-emerald-800">พิมพ์คำว่า <code class="bg-white px-1.5 py-0.5 rounded font-mono font-bold text-emerald-950">uid</code> หรือ <code class="bg-white px-1.5 py-0.5 rounded font-mono font-bold text-emerald-950">id</code> ในแชทไลน์ของบอทระบบ หรือส่ง LINE ID ของคุณ</p>
+                </div>
+
+                <div>
+                    <label for="line-input-user-id" class="block text-xs font-bold text-slate-700 mb-1">LINE User ID (ขึ้นต้นด้วย U...) <span class="text-red-500">*</span></label>
+                    <input type="text" id="line-input-user-id" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 outline-none focus:ring-2 focus:ring-[#06C755]" placeholder="เช่น U4af4980629c4bc15610852026759c99">
+                </div>
+
+                <div>
+                    <label for="line-input-display-name" class="block text-xs font-bold text-slate-700 mb-1">ชื่อบัญชี LINE (ทางเลือก):</label>
+                    <input type="text" id="line-input-display-name" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:ring-2 focus:ring-[#06C755]" placeholder="เช่น Peter_Akra, หมูหยอง">
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeLineBindingModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-600 transition-colors">ยกเลิก</button>
+                <button type="button" onclick="confirmSaveLineBinding()" id="btn-save-line-binding" class="flex-[2] py-2.5 rounded-xl bg-[#06C755] hover:bg-[#05b34c] active:scale-95 text-xs font-bold text-white shadow-md transition-all flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-link"></i>
+                    <span>ยืนยันการเชื่อมต่อ</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Modal -->
     <div id="custom-modal" class="hidden fixed inset-0 bg-gray-900/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-200">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-200" id="custom-modal-content">
@@ -2561,7 +2635,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260902.03</span>
+                <span id="drawer-version-text">KPI Suite v20260902.04</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2573,12 +2647,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260902.03"></script>
+    <script src="js/supabase-kpi-client.js?v=20260902.04"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260902.03";
+        const CURRENT_VERSION = "20260902.04";
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
@@ -5796,6 +5870,42 @@
                 }
             }
 
+            // Update LINE Binding Status Card
+            const lineBadge = document.getElementById('my-profile-line-status-badge');
+            const lineDesc = document.getElementById('my-profile-line-desc');
+            const btnBindText = document.getElementById('btn-bind-line-text');
+            const btnUnbind = document.getElementById('btn-unbind-line');
+            const lineIconContainer = document.getElementById('my-profile-line-status-icon');
+
+            if (p.lineUserId) {
+                if (lineBadge) {
+                    lineBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200';
+                    lineBadge.textContent = 'เชื่อมต่อแล้ว';
+                }
+                if (lineDesc) {
+                    const shortUid = p.lineUserId.length > 10 ? `${p.lineUserId.slice(0, 6)}...${p.lineUserId.slice(-4)}` : p.lineUserId;
+                    lineDesc.innerHTML = `<span class="font-bold text-slate-700 font-mono">${esc(p.lineDisplayName || 'LINE Account')}</span> <span class="text-slate-400">(${esc(shortUid)})</span> • พร้อมรับการ์ดบันทึกงานด่วน`;
+                }
+                if (btnBindText) btnBindText.textContent = 'เปลี่ยนบัญชี LINE';
+                if (btnUnbind) btnUnbind.classList.remove('hidden');
+                if (lineIconContainer) {
+                    lineIconContainer.className = 'w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-xl shrink-0 shadow-sm';
+                }
+            } else {
+                if (lineBadge) {
+                    lineBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600';
+                    lineBadge.textContent = 'ยังไม่เชื่อมต่อ';
+                }
+                if (lineDesc) {
+                    lineDesc.textContent = 'เชื่อมต่อเพื่อรับการ์ด Flex Message และแตะบันทึก Workload ใน LINE ได้ทันทีใน 1 วินาที';
+                }
+                if (btnBindText) btnBindText.textContent = 'เชื่อมต่อ LINE';
+                if (btnUnbind) btnUnbind.classList.add('hidden');
+                if (lineIconContainer) {
+                    lineIconContainer.className = 'w-10 h-10 rounded-xl bg-[#06C755]/10 text-[#06C755] flex items-center justify-center text-xl shrink-0';
+                }
+            }
+
             // Quality Cards
             const scoreEl = document.getElementById('my-profile-quality-score');
             const goodCatchEl = document.getElementById('my-profile-good-catch-count');
@@ -6053,6 +6163,85 @@
                 reader.onerror = () => reject(new Error('อ่านไฟล์ภาพล้มเหลว'));
                 reader.readAsDataURL(file);
             });
+        }
+
+        // ================= LINE ACCOUNT BINDING CONTROLLER =================
+        function openLineBindingModal() {
+            const modal = document.getElementById('line-binding-modal');
+            const uidInput = document.getElementById('line-input-user-id');
+            const nameInput = document.getElementById('line-input-display-name');
+            if (MY_PROFILE_DATA && MY_PROFILE_DATA.lineUserId && uidInput) {
+                uidInput.value = MY_PROFILE_DATA.lineUserId;
+                if (nameInput) nameInput.value = MY_PROFILE_DATA.lineDisplayName || '';
+            } else if (uidInput) {
+                uidInput.value = '';
+                if (nameInput) nameInput.value = '';
+            }
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeLineBindingModal() {
+            const modal = document.getElementById('line-binding-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function confirmSaveLineBinding() {
+            const uidInput = document.getElementById('line-input-user-id');
+            const nameInput = document.getElementById('line-input-display-name');
+            const saveBtn = document.getElementById('btn-save-line-binding');
+            const lineUserId = String(uidInput?.value || '').trim();
+            const lineDisplayName = String(nameInput?.value || '').trim();
+
+            if (!lineUserId) {
+                showCustomModal('แจ้งเตือน', 'กรุณากรอก LINE User ID (เช่น U4af4980629...)');
+                return;
+            }
+
+            if (!sessionToken || !window.AkraSupabaseKPI?.bindLineAccount) {
+                showCustomModal('ข้อผิดพลาด', 'ไม่พบการเชื่อมต่อ Supabase KPI Client');
+                return;
+            }
+
+            try {
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังเชื่อมต่อ...';
+                }
+                const res = await AkraSupabaseKPI.bindLineAccount(sessionToken, lineUserId, lineDisplayName);
+                if (res && res.status === 'success') {
+                    showToast('เชื่อมต่อบัญชี LINE สำเร็จแล้ว');
+                    closeLineBindingModal();
+                    await loadMyProfileData(true);
+                } else {
+                    showCustomModal('เชื่อมต่อไม่สำเร็จ', res?.message || 'ไม่สามารถเชื่อมต่อบัญชี LINE ได้');
+                }
+            } catch (err) {
+                console.error('bindLineAccount error:', err);
+                showCustomModal('เกิดข้อผิดพลาด', err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ LINE');
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fa-solid fa-link"></i> <span>ยืนยันการเชื่อมต่อ</span>';
+                }
+            }
+        }
+
+        async function confirmUnbindLine() {
+            if (!confirm('คุณต้องการยกเลิกการเชื่อมต่อบัญชี LINE ใช่หรือไม่?')) return;
+            if (!sessionToken || !window.AkraSupabaseKPI?.unbindLineAccount) return;
+
+            try {
+                const res = await AkraSupabaseKPI.unbindLineAccount(sessionToken);
+                if (res && res.status === 'success') {
+                    showToast('ยกเลิกการเชื่อมต่อ LINE แล้ว');
+                    await loadMyProfileData(true);
+                } else {
+                    showCustomModal('ไม่สำเร็จ', res?.message || 'ไม่สามารถยกเลิกการเชื่อมต่อได้');
+                }
+            } catch (err) {
+                console.error('unbindLineAccount error:', err);
+                showCustomModal('เกิดข้อผิดพลาด', err.message || 'เกิดข้อผิดพลาดในการยกเลิกการเชื่อมต่อ LINE');
+            }
         }
 
         function switchAdminIncidentBranch(branch) {

@@ -159,6 +159,16 @@
             if (data.status !== 'success' || !data.avatarUrl) throw new Error('invalid_upload_avatar_response');
             return data;
         },
+        bindLineAccount: async (token, lineUserId, lineDisplayName = '', employeeUid = null) => {
+            const data = await fetchKpiAction('bindLineAccount', token, { lineUserId, lineDisplayName, employeeUid });
+            if (data.status !== 'success') throw new Error('invalid_bind_line_response');
+            return data;
+        },
+        unbindLineAccount: async (token, employeeUid = null) => {
+            const data = await fetchKpiAction('unbindLineAccount', token, { employeeUid });
+            if (data.status !== 'success') throw new Error('invalid_unbind_line_response');
+            return data;
+        },
         getActions: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
         saveAction: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); }
     };
