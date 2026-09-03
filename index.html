@@ -2783,7 +2783,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260902.11</span>
+                <span id="drawer-version-text">KPI Suite v20260903.01</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2807,12 +2807,12 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260902.11"></script>
+    <script src="js/supabase-kpi-client.js?v=20260903.01"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260902.11";
+        const CURRENT_VERSION = "20260903.01";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -5999,9 +5999,11 @@
                     } else if (profile.avatarUrl && !currentObj.avatarUrl) {
                         currentObj.avatarUrl = profile.avatarUrl;
                     }
-                    if (!profile.lineUserId && currentObj.lineUserId) {
-                        profile.lineUserId = currentObj.lineUserId;
-                        profile.lineDisplayName = currentObj.lineDisplayName || '';
+                    const cachedLineUid = (MY_PROFILE_DATA && MY_PROFILE_DATA.lineUserId) || currentObj.lineUserId || '';
+                    const cachedLineName = (MY_PROFILE_DATA && MY_PROFILE_DATA.lineDisplayName) || currentObj.lineDisplayName || '';
+                    if (!profile.lineUserId && cachedLineUid) {
+                        profile.lineUserId = cachedLineUid;
+                        profile.lineDisplayName = cachedLineName;
                     } else if (profile.lineUserId) {
                         currentObj.lineUserId = profile.lineUserId;
                         currentObj.lineDisplayName = profile.lineDisplayName || '';
@@ -6010,6 +6012,9 @@
 
                 MY_PROFILE_DATA = profile;
                 renderMyProfileView(profile);
+                if (profile && !profile.lineUserId) {
+                    autoCheckLiffBinding().catch(() => {});
+                }
 
             } catch (err) {
                 console.error('loadMyProfileData error:', err);
@@ -6402,8 +6407,18 @@
                             if (MY_PROFILE_DATA) {
                                 MY_PROFILE_DATA.lineUserId = newUid;
                                 MY_PROFILE_DATA.lineDisplayName = newName;
-                                renderMyProfileView(MY_PROFILE_DATA);
                             }
+                            const currentUid = String(currentUser || currentUserId || '').trim();
+                            const emp = Array.isArray(GLOBAL_CONFIG_LIST) ? GLOBAL_CONFIG_LIST.find(e =>
+                                (e.uid && e.uid.toLowerCase() === currentUid.toLowerCase()) ||
+                                (e.name && e.name.toLowerCase() === currentUid.toLowerCase()) ||
+                                (e.name && currentUser && e.name.toLowerCase() === currentUser.toLowerCase())
+                            ) : null;
+                            if (emp) {
+                                emp.lineUserId = newUid;
+                                emp.lineDisplayName = newName;
+                            }
+                            renderMyProfileView(MY_PROFILE_DATA || emp || { lineUserId: newUid, lineDisplayName: newName, name: displayUserName || currentUid });
                             showToast(`เชื่อมต่อกับ LINE (${newName || 'สำเร็จ'}) เรียบร้อยแล้ว!`);
                             closeLineBindingModal();
                             await loadMyProfileData(true);
@@ -6437,6 +6452,43 @@
                     targetBtn.disabled = false;
                     targetBtn.innerHTML = '<i class="fa-brands fa-line text-lg"></i> <span>แตะเพื่อผูกกับ LINE เครื่องนี้ทันที (1-Tap)</span>';
                 }
+            }
+        }
+
+        async function autoCheckLiffBinding() {
+            try {
+                const liffId = String(window.KPI_LIFF_ID || '').trim();
+                if (!liffId || typeof liff === 'undefined' || typeof liff.init !== 'function') return;
+                await liff.init({ liffId });
+                if (!liff.isLoggedIn()) return;
+                const profile = await liff.getProfile();
+                if (profile && profile.userId && sessionToken && window.AkraSupabaseKPI?.bindLineAccount) {
+                    const currentUid = String(currentUser || currentUserId || '').trim();
+                    const currentObj = Array.isArray(GLOBAL_CONFIG_LIST) ? GLOBAL_CONFIG_LIST.find(e =>
+                        (e.uid && e.uid.toLowerCase() === currentUid.toLowerCase()) ||
+                        (e.name && e.name.toLowerCase() === currentUid.toLowerCase()) ||
+                        (e.name && currentUser && e.name.toLowerCase() === currentUser.toLowerCase())
+                    ) : null;
+                    const isAlreadyBound = Boolean((MY_PROFILE_DATA && MY_PROFILE_DATA.lineUserId) || (currentObj && currentObj.lineUserId));
+                    if (!isAlreadyBound) {
+                        const res = await AkraSupabaseKPI.bindLineAccount(sessionToken, profile.userId, profile.displayName || '');
+                        if (res && res.status === 'success') {
+                            const newUid = res.lineUserId || profile.userId;
+                            const newName = res.lineDisplayName || profile.displayName || '';
+                            if (MY_PROFILE_DATA) {
+                                MY_PROFILE_DATA.lineUserId = newUid;
+                                MY_PROFILE_DATA.lineDisplayName = newName;
+                            }
+                            if (currentObj) {
+                                currentObj.lineUserId = newUid;
+                                currentObj.lineDisplayName = newName;
+                            }
+                            renderMyProfileView(MY_PROFILE_DATA || currentObj || { lineUserId: newUid, lineDisplayName: newName, name: displayUserName || currentUid });
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('[LIFF Auto-Check] warning:', err);
             }
         }
 
@@ -6496,8 +6548,18 @@
                     if (MY_PROFILE_DATA) {
                         MY_PROFILE_DATA.lineUserId = newUid;
                         MY_PROFILE_DATA.lineDisplayName = newName;
-                        renderMyProfileView(MY_PROFILE_DATA);
                     }
+                    const currentUid = String(currentUser || currentUserId || '').trim();
+                    const emp = Array.isArray(GLOBAL_CONFIG_LIST) ? GLOBAL_CONFIG_LIST.find(e =>
+                        (e.uid && e.uid.toLowerCase() === currentUid.toLowerCase()) ||
+                        (e.name && e.name.toLowerCase() === currentUid.toLowerCase()) ||
+                        (e.name && currentUser && e.name.toLowerCase() === currentUser.toLowerCase())
+                    ) : null;
+                    if (emp) {
+                        emp.lineUserId = newUid;
+                        emp.lineDisplayName = newName;
+                    }
+                    renderMyProfileView(MY_PROFILE_DATA || emp || { lineUserId: newUid, lineDisplayName: newName, name: displayUserName || currentUid });
                     showToast('เชื่อมต่อบัญชี LINE สำเร็จแล้ว');
                     closeLineBindingModal();
                     await loadMyProfileData(true);
@@ -6525,8 +6587,18 @@
                     if (MY_PROFILE_DATA) {
                         MY_PROFILE_DATA.lineUserId = '';
                         MY_PROFILE_DATA.lineDisplayName = '';
-                        renderMyProfileView(MY_PROFILE_DATA);
                     }
+                    const currentUid = String(currentUser || currentUserId || '').trim();
+                    const emp = Array.isArray(GLOBAL_CONFIG_LIST) ? GLOBAL_CONFIG_LIST.find(e =>
+                        (e.uid && e.uid.toLowerCase() === currentUid.toLowerCase()) ||
+                        (e.name && e.name.toLowerCase() === currentUid.toLowerCase()) ||
+                        (e.name && currentUser && e.name.toLowerCase() === currentUser.toLowerCase())
+                    ) : null;
+                    if (emp) {
+                        emp.lineUserId = '';
+                        emp.lineDisplayName = '';
+                    }
+                    renderMyProfileView(MY_PROFILE_DATA || emp || { lineUserId: '', lineDisplayName: '', name: displayUserName || currentUid });
                     showToast('ยกเลิกการเชื่อมต่อ LINE แล้ว');
                     await loadMyProfileData(true);
                 } else {

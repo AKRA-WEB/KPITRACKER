@@ -121,6 +121,60 @@ async function runTests() {
   assert(dom['my-profile-line-desc'].innerHTML.includes('MooYong_Warehouse'), 'Must display linked LINE name');
   console.log('✓ renderMyProfileView correctly updates connected/disconnected LINE card states.');
 
+  function extractFunction(code, name) {
+    const declMatch = code.match(new RegExp(`(?:async\\s+)?function\\s+${name}\\s*\\(`));
+    if (!declMatch) return null;
+    const start = declMatch.index;
+    const braceStart = code.indexOf('{', start);
+    if (braceStart === -1) return null;
+    let depth = 1;
+    let pos = braceStart + 1;
+    while (pos < code.length && depth > 0) {
+      if (code[pos] === '{') depth++;
+      else if (code[pos] === '}') depth--;
+      pos++;
+    }
+    return code.slice(start, pos);
+  }
+
+  // 3b. Test autoCheckLiffBinding function existence and execution
+  console.log('\n[3b/4] Testing autoCheckLiffBinding in sandbox...');
+  const autoCheckCode = extractFunction(html, 'autoCheckLiffBinding');
+  assert(autoCheckCode, 'autoCheckLiffBinding function must exist');
+
+  let boundByAutoCheck = null;
+  const mockAkraSupabaseKPI = {
+    bindLineAccount: async (token, uid, name) => {
+      boundByAutoCheck = { uid, name };
+      return { status: 'success', lineUserId: uid, lineDisplayName: name };
+    }
+  };
+  const mockLiff = {
+    init: async () => {},
+    isLoggedIn: () => true,
+    getProfile: async () => ({ userId: 'U9999999999', displayName: 'AutoLinked_User' })
+  };
+  const autoCheckSandbox = {
+    window: { KPI_LIFF_ID: '2011386176-m5a77Ms9', AkraSupabaseKPI: mockAkraSupabaseKPI, liff: mockLiff },
+    liff: mockLiff,
+    sessionToken: 'test-token',
+    currentUser: '250013',
+    currentUserId: '250013',
+    GLOBAL_CONFIG_LIST: [{ uid: '250013', name: 'สมชาย', lineUserId: null }],
+    MY_PROFILE_DATA: { uid: '250013', name: 'สมชาย', lineUserId: null },
+    AkraSupabaseKPI: mockAkraSupabaseKPI,
+    renderMyProfileView: (p) => {
+      uiSandbox.renderMyProfileView(p);
+    },
+    console
+  };
+  vm.createContext(autoCheckSandbox);
+  await vm.runInContext(`(${autoCheckCode})()`, autoCheckSandbox);
+  assert.strictEqual(boundByAutoCheck?.uid, 'U9999999999', 'autoCheckLiffBinding must auto-bind logged in LIFF profile');
+  assert.strictEqual(autoCheckSandbox.MY_PROFILE_DATA.lineUserId, 'U9999999999');
+  assert.strictEqual(autoCheckSandbox.GLOBAL_CONFIG_LIST[0].lineUserId, 'U9999999999');
+  console.log('✓ autoCheckLiffBinding automatically links logged-in LIFF accounts.');
+
   // 4. Version parity check
   console.log('\n[4/4] Checking version parity...');
   const currentVersionMatch = html.match(/const\s+CURRENT_VERSION\s*=\s*["']([^"']+)["']/);
