@@ -2783,7 +2783,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260903.01</span>
+                <span id="drawer-version-text">KPI Suite v20260903.02</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2798,21 +2798,20 @@
             pointer-events: none;
         }
         .toast.show {
-            opacity: 1 !important;
-            transform: translate(-50%, 0) !important;
-            pointer-events: auto !important;
+            opacity: 1;
+            transform: translate(-50%, 0);
+            pointer-events: auto;
         }
-        /* Add safe area support for modern phones like iPhone */
-        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+        @media (max-width: 640px) {
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260903.01"></script>
+    <script src="js/supabase-kpi-client.js?v=20260903.02"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260903.01";
+        const CURRENT_VERSION = "20260903.02";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -4286,6 +4285,12 @@
         }
 
         function handleLineBrowserRedirect() {
+            try {
+                const url = new URL(window.location.href);
+                if (url.searchParams.has('code') || url.searchParams.has('liff.state') || url.searchParams.has('state') || url.searchParams.get('action') === 'quick_workload' || window.location.hash.includes('quick_workload') || window.location.hash.includes('liff')) {
+                    return false;
+                }
+            } catch (_e) {}
             const isLine = /Line/i.test(navigator.userAgent);
             if (isLine) {
                 const url = new URL(window.location.href);
@@ -6484,6 +6489,8 @@
                                 currentObj.lineDisplayName = newName;
                             }
                             renderMyProfileView(MY_PROFILE_DATA || currentObj || { lineUserId: newUid, lineDisplayName: newName, name: displayUserName || currentUid });
+                            if (typeof closeLineBindingModal === 'function') closeLineBindingModal();
+                            if (typeof showToast === 'function') showToast(`เชื่อมต่อกับ LINE (${newName || 'สำเร็จ'}) เรียบร้อยแล้ว!`);
                         }
                     }
                 }
@@ -7918,6 +7925,9 @@
 
                 // 3. ประเมินสิทธิ์และเตรียม UI
                 await checkAuth(ssoResult);
+
+                // 4. ตรวจสอบการผูกบัญชี LINE อัตโนมัติ (เช่น หลัง redirect กลับมาจาก LIFF login)
+                autoCheckLiffBinding().catch(() => {});
             } catch (err) {
                 console.error("InitSystem error:", err);
                 showModal("โหลดข้อมูลพนักงานไม่สำเร็จ", err?.message || "ไม่สามารถเชื่อมต่อ Supabase ได้", "error");
