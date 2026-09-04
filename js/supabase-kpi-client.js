@@ -173,3 +173,21 @@
         saveAction: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); }
     };
 }));
+
+// Store Skill Matrix is an additive extension of the existing Skill Catalog/Certification UI.
+// Load it after the current app has finished evaluating so it can safely reuse existing globals
+// without touching the large index.html entrypoint.
+(function loadStoreSkillMatrixExtension(root) {
+    if (!root || !root.document) return;
+    const load = () => {
+        if (root.AkraStoreSkillMatrix || root.document.getElementById('store-skill-matrix-extension-script')) return;
+        const script = root.document.createElement('script');
+        script.id = 'store-skill-matrix-extension-script';
+        script.src = 'js/store-skill-matrix-extension.js?v=20260827.01';
+        script.defer = true;
+        script.onerror = () => console.warn('[Store Skill Matrix] extension failed to load');
+        root.document.body.appendChild(script);
+    };
+    if (root.document.readyState === 'complete') load();
+    else root.addEventListener('load', load, { once: true });
+}(typeof window !== 'undefined' ? window : null));
