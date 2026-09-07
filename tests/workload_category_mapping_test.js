@@ -100,11 +100,127 @@ async function runTests() {
   assert.strictEqual(res[0].transfer, 3.0, 'Transfer should be 3.0 (ช่วยย้ายของ W2)');
   assert.strictEqual(res[0].shared, 0.0, 'Shared should be 0');
 
-  console.log('✓ All workload category mapping test cases passed.');
+  // Case 5: Streamlined 4 duties mapping ('ขาเข้า' -> inbound, 'ขาย้าย' -> transfer, 'ขาออก' -> outbound, 'คลัง W1' -> outbound)
+  sandbox.workloadState = { core: 'ขาเข้า', totalHours: 8, support: [{ name: 'ขาย้าย', hours: 2 }] };
+  res = sandbox.getAkraWorkloadValues();
+  assert.strictEqual(res[0].inbound, 6.0, 'ขาเข้า should map to inbound (6h)');
+  assert.strictEqual(res[0].transfer, 2.0, 'ขาย้าย should map to transfer (2h)');
+  assert.strictEqual(res[0].outbound, 0.0);
+  assert.strictEqual(res[0].shared, 0.0);
+
+  // Case 6: Test getDefaultPrimaryDuty mapping
+  const getDefaultPrimaryDutyFn = extractFunction(html, 'getDefaultPrimaryDuty');
+  const akraDefaultMapMatch = html.match(/const\s+AKRA_DEFAULT_PRIMARY_DUTIES\s*=\s*\{[\s\S]*?\};/);
+  assert(akraDefaultMapMatch, 'AKRA_DEFAULT_PRIMARY_DUTIES must exist in index.html');
+  
+  const dutySandbox = { normalizeEmpName: (n) => String(n || '').trim(), console };
+  vm.createContext(dutySandbox);
+  vm.runInContext(`${akraDefaultMapMatch[0]}; ${getDefaultPrimaryDutyFn};`, dutySandbox);
+
+  assert.strictEqual(dutySandbox.getDefaultPrimaryDuty('250007'), 'คลัง W1', 'หมูหยอง (250007) default must be คลัง W1');
+  assert.strictEqual(dutySandbox.getDefaultPrimaryDuty('หมูหยอง'), 'คลัง W1');
+  assert.strictEqual(dutySandbox.getDefaultPrimaryDuty('260029'), 'ขาออก', 'ปีเตอร์ (260029) default must be ขาออก');
+  assert.strictEqual(dutySandbox.getDefaultPrimaryDuty('ปีเตอร์'), 'ขาออก');
+  assert.strictEqual(dutySandbox.getDefaultPrimaryDuty('เอส'), 'ขาออก', 'เอส default must be ขาออก');
+  assert.strictEqual(dutySandbox.getDefaultPrimaryDuty('AKRA12123'), 'ขาเข้า', 'สอน (AKRA12123) default must be ขาเข้า');
+  assert.strictEqual(dutySandbox.getDefaultPrimaryDuty('สอน'), 'ขาเข้า');
+  assert.strictEqual(dutySandbox.getDefaultPrimaryDuty('250010'), 'ขาย้าย', 'เอี้ยง (250010) default must be ขาย้าย');
+  assert.strictEqual(dutySandbox.getDefaultPrimaryDuty('เอี้ยง'), 'ขาย้าย');
+  assert.strictEqual(dutySandbox.getDefaultPrimaryDuty('unknown_emp'), 'คลัง W1', 'Fallback must be คลัง W1');
+
+  // Case 7: Test dynamic Admin Employee Primary Duty assignment override via applySystemConfig
+  const applySystemConfigFn = extractFunction(html, 'applySystemConfig');
+  const changeEmployeeDutyAssignmentFn = extractFunction(html, 'changeEmployeeDutyAssignment');
+  const initAdminSettingsStateFn = extractFunction(html, 'initAdminSettingsState');
+
+  const adminDutySandbox = {
+    normalizeEmpName: (n) => String(n || '').trim(),
+    AKRA_PRIMARY_DUTIES: [
+      { id: 'W1', name: 'คลัง W1' },
+      { id: 'OUTBOUND', name: 'ขาออก' },
+      { id: 'INBOUND', name: 'ขาเข้า' },
+      { id: 'MOVE', name: 'ขาย้าย' }
+    ],
+    AKRA_SUPPORT_DUTIES: [],
+    ERROR_CATALOG: {},
+    AKRA_CORE_CATALOG: [],
+    GLOBAL_CONFIG_LIST: [
+      { uid: '250007', name: 'หมูหยอง', branches: 'AKRA', status: 'Active' },
+      { uid: '260029', name: 'ปีเตอร์', branches: 'AKRA', status: 'Active' },
+      { uid: 'AKRA12123', name: 'สอน', branches: 'AKRA', status: 'Active' },
+      { uid: '250010', name: 'เอี้ยง', branches: 'AKRA', status: 'Active' }
+    ],
+    getBranchRosterEmployees: (b) => [
+      { uid: '250007', name: 'หมูหยอง' },
+      { uid: '260029', name: 'ปีเตอร์' },
+      { uid: 'AKRA12123', name: 'สอน' },
+      { uid: '250010', name: 'เอี้ยง' }
+    ],
+    KPI_SYSTEM_CONFIG: null,
+    ADMIN_SETTINGS_STATE: {
+      activeTab: 'emp',
+      incidentBranch: 'AKRA',
+      workloadDuties: null,
+      incidentCatalog: null
+    },
+    buildDefaultEmployeeDutyAssignments: () => ({
+      '250007': 'คลัง W1',
+      '260029': 'ขาออก',
+      'AKRA12123': 'ขาเข้า',
+      '250010': 'ขาย้าย'
+    }),
+    renderWorkloadCoreGrid: () => {},
+    renderSupportModalTasks: () => {},
+    cloneConfig: (o) => JSON.parse(JSON.stringify(o)),
+    console
+  };
+  vm.createContext(adminDutySandbox);
+  vm.runInContext(`
+    ${akraDefaultMapMatch[0]};
+    ${getDefaultPrimaryDutyFn};
+    ${applySystemConfigFn};
+    ${changeEmployeeDutyAssignmentFn};
+    ${initAdminSettingsStateFn};
+  `, adminDutySandbox);
+
+  // Before override: หมูหยอง is คลัง W1, ปีเตอร์ is ขาออก
+  assert.strictEqual(adminDutySandbox.getDefaultPrimaryDuty('250007'), 'คลัง W1');
+  assert.strictEqual(adminDutySandbox.getDefaultPrimaryDuty('หมูหยอง'), 'คลัง W1');
+  assert.strictEqual(adminDutySandbox.getDefaultPrimaryDuty('260029'), 'ขาออก');
+
+  // Admin changes duty in state: หมูหยอง -> ขาออก, ปีเตอร์ -> ขาย้าย
+  adminDutySandbox.initAdminSettingsState();
+  adminDutySandbox.changeEmployeeDutyAssignment('250007', 'ขาออก');
+  adminDutySandbox.changeEmployeeDutyAssignment('260029', 'ขาย้าย');
+  assert.strictEqual(adminDutySandbox.ADMIN_SETTINGS_STATE.workloadDuties.employeeDutyAssignments['250007'], 'ขาออก');
+  assert.strictEqual(adminDutySandbox.ADMIN_SETTINGS_STATE.workloadDuties.employeeDutyAssignments['260029'], 'ขาย้าย');
+
+  // Simulate applySystemConfig loading from Supabase config
+  adminDutySandbox.applySystemConfig({
+    workloadDuties: {
+      employeeDutyAssignments: {
+        '250007': 'ขาออก',
+        '260029': 'ขาย้าย'
+      }
+    }
+  });
+
+  // After override: หมูหยอง resolves to ขาออก (by both UID and name), ปีเตอร์ resolves to ขาย้าย
+  assert.strictEqual(adminDutySandbox.getDefaultPrimaryDuty('250007'), 'ขาออก', 'หมูหยอง UID should be overridden to ขาออก');
+  assert.strictEqual(adminDutySandbox.getDefaultPrimaryDuty('หมูหยอง'), 'ขาออก', 'หมูหยอง Name should be overridden to ขาออก');
+  assert.strictEqual(adminDutySandbox.getDefaultPrimaryDuty('260029'), 'ขาย้าย', 'ปีเตอร์ UID should be overridden to ขาย้าย');
+  assert.strictEqual(adminDutySandbox.getDefaultPrimaryDuty('ปีเตอร์'), 'ขาย้าย', 'ปีเตอร์ Name should be overridden to ขาย้าย');
+  // Unmodified employees retain their defaults
+  assert.strictEqual(adminDutySandbox.getDefaultPrimaryDuty('AKRA12123'), 'ขาเข้า', 'สอน should remain ขาเข้า');
+  assert.strictEqual(adminDutySandbox.getDefaultPrimaryDuty('สอน'), 'ขาเข้า');
+  assert.strictEqual(adminDutySandbox.getDefaultPrimaryDuty('250010'), 'ขาย้าย', 'เอี้ยง should remain ขาย้าย');
+
+  console.log('✓ All workload category & default primary duty mapping test cases (including dynamic admin override) passed.');
 
   // 3. Test 17:30 time window enforcement in saveWorkloadCard
   console.log('\n[3/4] Testing 17:30 time window restriction in saveWorkloadCard...');
   const saveWorkloadCardFn = extractFunction(html, 'saveWorkloadCard');
+  const executeSaveWorkloadFn = extractFunction(html, 'executeSaveWorkload');
   const getKpiBangkokClockFn = extractFunction(html, 'getKpiBangkokClock');
   const getEmployeeWorkloadStatusFn = extractFunction(html, 'getEmployeeWorkloadStatus');
 
@@ -120,8 +236,11 @@ async function runTests() {
         return null;
       }
     },
-    showModal: (title, desc, type) => {
+    showModal: (title, desc, type, onConfirm) => {
       modalShown = { title, desc, type };
+      if (type === 'confirm' && typeof onConfirm === 'function') {
+        onConfirm();
+      }
     },
     showToast: (msg, isErr) => {},
     canAccessAdminSettings: (roles, token) => (Array.isArray(roles) && roles.includes('ADMIN')),
@@ -154,7 +273,7 @@ async function runTests() {
 
   saveSandbox.window = saveSandbox;
   vm.createContext(saveSandbox);
-  vm.runInContext(`${saveWorkloadCardFn}; ${getEmployeeWorkloadStatusFn}`, saveSandbox);
+  vm.runInContext(`${saveWorkloadCardFn}; ${executeSaveWorkloadFn}; ${getEmployeeWorkloadStatusFn}`, saveSandbox);
 
   // Case A: Regular worker before 17:30 on current day -> BLOCKED
   saveSandbox.getKpiBangkokClock = () => ({ date: '2026-09-02', hour: 14, minute: 30 });
@@ -167,31 +286,33 @@ async function runTests() {
   assert.strictEqual(saveWorkloadCalled, false, 'saveWorkload must NOT be called before 17:30');
   console.log('  ✓ Worker before 17:30 is blocked with explanation modal.');
 
-  // Case B: Regular worker at 17:30 on current day -> ALLOWED
+  // Case B: Regular worker at 17:30 on current day -> PROMPTED CONFIRM & ALLOWED
   saveSandbox.getKpiBangkokClock = () => ({ date: '2026-09-02', hour: 17, minute: 30 });
   modalShown = null;
   saveWorkloadCalled = false;
   await saveSandbox.saveWorkloadCard();
-  assert.strictEqual(modalShown, null, 'Modal should not be shown at 17:30');
-  assert.strictEqual(saveWorkloadCalled, true, 'saveWorkload must be called at 17:30');
-  console.log('  ✓ Worker at 17:30 is allowed to submit.');
+  assert(modalShown !== null, 'Confirm modal should be shown before save');
+  assert.strictEqual(modalShown.title, 'ยืนยันข้อมูล Workload วันนี้');
+  assert.strictEqual(modalShown.type, 'confirm');
+  assert.strictEqual(saveWorkloadCalled, true, 'saveWorkload must be called after confirm at 17:30');
+  console.log('  ✓ Worker at 17:30 gets confirmation prompt and is allowed to submit.');
 
-  // Case C: Regular worker after 17:30 (e.g. 19:15) -> ALLOWED
+  // Case C: Regular worker after 17:30 (e.g. 19:15) -> PROMPTED CONFIRM & ALLOWED
   saveSandbox.getKpiBangkokClock = () => ({ date: '2026-09-02', hour: 19, minute: 15 });
   modalShown = null;
   saveWorkloadCalled = false;
   await saveSandbox.saveWorkloadCard();
-  assert.strictEqual(modalShown, null);
+  assert(modalShown !== null && modalShown.type === 'confirm');
   assert.strictEqual(saveWorkloadCalled, true);
   console.log('  ✓ Worker after 17:30 is allowed to submit.');
 
-  // Case D: Supervisor / Admin submitting before 17:30 -> ALLOWED (bypass)
+  // Case D: Supervisor / Admin submitting before 17:30 -> ALLOWED (bypass 17:30 restriction, prompted confirm)
   saveSandbox.getKpiBangkokClock = () => ({ date: '2026-09-02', hour: 11, minute: 0 });
   saveSandbox.currentRoles = ['ADMIN'];
   modalShown = null;
   saveWorkloadCalled = false;
   await saveSandbox.saveWorkloadCard();
-  assert.strictEqual(modalShown, null);
+  assert(modalShown !== null && modalShown.type === 'confirm');
   assert.strictEqual(saveWorkloadCalled, true);
   console.log('  ✓ Admin / Supervisor can bypass 17:30 restriction.');
 
@@ -206,7 +327,7 @@ async function runTests() {
   modalShown = null;
   saveWorkloadCalled = false;
   await saveSandbox.saveWorkloadCard();
-  assert.strictEqual(modalShown, null);
+  assert(modalShown !== null && modalShown.type === 'confirm');
   assert.strictEqual(saveWorkloadCalled, true);
   console.log('  ✓ Past date submission is not blocked by 17:30 rule.');
 

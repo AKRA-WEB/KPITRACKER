@@ -222,112 +222,147 @@
                 </div>
             </div>
 
-            <!-- Responsive Layout Grid on PC: 2 Columns -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Responsive Layout Grid: Streamlined Daily Workload Card (Col 1) + Analytics & Team (Col 2) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 
-                <!-- Col 1: Form Entry -->
-                <div class="space-y-3.5">
-                    <!-- Step 1: Core Work -->
-                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
-                        <div class="flex items-center justify-between">
-                            <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                                <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
-                                งานหลักวันนี้ของคุณคืออะไร?
-                            </label>
-                            <span class="text-[11px] text-blue-600 font-semibold">แตะเลือก 1 อย่าง</span>
+                <!-- Col 1: Streamlined Daily Workload Card (lg:col-span-7) -->
+                <div class="lg:col-span-7 space-y-3.5">
+                    <section class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <!-- Greeting & Date Header -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold shadow-sm">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-slate-800" id="main-wl-user-name">คุณ (AKRA)</p>
+                                    <p class="text-[11px] text-slate-500" id="main-wl-date-text">บันทึกภาระงานประจำวัน</p>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200 flex items-center gap-1">
+                                <i class="fa-solid fa-bolt text-emerald-600"></i>
+                                <span>1-Tap ยืนยัน</span>
+                            </span>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2" id="wl-core-grid">
-                            <button type="button" onclick="selectCore('คลัง W1', this)" class="core-btn chip-active p-3 rounded-xl border border-slate-200 bg-white text-left transition-all active:scale-95 flex items-center gap-2.5">
-                                <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm shrink-0 font-bold"><i class="fa-solid fa-warehouse"></i></div>
-                                <div><p class="text-xs font-bold text-slate-800 leading-tight">คลังหลัก W1</p><p class="text-[10px] text-slate-500">หยิบ/แพ็ก/จัดเก็บ</p></div>
-                            </button>
+                        <!-- 1. Primary Duty Card -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                                    งานหลักของคุณวันนี้:
+                                </span>
+                                <button type="button" onclick="toggleMainDutyPicker()" id="btn-toggle-main-duty-picker" class="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 transition-colors">
+                                    <i class="fa-solid fa-arrows-rotate"></i>
+                                    <span id="btn-toggle-main-duty-text">[เปลี่ยนงานหลัก]</span>
+                                </button>
+                            </div>
 
-                            <button type="button" onclick="selectCore('คลัง W2', this)" class="core-btn p-3 rounded-xl border border-slate-200 bg-white text-left transition-all active:scale-95 flex items-center gap-2.5">
-                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm shrink-0 font-bold"><i class="fa-solid fa-boxes-stacked"></i></div>
-                                <div><p class="text-xs font-bold text-slate-800 leading-tight">คลังสำรอง W2</p><p class="text-[10px] text-slate-500">สต๊อกใหญ่/เติมของ</p></div>
-                            </button>
+                            <div class="p-3.5 rounded-xl border-2 border-blue-500 bg-blue-50/60 flex items-center justify-between gap-3 transition-all">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-base shrink-0 font-bold shadow-sm" id="main-wl-primary-icon-box">
+                                        <i class="fa-solid fa-warehouse" id="main-wl-primary-icon"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <p class="text-sm font-black text-slate-900 leading-tight truncate" id="main-wl-primary-name">คลัง W1</p>
+                                            <span class="text-[9px] bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded font-bold shrink-0">งานหลัก</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-500 truncate mt-0.5" id="main-wl-primary-desc">เบิกของสต๊อคสินค้า จัดระเบียบคลัง</p>
+                                    </div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <span class="font-bold text-blue-700 bg-white border border-blue-200 px-2.5 py-1 rounded-lg text-xs font-num shadow-sm" id="main-wl-primary-hours">10.0 ชม.</span>
+                                </div>
+                            </div>
 
-                            <button type="button" onclick="selectCore('รับสินค้าเข้า', this)" class="core-btn p-3 rounded-xl border border-slate-200 bg-white text-left transition-all active:scale-95 flex items-center gap-2.5">
-                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm shrink-0 font-bold"><i class="fa-solid fa-truck-ramp-box"></i></div>
-                                <div><p class="text-xs font-bold text-slate-800 leading-tight">รับสินค้าเข้า</p><p class="text-[10px] text-slate-500">ตรวจรับ &amp; ลงสินค้า</p></div>
-                            </button>
-
-                            <button type="button" onclick="selectCore('ขาออก', this)" class="core-btn p-3 rounded-xl border border-slate-200 bg-white text-left transition-all active:scale-95 flex items-center gap-2.5">
-                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm shrink-0 font-bold"><i class="fa-solid fa-truck"></i></div>
-                                <div><p class="text-xs font-bold text-slate-800 leading-tight">ขาออก</p><p class="text-[10px] text-slate-500">จัดส่ง &amp; จ่ายออก</p></div>
-                            </button>
-
-                            <button type="button" onclick="selectCore('ขนย้ายสินค้า', this)" class="core-btn p-3 rounded-xl border border-slate-200 bg-white text-left transition-all active:scale-95 flex items-center gap-2.5 col-span-2">
-                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm shrink-0 font-bold"><i class="fa-solid fa-dolly"></i></div>
-                                <div><p class="text-xs font-bold text-slate-800 leading-tight">ขนย้ายสินค้า</p><p class="text-[10px] text-slate-500">โอนย้าย &amp; จัดระเบียบ</p></div>
-                            </button>
+                            <!-- Inline Duty Picker (Hidden by default) -->
+                            <div id="main-duty-picker-panel" class="hidden p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                                <p class="text-[11px] font-bold text-slate-600">เลือกงานหลักที่ทำจริงวันนี้:</p>
+                                <div class="grid grid-cols-2 gap-2" id="wl-core-grid">
+                                    <!-- Injected from AKRA_PRIMARY_DUTIES via renderWorkloadCoreGrid -->
+                                </div>
+                            </div>
                         </div>
-                    </section>
 
-                    <!-- Step 2: Support Work -->
-                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
-                        <div class="flex items-center justify-between">
-                            <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                        <!-- 2. Support Work Toggle -->
+                        <div class="space-y-2.5 pt-1">
+                            <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                                 <span class="w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-[10px] font-bold">2</span>
-                                วันนี้มีไปช่วยงานอื่นไหม?
-                            </label>
-                            <span class="text-[11px] text-slate-500">ถ้าไม่มี ข้ามได้เลย</span>
+                                วันนี้มีไปช่วยงานอื่นหรือไม่?
+                            </span>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="button" onclick="setMainSupportMode(false)" id="btn-main-supp-none" class="py-2.5 px-3 rounded-xl border-2 text-xs font-bold transition-all flex items-center justify-center gap-2 border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm">
+                                    <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                                    <span>ไม่มี (ทำงานหลัก 100%)</span>
+                                </button>
+                                <button type="button" onclick="setMainSupportMode(true)" id="btn-main-supp-yes" class="py-2.5 px-3 rounded-xl border-2 text-xs font-bold transition-all flex items-center justify-center gap-2 border-slate-200 bg-white text-slate-600 hover:border-amber-300">
+                                    <i class="fa-solid fa-plus-circle text-amber-500"></i>
+                                    <span>+ เพิ่มงานช่วย</span>
+                                </button>
+                            </div>
+
+                            <!-- Support Detail Section (Shown when support is true) -->
+                            <div id="main-support-detail" class="hidden space-y-3 p-3 bg-amber-50/50 rounded-xl border border-amber-200 transition-all">
+                                <div>
+                                    <p class="text-[11px] font-bold text-slate-700 mb-1.5">เลือกงานที่ไปช่วย:</p>
+                                    <div class="flex flex-wrap gap-1.5" id="main-support-chips">
+                                        <!-- Support duty chips injected here -->
+                                    </div>
+                                </div>
+
+                                <!-- Support Hours Stepper -->
+                                <div class="flex items-center justify-between pt-2 border-t border-amber-200/70">
+                                    <span class="text-xs font-bold text-slate-700">เวลาที่ไปช่วย:</span>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" onclick="stepMainSupportHours(-0.5)" class="w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold hover:bg-slate-100 flex items-center justify-center active:scale-90 text-sm shadow-sm">-</button>
+                                        <span id="main-support-hours-badge" class="font-bold text-amber-800 bg-amber-100 border border-amber-300 px-3 py-1 rounded-lg text-xs font-num min-w-[65px] text-center">2.0 ชม.</span>
+                                        <button type="button" onclick="stepMainSupportHours(0.5)" class="w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold hover:bg-slate-100 flex items-center justify-center active:scale-90 text-sm shadow-sm">+</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="wl-support-items" class="space-y-2"></div>
+                        <!-- 3. Time Summary & Rule Notice -->
+                        <div class="p-3 bg-slate-100 rounded-xl text-center text-xs space-y-1">
+                            <p class="font-bold text-slate-700" id="main-wl-summary-text">งานหลัก: คลัง W1 (10.0 ชม.) — 100%</p>
+                            <p class="text-[10px] text-amber-700 flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-clock"></i>
+                                <span>เปิดให้บันทึก Workload สรุปประจำวันตั้งแต่เวลา <b>17:30 น.</b> เป็นต้นไป</span>
+                            </p>
+                        </div>
 
-                        <button type="button" onclick="openSupportModal()" class="w-full py-2.5 px-3 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/70 hover:bg-amber-100 text-amber-800 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-98">
-                            <i class="fa-solid fa-plus-circle text-amber-600 text-sm"></i>
-                            <span>แตะเพิ่มงานที่ไปช่วย (แวะขึ้นของ / ส่งของ / หน้าร้าน)</span>
-                        </button>
+                        <!-- Hidden compatibility elements so existing helpers don't crash if checked -->
+                        <div class="hidden" aria-hidden="true">
+                            <div id="wl-bar-c"></div>
+                            <div id="wl-bar-s"></div>
+                            <div id="wl-c-name"></div>
+                            <div id="wl-c-val"></div>
+                            <div id="wl-total-badge"></div>
+                            <div id="wl-support-items"></div>
+                            <div id="wl-s-breakdown"></div>
+                        </div>
+
+                        <!-- 4. Action Buttons -->
+                        <div class="space-y-2 pt-1">
+                            <button type="button" onclick="saveWorkloadCard()" id="btn-save-workload" class="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all active:scale-98">
+                                <i class="fa-solid fa-circle-check text-base"></i>
+                                <span id="btn-save-workload-text">[ ยืนยันข้อมูลวันนี้ ]</span>
+                            </button>
+                            <div class="flex justify-between items-center px-1">
+                                <button type="button" onclick="clearWorkloadCard()" id="btn-clear-workload" class="text-[11px] text-slate-400 hover:text-red-500 font-semibold flex items-center gap-1 transition-colors">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                    <span>ล้างข้อมูลวันนี้</span>
+                                </button>
+                                <span class="text-[10px] text-slate-400">มี Popup ตรวจสอบก่อนบันทึก</span>
+                            </div>
+                        </div>
                     </section>
                 </div>
 
-                <!-- Col 2: Summary Calculation & Team Matrix -->
-                <div class="space-y-3.5">
-                    <!-- Live Time Breakdown Box -->
-                    <section class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-2xl shadow-md border border-slate-700 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-slate-200 flex items-center gap-2">
-                                <i class="fa-solid fa-clock-rotate-left text-amber-400"></i>
-                                สรุปการแบ่งเวลาวันนี้
-                            </span>
-                            <span id="wl-total-badge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/40">
-                                รวม 10.0 / 10.0 ชม. (ครบ)
-                            </span>
-                        </div>
-
-                        <div class="w-full h-4 bg-slate-950 rounded-full overflow-hidden flex p-0.5 border border-slate-700">
-                            <div id="wl-bar-c" style="width: 100%;" class="h-full bg-blue-500 rounded-l-full transition-all duration-300"></div>
-                            <div id="wl-bar-s" style="width: 0%;" class="h-full bg-amber-400 rounded-r-full transition-all duration-300"></div>
-                        </div>
-
-                        <div class="space-y-1.5 text-xs pt-1 border-t border-slate-700/60">
-                            <div class="flex items-center justify-between">
-                                <span class="text-slate-300 flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>งานหลัก: <b class="text-white font-medium" id="wl-c-name">คลังหลัก W1</b></span>
-                                <span class="font-bold text-blue-400 font-num" id="wl-c-val">10.0 ชม. (100%)</span>
-                            </div>
-                            <div id="wl-s-breakdown" class="space-y-1 text-slate-300"></div>
-                        </div>
-
-                        <div class="mt-3 text-[11px] text-amber-200 bg-amber-950/40 rounded-xl p-2.5 text-center border border-amber-500/30 flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-clock text-amber-400"></i>
-                            <span>ระบบเปิดให้บันทึกสรุป Workload ประจำวันตั้งแต่เวลา <b>17:30 น.</b> เป็นต้นไป (หลังเลิกงาน)</span>
-                        </div>
-
-                        <div class="flex gap-2 mt-2">
-                            <button type="button" onclick="saveWorkloadCard()" id="btn-save-workload" class="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95">
-                                <i class="fa-solid fa-cloud-arrow-up"></i>
-                                <span>บันทึก Workload ประจำวัน</span>
-                            </button>
-                            <button type="button" onclick="clearWorkloadCard()" id="btn-clear-workload" class="py-3 px-3 rounded-xl bg-slate-700 hover:bg-red-600 text-slate-200 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md" title="ล้างข้อมูล Workload วันนี้ของฉัน">
-                                <i class="fa-solid fa-trash-can"></i>
-                                <span>ล้างข้อมูล</span>
-                            </button>
-                        </div>
-                    </section>
-
+                <!-- Col 2: Analytics & Team On-Duty Matrix (lg:col-span-5) -->
+                <div class="lg:col-span-5 space-y-3.5">
                     <!-- Section Workload Breakdown & Capacity Heatmap -->
                     <section id="wl-section-analytics-card" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -1943,6 +1978,20 @@
                         </div>
                     </section>
                 </div>
+
+                <!-- Employee Default Duty Assignment -->
+                <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <h4 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">3</span>
+                            <span>กำหนดงานหลักพนักงาน (Default Primary Duty)</span>
+                        </h4>
+                    </div>
+                    <p class="text-[11px] text-slate-500">กำหนดงานหลักเริ่มต้นให้แต่ละพนักงาน AKRA — ใช้แสดงใน Quick Workload วันนี้</p>
+                    <div id="admin-employee-duty-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                        <!-- Employee duty assignment cards injected here -->
+                    </div>
+                </section>
             </div>
 
             <!-- SUB-PANEL 3: INCIDENT CATEGORIES & PENALTIES SETTINGS -->
@@ -2424,7 +2473,7 @@
 
 
     <!-- Custom Modal -->
-    <div id="custom-modal" class="hidden fixed inset-0 bg-gray-900/60 z-[150] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-200">
+    <div id="custom-modal" class="hidden fixed inset-0 bg-gray-900/60 z-[170] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-200">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-200" id="custom-modal-content">
             <div class="p-6 text-center">
                 <div id="custom-modal-icon" class="mb-3"></div>
@@ -2463,74 +2512,88 @@
             </div>
 
             <!-- Scrollable Body -->
-            <div class="p-5 space-y-5 overflow-y-auto custom-scrollbar flex-1">
-                <!-- Total Capacity Pill -->
-                <div class="flex items-center justify-between bg-slate-800/60 p-3 rounded-2xl border border-slate-750">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span class="text-xs font-bold text-slate-300">เวลารวมทั้งกะ:</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span id="qw-total-badge" class="text-xs font-black px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">10.0 ชม.</span>
-                    </div>
-                </div>
-
-                <!-- Section 1: Primary Core Duty -->
-                <div class="space-y-2.5">
+            <div class="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+                <!-- Section 1: Primary Core Duty Display & Switcher -->
+                <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700/80 space-y-3">
                     <div class="flex items-center justify-between">
-                        <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <div class="flex items-center gap-2 text-slate-300 text-xs font-bold">
                             <i class="fa-solid fa-boxes-packing text-blue-400"></i>
-                            <span>หน้าที่หลัก (Primary)</span>
-                        </label>
-                        <span id="qw-primary-hours-label" class="text-xs font-black text-blue-400 font-num">8.0 ชม.</span>
+                            <span>งานหลักวันนี้ของคุณ</span>
+                        </div>
+                        <button type="button" onclick="toggleQuickDutyPicker()" id="qw-toggle-duty-btn" class="text-[11px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 bg-blue-500/10 px-2 py-1 rounded-lg border border-blue-500/20 transition-all">
+                            <i class="fa-solid fa-repeat text-[10px]"></i>
+                            <span id="qw-toggle-duty-text">เปลี่ยนงานหลัก</span>
+                        </button>
                     </div>
 
-                    <!-- Primary Duty Chips -->
-                    <div id="qw-primary-chips" class="grid grid-cols-2 gap-2">
-                        <!-- Rendered dynamically -->
+                    <!-- Selected Primary Duty Card -->
+                    <div id="qw-primary-selected-card" class="bg-gradient-to-r from-blue-900/40 to-slate-800/80 p-3.5 rounded-xl border border-blue-500/30 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div id="qw-primary-icon-wrap" class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-base shrink-0">
+                                <i class="fa-solid fa-warehouse" id="qw-primary-icon"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-black text-white leading-tight" id="qw-primary-title">คลัง W1</h4>
+                                <p class="text-[11px] text-slate-400 mt-0.5 line-clamp-1" id="qw-primary-desc">เบิกของสต๊อคสินค้า จัดระเบียบคลัง</p>
+                            </div>
+                        </div>
+                        <span id="qw-primary-hours-badge" class="text-xs font-black px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30 whitespace-nowrap font-num">8.0 ชม.</span>
                     </div>
 
-                    <!-- Primary Stepper -->
-                    <div class="flex items-center justify-between bg-slate-800/40 p-2.5 rounded-xl border border-slate-700/60 mt-2">
-                        <span class="text-[11px] text-slate-400">ปรับเวลาหน้าที่หลัก:</span>
-                        <div class="flex items-center gap-2">
-                            <button type="button" onclick="adjustQuickPrimaryHours(-0.5)" class="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center active:scale-95 transition-all">
-                                <i class="fa-solid fa-minus text-xs"></i>
-                            </button>
-                            <span id="qw-primary-stepper-val" class="w-14 text-center text-sm font-black text-white font-num">8.0 ชม.</span>
-                            <button type="button" onclick="adjustQuickPrimaryHours(0.5)" class="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center active:scale-95 transition-all">
-                                <i class="fa-solid fa-plus text-xs"></i>
-                            </button>
+                    <!-- Collapsible Primary Duty Picker Grid -->
+                    <div id="qw-duty-picker-grid" class="hidden space-y-2 pt-2 border-t border-slate-700/60">
+                        <p class="text-[10px] text-slate-400">เลือกหน้าที่หลักที่คุณทำจริงในวันนี้:</p>
+                        <div id="qw-primary-chips" class="grid grid-cols-2 gap-2">
+                            <!-- Rendered dynamically -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Section 2: Support / Secondary Duty -->
-                <div class="space-y-2.5">
+                <!-- Section 2: Support Work Toggle & Stepper -->
+                <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700/80 space-y-3">
                     <div class="flex items-center justify-between">
                         <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-handshake-angle text-emerald-400"></i>
-                            <span>งานช่วยเสริม (Support)</span>
+                            <i class="fa-solid fa-handshake-angle text-amber-400"></i>
+                            <span>มีไปช่วยงานอื่นหรือไม่?</span>
                         </label>
-                        <span id="qw-support-hours-label" class="text-xs font-black text-emerald-400 font-num">2.0 ชม.</span>
                     </div>
 
-                    <!-- Support Duty Chips -->
-                    <div id="qw-support-chips" class="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto custom-scrollbar p-1">
-                        <!-- Rendered dynamically -->
+                    <!-- Support Choice Buttons (ไม่มี / + เพิ่มงานช่วย) -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" id="qw-btn-support-none" onclick="setQuickHasSupport(false)" class="py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95 bg-emerald-600/30 border-emerald-500 text-white shadow-sm">
+                            <i class="fa-solid fa-check text-emerald-400"></i>
+                            <span>ไม่มี (ทำงานหลัก 100%)</span>
+                        </button>
+                        <button type="button" id="qw-btn-support-add" onclick="setQuickHasSupport(true)" class="py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95 bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-slate-600">
+                            <i class="fa-solid fa-plus text-amber-400"></i>
+                            <span>+ เพิ่มงานช่วย</span>
+                        </button>
                     </div>
 
-                    <!-- Support Stepper -->
-                    <div class="flex items-center justify-between bg-slate-800/40 p-2.5 rounded-xl border border-slate-700/60 mt-2">
-                        <span class="text-[11px] text-slate-400">ปรับเวลางานช่วยเสริม:</span>
-                        <div class="flex items-center gap-2">
-                            <button type="button" onclick="adjustQuickSupportHours(-0.5)" class="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center active:scale-95 transition-all">
-                                <i class="fa-solid fa-minus text-xs"></i>
-                            </button>
-                            <span id="qw-support-stepper-val" class="w-14 text-center text-sm font-black text-white font-num">2.0 ชม.</span>
-                            <button type="button" onclick="adjustQuickSupportHours(0.5)" class="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center active:scale-95 transition-all">
-                                <i class="fa-solid fa-plus text-xs"></i>
-                            </button>
+                    <!-- Collapsible Support Task & Stepper Area -->
+                    <div id="qw-support-expanded-area" class="hidden space-y-3 pt-2 border-t border-slate-700/60">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] text-slate-400 font-medium">เลือกงานที่คุณไปช่วย:</span>
+                            <span id="qw-support-hours-label" class="text-xs font-black text-amber-400 font-num">2.0 ชม.</span>
+                        </div>
+
+                        <!-- Support Duty Chips -->
+                        <div id="qw-support-chips" class="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto custom-scrollbar p-0.5">
+                            <!-- Rendered dynamically -->
+                        </div>
+
+                        <!-- Support Stepper -->
+                        <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-xl border border-slate-700/60">
+                            <span class="text-[11px] text-slate-400">ปรับชั่วโมงงานช่วย:</span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="adjustQuickSupportHours(-0.5)" class="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center active:scale-95 transition-all">
+                                    <i class="fa-solid fa-minus text-xs"></i>
+                                </button>
+                                <span id="qw-support-stepper-val" class="w-14 text-center text-sm font-black text-white font-num">2.0 ชม.</span>
+                                <button type="button" onclick="adjustQuickSupportHours(0.5)" class="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center active:scale-95 transition-all">
+                                    <i class="fa-solid fa-plus text-xs"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2538,21 +2601,21 @@
                 <!-- Visual Allocation Progress Bar -->
                 <div class="space-y-1.5 bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
                     <div class="flex justify-between text-[11px] font-bold">
-                        <span id="qw-bar-primary-text" class="text-blue-400">ขาออก 80% (8.0 ชม.)</span>
-                        <span id="qw-bar-support-text" class="text-emerald-400">ช่วยงาน 20% (2.0 ชม.)</span>
+                        <span id="qw-bar-primary-text" class="text-blue-400 truncate">งานหลัก 8.0 ชม.</span>
+                        <span id="qw-bar-support-text" class="text-amber-400 truncate ml-2">ไม่มีงานช่วย</span>
                     </div>
                     <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden flex">
-                        <div id="qw-bar-primary" class="h-full bg-blue-500 transition-all duration-300" style="width: 80%;"></div>
-                        <div id="qw-bar-support" class="h-full bg-emerald-500 transition-all duration-300" style="width: 20%;"></div>
+                        <div id="qw-bar-primary" class="h-full bg-blue-500 transition-all duration-300" style="width: 100%;"></div>
+                        <div id="qw-bar-support" class="h-full bg-amber-400 transition-all duration-300" style="width: 0%;"></div>
                     </div>
                 </div>
             </div>
 
             <!-- Footer Save CTA -->
             <div class="p-4 border-t border-slate-800 bg-slate-900 sticky bottom-0 z-10 space-y-2">
-                <button type="button" id="btn-save-quick-workload" onclick="submitQuickWorkload()" class="w-full py-3.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all">
-                    <i class="fa-solid fa-floppy-disk"></i>
-                    <span id="btn-save-qw-text">บันทึกเวลา 10 ชม. ทันที</span>
+                <button type="button" id="btn-save-quick-workload" onclick="confirmQuickWorkloadSave()" class="w-full py-3.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span id="btn-save-qw-text">[ยืนยันวันนี้]</span>
                 </button>
             </div>
         </div>
@@ -2748,7 +2811,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260907.02";
+        const CURRENT_VERSION = "20260907.05";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -4219,6 +4282,10 @@
                     }
                 }
             });
+
+            if (typeof KPI_SYSTEM_CONFIG !== 'undefined' && KPI_SYSTEM_CONFIG && KPI_SYSTEM_CONFIG.workloadDuties && KPI_SYSTEM_CONFIG.workloadDuties.employeeDutyAssignments) {
+                applySystemConfig(KPI_SYSTEM_CONFIG);
+            }
         }
 
         function handleLineBrowserRedirect() {
@@ -4437,19 +4504,68 @@
 
         // ================= AKRA WORKLOAD EDITOR V2 =================
         let AKRA_PRIMARY_DUTIES = [
-            { id: 'W1', name: 'คลังหลัก W1', desc: 'หยิบ/แพ็ก/จัดเก็บ', icon: 'fa-warehouse' },
-            { id: 'W2', name: 'คลังสำรอง W2', desc: 'สต๊อกใหญ่/เติมของ', icon: 'fa-boxes-stacked' },
-            { id: 'INBOUND', name: 'รับสินค้าเข้า', desc: 'ตรวจรับ & ลงสินค้า', icon: 'fa-truck-ramp-box' },
-            { id: 'OUTBOUND', name: 'ขาออก', desc: 'จัดส่ง & จ่ายออก', icon: 'fa-truck' },
-            { id: 'MOVE', name: 'ขนย้ายสินค้า', desc: 'โอนย้าย & จัดระเบียบ', icon: 'fa-dolly' }
+            { id: 'W1', name: 'คลัง W1', desc: 'เบิกของสต๊อคสินค้า จัดระเบียบคลัง', icon: 'fa-warehouse' },
+            { id: 'OUTBOUND', name: 'ขาออก', desc: 'จัดสินค้า ส่งไปยัง TRD/ลูกค้า', icon: 'fa-truck' },
+            { id: 'INBOUND', name: 'ขาเข้า', desc: 'รับลงสินค้า / จัดระเบียบพื้นที่คลัง', icon: 'fa-truck-ramp-box' },
+            { id: 'MOVE', name: 'ขาย้าย', desc: 'ย้ายสินค้าจาก AKRA > TRD / W5 > AKRA', icon: 'fa-dolly' }
         ];
+
+        // Fixed pre-assigned default primary duties per employee
+        const AKRA_DEFAULT_PRIMARY_DUTIES = {
+            '250007': 'คลัง W1',     // หมูหยอง
+            'หมูหยอง': 'คลัง W1',
+            'yong': 'คลัง W1',
+            '260029': 'ขาออก',       // ปีเตอร์
+            'ปีเตอร์': 'ขาออก',
+            'peter': 'ขาออก',
+            'เอส': 'ขาออก',          // เอส
+            'พี่เอส': 'ขาออก',
+            '260030': 'ขาออก',       // จอนห์นี่ (default fallback)
+            'จอนห์นี่': 'ขาออก',
+            'johnny': 'ขาออก',
+            'AKRA12123': 'ขาเข้า',   // สอน
+            'TRAINEE_SORN': 'ขาเข้า',
+            'SORN': 'ขาเข้า',
+            'สอน': 'ขาเข้า',
+            '250010': 'ขาย้าย',      // เอี้ยง
+            'เอี้ยง': 'ขาย้าย',
+            'eng': 'ขาย้าย'
+        };
+
+        function getDefaultPrimaryDuty(empIdentifier) {
+            if (!empIdentifier) return 'คลัง W1';
+            const raw = String(empIdentifier).trim();
+            const lower = raw.toLowerCase();
+            const normalized = typeof normalizeEmpName === 'function' ? normalizeEmpName(raw) : raw;
+
+            if (AKRA_DEFAULT_PRIMARY_DUTIES[raw]) return AKRA_DEFAULT_PRIMARY_DUTIES[raw];
+            if (AKRA_DEFAULT_PRIMARY_DUTIES[lower]) return AKRA_DEFAULT_PRIMARY_DUTIES[lower];
+            if (AKRA_DEFAULT_PRIMARY_DUTIES[normalized]) return AKRA_DEFAULT_PRIMARY_DUTIES[normalized];
+
+            if (typeof GLOBAL_CONFIG_LIST !== 'undefined' && Array.isArray(GLOBAL_CONFIG_LIST)) {
+                const emp = GLOBAL_CONFIG_LIST.find(e =>
+                    String(e.uid || '').toLowerCase() === lower ||
+                    String(e.name || '').trim() === raw ||
+                    (typeof normalizeEmpName === 'function' && normalizeEmpName(e.name) === normalized)
+                );
+                if (emp) {
+                    const uidKey = String(emp.uid || '').toLowerCase();
+                    const nameKey = String(emp.name || '').trim();
+                    if (AKRA_DEFAULT_PRIMARY_DUTIES[emp.uid]) return AKRA_DEFAULT_PRIMARY_DUTIES[emp.uid];
+                    if (AKRA_DEFAULT_PRIMARY_DUTIES[uidKey]) return AKRA_DEFAULT_PRIMARY_DUTIES[uidKey];
+                    if (AKRA_DEFAULT_PRIMARY_DUTIES[emp.name]) return AKRA_DEFAULT_PRIMARY_DUTIES[emp.name];
+                    if (AKRA_DEFAULT_PRIMARY_DUTIES[nameKey]) return AKRA_DEFAULT_PRIMARY_DUTIES[nameKey];
+                }
+            }
+            return 'คลัง W1';
+        }
 
         let AKRA_SUPPORT_DUTIES = [
             { id: 'SUPP_W1', name: 'คลัง W1', desc: 'ช่วยงานคลัง W1', icon: 'fa-boxes-stacked' },
             { id: 'SUPP_W2', name: 'คลัง W2', desc: 'ช่วยงานคลัง W2', icon: 'fa-cubes-stacked' },
             { id: 'SUPP_OUT', name: 'ขาออก', desc: 'ช่วยจัดส่ง/จ่ายออก', icon: 'fa-truck-fast' },
-            { id: 'SUPP_IN', name: 'รับสินค้าเข้า', desc: 'ช่วยตรวจรับสินค้า', icon: 'fa-truck-ramp-box' },
-            { id: 'SUPP_MOVE', name: 'ขนย้ายสินค้า', desc: 'ช่วยขนย้ายสินค้า', icon: 'fa-dolly' },
+            { id: 'SUPP_IN', name: 'ขาเข้า', desc: 'ช่วยตรวจรับสินค้า', icon: 'fa-truck-ramp-box' },
+            { id: 'SUPP_MOVE', name: 'ขาย้าย', desc: 'ช่วยขนย้ายสินค้า', icon: 'fa-dolly' },
             { id: 'SUPP_LIFT', name: 'ช่วยยกสินค้า', desc: 'ช่วยยก/ขึ้นของ', icon: 'fa-truck-loading' },
             { id: 'SUPP_TRD', name: 'สนับสนุน TRD', desc: 'ช่วยหน้าร้าน TRD', icon: 'fa-store' },
             { id: 'SUPP_DEL', name: 'ส่งสินค้า', desc: 'วิ่งส่งสินค้าด่วน', icon: 'fa-motorcycle' }
@@ -4459,12 +4575,13 @@
             { hours: 0.5, label: '30 นาที' },
             { hours: 1.0, label: '1.0 ชม.' },
             { hours: 2.0, label: '2.0 ชม.' },
+            { hours: 3.0, label: '3.0 ชม.' },
             { hours: 5.0, label: '5.0 ชม.' }
         ];
 
         let workloadState = {
             core: 'คลัง W1',
-            coreLabel: 'คลังหลัก W1',
+            coreLabel: 'คลัง W1',
             totalHours: 10.0,
             support: []
         };
@@ -4854,6 +4971,25 @@
                 if (Array.isArray(systemConfig.workloadDuties.supportDuties) && systemConfig.workloadDuties.supportDuties.length > 0) {
                     AKRA_SUPPORT_DUTIES = systemConfig.workloadDuties.supportDuties;
                 }
+                const eda = systemConfig.workloadDuties.employeeDutyAssignments;
+                if (eda && typeof eda === 'object') {
+                    // Overwrite AKRA_DEFAULT_PRIMARY_DUTIES with admin-configured values
+                    Object.keys(eda).forEach(uid => {
+                        const val = eda[uid];
+                        AKRA_DEFAULT_PRIMARY_DUTIES[uid] = val;
+                        AKRA_DEFAULT_PRIMARY_DUTIES[String(uid).toLowerCase()] = val;
+                        // Also set by employee name for lookup compatibility
+                        const emp = (typeof GLOBAL_CONFIG_LIST !== 'undefined' && Array.isArray(GLOBAL_CONFIG_LIST))
+                            ? GLOBAL_CONFIG_LIST.find(e => String(e.uid || '').toLowerCase() === String(uid).toLowerCase())
+                            : null;
+                        if (emp && emp.name) {
+                            AKRA_DEFAULT_PRIMARY_DUTIES[emp.name] = val;
+                            if (typeof normalizeEmpName === 'function') {
+                                AKRA_DEFAULT_PRIMARY_DUTIES[normalizeEmpName(emp.name)] = val;
+                            }
+                        }
+                    });
+                }
             }
 
             if (systemConfig.incidentCatalog) {
@@ -4946,8 +5082,168 @@
             workloadState.coreLabel = name;
             document.querySelectorAll('.core-btn').forEach(el => el.classList.remove('chip-active'));
             if (btn) btn.classList.add('chip-active');
+            const panel = document.getElementById('main-duty-picker-panel');
+            if (panel) panel.classList.add('hidden');
+            const textEl = document.getElementById('btn-toggle-main-duty-text');
+            if (textEl) textEl.textContent = '[เปลี่ยนงานหลัก]';
             renderWorkload();
             saveRecordDraftDebounced();
+        }
+
+        function toggleMainDutyPicker() {
+            const panel = document.getElementById('main-duty-picker-panel');
+            const textEl = document.getElementById('btn-toggle-main-duty-text');
+            if (!panel) return;
+            const isHidden = panel.classList.contains('hidden');
+            if (isHidden) {
+                panel.classList.remove('hidden');
+                if (textEl) textEl.textContent = '[ปิดตัวเลือก]';
+                renderWorkloadCoreGrid();
+            } else {
+                panel.classList.add('hidden');
+                if (textEl) textEl.textContent = '[เปลี่ยนงานหลัก]';
+            }
+        }
+
+        function setMainSupportMode(enable) {
+            if (!enable) {
+                workloadState.support = [];
+            } else {
+                if (!workloadState.support || workloadState.support.length === 0) {
+                    const defaultSuppName = (typeof AKRA_SUPPORT_DUTIES !== 'undefined' && AKRA_SUPPORT_DUTIES[0]) ? AKRA_SUPPORT_DUTIES[0].name : 'ขาเข้า';
+                    workloadState.support = [{
+                        id: Date.now(),
+                        name: defaultSuppName,
+                        icon: 'fa-truck-ramp-box',
+                        hours: 2.0
+                    }];
+                }
+            }
+            renderWorkload();
+            saveRecordDraftDebounced();
+        }
+
+        function setMainSupportDuty(name, icon) {
+            if (!workloadState.support || workloadState.support.length === 0) {
+                workloadState.support = [{ id: Date.now(), name, icon: icon || 'fa-box', hours: 2.0 }];
+            } else {
+                workloadState.support[0].name = name;
+                if (icon) workloadState.support[0].icon = icon;
+            }
+            renderWorkload();
+            saveRecordDraftDebounced();
+        }
+
+        function stepMainSupportHours(delta) {
+            if (!workloadState.support || workloadState.support.length === 0) return;
+            let current = parseFloat(workloadState.support[0].hours) || 2.0;
+            current = Math.round((current + delta) * 10) / 10;
+            const totalCapacity = typeof workloadState.totalHours === 'number' ? workloadState.totalHours : 10.0;
+            if (current < 0.5) current = 0.5;
+            if (current > Math.max(0.5, totalCapacity - 0.5)) current = Math.max(0.5, totalCapacity - 0.5);
+            workloadState.support[0].hours = current;
+            renderWorkload();
+            saveRecordDraftDebounced();
+        }
+
+        function renderMainWorkloadCard() {
+            const nameEl = document.getElementById('main-wl-user-name');
+            const dateEl = document.getElementById('main-wl-date-text');
+            const primaryNameEl = document.getElementById('main-wl-primary-name');
+            const primaryDescEl = document.getElementById('main-wl-primary-desc');
+            const primaryIconEl = document.getElementById('main-wl-primary-icon');
+            const primaryHoursEl = document.getElementById('main-wl-primary-hours');
+            const summaryTextEl = document.getElementById('main-wl-summary-text');
+            const suppNoneBtn = document.getElementById('btn-main-supp-none');
+            const suppYesBtn = document.getElementById('btn-main-supp-yes');
+            const suppDetailEl = document.getElementById('main-support-detail');
+            const suppHoursBadge = document.getElementById('main-support-hours-badge');
+            const suppChipsEl = document.getElementById('main-support-chips');
+
+            if (!primaryNameEl) return;
+
+            // User greeting & record date
+            const targetEmp = (typeof displayUserName !== 'undefined' && displayUserName) ? displayUserName : (currentUser || 'พนักงาน');
+            if (nameEl) nameEl.textContent = `คุณ ${targetEmp} (AKRA)`;
+            const recDate = document.getElementById('record-date')?.value || '';
+            if (dateEl) dateEl.textContent = recDate ? `วันที่บันทึก: ${recDate}` : 'บันทึกภาระงานประจำวัน';
+
+            // Primary duty info
+            const currentCore = workloadState.core || 'คลัง W1';
+            const primaryDutyObj = (AKRA_PRIMARY_DUTIES || []).find(d => d.name === currentCore) || {
+                name: currentCore,
+                desc: 'หน้าที่หลักประจำวัน',
+                icon: 'fa-boxes-stacked'
+            };
+            primaryNameEl.textContent = primaryDutyObj.name;
+            if (primaryDescEl) primaryDescEl.textContent = primaryDutyObj.desc || '';
+            if (primaryIconEl) {
+                primaryIconEl.className = `fa-solid ${primaryDutyObj.icon && primaryDutyObj.icon.startsWith('fa-') ? primaryDutyObj.icon : 'fa-warehouse'}`;
+            }
+
+            // Support state
+            const hasSupport = Array.isArray(workloadState.support) && workloadState.support.length > 0;
+            const supportItem = hasSupport ? workloadState.support[0] : null;
+            const supportHours = supportItem ? (parseFloat(supportItem.hours) || 0) : 0;
+            const totalCapacity = typeof workloadState.totalHours === 'number' ? workloadState.totalHours : 10.0;
+            const primaryHours = Math.max(0, totalCapacity - supportHours);
+
+            if (primaryHoursEl) primaryHoursEl.textContent = `${primaryHours.toFixed(1)} ชม.`;
+
+            // Support toggle buttons
+            if (suppNoneBtn && suppYesBtn) {
+                if (!hasSupport) {
+                    suppNoneBtn.className = 'py-2.5 px-3 rounded-xl border-2 text-xs font-bold transition-all flex items-center justify-center gap-2 border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm';
+                    suppYesBtn.className = 'py-2.5 px-3 rounded-xl border-2 text-xs font-bold transition-all flex items-center justify-center gap-2 border-slate-200 bg-white text-slate-600 hover:border-amber-300';
+                } else {
+                    suppNoneBtn.className = 'py-2.5 px-3 rounded-xl border-2 text-xs font-bold transition-all flex items-center justify-center gap-2 border-slate-200 bg-white text-slate-600 hover:border-emerald-300';
+                    suppYesBtn.className = 'py-2.5 px-3 rounded-xl border-2 text-xs font-bold transition-all flex items-center justify-center gap-2 border-amber-500 bg-amber-50 text-amber-800 shadow-sm';
+                }
+            }
+
+            if (suppDetailEl) {
+                if (hasSupport) suppDetailEl.classList.remove('hidden');
+                else suppDetailEl.classList.add('hidden');
+            }
+
+            if (suppHoursBadge && supportItem) {
+                suppHoursBadge.textContent = `${supportHours.toFixed(1)} ชม.`;
+            }
+
+            // Support duty chips
+            if (suppChipsEl) {
+                const supportDuties = (typeof AKRA_SUPPORT_DUTIES !== 'undefined' && Array.isArray(AKRA_SUPPORT_DUTIES) && AKRA_SUPPORT_DUTIES.length > 0)
+                    ? AKRA_SUPPORT_DUTIES
+                    : [
+                        { id: 'SUPP_W1', name: 'คลัง W1', icon: 'fa-boxes-stacked' },
+                        { id: 'SUPP_OUT', name: 'ขาออก', icon: 'fa-truck-fast' },
+                        { id: 'SUPP_IN', name: 'ขาเข้า', icon: 'fa-truck-ramp-box' },
+                        { id: 'SUPP_MOVE', name: 'ขาย้าย', icon: 'fa-dolly' },
+                        { id: 'SUPP_LIFT', name: 'ช่วยยกสินค้า', icon: 'fa-truck-loading' },
+                        { id: 'SUPP_TRD', name: 'สนับสนุน TRD', icon: 'fa-store' },
+                        { id: 'SUPP_DEL', name: 'ส่งสินค้า', icon: 'fa-motorcycle' }
+                    ];
+                const activeSuppName = supportItem ? supportItem.name : (supportDuties[0]?.name || 'ขาเข้า');
+                suppChipsEl.innerHTML = supportDuties.map(d => {
+                    const isSelected = d.name === activeSuppName;
+                    return `
+                        <button type="button" onclick="setMainSupportDuty('${esc(d.name)}', '${esc(d.icon || 'fa-box')}')"
+                            class="py-1.5 px-2.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-all ${isSelected ? 'border-amber-500 bg-amber-500 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}">
+                            <i class="fa-solid ${esc(d.icon || 'fa-box')} text-[11px]"></i>
+                            <span>${esc(d.name)}</span>
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            // Summary text
+            if (summaryTextEl) {
+                if (!hasSupport) {
+                    summaryTextEl.textContent = `งานหลัก: ${currentCore} (${primaryHours.toFixed(1)} ชม.) — 100%`;
+                } else {
+                    summaryTextEl.textContent = `งานหลัก: ${currentCore} (${primaryHours.toFixed(1)} ชม.) + งานช่วย: ${supportItem.name} (${supportHours.toFixed(1)} ชม.) = รวม ${totalCapacity.toFixed(1)} ชม.`;
+                }
+            }
         }
 
         function renderWorkload() {
@@ -5002,6 +5298,7 @@
                 }).join('');
             }
 
+            renderMainWorkloadCard();
             renderTeamWorkloadPreview();
         }
 
@@ -5104,15 +5401,15 @@
             const primaryCore = workloadState.core || 'คลัง W1';
             
             if (primaryCore === 'คลัง W1' || primaryCore === 'คลังหลัก W1' || primaryCore === 'ขาออก' || primaryCore === 'ส่งสินค้า') outbound += primaryHours;
-            else if (primaryCore === 'รับสินค้าเข้า' || primaryCore === 'ช่วยยกสินค้า') inbound += primaryHours;
-            else if (primaryCore === 'คลัง W2' || primaryCore === 'คลังสำรอง W2' || primaryCore === 'ขนย้ายสินค้า') transfer += primaryHours;
+            else if (primaryCore === 'ขาเข้า' || primaryCore === 'รับสินค้าเข้า' || primaryCore === 'ช่วยยกสินค้า') inbound += primaryHours;
+            else if (primaryCore === 'ขาย้าย' || primaryCore === 'ขนย้ายสินค้า' || primaryCore === 'คลัง W2' || primaryCore === 'คลังสำรอง W2') transfer += primaryHours;
             else shared += primaryHours;
 
             (workloadState.support || []).forEach(d => {
                 const h = parseFloat(d.hours) || 0;
                 if (d.name === 'คลัง W1' || d.name === 'คลังหลัก W1' || d.name === 'ขาออก' || d.name === 'ส่งสินค้า' || d.name === 'สนับสนุน TRD' || d.name === 'ช่วยหน้าร้าน TRD' || d.name === 'แวะไปส่งของ') outbound += h;
-                else if (d.name === 'รับสินค้าเข้า' || d.name === 'ช่วยยกสินค้า' || d.name === 'แวะขึ้นของ') inbound += h;
-                else if (d.name === 'คลัง W2' || d.name === 'คลังสำรอง W2' || d.name === 'ขนย้ายสินค้า' || d.name === 'ช่วยย้ายของ W2') transfer += h;
+                else if (d.name === 'ขาเข้า' || d.name === 'รับสินค้าเข้า' || d.name === 'ช่วยยกสินค้า' || d.name === 'แวะขึ้นของ') inbound += h;
+                else if (d.name === 'ขาย้าย' || d.name === 'ขนย้ายสินค้า' || d.name === 'คลัง W2' || d.name === 'คลังสำรอง W2' || d.name === 'ช่วยย้ายของ W2') transfer += h;
                 else shared += h;
             });
 
@@ -5133,19 +5430,24 @@
 
         function renderAkraWorkloadEditor(savedData = null, forceReset = false) {
             if (currentBranch !== 'AKRA') return;
+            const currentUid = String(currentUser || currentUserId || '').trim().toLowerCase();
+            const currentName = String(displayUserName || currentUser || '').trim();
+            const defaultDuty = (typeof getDefaultPrimaryDuty === 'function') 
+                ? (getDefaultPrimaryDuty(currentUid) !== 'คลัง W1' ? getDefaultPrimaryDuty(currentUid) : getDefaultPrimaryDuty(currentName))
+                : 'คลัง W1';
+
             const resetEditor = () => {
-                workloadState.core = 'คลัง W1';
-                workloadState.coreLabel = 'คลังหลัก W1';
+                workloadState.core = defaultDuty;
+                workloadState.coreLabel = defaultDuty;
                 workloadState.support = [];
             };
             if (forceReset || !savedData || (Array.isArray(savedData) && savedData.length === 0)) resetEditor();
             if (savedData && Array.isArray(savedData) && savedData.length > 0) {
-                const currentUid = String(currentUser || '').trim().toLowerCase();
                 const meItem = getCanonicalWorkloadEntries(savedData, GLOBAL_CONFIG_LIST)
                     .find(item => String(item.uid || '').trim().toLowerCase() === currentUid);
                 if (meItem) {
-                    workloadState.core = meItem.primaryCore || 'คลัง W1';
-                    workloadState.coreLabel = meItem.primaryCore || 'คลัง W1';
+                    workloadState.core = meItem.primaryCore || defaultDuty;
+                    workloadState.coreLabel = meItem.primaryCore || defaultDuty;
                     if (meItem.supportDuties && Array.isArray(meItem.supportDuties)) {
                         workloadState.support = meItem.supportDuties;
                     } else {
@@ -5213,6 +5515,9 @@
                         primaryDuties: cloneConfig(AKRA_PRIMARY_DUTIES),
                         supportDuties: cloneConfig(AKRA_SUPPORT_DUTIES)
                     };
+            }
+            if (!ADMIN_SETTINGS_STATE.workloadDuties.employeeDutyAssignments) {
+                ADMIN_SETTINGS_STATE.workloadDuties.employeeDutyAssignments = buildDefaultEmployeeDutyAssignments();
             }
             if (!ADMIN_SETTINGS_STATE.incidentCatalog) {
                 const akraCategories = [
@@ -6283,31 +6588,48 @@
 
         // ================= QUICK WORKLOAD STEPPER MODAL (LIFF & 1-TAP) =================
         let QUICK_WORKLOAD_STATE = {
-            primaryCore: 'คลังหลัก W1',
-            supportName: 'รับสินค้าเข้า',
-            hasSupport: true,
+            primaryCore: 'คลัง W1',
+            supportName: 'ขาเข้า',
+            hasSupport: false,
             primaryHours: 8.0,
-            supportHours: 2.0,
-            totalHours: 10.0
+            supportHours: 0.0,
+            totalHours: 8.0,
+            dutyPickerOpen: false
         };
 
-        function openQuickWorkloadModal(initialCore = null, initialSupport = null, pHours = 8.0, sHours = 2.0) {
+        function openQuickWorkloadModal(initialCore = null, initialSupport = null, pHours = null, sHours = 0.0) {
             const modal = document.getElementById('quick-workload-modal');
             if (!modal) return;
 
-            if (initialCore) QUICK_WORKLOAD_STATE.primaryCore = initialCore;
+            const currentUid = String(currentUser || currentUserId || '').trim().toLowerCase();
+            const currentName = String(displayUserName || currentUser || '').trim();
+            const defaultDuty = (typeof getDefaultPrimaryDuty === 'function')
+                ? (getDefaultPrimaryDuty(currentUid) !== 'คลัง W1' ? getDefaultPrimaryDuty(currentUid) : getDefaultPrimaryDuty(currentName))
+                : 'คลัง W1';
+
+            QUICK_WORKLOAD_STATE.primaryCore = initialCore || defaultDuty;
             if (initialSupport) {
                 QUICK_WORKLOAD_STATE.supportName = initialSupport;
                 QUICK_WORKLOAD_STATE.hasSupport = true;
+                QUICK_WORKLOAD_STATE.supportHours = Number(sHours) || 2.0;
+            } else {
+                QUICK_WORKLOAD_STATE.hasSupport = false;
+                QUICK_WORKLOAD_STATE.supportHours = 0.0;
             }
-            QUICK_WORKLOAD_STATE.primaryHours = pHours;
-            QUICK_WORKLOAD_STATE.supportHours = sHours;
-            QUICK_WORKLOAD_STATE.totalHours = pHours + sHours;
+
+            const total = (typeof pHours === 'number' && pHours > 0) ? (pHours + QUICK_WORKLOAD_STATE.supportHours) : 8.0;
+            QUICK_WORKLOAD_STATE.totalHours = total;
+            QUICK_WORKLOAD_STATE.primaryHours = Math.max(0, total - QUICK_WORKLOAD_STATE.supportHours);
+            QUICK_WORKLOAD_STATE.dutyPickerOpen = false;
 
             const dateText = document.getElementById('qw-date-text');
             const userText = document.getElementById('qw-user-text');
-            if (dateText) dateText.textContent = formatDisplayDate(getTodayBangkokDateStr());
-            if (userText) userText.textContent = currentUser || displayUserName || 'คุณ';
+            if (dateText) {
+                const todayStr = getTodayBangkokDateStr();
+                const parts = todayStr.split('-');
+                dateText.textContent = parts.length === 3 ? `วันนี้ ${parts[2]}/${parts[1]}` : 'วันนี้';
+            }
+            if (userText) userText.textContent = displayUserName || currentUser || 'คุณ';
 
             renderQuickWorkloadModal();
             modal.classList.remove('hidden');
@@ -6322,22 +6644,89 @@
             }
         }
 
+        function toggleQuickDutyPicker() {
+            QUICK_WORKLOAD_STATE.dutyPickerOpen = !QUICK_WORKLOAD_STATE.dutyPickerOpen;
+            const picker = document.getElementById('qw-duty-picker-grid');
+            const toggleText = document.getElementById('qw-toggle-duty-text');
+            if (picker) {
+                if (QUICK_WORKLOAD_STATE.dutyPickerOpen) {
+                    picker.classList.remove('hidden');
+                    if (toggleText) toggleText.textContent = 'ปิดตัวเลือก';
+                } else {
+                    picker.classList.add('hidden');
+                    if (toggleText) toggleText.textContent = 'เปลี่ยนงานหลัก';
+                }
+            }
+        }
+
+        function setQuickHasSupport(hasSupport) {
+            QUICK_WORKLOAD_STATE.hasSupport = !!hasSupport;
+            if (!QUICK_WORKLOAD_STATE.hasSupport) {
+                QUICK_WORKLOAD_STATE.supportHours = 0.0;
+                QUICK_WORKLOAD_STATE.primaryHours = QUICK_WORKLOAD_STATE.totalHours;
+            } else {
+                if (QUICK_WORKLOAD_STATE.supportHours === 0) {
+                    QUICK_WORKLOAD_STATE.supportHours = 2.0;
+                    QUICK_WORKLOAD_STATE.primaryHours = Math.max(0, QUICK_WORKLOAD_STATE.totalHours - 2.0);
+                }
+                if (!QUICK_WORKLOAD_STATE.supportName) {
+                    QUICK_WORKLOAD_STATE.supportName = (QUICK_WORKLOAD_STATE.primaryCore === 'ขาเข้า') ? 'ขาออก' : 'ขาเข้า';
+                }
+            }
+            renderQuickWorkloadModal();
+        }
+
         function renderQuickWorkloadModal() {
             const s = QUICK_WORKLOAD_STATE;
 
-            // Render Primary Chips
+            // Find duty object for primary
+            const currentDuty = AKRA_PRIMARY_DUTIES.find(d => d.name === s.primaryCore || d.id === s.primaryCore)
+                || { name: s.primaryCore, desc: '', icon: 'fa-warehouse' };
+
+            // Update Selected Primary Card
+            const titleEl = document.getElementById('qw-primary-title');
+            const descEl = document.getElementById('qw-primary-desc');
+            const iconEl = document.getElementById('qw-primary-icon');
+            const pHoursBadge = document.getElementById('qw-primary-hours-badge');
+
+            if (titleEl) titleEl.textContent = currentDuty.name;
+            if (descEl) descEl.textContent = currentDuty.desc || 'หน้าที่หลักประจำวัน';
+            if (iconEl) iconEl.className = `fa-solid ${currentDuty.icon || 'fa-boxes-stacked'}`;
+            if (pHoursBadge) pHoursBadge.textContent = `${s.primaryHours.toFixed(1)} ชม.`;
+
+            // Render Primary Duty Chips in picker
             const pContainer = document.getElementById('qw-primary-chips');
             if (pContainer) {
                 pContainer.innerHTML = AKRA_PRIMARY_DUTIES.map(d => {
                     const isSelected = s.primaryCore === d.name || s.primaryCore === d.id;
                     const icon = (d.icon && d.icon.startsWith('fa-')) ? d.icon : 'fa-boxes-stacked';
                     return `
-                        <button type="button" onclick="selectQuickPrimaryDuty('${esc(d.name)}')" class="p-2.5 rounded-xl border text-left transition-all active:scale-95 flex items-center gap-2 ${isSelected ? 'bg-blue-600/30 border-blue-500 text-white shadow-sm' : 'bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-slate-600'}">
-                            <i class="fa-solid ${esc(icon)} ${isSelected ? 'text-blue-400' : 'text-slate-400'} text-sm"></i>
-                            <span class="text-xs font-bold truncate">${esc(d.name)}</span>
+                        <button type="button" onclick="selectQuickPrimaryDuty('${esc(d.name)}')" class="p-2.5 rounded-xl border text-left transition-all active:scale-95 flex items-center gap-2 ${isSelected ? 'bg-blue-600/40 border-blue-500 text-white shadow-md' : 'bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-slate-600'}">
+                            <i class="fa-solid ${esc(icon)} ${isSelected ? 'text-blue-400' : 'text-slate-400'} text-sm shrink-0"></i>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs font-bold truncate leading-tight">${esc(d.name)}</p>
+                                <p class="text-[9px] text-slate-400 truncate mt-0.5">${esc(d.desc || '')}</p>
+                            </div>
                         </button>
                     `;
                 }).join('');
+            }
+
+            // Update Support Section Buttons & Area
+            const btnNone = document.getElementById('qw-btn-support-none');
+            const btnAdd = document.getElementById('qw-btn-support-add');
+            const supportArea = document.getElementById('qw-support-expanded-area');
+
+            if (btnNone && btnAdd) {
+                if (!s.hasSupport) {
+                    btnNone.className = 'py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95 bg-emerald-600/30 border-emerald-500 text-white shadow-sm';
+                    btnAdd.className = 'py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95 bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-slate-600';
+                    if (supportArea) supportArea.classList.add('hidden');
+                } else {
+                    btnNone.className = 'py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95 bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-slate-600';
+                    btnAdd.className = 'py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95 bg-amber-600/30 border-amber-500 text-white shadow-sm';
+                    if (supportArea) supportArea.classList.remove('hidden');
+                }
             }
 
             // Render Support Chips
@@ -6347,28 +6736,22 @@
                     const isSelected = s.hasSupport && (s.supportName === d.name || s.supportName === d.id);
                     const icon = (d.icon && d.icon.startsWith('fa-')) ? d.icon : 'fa-handshake';
                     return `
-                        <button type="button" onclick="selectQuickSupportDuty('${esc(d.name)}')" class="p-2 rounded-xl border text-left transition-all active:scale-95 flex items-center gap-2 ${isSelected ? 'bg-emerald-600/30 border-emerald-500 text-white shadow-sm' : 'bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-slate-600'}">
-                            <i class="fa-solid ${esc(icon)} ${isSelected ? 'text-emerald-400' : 'text-slate-400'} text-xs"></i>
+                        <button type="button" onclick="selectQuickSupportDuty('${esc(d.name)}')" class="p-2 rounded-xl border text-left transition-all active:scale-95 flex items-center gap-2 ${isSelected ? 'bg-amber-600/30 border-amber-500 text-white shadow-sm' : 'bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-slate-600'}">
+                            <i class="fa-solid ${esc(icon)} ${isSelected ? 'text-amber-400' : 'text-slate-400'} text-xs shrink-0"></i>
                             <span class="text-[11px] font-bold truncate">${esc(d.name)}</span>
                         </button>
                     `;
                 }).join('');
             }
 
-            // Update Stepper Values & Labels
-            const pVal = document.getElementById('qw-primary-stepper-val');
+            // Update Support Stepper Values & Labels
             const sVal = document.getElementById('qw-support-stepper-val');
-            const pLabel = document.getElementById('qw-primary-hours-label');
             const sLabel = document.getElementById('qw-support-hours-label');
-            const totalBadge = document.getElementById('qw-total-badge');
             const saveBtnText = document.getElementById('btn-save-qw-text');
 
-            if (pVal) pVal.textContent = `${s.primaryHours.toFixed(1)} ชม.`;
             if (sVal) sVal.textContent = `${s.supportHours.toFixed(1)} ชม.`;
-            if (pLabel) pLabel.textContent = `${s.primaryHours.toFixed(1)} ชม.`;
             if (sLabel) sLabel.textContent = `${s.supportHours.toFixed(1)} ชม.`;
-            if (totalBadge) totalBadge.textContent = `${s.totalHours.toFixed(1)} ชม.`;
-            if (saveBtnText) saveBtnText.textContent = `บันทึกเวลา ${s.totalHours.toFixed(1)} ชม. ทันที`;
+            if (saveBtnText) saveBtnText.textContent = `[ยืนยันวันนี้]`;
 
             // Update Visual Allocation Bar
             const pPct = s.totalHours > 0 ? Math.round((s.primaryHours / s.totalHours) * 100) : 100;
@@ -6380,12 +6763,17 @@
 
             if (barPrimary) barPrimary.style.width = `${pPct}%`;
             if (barSupport) barSupport.style.width = `${sPct}%`;
-            if (barPrimaryText) barPrimaryText.textContent = `${s.primaryCore} ${pPct}% (${s.primaryHours.toFixed(1)}h)`;
-            if (barSupportText) barSupportText.textContent = s.hasSupport && s.supportHours > 0 ? `${s.supportName} ${sPct}% (${s.supportHours.toFixed(1)}h)` : 'ไม่มีงานช่วย (0h)';
+            if (barPrimaryText) barPrimaryText.textContent = `${s.primaryCore} ${s.primaryHours.toFixed(1)} ชม. (${pPct}%)`;
+            if (barSupportText) barSupportText.textContent = (s.hasSupport && s.supportHours > 0) ? `${s.supportName} ${s.supportHours.toFixed(1)} ชม. (${sPct}%)` : 'ไม่มีงานช่วย';
         }
 
         function selectQuickPrimaryDuty(name) {
             QUICK_WORKLOAD_STATE.primaryCore = name;
+            QUICK_WORKLOAD_STATE.dutyPickerOpen = false;
+            const picker = document.getElementById('qw-duty-picker-grid');
+            const toggleText = document.getElementById('qw-toggle-duty-text');
+            if (picker) picker.classList.add('hidden');
+            if (toggleText) toggleText.textContent = 'เปลี่ยนงานหลัก';
             renderQuickWorkloadModal();
         }
 
@@ -6399,20 +6787,23 @@
             renderQuickWorkloadModal();
         }
 
-        function adjustQuickPrimaryHours(delta) {
-            const newP = Math.max(0, Math.min(QUICK_WORKLOAD_STATE.totalHours, QUICK_WORKLOAD_STATE.primaryHours + delta));
-            QUICK_WORKLOAD_STATE.primaryHours = Math.round(newP * 10) / 10;
-            QUICK_WORKLOAD_STATE.supportHours = Math.round((QUICK_WORKLOAD_STATE.totalHours - QUICK_WORKLOAD_STATE.primaryHours) * 10) / 10;
-            QUICK_WORKLOAD_STATE.hasSupport = QUICK_WORKLOAD_STATE.supportHours > 0;
-            renderQuickWorkloadModal();
-        }
-
         function adjustQuickSupportHours(delta) {
             const newS = Math.max(0, Math.min(QUICK_WORKLOAD_STATE.totalHours, QUICK_WORKLOAD_STATE.supportHours + delta));
             QUICK_WORKLOAD_STATE.supportHours = Math.round(newS * 10) / 10;
             QUICK_WORKLOAD_STATE.primaryHours = Math.round((QUICK_WORKLOAD_STATE.totalHours - QUICK_WORKLOAD_STATE.supportHours) * 10) / 10;
             QUICK_WORKLOAD_STATE.hasSupport = QUICK_WORKLOAD_STATE.supportHours > 0;
             renderQuickWorkloadModal();
+        }
+
+        function confirmQuickWorkloadSave() {
+            const s = QUICK_WORKLOAD_STATE;
+            const dutyName = s.primaryCore || 'หน้าที่หลัก';
+            const supportSummary = (s.hasSupport && s.supportHours > 0) ? `\n(ช่วยงาน ${s.supportName} ${s.supportHours.toFixed(1)} ชม.)` : '';
+            const confirmMsg = `วันนี้คุณได้ทำ "${dutyName}" ${s.primaryHours.toFixed(1)} ชม. ถูกต้องหรือไม่?${supportSummary}`;
+
+            showModal('ยืนยันข้อมูล Workload วันนี้', confirmMsg, 'confirm', () => {
+                submitQuickWorkload();
+            });
         }
 
         async function submitQuickWorkload() {
@@ -6423,21 +6814,21 @@
             const dateStr = getTodayBangkokDateStr();
 
             let outbound = 0, inbound = 0, transfer = 0, shared = 0;
-            const primaryCore = s.primaryCore || 'คลังหลัก W1';
+            const primaryCore = s.primaryCore || 'คลัง W1';
 
             if (primaryCore === 'คลัง W1' || primaryCore === 'คลังหลัก W1' || primaryCore === 'ขาออก' || primaryCore === 'ส่งสินค้า') outbound += s.primaryHours;
-            else if (primaryCore === 'รับสินค้าเข้า' || primaryCore === 'ช่วยยกสินค้า') inbound += s.primaryHours;
-            else if (primaryCore === 'คลัง W2' || primaryCore === 'คลังสำรอง W2' || primaryCore === 'ขนย้ายสินค้า') transfer += s.primaryHours;
+            else if (primaryCore === 'ขาเข้า' || primaryCore === 'รับสินค้าเข้า' || primaryCore === 'ช่วยยกสินค้า') inbound += s.primaryHours;
+            else if (primaryCore === 'ขาย้าย' || primaryCore === 'ขนย้ายสินค้า' || primaryCore === 'คลัง W2' || primaryCore === 'คลังสำรอง W2') transfer += s.primaryHours;
             else shared += s.primaryHours;
 
             const supportDuties = [];
             if (s.hasSupport && s.supportHours > 0) {
-                const suppName = s.supportName || 'รับสินค้าเข้า';
+                const suppName = s.supportName || 'ขาเข้า';
                 supportDuties.push({ name: suppName, hours: s.supportHours });
 
                 if (suppName === 'คลัง W1' || suppName === 'คลังหลัก W1' || suppName === 'ขาออก' || suppName === 'ส่งสินค้า' || suppName === 'สนับสนุน TRD' || suppName === 'ช่วยหน้าร้าน TRD' || suppName === 'แวะไปส่งของ') outbound += s.supportHours;
-                else if (suppName === 'รับสินค้าเข้า' || suppName === 'ช่วยยกสินค้า' || suppName === 'แวะขึ้นของ') inbound += s.supportHours;
-                else if (suppName === 'คลัง W2' || suppName === 'คลังสำรอง W2' || suppName === 'ขนย้ายสินค้า' || suppName === 'ช่วยย้ายของ W2') transfer += s.supportHours;
+                else if (suppName === 'ขาเข้า' || suppName === 'รับสินค้าเข้า' || suppName === 'ช่วยยกสินค้า' || suppName === 'แวะขึ้นของ') inbound += s.supportHours;
+                else if (suppName === 'ขาย้าย' || suppName === 'ขนย้ายสินค้า' || suppName === 'คลัง W2' || suppName === 'คลังสำรอง W2' || suppName === 'ช่วยย้ายของ W2') transfer += s.supportHours;
                 else shared += s.supportHours;
             }
 
@@ -6491,7 +6882,7 @@
             } finally {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> <span id="btn-save-qw-text">บันทึกเวลา 10 ชม. ทันที</span>';
+                    btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span id="btn-save-qw-text">[ยืนยันวันนี้]</span>';
                 }
             }
         }
@@ -6556,6 +6947,66 @@
                     </div>
                 `).join('') || '<div class="text-xs text-slate-400 text-center py-3">ไม่มีรายการงานรอง</div>';
             }
+            renderAdminEmployeeDutyAssignments();
+        }
+
+        function buildDefaultEmployeeDutyAssignments() {
+            const assignments = {};
+            const akraEmployees = getBranchRosterEmployees('AKRA');
+            akraEmployees.forEach(emp => {
+                // Use hardcoded default as seed value
+                assignments[emp.uid] = AKRA_DEFAULT_PRIMARY_DUTIES[emp.uid]
+                    || AKRA_DEFAULT_PRIMARY_DUTIES[emp.name]
+                    || 'คลัง W1';
+            });
+            return assignments;
+        }
+
+        function renderAdminEmployeeDutyAssignments() {
+            initAdminSettingsState();
+            const container = document.getElementById('admin-employee-duty-list');
+            if (!container) return;
+
+            const assignments = ADMIN_SETTINGS_STATE.workloadDuties.employeeDutyAssignments || {};
+            const akraEmployees = getBranchRosterEmployees('AKRA');
+            const duties = ADMIN_SETTINGS_STATE.workloadDuties.primaryDuties || AKRA_PRIMARY_DUTIES;
+
+            if (akraEmployees.length === 0) {
+                container.innerHTML = '<div class="text-xs text-slate-400 text-center py-3">ไม่พบพนักงาน AKRA ที่ Active</div>';
+                return;
+            }
+
+            container.innerHTML = akraEmployees.map(emp => {
+                const currentDuty = assignments[emp.uid] || getDefaultPrimaryDuty(emp.uid);
+                const dutyOptions = duties.map(d =>
+                    `<option value="${esc(d.name)}" ${d.name === currentDuty ? 'selected' : ''}>${esc(d.name)}</option>`
+                ).join('');
+                return `
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3 text-xs">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm shrink-0 font-bold">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-bold text-slate-800 leading-tight truncate">${esc(emp.name)}</p>
+                                <p class="text-[10px] text-slate-400 truncate">UID: ${esc(emp.uid)}</p>
+                            </div>
+                        </div>
+                        <select onchange="changeEmployeeDutyAssignment('${esc(emp.uid)}', this.value)"
+                                class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 min-w-[100px] focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            ${dutyOptions}
+                        </select>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function changeEmployeeDutyAssignment(uid, dutyName) {
+            initAdminSettingsState();
+            if (!ADMIN_SETTINGS_STATE.workloadDuties.employeeDutyAssignments) {
+                ADMIN_SETTINGS_STATE.workloadDuties.employeeDutyAssignments = {};
+            }
+            ADMIN_SETTINGS_STATE.workloadDuties.employeeDutyAssignments[uid] = dutyName;
         }
 
         function openAddDutyModal(kind, idx = -1) {
@@ -6639,12 +7090,22 @@
                 saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>กำลังบันทึก…</span>';
             }
             try {
+                if (!ADMIN_SETTINGS_STATE.workloadDuties.employeeDutyAssignments) {
+                    ADMIN_SETTINGS_STATE.workloadDuties.employeeDutyAssignments = {};
+                }
+                const akraEmployees = getBranchRosterEmployees('AKRA');
+                akraEmployees.forEach(emp => {
+                    if (!ADMIN_SETTINGS_STATE.workloadDuties.employeeDutyAssignments[emp.uid]) {
+                        ADMIN_SETTINGS_STATE.workloadDuties.employeeDutyAssignments[emp.uid] = getDefaultPrimaryDuty(emp.uid);
+                    }
+                });
                 const result = await AkraSupabaseKPI.saveSystemConfig(sessionToken, 'workload_duties', ADMIN_SETTINGS_STATE.workloadDuties);
                 if (result.status === 'success') {
                     if (!KPI_SYSTEM_CONFIG) KPI_SYSTEM_CONFIG = {};
                     KPI_SYSTEM_CONFIG.workloadDuties = cloneConfig(ADMIN_SETTINGS_STATE.workloadDuties);
                     applySystemConfig(KPI_SYSTEM_CONFIG);
                     renderWorkload();
+                    renderAdminWorkloadSettings();
                     showToast('บันทึกการตั้งค่า Workload สำเร็จแล้ว');
                 }
             } catch (err) {
@@ -11838,6 +12299,17 @@
                 }
             }
 
+            const primaryCore = workload[0]?.primaryCore || 'หน้าที่หลัก';
+            const supportList = workload[0]?.supportDuties || [];
+            const supportText = supportList.length > 0 ? `\n(มีงานช่วย: ${supportList.map(s => `${s.name} ${s.hours} ชม.`).join(', ')})` : '';
+            const confirmMsg = `วันนี้คุณได้ทำ "${primaryCore}" ถูกต้องหรือไม่?${supportText}`;
+
+            showModal('ยืนยันข้อมูล Workload วันนี้', confirmMsg, 'confirm', async () => {
+                await executeSaveWorkload(workload, date);
+            });
+        }
+
+        async function executeSaveWorkload(workload, date) {
             const btn = document.getElementById('btn-save-workload');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
             btn.disabled = true;
@@ -11871,7 +12343,7 @@
                 console.error(e);
                 showModal("บันทึกไม่สำเร็จ", e.message || "เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้", "error");
             } finally {
-                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> บันทึก Workload';
+                btn.innerHTML = '<i class="fa-solid fa-circle-check text-base"></i> <span id="btn-save-workload-text">[ ยืนยันข้อมูลวันนี้ ]</span>';
                 btn.disabled = false;
             }
         }

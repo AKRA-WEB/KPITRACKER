@@ -225,7 +225,7 @@ async function runTests() {
   const currentVersionMatch = html.match(/const\s+CURRENT_VERSION\s*=\s*["']([^"']+)["']/);
   assert(currentVersionMatch, 'CURRENT_VERSION must exist in index.html');
   assert.strictEqual(currentVersionMatch[1], versionJson.version, 'CURRENT_VERSION must match version.json');
-  assert.strictEqual(currentVersionMatch[1], '20260907.02', 'Version must be 20260907.02');
+  assert(currentVersionMatch[1] >= '20260907.02', 'Version must be at least 20260907.02');
   console.log(`✓ Version parity verified: ${versionJson.version}`);
 
   console.log('\nAll LINE binding tests passed successfully!');
