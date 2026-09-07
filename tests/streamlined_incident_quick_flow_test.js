@@ -30,7 +30,7 @@ const versionJson = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
 const versionMatch = scriptCode.match(/const CURRENT_VERSION = ["']([^"']+)["'];/);
 assert.ok(versionMatch, 'CURRENT_VERSION must be declared in index.html');
 assert.equal(versionMatch[1], versionJson.version, 'index.html CURRENT_VERSION must match version.json');
-assert.equal(versionJson.version, '20260907.06', 'Version must be bumped to 20260907.06');
+assert.equal(versionJson.version, '20260907.07', 'Version must be bumped to 20260907.07');
 console.log(`✓ Version parity verified: ${versionJson.version}`);
 
 // [3/5] Setup mock DOM and runtime environment for functional tests
@@ -131,7 +131,15 @@ globalThis.updateIncidentMetadataSummary = updateIncidentMetadataSummary;
 globalThis.showIncidentSuccessCard = showIncidentSuccessCard;
 globalThis.dismissIncidentSuccessCard = dismissIncidentSuccessCard;
 globalThis.resetIncidentFormForNextCase = resetIncidentFormForNextCase;
+globalThis.getIncidentCategoriesForBranch = getIncidentCategoriesForBranch;
+globalThis.getIncidentCategoryLabel = getIncidentCategoryLabel;
+globalThis.getIncidentItemsForCategory = getIncidentItemsForCategory;
 
+Object.defineProperty(globalThis, 'KPI_SYSTEM_CONFIG', {
+    get() { return KPI_SYSTEM_CONFIG; },
+    set(v) { KPI_SYSTEM_CONFIG = v; },
+    configurable: true
+});
 Object.defineProperty(globalThis, 'currentBranch', {
     get() { return currentBranch; },
     set(v) { currentBranch = v; },
@@ -248,6 +256,71 @@ assert.equal(mockElements.get('inc-success-card').classList.contains('hidden'), 
 assert.equal(sandbox.currentSelectedTemplateIdx, 0, 'Reset must restore default template');
 
 console.log('✓ Success feedback and "+ บันทึกอีกเคส" form reset flow verified.');
+
+// [6/6] Dynamic Custom Category Resolution & Branch Cross-Leakage Prevention
+sandbox.KPI_SYSTEM_CONFIG = {
+    incidentCatalog: {
+        AKRA: {
+            categories: [
+                { key: 'outbound', label: 'ขาออก' },
+                { key: 'store_stock', label: 'หน้าร้าน/สต๊อก' }
+            ],
+            items: {
+                'outbound': [
+                    { name: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5, dot: 'bg-amber-500', desc: 'ตรวจเจอก่อนส่งมอบ' }
+                ],
+                'store_stock': [
+                    { name: 'วางสินค้าผิดตำแหน่ง', penalty: 5, dot: 'bg-amber-500', desc: 'หาของไม่เจอ' }
+                ]
+            }
+        },
+        TRD: {
+            categories: [
+                { key: 'cat_1787719959049', label: 'หน้าร้าน / ในร้าน' },
+                { key: 'trd_cashier', label: 'แคชเชียร์/แอดมิน' }
+            ],
+            items: {
+                'cat_1787719959049': [
+                    { name: 'จัดสินค้าผิด (แก้ไขทัน)', penalty: 5, dot: 'bg-amber-500', desc: 'เช็คเกอร์ตรวจเจอ' }
+                ],
+                'trd_cashier': [
+                    { name: 'เปิดบิลผิดพลาด', penalty: 10, dot: 'bg-red-500', desc: 'คีย์ยอดไม่ตรง' }
+                ]
+            }
+        }
+    }
+};
+
+// 1. Dynamic category label resolution
+const resolvedLabel = sandbox.getIncidentCategoryLabel('cat_1787719959049', 'TRD');
+assert.equal(resolvedLabel, 'หน้าร้าน / ในร้าน', 'Dynamic TRD category must resolve to human-readable Thai label');
+
+// 2. AKRA Search: TRD custom category items must NOT leak into AKRA
+sandbox.currentBranch = 'AKRA';
+sandbox.onIncidentSearchInput('จัดสินค้าผิด');
+const akraSearchHtml = mockElements.get('inc-search-results').innerHTML;
+assert.ok(
+    !akraSearchHtml.includes('cat_1787719959049') && !akraSearchHtml.includes('จัดสินค้าผิด (แก้ไขทัน)'),
+    'TRD custom category items must never leak into AKRA search'
+);
+
+// 3. TRD Search: TRD custom category items must appear with human-readable label, NEVER raw key
+sandbox.currentBranch = 'TRD';
+sandbox.onIncidentSearchInput('จัดสินค้าผิด');
+const trdSearchHtml = mockElements.get('inc-search-results').innerHTML;
+assert.ok(trdSearchHtml.includes('จัดสินค้าผิด (แก้ไขทัน)'), 'TRD search must find items in TRD custom category');
+assert.ok(trdSearchHtml.includes('หน้าร้าน / ในร้าน'), 'TRD search item badge must display human-readable category label');
+const badgeMatch = trdSearchHtml.match(/<span class="text-\[10px\] bg-slate-100[^>]*>([\s\S]*?)<\/span>/);
+assert.ok(badgeMatch, 'Category badge span must exist in search result item');
+assert.equal(badgeMatch[1], 'หน้าร้าน / ในร้าน', 'Category badge text must strictly be human-readable label');
+
+// 4. Custom item selection updates metadata with human-readable category
+sandbox.selectCustomCatalogItem('cat_1787719959049', 'จัดสินค้าผิด (แก้ไขทัน)', 5);
+assert.equal(mockElements.get('inc-meta-cat').textContent, 'หน้าร้าน / ในร้าน', 'Selected category metadata must display human-readable label');
+assert.equal(mockElements.get('inc-selected-pill').textContent, 'จัดสินค้าผิด (แก้ไขทัน)', 'Selected item pill must display item name');
+assert.equal(mockElements.get('inc-meta-hp').textContent, '-5 HP', 'Penalty HP must reflect selected item penalty');
+
+console.log('✓ Dynamic custom category resolution and branch cross-leakage prevention verified.');
 
 console.log('\n=============================================================');
 console.log('🎉 ALL STREAMLINED INCIDENT QUICK FLOW TESTS PASSED 100%! 🎉');

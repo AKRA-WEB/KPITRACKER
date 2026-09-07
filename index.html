@@ -2901,7 +2901,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260907.06";
+        const CURRENT_VERSION = "20260907.07";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -5555,37 +5555,72 @@
             renderErrTeamHp();
         }
 
+        function getIncidentCategoriesForBranch(branch) {
+            const b = branch || currentBranch || 'AKRA';
+            const catalog = (KPI_SYSTEM_CONFIG && KPI_SYSTEM_CONFIG.incidentCatalog && KPI_SYSTEM_CONFIG.incidentCatalog[b])
+                ? KPI_SYSTEM_CONFIG.incidentCatalog[b]
+                : null;
+
+            if (catalog && Array.isArray(catalog.categories) && catalog.categories.length > 0) {
+                return catalog.categories.map(c => ({
+                    id: c.key,
+                    name: c.label || c.name || c.key,
+                    icon: c.icon || (b === 'TRD' ? 'fa-store' : 'fa-folder'),
+                    color: c.color || 'text-blue-500'
+                }));
+            }
+
+            if (b === 'TRD') {
+                return [
+                    { id: 'trd_store', name: 'หน้าร้าน / ในร้าน', icon: 'fa-store', color: 'text-amber-500' },
+                    { id: 'trd_cashier', name: 'แคชเชียร์/แอดมิน', icon: 'fa-cash-register', color: 'text-blue-500' },
+                    { id: 'trd_stock', name: 'คลังหน้าร้าน', icon: 'fa-boxes-stacked', color: 'text-emerald-500' },
+                    { id: 'trd_other', name: 'อื่น ๆ', icon: 'fa-ellipsis', color: 'text-slate-500' }
+                ];
+            }
+
+            return [
+                { id: 'outbound', name: 'ขาออก', icon: 'fa-truck-fast', color: 'text-blue-500' },
+                { id: 'store_stock', name: 'หน้าร้าน/สต๊อก', icon: 'fa-store', color: 'text-amber-500' },
+                { id: 'inbound', name: 'ขารับเข้า', icon: 'fa-box-archive', color: 'text-emerald-500' },
+                { id: 'transfer', name: 'โอนย้าย W2', icon: 'fa-arrows-rotate', color: 'text-purple-500' },
+                { id: 'shared', name: 'ร่วมรับผิดชอบ', icon: 'fa-handshake', color: 'text-indigo-500' }
+            ];
+        }
+
+        function getIncidentCategoryLabel(catKey, branch) {
+            const b = branch || currentBranch || 'AKRA';
+            const cats = getIncidentCategoriesForBranch(b);
+            const found = cats.find(c => c.id === catKey);
+            if (found && found.name) return found.name;
+
+            const fallbackLabels = {
+                'outbound': 'ขาออก', 'store_stock': 'หน้าร้าน/สต๊อก', 'inbound': 'ขารับเข้า',
+                'transfer': 'โอนย้าย W2', 'shared': 'ร่วมรับผิดชอบ', 'trd_store': 'หน้าร้าน',
+                'trd_cashier': 'แคชเชียร์', 'trd_stock': 'คลังหน้าร้าน', 'trd_other': 'อื่น ๆ',
+                'cashier': 'แคชเชียร์ & บริการ', 'admin_doc': 'แอดมิน & งานเอกสาร'
+            };
+            return fallbackLabels[catKey] || catKey;
+        }
+
+        function getIncidentItemsForCategory(branch, catKey) {
+            const b = branch || currentBranch || 'AKRA';
+            const catalog = (KPI_SYSTEM_CONFIG && KPI_SYSTEM_CONFIG.incidentCatalog && KPI_SYSTEM_CONFIG.incidentCatalog[b])
+                ? KPI_SYSTEM_CONFIG.incidentCatalog[b]
+                : null;
+
+            if (catalog && catalog.items && Array.isArray(catalog.items[catKey])) {
+                return catalog.items[catKey];
+            }
+
+            return ERROR_CATALOG[catKey] || [];
+        }
+
         function renderErrCategoryPills() {
             const container = document.getElementById('err-cat-pills');
             if (!container) return;
             const branch = currentBranch || 'AKRA';
-            const catalog = (KPI_SYSTEM_CONFIG && KPI_SYSTEM_CONFIG.incidentCatalog && KPI_SYSTEM_CONFIG.incidentCatalog[branch])
-                ? KPI_SYSTEM_CONFIG.incidentCatalog[branch]
-                : null;
-
-            let cats = [];
-            if (catalog && Array.isArray(catalog.categories) && catalog.categories.length > 0) {
-                cats = catalog.categories.map(c => ({
-                    id: c.key,
-                    name: c.label,
-                    icon: `${c.icon || 'fa-folder'} ${c.color || 'text-blue-500'}`
-                }));
-            } else if (branch === 'TRD') {
-                cats = [
-                    { id: 'trd_store', name: 'หน้าร้าน / ในร้าน', icon: 'fa-store text-amber-500' },
-                    { id: 'trd_cashier', name: 'แคชเชียร์/แอดมิน', icon: 'fa-cash-register text-blue-500' },
-                    { id: 'trd_stock', name: 'คลังหน้าร้าน', icon: 'fa-boxes-stacked text-emerald-500' },
-                    { id: 'trd_other', name: 'อื่น ๆ', icon: 'fa-ellipsis text-slate-500' }
-                ];
-            } else {
-                cats = [
-                    { id: 'outbound', name: 'ขาออก', icon: 'fa-truck-fast text-blue-500' },
-                    { id: 'store_stock', name: 'หน้าร้าน/สต๊อก', icon: 'fa-store text-amber-500' },
-                    { id: 'inbound', name: 'ขารับเข้า', icon: 'fa-box-archive text-emerald-500' },
-                    { id: 'transfer', name: 'โอนย้าย W2', icon: 'fa-arrows-rotate text-purple-500' },
-                    { id: 'shared', name: 'ร่วมรับผิดชอบ', icon: 'fa-handshake text-indigo-500' }
-                ];
-            }
+            const cats = getIncidentCategoriesForBranch(branch);
 
             const validIds = cats.map(c => c.id);
             if (!validIds.includes(errCategory)) {
@@ -5594,7 +5629,7 @@
 
             container.innerHTML = cats.map(c => `
                 <button type="button" onclick="switchErrCategory('${c.id}', this)" class="cat-chip ${errCategory === c.id ? 'cat-chip-active' : ''} shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1">
-                    <i class="fa-solid ${c.icon} mr-1"></i><span>${esc(c.name)}</span>
+                    <i class="fa-solid ${c.icon} ${c.color || ''} mr-1"></i><span>${esc(c.name)}</span>
                 </button>
             `).join('');
         }
@@ -7737,18 +7772,6 @@
             const metaHp = document.getElementById('inc-meta-hp');
             if (!metaCat || !metaResp || !metaHp) return;
 
-            const categoryNames = {
-                'outbound': 'ขาออก',
-                'store_stock': 'หน้าร้าน/สต๊อก',
-                'inbound': 'ขารับเข้า',
-                'transfer': 'โอนย้าย W2',
-                'shared': 'ร่วมรับผิดชอบ',
-                'trd_store': 'หน้าร้าน',
-                'trd_cashier': 'แคชเชียร์',
-                'trd_stock': 'คลังหน้าร้าน',
-                'trd_other': 'อื่น ๆ'
-            };
-
             const respNames = {
                 'individual': 'รายบุคคล',
                 'team': 'ทีมทั้งกะ',
@@ -7756,8 +7779,9 @@
                 'pending': 'รอตรวจสอบ (0 HP)'
             };
 
-            const currentCat = cat || errCategory || 'outbound';
-            metaCat.textContent = categoryNames[currentCat] || currentCat;
+            const branch = currentBranch || 'AKRA';
+            const currentCat = cat || errCategory || (branch === 'TRD' ? 'trd_store' : 'outbound');
+            metaCat.textContent = getIncidentCategoryLabel(currentCat, branch);
 
             const resp = selectedIncidentResponsibility || 'individual';
             metaResp.textContent = respNames[resp] || 'รายบุคคล';
@@ -7799,16 +7823,13 @@
 
             const branch = currentBranch || 'AKRA';
             const allItems = [];
-            const catKeys = Object.keys(ERROR_CATALOG);
-            const relevantCats = branch === 'TRD'
-                ? catKeys.filter(k => k.startsWith('trd_'))
-                : catKeys.filter(k => !k.startsWith('trd_'));
+            const branchCats = getIncidentCategoriesForBranch(branch);
 
-            relevantCats.forEach(cat => {
-                const items = ERROR_CATALOG[cat] || [];
+            branchCats.forEach(cat => {
+                const items = getIncidentItemsForCategory(branch, cat.id);
                 items.forEach(item => {
                     if (item.name.toLowerCase().includes(q) || (item.desc && item.desc.toLowerCase().includes(q))) {
-                        allItems.push({ ...item, category: cat });
+                        allItems.push({ ...item, category: cat.id, categoryLabel: cat.name });
                     }
                 });
             });
@@ -7822,12 +7843,6 @@
                 return;
             }
 
-            const catLabels = {
-                'outbound': 'ขาออก', 'store_stock': 'หน้าร้าน/สต๊อก', 'inbound': 'ขารับเข้า',
-                'transfer': 'โอนย้าย W2', 'shared': 'ร่วมรับผิดชอบ', 'trd_store': 'หน้าร้าน',
-                'trd_cashier': 'แคชเชียร์', 'trd_stock': 'คลังหน้าร้าน', 'trd_other': 'อื่น ๆ'
-            };
-
             resultsContainer.innerHTML = allItems.map(item => `
                 <button type="button" onclick="selectCustomCatalogItem('${esc(item.category)}', '${esc(item.name)}', ${item.penalty})" class="w-full p-2.5 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50/50 bg-white text-left text-xs transition-all flex items-center justify-between gap-2 active:scale-98 cursor-pointer">
                     <div class="flex items-center gap-2">
@@ -7838,7 +7853,7 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1.5 shrink-0">
-                        <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-semibold">${catLabels[item.category] || item.category}</span>
+                        <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-semibold">${esc(item.categoryLabel)}</span>
                         <span class="font-bold text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded text-xs font-num">-${item.penalty}</span>
                     </div>
                 </button>
@@ -7942,14 +7957,15 @@
         function renderErrSeverityListOnly() {
             const container = document.getElementById('pc-err-severity-list');
             if (!container) return;
-            const list = ERROR_CATALOG[errCategory] || [];
+            const branch = currentBranch || 'AKRA';
+            const list = getIncidentItemsForCategory(branch, errCategory);
             container.innerHTML = list.map((opt, idx) => `
                 <button type="button" onclick="selectErrSeverityItem(${idx}, this)" data-name="${esc(opt.name)}" data-penalty="${opt.penalty}" class="sev-chip ${idx === 0 ? 'severity-chip-active' : ''} w-full p-2.5 rounded-xl border border-slate-200 bg-white text-left text-xs flex items-center justify-between transition-all">
                     <div class="flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full ${opt.dot} shrink-0"></span>
+                        <span class="w-2.5 h-2.5 rounded-full ${opt.dot || 'bg-amber-500'} shrink-0"></span>
                         <div>
                             <span class="font-bold text-slate-800 block">${esc(opt.name)}</span>
-                            <p class="text-[10px] text-slate-500">${esc(opt.desc)}</p>
+                            <p class="text-[10px] text-slate-500">${esc(opt.desc || '')}</p>
                         </div>
                     </div>
                     <span class="font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg text-xs font-num shrink-0">-${opt.penalty}</span>
