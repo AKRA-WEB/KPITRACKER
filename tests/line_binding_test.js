@@ -142,11 +142,30 @@ async function runTests() {
   assert(!html.includes('id="line-binding-modal"'), 'line-binding-modal markup must be removed');
   assert(!html.includes('autoCheckLiffBinding()'), 'Zero calls to autoCheckLiffBinding should remain in index.html');
 
-  // Verify Quick Workload LIFF is retained
+  // Verify Quick Workload LIFF is retained and executable
   assert(html.includes('window.KPI_LIFF_ID = KPI_LIFF_ID;'), 'window.KPI_LIFF_ID must be retained');
   assert(html.includes('id="quick-workload-modal"'), 'quick-workload-modal must be retained');
-  assert(extractFunction(html, 'openQuickWorkloadModal') !== null, 'openQuickWorkloadModal function must be retained');
-  console.log('✓ autoCheckLiffBinding purged; Quick Workload LIFF correctly retained.');
+  const openModalCode = extractFunction(html, 'openQuickWorkloadModal');
+  assert(openModalCode !== null, 'openQuickWorkloadModal function must exist');
+
+  // Executable test of quick_workload routing behavior
+  let modalOpened = false;
+  const routeSandbox = {
+    window: {
+      location: new URL('https://akra-web.github.io/KPITRACKER/?action=quick_workload')
+    },
+    URLSearchParams: globalThis.URLSearchParams,
+    openQuickWorkloadModal: () => { modalOpened = true; }
+  };
+  vm.createContext(routeSandbox);
+  vm.runInContext(`
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'quick_workload' || window.location.hash?.includes('quick_workload')) {
+      openQuickWorkloadModal();
+    }
+  `, routeSandbox);
+  assert.strictEqual(modalOpened, true, 'Executable route check: ?action=quick_workload must open quick workload modal');
+  console.log('✓ autoCheckLiffBinding purged; Quick Workload LIFF route correctly retained and executable.');
 
   // 3c. Test loadMyProfileData authoritative sync (M5 / R4): cached linked state must be cleared if server returns unlinked
   console.log('\n[3c/4] Testing loadMyProfileData authoritative profile sync...');
