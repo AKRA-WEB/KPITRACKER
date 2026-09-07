@@ -439,79 +439,169 @@
 
                     <!-- Mode A: Incident Form Container -->
                     <div id="form-container-incident" class="space-y-3.5">
-                        <button type="button" id="btn-confirm-zero-errors" onclick="confirmZeroErrors()" class="w-full py-2.5 px-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center justify-between transition-all active:scale-98 shadow-sm">
-                            <div class="flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-check"></i></div>
-                                <span>วันนี้ตรวจแล้ว ไม่พบข้อผิดพลาด</span>
+                        <!-- Success State Card (Shown after save) -->
+                        <div id="inc-success-card" class="hidden p-5 bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100/50 border border-emerald-300 rounded-2xl shadow-sm text-center space-y-3">
+                            <div class="w-12 h-12 mx-auto rounded-full bg-emerald-600 text-white flex items-center justify-center text-xl shadow">
+                                <i class="fa-solid fa-check"></i>
                             </div>
-                            <span class="text-[10px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-md font-bold">ยืนยัน Zero Error</span>
-                        </button>
+                            <div>
+                                <span class="text-[11px] uppercase tracking-wider text-emerald-800 font-extrabold bg-emerald-100/80 border border-emerald-200 px-2.5 py-0.5 rounded-full">บันทึกสำเร็จ</span>
+                                <h3 class="text-sm md:text-base font-bold text-emerald-950 mt-1.5" id="inc-success-title">✅ บันทึกข้อผิดพลาดเรียบร้อยแล้ว</h3>
+                                <p id="inc-success-summary" class="text-xs text-emerald-800 font-semibold mt-1">จัดสินค้าผิด • เอี้ยง • แก้ไขก่อนส่ง</p>
+                            </div>
+                            <div class="pt-1 flex flex-col sm:flex-row items-center justify-center gap-2">
+                                <button type="button" id="btn-inc-next-case" onclick="resetIncidentFormForNextCase()" class="w-full sm:w-auto py-2.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span>+ บันทึกอีกเคส</span>
+                                </button>
+                                <button type="button" onclick="dismissIncidentSuccessCard()" class="w-full sm:w-auto py-2 px-4 rounded-xl bg-white border border-emerald-200 hover:bg-emerald-50 text-emerald-800 font-bold text-xs transition-all cursor-pointer">
+                                    <span>ปิด</span>
+                                </button>
+                            </div>
+                        </div>
 
-                        <!-- Step 1: Responsibility Dimension & Worker Select -->
-                        <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
-                            <div class="flex items-center justify-between">
-                                <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                                    <span class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
-                                    มิติความรับผิดชอบ (Responsibility Dimension):
+                        <!-- Active Incident Form Body -->
+                        <div id="inc-form-body" class="space-y-3.5">
+                            <!-- Zero Error Confirmation (Restricted to Checker / Lead / Admin) -->
+                            <div id="zero-error-wrapper">
+                                <button type="button" id="btn-confirm-zero-errors" onclick="handleZeroErrorClick()" class="w-full py-2.5 px-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center justify-between transition-all active:scale-98 shadow-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-check"></i></div>
+                                        <span>วันนี้ตรวจแล้ว ไม่พบข้อผิดพลาด</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span id="zero-error-role-badge" class="text-[9px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-md font-bold">Checker / Lead</span>
+                                        <span class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-md font-bold">ยืนยัน Zero Error</span>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <!-- Section 1: เกิดอะไรขึ้น? (What happened?) -->
+                            <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                        <span class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                                        <span>เกิดอะไรขึ้น? (ระบุข้อผิดพลาด):</span>
+                                    </label>
+                                    <span id="inc-selected-pill" class="text-[10px] bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-lg font-bold">เลือกรายการ</span>
+                                </div>
+
+                                <!-- Live Search Bar -->
+                                <div class="relative">
+                                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                                    <input type="text" id="inc-quick-search" oninput="onIncidentSearchInput(this.value)" placeholder="🔍 ค้นหาข้อผิดพลาด..." class="w-full pl-8 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-red-500 font-medium placeholder:text-slate-400 transition-all">
+                                    <button type="button" id="inc-search-clear-btn" onclick="clearIncidentSearch()" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs cursor-pointer">
+                                        <i class="fa-solid fa-circle-xmark"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Search Results Dropdown/List (Shown when searching) -->
+                                <div id="inc-search-results" class="hidden space-y-1.5 max-h-56 overflow-y-auto pr-1"></div>
+
+                                <!-- Frequently Used Quick Chips (⭐ ใช้บ่อย) -->
+                                <div id="inc-frequent-container" class="space-y-1.5">
+                                    <div class="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                                        <span class="flex items-center gap-1"><i class="fa-solid fa-star text-amber-500"></i> ใช้บ่อย</span>
+                                        <span class="text-[10px] text-slate-400">แตะเพื่อเลือก</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="inc-quick-templates"></div>
+                                </div>
+                            </section>
+
+                            <!-- Section 2: ใครเกี่ยวข้อง? (Who is involved?) -->
+                            <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                        <span class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+                                        <span id="inc-worker-label">ใครเกี่ยวข้อง / ผู้รับผิดชอบ (Caused by):</span>
+                                    </label>
+                                    <span id="inc-worker-selected-badge" class="text-[10px] text-slate-500 font-bold"></span>
+                                </div>
+                                <div>
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-emp-chips"></div>
+                                </div>
+                            </section>
+
+                            <!-- Section 3: ผลกระทบ (Impact / Detection Stage) - Dynamic Single Question -->
+                            <section id="inc-impact-section" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                        <span class="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-bold">3</span>
+                                        <span id="inc-impact-label">ผลกระทบ / พบตอนไหน?</span>
+                                    </label>
+                                    <span class="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200" id="inc-impact-status-pill">ระดับผลกระทบ</span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="inc-impact-options"></div>
+                            </section>
+
+                            <!-- Section 4: รายละเอียดเพิ่มเติม (Optional notes) -->
+                            <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                                <label class="text-xs font-bold text-slate-800 flex items-center justify-between">
+                                    <span class="flex items-center gap-2">
+                                        <span class="w-5 h-5 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px] font-bold">4</span>
+                                        <span>📝 รายละเอียด (ไม่บังคับ):</span>
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 font-normal">เช่น แป้งผิดขนาด 5 ลัง บิล #1234</span>
                                 </label>
-                            </div>
+                                <input type="text" id="pc-err-note-input" placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-red-500">
+                            </section>
 
-                            <!-- 4 Responsibility Options -->
-                            <div class="grid grid-cols-2 gap-1.5" id="err-resp-grid">
-                                <button type="button" onclick="selectIncidentResponsibility('individual', this)" class="resp-btn p-2 rounded-xl border border-red-300 bg-red-50 text-left text-xs font-bold text-red-900 transition-all flex items-center gap-1.5 active:scale-98">
-                                    <i class="fa-solid fa-user text-red-600"></i>
-                                    <span>👤 รายบุคคล</span>
+                            <!-- Section 5: Submit & Auto Metadata -->
+                            <div class="space-y-2">
+                                <button type="button" id="btn-save-error-preview" onclick="saveErrorCaseFromPreview()" class="w-full py-3.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    <span>บันทึกเคสความผิดพลาดทันที</span>
                                 </button>
-                                <button type="button" onclick="selectIncidentResponsibility('team', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
-                                    <i class="fa-solid fa-users text-purple-600"></i>
-                                    <span>👥 ทีมทั้งกะ (On-Duty)</span>
-                                </button>
-                                <button type="button" onclick="selectIncidentResponsibility('process', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
-                                    <i class="fa-solid fa-gears text-blue-600"></i>
-                                    <span>⚙️ ข้อผิดพลาดระบบ (0 HP)</span>
-                                </button>
-                                <button type="button" onclick="selectIncidentResponsibility('pending', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
-                                    <i class="fa-solid fa-circle-question text-amber-600"></i>
-                                    <span>❓ รอตรวจสอบ (0 HP)</span>
-                                </button>
-                            </div>
 
-                            <div class="pt-1">
-                                <label class="text-[11px] font-bold text-slate-700 block mb-1">เลือกผู้รับผิดชอบ / ผู้จัด (Caused by):</label>
-                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="pc-err-emp-chips"></div>
-                            </div>
-                        </section>
+                                <!-- Subtle Auto Metadata Info -->
+                                <div id="inc-auto-meta-summary" class="flex items-center justify-center gap-2 text-[11px] text-slate-500 font-medium py-1 flex-wrap">
+                                    <span id="inc-meta-cat" class="px-2 py-0.5 bg-slate-100 rounded-md text-slate-700 font-semibold">ขาออก</span>
+                                    <span>•</span>
+                                    <span id="inc-meta-resp" class="px-2 py-0.5 bg-slate-100 rounded-md text-slate-700 font-semibold">รายบุคคล</span>
+                                    <span>•</span>
+                                    <span id="inc-meta-hp" class="px-2 py-0.5 bg-red-50 text-red-700 rounded-md font-bold font-num border border-red-200">-5 HP</span>
+                                </div>
 
-                        <!-- Step 2: Category & Detection Stage Severity -->
-                        <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
-                            <div class="flex items-center justify-between">
-                                <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                                    <span class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
-                                    หมวดหมู่และระดับความรุนแรง / จุดที่พบ:
-                                </label>
-                            </div>
-                            <div class="incident-category-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5" id="err-cat-pills">
-                                <button type="button" onclick="switchErrCategory('outbound', this)" class="cat-chip cat-chip-active shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-truck-fast text-blue-500 mr-1"></i><span>ขาออก</span></button>
-                                <button type="button" onclick="switchErrCategory('store_stock', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-store text-amber-500 mr-1"></i><span>หน้าร้าน/สต๊อก</span></button>
-                                <button type="button" onclick="switchErrCategory('inbound', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-box-archive text-emerald-500 mr-1"></i><span>ขารับเข้า</span></button>
-                                <button type="button" onclick="switchErrCategory('transfer', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-arrows-rotate text-purple-500 mr-1"></i><span>โอนย้าย W2</span></button>
-                                <button type="button" onclick="switchErrCategory('shared', this)" class="cat-chip shrink-0 py-1.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-handshake text-indigo-500 mr-1"></i><span>ร่วมรับผิดชอบ</span></button>
-                            </div>
-                            <div class="space-y-1.5" id="pc-err-severity-list"></div>
-                        </section>
+                                <!-- Advanced / Supervisor Accordion (Collapsed by default) -->
+                                <div class="pt-1">
+                                    <button type="button" onclick="toggleIncidentAdvancedAccordion()" class="w-full py-1.5 px-3 rounded-lg text-slate-500 hover:text-slate-800 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
+                                        <i class="fa-solid fa-sliders text-slate-400"></i>
+                                        <span>แก้ไขขั้นสูง / มิติความรับผิดชอบ (Advanced)</span>
+                                        <i id="inc-adv-icon" class="fa-solid fa-chevron-down text-[9px] ml-1 transition-transform"></i>
+                                    </button>
 
-                        <!-- Step 3: Note & Save -->
-                        <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-                            <label class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                                <span class="w-5 h-5 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px] font-bold">3</span>
-                                <span>รายละเอียดสินค้า / เลขที่บิล (สั้นๆ):</span>
-                            </label>
-                            <input type="text" id="pc-err-note-input" placeholder="เช่น 'ตกเบิกนมสด 5 ลัง หน้าร้านของหมด'" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-red-500">
-                            <button type="button" id="btn-save-error-preview" onclick="saveErrorCaseFromPreview()" class="w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 mt-2 transition-all active:scale-95 cursor-pointer">
-                                <i class="fa-solid fa-cloud-arrow-up"></i>
-                                <span>บันทึกเคสความผิดพลาดทันที</span>
-                            </button>
-                        </section>
+                                    <div id="inc-advanced-accordion" class="hidden mt-2 p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                                        <div>
+                                            <label class="text-[11px] font-bold text-slate-700 block mb-1">มิติความรับผิดชอบ (Responsibility Dimension):</label>
+                                            <div class="grid grid-cols-2 gap-1.5" id="err-resp-grid">
+                                                <button type="button" onclick="selectIncidentResponsibility('individual', this)" class="resp-btn p-2 rounded-xl border border-red-300 bg-red-50 text-left text-xs font-bold text-red-900 transition-all flex items-center gap-1.5 active:scale-98">
+                                                    <i class="fa-solid fa-user text-red-600"></i>
+                                                    <span>👤 รายบุคคล</span>
+                                                </button>
+                                                <button type="button" onclick="selectIncidentResponsibility('team', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
+                                                    <i class="fa-solid fa-users text-purple-600"></i>
+                                                    <span>👥 ทีมทั้งกะ (On-Duty)</span>
+                                                </button>
+                                                <button type="button" onclick="selectIncidentResponsibility('process', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
+                                                    <i class="fa-solid fa-gears text-blue-600"></i>
+                                                    <span>⚙️ ข้อผิดพลาดระบบ (0 HP)</span>
+                                                </button>
+                                                <button type="button" onclick="selectIncidentResponsibility('pending', this)" class="resp-btn p-2 rounded-xl border border-slate-200 bg-white text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-1.5 active:scale-98">
+                                                    <i class="fa-solid fa-circle-question text-amber-600"></i>
+                                                    <span>❓ รอตรวจสอบ (0 HP)</span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="text-[11px] font-bold text-slate-700 block mb-1">หมวดหมู่และรายการข้อผิดพลาดในระบบ:</label>
+                                            <div class="incident-category-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 mb-2" id="err-cat-pills"></div>
+                                            <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1" id="pc-err-severity-list"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Mode B: Standalone Good Catch & Positive Achievements Container -->
@@ -2811,7 +2901,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260907.05";
+        const CURRENT_VERSION = "20260907.06";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -4623,6 +4713,9 @@
                     renderErrEmpChips();
                 } else if (resp === 'process') btn.classList.add('border-blue-300', 'bg-blue-50', 'text-blue-900');
                 else if (resp === 'pending') btn.classList.add('border-amber-300', 'bg-amber-50', 'text-amber-900');
+            }
+            if (typeof updateIncidentMetadataSummary === 'function') {
+                updateIncidentMetadataSummary();
             }
         }
 
@@ -7299,6 +7392,535 @@
             }
         }
 
+        const QUICK_INCIDENT_TEMPLATES = {
+            AKRA: [
+                {
+                    id: 'pick_wrong',
+                    label: 'จัดสินค้าผิด',
+                    icon: 'fa-box-open',
+                    color: 'text-blue-600',
+                    category: 'outbound',
+                    defaultResp: 'individual',
+                    workerPrompt: 'ผู้จัดสินค้าบิลนี้คือใคร?',
+                    hasImpact: true,
+                    impacts: [
+                        { label: 'แก้ไขก่อนส่ง', desc: 'ตรวจพบที่จุดเช็คก่อนขึ้นรถ', item: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5, badge: 'text-emerald-700 bg-emerald-50 border-emerald-300' },
+                        { label: 'ถึงหน้าร้าน TRD แล้ว', desc: 'หลุดไปหน้าร้านแล้วแจ้งกลับ', item: 'หยิบผิด ถึงหน้าร้านแล้ว', penalty: 10, badge: 'text-amber-700 bg-amber-50 border-amber-300' },
+                        { label: 'ถึงลูกค้าแล้ว', desc: 'ส่งถึงลูกค้าแล้ว ลูกค้าแจ้งเคลม', item: 'หยิบผิด ถึงลูกค้าแล้ว', penalty: 20, badge: 'text-red-700 bg-red-50 border-red-300' }
+                    ]
+                },
+                {
+                    id: 'qty_mismatch',
+                    label: 'จำนวนขาด/เกิน',
+                    icon: 'fa-calculator',
+                    color: 'text-amber-600',
+                    category: 'outbound',
+                    defaultResp: 'individual',
+                    workerPrompt: 'ผู้จัด / ตรวจนับบิลนี้คือใคร?',
+                    hasImpact: false,
+                    item: 'จำนวนไม่ครบ / ขาดเกิน',
+                    penalty: 5,
+                    impactDesc: 'ยอดสินค้าในบิลไม่ตรงกับที่จัด (-5 HP)'
+                },
+                {
+                    id: 'checker_error',
+                    label: 'Checker ตรวจผิด',
+                    icon: 'fa-clipboard-check',
+                    color: 'text-purple-600',
+                    category: 'outbound',
+                    defaultResp: 'individual',
+                    workerPrompt: 'Checker ของบิลนี้คือใคร?',
+                    hasImpact: true,
+                    impacts: [
+                        { label: 'แก้ไขก่อนขึ้นรถ', desc: 'ตรวจพบและแก้ทันก่อนรถออก', item: 'หยิบผิด แก้ทันก่อนจัดส่ง', penalty: 5, badge: 'text-emerald-700 bg-emerald-50 border-emerald-300' },
+                        { label: 'ถึงลูกค้าแล้ว', desc: 'Checker Escape / หลุดถึงลูกค้า', item: 'หยิบผิด ถึงลูกค้าแล้ว', penalty: 20, badge: 'text-red-700 bg-red-50 border-red-300' }
+                    ]
+                },
+                {
+                    id: 'no_check_loading',
+                    label: 'ไม่ตรวจก่อนขึ้นรถ',
+                    icon: 'fa-truck-ramp-box',
+                    color: 'text-indigo-600',
+                    category: 'outbound',
+                    defaultResp: 'individual',
+                    workerPrompt: 'ผู้จัดของขึ้นรถ / คนขับรถคือใคร?',
+                    hasImpact: false,
+                    item: 'หยิบผิด แก้ทันก่อนจัดส่ง',
+                    penalty: 5,
+                    impactDesc: 'ไม่ตรวจเช็คสินค้าก่อนลำเลียงขึ้นรถ (-5 HP)'
+                },
+                {
+                    id: 'shelf_empty',
+                    label: 'สินค้าในชั้นหมด',
+                    icon: 'fa-boxes-packing',
+                    color: 'text-amber-600',
+                    category: 'store_stock',
+                    defaultResp: 'individual',
+                    workerPrompt: 'ผู้รับผิดชอบดูแลสต็อกคือใคร?',
+                    hasImpact: false,
+                    item: 'ปล่อยชั้นวางว่าง / เติมของช้า',
+                    penalty: 5,
+                    impactDesc: 'ชั้นวางโล่ง ลูกค้ารอสินค้านาน (-5 HP)'
+                },
+                {
+                    id: 'inbound_misplaced',
+                    label: 'วางของผิดที่ / รับเข้าผิด',
+                    icon: 'fa-dolly',
+                    color: 'text-emerald-600',
+                    category: 'inbound',
+                    defaultResp: 'individual',
+                    workerPrompt: 'ผู้รับเข้า / จัดวางสินค้าคือใคร?',
+                    hasImpact: true,
+                    impacts: [
+                        { label: 'วางผิดช่อง/ไม่เรียบร้อย', desc: 'ขารับเข้าจัดวางของผิดช่อง', item: 'วางสินค้าไม่เรียบร้อย/ผิดตำแหน่ง', penalty: 3, badge: 'text-blue-700 bg-blue-50 border-blue-300' },
+                        { label: 'ลงรับในแอปผิด', desc: 'คีย์ยอดรับสินค้าในระบบผิดพลาด', item: 'ลงรับสินค้าในแอปผิด', penalty: 5, badge: 'text-amber-700 bg-amber-50 border-amber-300' }
+                    ]
+                },
+                {
+                    id: 'transfer_w2_mismatch',
+                    label: 'โอน W2 ผิด / ไม่ตรง',
+                    icon: 'fa-arrows-rotate',
+                    color: 'text-purple-600',
+                    category: 'transfer',
+                    defaultResp: 'individual',
+                    workerPrompt: 'ผู้รับผิดชอบการโอน W2 คือใคร?',
+                    hasImpact: false,
+                    item: 'โอน W2→W1 จำนวนไม่ตรง',
+                    penalty: 5,
+                    impactDesc: 'ย้ายของข้ามคลังยอดไม่ตรงใบเบิก (-5 HP)'
+                }
+            ],
+            TRD: [
+                {
+                    id: 'trd_pick_wrong',
+                    label: 'จัดสินค้าผิด',
+                    icon: 'fa-box-open',
+                    color: 'text-blue-600',
+                    category: 'trd_store',
+                    defaultResp: 'individual',
+                    workerPrompt: 'ผู้จัดสินค้าบิลนี้คือใคร?',
+                    hasImpact: true,
+                    impacts: [
+                        { label: 'แก้ไขก่อนส่ง', desc: 'ตรวจพบและแก้ทันในร้าน', item: 'จัดสินค้าผิด (ตรวจพบและแก้ทัน)', penalty: 5, badge: 'text-emerald-700 bg-emerald-50 border-emerald-300' },
+                        { label: 'ออกจากร้านแล้ว', desc: 'ดักทันก่อนถึงลูกค้า', item: 'จัดสินค้าผิด (ออกจากร้านแต่ยังไม่ถึงลูกค้า)', penalty: 10, badge: 'text-amber-700 bg-amber-50 border-amber-300' },
+                        { label: 'ถึงลูกค้าแล้ว', desc: 'หลุดถึงลูกค้า / ร้องเรียน', item: 'จัดสินค้าผิด (ถึงลูกค้า / ร้องเรียน)', penalty: 20, badge: 'text-red-700 bg-red-50 border-red-300' }
+                    ]
+                },
+                {
+                    id: 'trd_qty_mismatch',
+                    label: 'จำนวนขาด/เกิน',
+                    icon: 'fa-calculator',
+                    color: 'text-amber-600',
+                    category: 'trd_store',
+                    defaultResp: 'individual',
+                    workerPrompt: 'ผู้จัด / นับสินค้าคือใคร?',
+                    hasImpact: false,
+                    item: 'จำนวนไม่ครบ / ขาดเกิน',
+                    penalty: 5,
+                    impactDesc: 'นับจำนวนสินค้าขาดหรือเกิน (-5 HP)'
+                },
+                {
+                    id: 'trd_checker_error',
+                    label: 'Checker ตรวจผิด',
+                    icon: 'fa-clipboard-check',
+                    color: 'text-purple-600',
+                    category: 'trd_store',
+                    defaultResp: 'individual',
+                    workerPrompt: 'Checker ของบิลนี้คือใคร?',
+                    hasImpact: true,
+                    impacts: [
+                        { label: 'แก้ไขทันในร้าน', desc: 'ตรวจพบก่อนออกจากร้าน', item: 'จัดสินค้าผิด (ตรวจพบและแก้ทัน)', penalty: 5, badge: 'text-emerald-700 bg-emerald-50 border-emerald-300' },
+                        { label: 'ถึงลูกค้าแล้ว', desc: 'Checker Escape / หลุดถึงลูกค้า', item: 'ปล่อยของผิดถึงลูกค้า (Checker)', penalty: 30, badge: 'text-red-700 bg-red-50 border-red-300' }
+                    ]
+                },
+                {
+                    id: 'trd_cashier_error',
+                    label: 'คิดเงิน/ทอนเงินผิด',
+                    icon: 'fa-cash-register',
+                    color: 'text-emerald-600',
+                    category: 'trd_cashier',
+                    defaultResp: 'individual',
+                    workerPrompt: 'แคชเชียร์บิลนี้คือใคร?',
+                    hasImpact: true,
+                    impacts: [
+                        { label: 'แก้ทันก่อนออก', desc: 'ยอดไม่ตรงแต่ทักท้วงและแก้ทัน', item: 'คิดเงิน/ทอนเงินผิด (แก้ทันก่อนลูกค้าออก)', penalty: 3, badge: 'text-emerald-700 bg-emerald-50 border-emerald-300' },
+                        { label: 'ลูกค้าร้องเรียน/แก้ย้อนหลัง', desc: 'ลูกค้ากลับมาทักท้วง', item: 'คิดเงิน/ทอนเงินผิด (ลูกค้าร้องเรียน/แก้ย้อนหลัง)', penalty: 10, badge: 'text-amber-700 bg-amber-50 border-amber-300' },
+                        { label: 'เสียหายทางการเงินจริง', desc: 'ยอดเงินขาดบัญชีจริง', item: 'เกิดความเสียหายทางการเงินจริง', penalty: 20, badge: 'text-red-700 bg-red-50 border-red-300' }
+                    ]
+                },
+                {
+                    id: 'trd_shelf_empty',
+                    label: 'สินค้าในชั้นหมด',
+                    icon: 'fa-boxes-packing',
+                    color: 'text-amber-600',
+                    category: 'trd_store',
+                    defaultResp: 'individual',
+                    workerPrompt: 'ผู้ดูแลการเติมสินค้าคือใคร?',
+                    hasImpact: false,
+                    item: 'มีสต็อกหน้าร้านแต่ไม่เติมตามมาตรฐาน',
+                    penalty: 5,
+                    impactDesc: 'ไม่เติมสินค้าบนชั้นวางให้เต็มตามเวลา (-5 HP)'
+                },
+                {
+                    id: 'trd_slow_service',
+                    label: 'บริการล่าช้า / ไม่สุภาพ',
+                    icon: 'fa-user-clock',
+                    color: 'text-red-600',
+                    category: 'trd_store',
+                    defaultResp: 'individual',
+                    workerPrompt: 'พนักงานผู้ให้บริการคือใคร?',
+                    hasImpact: false,
+                    item: 'บริการล่าช้าเกินมาตรฐาน',
+                    penalty: 10,
+                    impactDesc: 'ให้บริการล่าช้าเกิน SLA ที่กำหนด (-10 HP)'
+                }
+            ]
+        };
+
+        let currentSelectedTemplateIdx = 0;
+        let currentSelectedImpactIdx = 0;
+        let selectedCustomCatalogItem = null;
+
+        function renderQuickIncidentTemplates() {
+            renderConfirmZeroErrorsButton();
+            const branch = currentBranch || 'AKRA';
+            const container = document.getElementById('inc-quick-templates');
+            if (!container) return;
+            const templates = QUICK_INCIDENT_TEMPLATES[branch] || QUICK_INCIDENT_TEMPLATES.AKRA;
+            if (currentSelectedTemplateIdx >= templates.length) {
+                currentSelectedTemplateIdx = 0;
+            }
+
+            container.innerHTML = templates.map((tpl, idx) => {
+                const isSelected = (!selectedCustomCatalogItem && currentSelectedTemplateIdx === idx);
+                const activeClass = isSelected
+                    ? 'ring-2 ring-red-500 bg-red-50 border-red-300 text-red-900 shadow-sm'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50';
+                return `
+                    <button type="button" onclick="selectQuickIncidentTemplate(${idx})" class="p-2.5 rounded-xl border text-left text-xs font-bold transition-all flex items-center gap-2 active:scale-95 ${activeClass} cursor-pointer">
+                        <i class="fa-solid ${tpl.icon} ${tpl.color} text-sm shrink-0"></i>
+                        <span class="truncate">${esc(tpl.label)}</span>
+                    </button>
+                `;
+            }).join('');
+
+            renderIncidentImpactSection();
+            syncSelectedTemplateToCatalog();
+        }
+
+        function selectQuickIncidentTemplate(idx) {
+            selectedCustomCatalogItem = null;
+            currentSelectedTemplateIdx = idx;
+            currentSelectedImpactIdx = 0;
+            const branch = currentBranch || 'AKRA';
+            const templates = QUICK_INCIDENT_TEMPLATES[branch] || QUICK_INCIDENT_TEMPLATES.AKRA;
+            const tpl = templates[idx];
+            if (tpl) {
+                const workerLabel = document.getElementById('inc-worker-label');
+                if (workerLabel) {
+                    workerLabel.innerHTML = `<i class="fa-solid fa-user-tag text-red-600 mr-1"></i>${esc(tpl.workerPrompt || 'ใครเกี่ยวข้อง / ผู้รับผิดชอบ (Caused by):')}`;
+                }
+            }
+            renderQuickIncidentTemplates();
+        }
+
+        function renderIncidentImpactSection() {
+            const section = document.getElementById('inc-impact-section');
+            const optionsContainer = document.getElementById('inc-impact-options');
+            const statusPill = document.getElementById('inc-impact-status-pill');
+            if (!section || !optionsContainer) return;
+
+            if (selectedCustomCatalogItem) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            const branch = currentBranch || 'AKRA';
+            const templates = QUICK_INCIDENT_TEMPLATES[branch] || QUICK_INCIDENT_TEMPLATES.AKRA;
+            const tpl = templates[currentSelectedTemplateIdx];
+
+            if (!tpl || !tpl.hasImpact || !Array.isArray(tpl.impacts) || tpl.impacts.length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+            if (statusPill) {
+                const activeImp = tpl.impacts[currentSelectedImpactIdx] || tpl.impacts[0];
+                statusPill.textContent = activeImp ? activeImp.label : 'ระดับผลกระทบ';
+            }
+
+            optionsContainer.innerHTML = tpl.impacts.map((imp, idx) => {
+                const isSelected = currentSelectedImpactIdx === idx;
+                const activeBorder = isSelected
+                    ? 'border-amber-500 bg-amber-50/80 shadow-sm ring-2 ring-amber-400/50'
+                    : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700';
+                const radioDot = isSelected
+                    ? '<span class="w-3.5 h-3.5 rounded-full bg-amber-500 border-2 border-white shadow-sm flex items-center justify-center shrink-0"><span class="w-1.5 h-1.5 rounded-full bg-white"></span></span>'
+                    : '<span class="w-3.5 h-3.5 rounded-full border border-slate-300 bg-white shrink-0"></span>';
+
+                return `
+                    <button type="button" onclick="selectIncidentImpact(${idx})" class="p-3 rounded-xl border text-left text-xs transition-all flex items-start justify-between gap-2 active:scale-98 cursor-pointer ${activeBorder}">
+                        <div class="flex items-start gap-2">
+                            ${radioDot}
+                            <div>
+                                <span class="font-bold text-slate-900 block">${esc(imp.label)}</span>
+                                <p class="text-[10px] text-slate-500 mt-0.5">${esc(imp.desc)}</p>
+                            </div>
+                        </div>
+                        <span class="font-bold font-num text-xs px-2 py-0.5 rounded-md border shrink-0 ${imp.badge || 'bg-red-50 text-red-700 border-red-200'}">
+                            -${imp.penalty} HP
+                        </span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectIncidentImpact(idx) {
+            currentSelectedImpactIdx = idx;
+            renderIncidentImpactSection();
+            syncSelectedTemplateToCatalog();
+        }
+
+        function syncSelectedTemplateToCatalog() {
+            const branch = currentBranch || 'AKRA';
+            let itemName = '';
+            let itemPenalty = 5;
+            let category = 'outbound';
+            let tplLabel = '';
+
+            if (selectedCustomCatalogItem) {
+                itemName = selectedCustomCatalogItem.name;
+                itemPenalty = selectedCustomCatalogItem.penalty;
+                category = selectedCustomCatalogItem.category;
+                tplLabel = itemName;
+            } else {
+                const templates = QUICK_INCIDENT_TEMPLATES[branch] || QUICK_INCIDENT_TEMPLATES.AKRA;
+                const tpl = templates[currentSelectedTemplateIdx] || templates[0];
+                tplLabel = tpl.label;
+                category = tpl.category || (branch === 'TRD' ? 'trd_store' : 'outbound');
+                if (tpl.hasImpact && Array.isArray(tpl.impacts) && tpl.impacts[currentSelectedImpactIdx]) {
+                    const imp = tpl.impacts[currentSelectedImpactIdx];
+                    itemName = imp.item;
+                    itemPenalty = imp.penalty;
+                } else {
+                    itemName = tpl.item || tpl.label;
+                    itemPenalty = tpl.penalty || 5;
+                }
+            }
+
+            errCategory = category;
+
+            const pill = document.getElementById('inc-selected-pill');
+            if (pill) {
+                pill.textContent = tplLabel;
+            }
+
+            document.querySelectorAll('.cat-chip').forEach(el => el.classList.remove('cat-chip-active'));
+            const catBtn = document.querySelector(`.cat-chip[onclick*="'${category}'"]`);
+            if (catBtn) catBtn.classList.add('cat-chip-active');
+
+            renderErrSeverityListOnly();
+            const chips = Array.from(document.querySelectorAll('#pc-err-severity-list .sev-chip'));
+            const activeChip = chips.find(chip => chip.dataset.name === itemName) || chips[0];
+            if (activeChip) {
+                chips.forEach(el => el.classList.remove('severity-chip-active'));
+                activeChip.classList.add('severity-chip-active');
+            }
+
+            updateIncidentMetadataSummary(category, itemName, itemPenalty);
+        }
+
+        function updateIncidentMetadataSummary(cat = null, item = null, penalty = null) {
+            const metaCat = document.getElementById('inc-meta-cat');
+            const metaResp = document.getElementById('inc-meta-resp');
+            const metaHp = document.getElementById('inc-meta-hp');
+            if (!metaCat || !metaResp || !metaHp) return;
+
+            const categoryNames = {
+                'outbound': 'ขาออก',
+                'store_stock': 'หน้าร้าน/สต๊อก',
+                'inbound': 'ขารับเข้า',
+                'transfer': 'โอนย้าย W2',
+                'shared': 'ร่วมรับผิดชอบ',
+                'trd_store': 'หน้าร้าน',
+                'trd_cashier': 'แคชเชียร์',
+                'trd_stock': 'คลังหน้าร้าน',
+                'trd_other': 'อื่น ๆ'
+            };
+
+            const respNames = {
+                'individual': 'รายบุคคล',
+                'team': 'ทีมทั้งกะ',
+                'process': 'ข้อผิดพลาดระบบ (0 HP)',
+                'pending': 'รอตรวจสอบ (0 HP)'
+            };
+
+            const currentCat = cat || errCategory || 'outbound';
+            metaCat.textContent = categoryNames[currentCat] || currentCat;
+
+            const resp = selectedIncidentResponsibility || 'individual';
+            metaResp.textContent = respNames[resp] || 'รายบุคคล';
+
+            let effectivePenalty = penalty;
+            if (effectivePenalty === null) {
+                const activeSev = document.querySelector('#pc-err-severity-list .severity-chip-active');
+                effectivePenalty = activeSev ? (parseInt(activeSev.dataset.penalty, 10) || 5) : 5;
+            }
+            if (resp === 'process' || resp === 'pending') {
+                effectivePenalty = 0;
+            }
+
+            metaHp.textContent = `-${effectivePenalty} HP`;
+            if (effectivePenalty === 0) {
+                metaHp.className = 'px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md font-bold font-num border border-blue-200';
+            } else {
+                metaHp.className = 'px-2 py-0.5 bg-red-50 text-red-700 rounded-md font-bold font-num border border-red-200';
+            }
+        }
+
+        function onIncidentSearchInput(query) {
+            const q = String(query || '').trim().toLowerCase();
+            const resultsContainer = document.getElementById('inc-search-results');
+            const frequentContainer = document.getElementById('inc-frequent-container');
+            const clearBtn = document.getElementById('inc-search-clear-btn');
+            if (!resultsContainer || !frequentContainer) return;
+
+            if (!q) {
+                resultsContainer.classList.add('hidden');
+                frequentContainer.classList.remove('hidden');
+                if (clearBtn) clearBtn.classList.add('hidden');
+                return;
+            }
+
+            if (clearBtn) clearBtn.classList.remove('hidden');
+            resultsContainer.classList.remove('hidden');
+            frequentContainer.classList.add('hidden');
+
+            const branch = currentBranch || 'AKRA';
+            const allItems = [];
+            const catKeys = Object.keys(ERROR_CATALOG);
+            const relevantCats = branch === 'TRD'
+                ? catKeys.filter(k => k.startsWith('trd_'))
+                : catKeys.filter(k => !k.startsWith('trd_'));
+
+            relevantCats.forEach(cat => {
+                const items = ERROR_CATALOG[cat] || [];
+                items.forEach(item => {
+                    if (item.name.toLowerCase().includes(q) || (item.desc && item.desc.toLowerCase().includes(q))) {
+                        allItems.push({ ...item, category: cat });
+                    }
+                });
+            });
+
+            if (allItems.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="p-3 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        ไม่พบข้อผิดพลาดที่ตรงกับ "${esc(q)}"
+                    </div>
+                `;
+                return;
+            }
+
+            const catLabels = {
+                'outbound': 'ขาออก', 'store_stock': 'หน้าร้าน/สต๊อก', 'inbound': 'ขารับเข้า',
+                'transfer': 'โอนย้าย W2', 'shared': 'ร่วมรับผิดชอบ', 'trd_store': 'หน้าร้าน',
+                'trd_cashier': 'แคชเชียร์', 'trd_stock': 'คลังหน้าร้าน', 'trd_other': 'อื่น ๆ'
+            };
+
+            resultsContainer.innerHTML = allItems.map(item => `
+                <button type="button" onclick="selectCustomCatalogItem('${esc(item.category)}', '${esc(item.name)}', ${item.penalty})" class="w-full p-2.5 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50/50 bg-white text-left text-xs transition-all flex items-center justify-between gap-2 active:scale-98 cursor-pointer">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full ${item.dot || 'bg-amber-500'} shrink-0"></span>
+                        <div>
+                            <span class="font-bold text-slate-800 block">${esc(item.name)}</span>
+                            <span class="text-[10px] text-slate-400">${esc(item.desc || '')}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-semibold">${catLabels[item.category] || item.category}</span>
+                        <span class="font-bold text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded text-xs font-num">-${item.penalty}</span>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function clearIncidentSearch() {
+            const input = document.getElementById('inc-quick-search');
+            if (input) input.value = '';
+            onIncidentSearchInput('');
+        }
+
+        function selectCustomCatalogItem(category, name, penalty) {
+            selectedCustomCatalogItem = { category, name, penalty };
+            clearIncidentSearch();
+            syncSelectedTemplateToCatalog();
+            const workerLabel = document.getElementById('inc-worker-label');
+            if (workerLabel) {
+                workerLabel.innerHTML = `<i class="fa-solid fa-user-tag text-red-600 mr-1"></i>ใครเกี่ยวข้อง / ผู้รับผิดชอบ (Caused by):`;
+            }
+            const pill = document.getElementById('inc-selected-pill');
+            if (pill) pill.textContent = name;
+        }
+
+        function toggleIncidentAdvancedAccordion() {
+            const accordion = document.getElementById('inc-advanced-accordion');
+            const icon = document.getElementById('inc-adv-icon');
+            if (!accordion) return;
+            const isHidden = accordion.classList.contains('hidden');
+            if (isHidden) {
+                accordion.classList.remove('hidden');
+                if (icon) icon.className = 'fa-solid fa-chevron-up text-[9px] ml-1 transition-transform';
+            } else {
+                accordion.classList.add('hidden');
+                if (icon) icon.className = 'fa-solid fa-chevron-down text-[9px] ml-1 transition-transform';
+            }
+        }
+
+        function showIncidentSuccessCard(caseData) {
+            const card = document.getElementById('inc-success-card');
+            const summary = document.getElementById('inc-success-summary');
+            if (!card) return;
+
+            const b = currentBranch || 'AKRA';
+            const templates = QUICK_INCIDENT_TEMPLATES[b] || QUICK_INCIDENT_TEMPLATES.AKRA;
+            const tpl = templates[currentSelectedTemplateIdx];
+            let label = (selectedCustomCatalogItem ? selectedCustomCatalogItem.name : (tpl ? tpl.label : caseData.type));
+            let impactText = '';
+            if (!selectedCustomCatalogItem && tpl && tpl.hasImpact && Array.isArray(tpl.impacts)) {
+                const imp = tpl.impacts[currentSelectedImpactIdx];
+                if (imp) impactText = ` • ${imp.label}`;
+            }
+
+            if (summary) {
+                summary.textContent = `${label} • ${caseData.worker}${impactText} (-${caseData.penalty} HP)`;
+            }
+            card.classList.remove('hidden');
+            try {
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } catch (_) {}
+        }
+
+        function dismissIncidentSuccessCard() {
+            const card = document.getElementById('inc-success-card');
+            const formBody = document.getElementById('inc-form-body');
+            if (card) card.classList.add('hidden');
+            if (formBody) formBody.classList.remove('hidden');
+        }
+
+        function resetIncidentFormForNextCase() {
+            dismissIncidentSuccessCard();
+            clearIncidentSearch();
+            const noteInput = document.getElementById('pc-err-note-input');
+            if (noteInput) noteInput.value = '';
+            currentSelectedTemplateIdx = 0;
+            currentSelectedImpactIdx = 0;
+            selectedCustomCatalogItem = null;
+            renderQuickIncidentTemplates();
+            const searchInput = document.getElementById('inc-quick-search');
+            if (searchInput) searchInput.focus();
+        }
+
         function switchErrCategory(cat, btn) {
             errCategory = cat;
             document.querySelectorAll('.cat-chip').forEach(el => el.classList.remove('cat-chip-active'));
@@ -7307,7 +7929,17 @@
         }
 
         function renderErrSeverity() {
+            if (typeof dismissIncidentSuccessCard === 'function') {
+                dismissIncidentSuccessCard();
+            }
             renderErrCategoryPills();
+            renderErrSeverityListOnly();
+            if (typeof renderQuickIncidentTemplates === 'function') {
+                renderQuickIncidentTemplates();
+            }
+        }
+
+        function renderErrSeverityListOnly() {
             const container = document.getElementById('pc-err-severity-list');
             if (!container) return;
             const list = ERROR_CATALOG[errCategory] || [];
@@ -7328,6 +7960,12 @@
         function selectErrSeverityItem(idx, btn) {
             document.querySelectorAll('#pc-err-severity-list .sev-chip').forEach(el => el.classList.remove('severity-chip-active'));
             if (btn) btn.classList.add('severity-chip-active');
+            const name = btn ? btn.dataset.name : '';
+            const penalty = btn ? (parseInt(btn.dataset.penalty, 10) || 5) : 5;
+            selectedCustomCatalogItem = { category: errCategory, name, penalty };
+            updateIncidentMetadataSummary(errCategory, name, penalty);
+            const pill = document.getElementById('inc-selected-pill');
+            if (pill) pill.textContent = name;
         }
 
         function getBranchActiveRoster(branch = null) {
@@ -7357,6 +7995,8 @@
                 if (!selectedErrWorker || !options.includes(selectedErrWorker)) {
                     selectedErrWorker = options[0] || 'ทุกคนในกะ';
                 }
+                const badge = document.getElementById('inc-worker-selected-badge');
+                if (badge) badge.textContent = selectedErrWorker || '';
 
                 container.innerHTML = options.map(emp => {
                     const isSelected = selectedErrWorker === emp;
@@ -7390,6 +8030,11 @@
             selectedErrWorker = name;
             document.querySelectorAll('#pc-err-emp-chips .emp-chip').forEach(el => el.classList.remove('emp-chip-active'));
             if (btn) btn.classList.add('emp-chip-active');
+            const badge = document.getElementById('inc-worker-selected-badge');
+            if (badge) badge.textContent = name;
+            if (typeof updateIncidentMetadataSummary === 'function') {
+                updateIncidentMetadataSummary();
+            }
         }
 
         function toggleErrCatcher(name, btn) {
@@ -7623,6 +8268,9 @@
                 showToast('บันทึกเคสความผิดพลาดสำเร็จ!', false);
                 loadDashboardData();
                 updateDailyDashboard();
+                if (typeof showIncidentSuccessCard === 'function') {
+                    showIncidentSuccessCard(newCase);
+                }
             } catch (error) {
                 console.error('Incident save failed:', error);
                 showModal('บันทึกไม่สำเร็จ', error?.message || 'เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้', 'error');
@@ -7709,8 +8357,64 @@
             }
         }
 
+        function canConfirmZeroErrors() {
+            if (typeof IS_ADMIN !== 'undefined' && IS_ADMIN) return true;
+            if (Array.isArray(currentRoles)) {
+                const hasAuthRole = currentRoles.some(r => {
+                    const role = String(r || '').toLowerCase();
+                    return role.includes('admin') || role.includes('supervisor') || role.includes('lead') || role.includes('checker');
+                });
+                if (hasAuthRole) return true;
+            }
+            if (typeof getEmployeePrimaryDuty === 'function' && currentUser) {
+                const duty = String(getEmployeePrimaryDuty(currentUser) || '').toLowerCase();
+                if (duty.includes('checker') || duty.includes('ตรวจ')) return true;
+            }
+            if (!sessionToken) return true;
+            return false;
+        }
+
+        function handleZeroErrorClick() {
+            if (!canConfirmZeroErrors()) {
+                return showModal(
+                    'เฉพาะเจ้าหน้าที่ตรวจสอบ',
+                    'การยืนยัน Zero Error (ไม่พบข้อผิดพลาด) ต้องดำเนินการโดยหัวหน้ากะ หรือ ผู้ตรวจประจำวัน (Checker / Lead / Admin) เท่านั้น เพื่อป้องกันการกดข้ามขั้นตอน',
+                    'warning'
+                );
+            }
+            return confirmZeroErrors();
+        }
+
+        function renderConfirmZeroErrorsButton() {
+            const btn = document.getElementById('btn-confirm-zero-errors');
+            const badge = document.getElementById('zero-error-role-badge');
+            if (!btn) return;
+            const allowed = canConfirmZeroErrors();
+            if (badge) {
+                if (allowed) {
+                    badge.className = 'text-[9px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-md font-bold';
+                    badge.innerHTML = '<i class="fa-solid fa-user-shield mr-1"></i>Checker / Lead';
+                } else {
+                    badge.className = 'text-[9px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md font-bold';
+                    badge.innerHTML = '<i class="fa-solid fa-lock mr-1"></i>เฉพาะ Lead / Checker';
+                }
+            }
+            if (allowed) {
+                btn.className = 'w-full py-2.5 px-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center justify-between transition-all active:scale-98 shadow-sm cursor-pointer';
+            } else {
+                btn.className = 'w-full py-2.5 px-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 font-bold text-xs flex items-center justify-between transition-all active:scale-98 shadow-sm cursor-pointer';
+            }
+        }
+
         async function confirmZeroErrors() {
             if (incidentSaveInFlight) return;
+            if (!canConfirmZeroErrors()) {
+                return showModal(
+                    'เฉพาะเจ้าหน้าที่ตรวจสอบ',
+                    'การยืนยัน Zero Error (ไม่พบข้อผิดพลาด) ต้องดำเนินการโดยหัวหน้ากะ หรือ ผู้ตรวจประจำวัน (Checker / Lead / Admin) เท่านั้น เพื่อป้องกันการกดข้ามขั้นตอน',
+                    'warning'
+                );
+            }
             const date = document.getElementById('record-date-error')?.value || '';
             if (!date) return showToast('กรุณาเลือกวันที่บันทึก', true);
             if (recordedErrorCases.length > 0) {
@@ -11253,6 +11957,9 @@
             } else if (tab === 'error') {
                 renderErrSeverity();
                 renderErrEmpChips();
+                if (typeof renderQuickIncidentTemplates === 'function') {
+                    renderQuickIncidentTemplates();
+                }
                 renderErrTimeline();
                 renderErrTeamHp();
             } else if (tab === 'workload') {
