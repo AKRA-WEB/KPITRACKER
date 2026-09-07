@@ -58,7 +58,7 @@ async function runTests() {
   assert.strictEqual(unbindRes.status, 'success');
   console.log('✓ supabase-kpi-client LINE methods verified.');
 
-  // 3. Test UI state rendering in renderMyProfileView
+  // 3. Test UI state rendering in renderMyProfileView (Read-only status card)
   console.log('\n[3/4] Testing UI rendering in renderMyProfileView...');
   const dom = {
     'my-profile-name': { textContent: '' },
@@ -66,11 +66,8 @@ async function runTests() {
     'my-profile-dept-badge': { textContent: '' },
     'my-profile-roles': { textContent: '' },
     'my-profile-month-input': { value: '' },
-    'my-profile-line-status-badge': { textContent: '', className: '' },
+    'my-profile-line-status-badge': { textContent: '', className: '', innerHTML: '' },
     'my-profile-line-desc': { textContent: '', innerHTML: '' },
-    'btn-bind-line': { classList: { add: (c) => dom['btn-bind-line'].classes.add(c), remove: (c) => dom['btn-bind-line'].classes.delete(c) }, classes: new Set() },
-    'btn-bind-line-text': { textContent: '' },
-    'btn-unbind-line': { classList: { add: (c) => dom['btn-unbind-line'].classes.add(c), remove: (c) => dom['btn-unbind-line'].classes.delete(c) }, classes: new Set(['hidden']) },
     'my-profile-line-status-icon': { className: '' },
     'my-profile-quality-score': { textContent: '' },
     'my-profile-good-catch-count': { textContent: '' },
@@ -95,7 +92,7 @@ async function runTests() {
   vm.createContext(uiSandbox);
   vm.runInContext(renderFnMatch[0], uiSandbox);
 
-  // Case A: Unlinked profile
+  // Case A: Unlinked profile -> shows unlinked badge and directs to Main Menu
   uiSandbox.renderMyProfileView({
     name: 'น้องใหม่',
     lineUserId: null,
@@ -104,10 +101,10 @@ async function runTests() {
     roadmap: []
   });
   assert(dom['my-profile-line-status-badge'].textContent.includes('ยังไม่เชื่อมต่อ'));
-  assert.strictEqual(dom['btn-bind-line-text'].textContent, 'เชื่อมต่อ LINE');
-  assert(!dom['btn-bind-line'].classes.has('hidden'), 'Connect button should be visible when unlinked');
+  assert(dom['my-profile-line-desc'].textContent.includes('จัดการการผูกบัญชี LINE ได้ที่เมนูหลัก (Main Menu)'));
+  assert(dom['my-profile-line-status-icon'].className.includes('text-[#06C755]'));
 
-  // Case B: Linked profile
+  // Case B: Linked profile -> shows linked badge and LINE display name with UID snippet
   uiSandbox.renderMyProfileView({
     name: 'หมูหยอง',
     lineUserId: 'U1234567890abcdef',
@@ -116,10 +113,9 @@ async function runTests() {
     roadmap: []
   });
   assert(dom['my-profile-line-status-badge'].innerHTML.includes('เชื่อมต่อแล้ว'));
-  assert(dom['btn-bind-line'].classes.has('hidden'), 'Connect button should be hidden when connected');
-  assert(!dom['btn-unbind-line'].classes.has('hidden'), 'Unbind button should be visible when connected');
   assert(dom['my-profile-line-desc'].innerHTML.includes('MooYong_Warehouse'), 'Must display linked LINE name');
-  console.log('✓ renderMyProfileView correctly updates connected/disconnected LINE card states.');
+  assert(dom['my-profile-line-status-icon'].className.includes('bg-emerald-500'));
+  console.log('✓ renderMyProfileView correctly updates read-only LINE status card states.');
 
   function extractFunction(code, name) {
     const declMatch = code.match(new RegExp(`(?:async\\s+)?function\\s+${name}\\s*\\(`));
@@ -137,49 +133,26 @@ async function runTests() {
     return code.slice(start, pos);
   }
 
-  // 3b. Test autoCheckLiffBinding function existence and execution
-  console.log('\n[3b/4] Testing autoCheckLiffBinding in sandbox...');
-  const autoCheckCode = extractFunction(html, 'autoCheckLiffBinding');
-  assert(autoCheckCode, 'autoCheckLiffBinding function must exist');
+  // 3b. Verify strict auto-rebind purge and Quick Workload LIFF retention
+  console.log('\n[3b/4] Verifying auto-rebind purge and Quick Workload retention...');
+  assert.strictEqual(extractFunction(html, 'autoCheckLiffBinding'), null, 'autoCheckLiffBinding must be completely removed');
+  assert.strictEqual(extractFunction(html, 'connectLineOneTap'), null, 'connectLineOneTap must be removed from KPITracker');
+  assert.strictEqual(extractFunction(html, 'openLineBindingModal'), null, 'openLineBindingModal must be removed');
+  assert(!html.includes('id="line-binding-modal"'), 'line-binding-modal markup must be removed');
+  assert(!html.includes('autoCheckLiffBinding()'), 'Zero calls to autoCheckLiffBinding should remain in index.html');
 
-  let boundByAutoCheck = null;
-  const mockAkraSupabaseKPI = {
-    bindLineAccount: async (token, uid, name) => {
-      boundByAutoCheck = { uid, name };
-      return { status: 'success', lineUserId: uid, lineDisplayName: name };
-    }
-  };
-  const mockLiff = {
-    init: async () => {},
-    isLoggedIn: () => true,
-    getProfile: async () => ({ userId: 'U9999999999', displayName: 'AutoLinked_User' })
-  };
-  const autoCheckSandbox = {
-    window: { KPI_LIFF_ID: '2011386176-m5a77Ms9', AkraSupabaseKPI: mockAkraSupabaseKPI, liff: mockLiff },
-    liff: mockLiff,
-    sessionToken: 'test-token',
-    currentUser: '250013',
-    currentUserId: '250013',
-    GLOBAL_CONFIG_LIST: [{ uid: '250013', name: 'สมชาย', lineUserId: null }],
-    MY_PROFILE_DATA: { uid: '250013', name: 'สมชาย', lineUserId: null },
-    AkraSupabaseKPI: mockAkraSupabaseKPI,
-    renderMyProfileView: (p) => {
-      uiSandbox.renderMyProfileView(p);
-    },
-    console
-  };
-  vm.createContext(autoCheckSandbox);
-  await vm.runInContext(`(${autoCheckCode})()`, autoCheckSandbox);
-  assert.strictEqual(boundByAutoCheck?.uid, 'U9999999999', 'autoCheckLiffBinding must auto-bind logged in LIFF profile');
-  assert.strictEqual(autoCheckSandbox.MY_PROFILE_DATA.lineUserId, 'U9999999999');
-  assert.strictEqual(autoCheckSandbox.GLOBAL_CONFIG_LIST[0].lineUserId, 'U9999999999');
-  console.log('✓ autoCheckLiffBinding automatically links logged-in LIFF accounts.');
+  // Verify Quick Workload LIFF is retained
+  assert(html.includes('window.KPI_LIFF_ID = KPI_LIFF_ID;'), 'window.KPI_LIFF_ID must be retained');
+  assert(html.includes('id="quick-workload-modal"'), 'quick-workload-modal must be retained');
+  assert(extractFunction(html, 'openQuickWorkloadModal') !== null, 'openQuickWorkloadModal function must be retained');
+  console.log('✓ autoCheckLiffBinding purged; Quick Workload LIFF correctly retained.');
 
   // 4. Version parity check
   console.log('\n[4/4] Checking version parity...');
   const currentVersionMatch = html.match(/const\s+CURRENT_VERSION\s*=\s*["']([^"']+)["']/);
   assert(currentVersionMatch, 'CURRENT_VERSION must exist in index.html');
   assert.strictEqual(currentVersionMatch[1], versionJson.version, 'CURRENT_VERSION must match version.json');
+  assert.strictEqual(currentVersionMatch[1], '20260907.01', 'Version must be 20260907.01');
   console.log(`✓ Version parity verified: ${versionJson.version}`);
 
   console.log('\nAll LINE binding tests passed successfully!');
