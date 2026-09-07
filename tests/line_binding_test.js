@@ -148,23 +148,37 @@ async function runTests() {
   const openModalCode = extractFunction(html, 'openQuickWorkloadModal');
   assert(openModalCode !== null, 'openQuickWorkloadModal function must exist');
 
-  // Executable test of quick_workload routing behavior
-  let modalOpened = false;
-  const routeSandbox = {
-    window: {
-      location: new URL('https://akra-web.github.io/KPITRACKER/?action=quick_workload')
-    },
-    URLSearchParams: globalThis.URLSearchParams,
-    openQuickWorkloadModal: () => { modalOpened = true; }
-  };
-  vm.createContext(routeSandbox);
-  vm.runInContext(`
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('action') === 'quick_workload' || window.location.hash?.includes('quick_workload')) {
-      openQuickWorkloadModal();
-    }
-  `, routeSandbox);
-  assert.strictEqual(modalOpened, true, 'Executable route check: ?action=quick_workload must open quick workload modal');
+  // Execute the production startup registration and its scheduled callback.
+  // Boundaries select source; assertions check effects, not source-string presence.
+  const configStart = html.indexOf('const LOG_APP_SCRIPT_URL');
+  const configEnd = html.indexOf('function forceCleanCacheAndReload()', configStart);
+  assert(configStart >= 0 && configEnd > configStart, 'Production startup source must be found');
+  const startupSource = html.slice(configStart, configEnd);
+  function runStartup(source, suffix, throwOnOpen = false) {
+    let opens = 0;
+    const timers = [];
+    const routeSandbox = {
+      window: { location: new URL('https://akra-web.github.io/KPITracker/' + suffix) },
+      URLSearchParams,
+      setTimeout: fn => { timers.push(fn); },
+      openQuickWorkloadModal: () => { opens++; if (throwOnOpen) throw new Error('synthetic modal failure'); }
+    };
+    vm.createContext(routeSandbox);
+    vm.runInContext(source, routeSandbox, { filename: 'kpi-production-startup.js' });
+    timers.forEach(fn => fn());
+    return opens;
+  }
+  for (const suffix of ['?action=quick_workload', '#quick_workload']) {
+    assert.strictEqual(runStartup(startupSource, suffix), 1, 'Production startup must open requested workload route');
+  }
+  for (const suffix of ['', '?action=other', '#profile']) {
+    assert.strictEqual(runStartup(startupSource, suffix), 0, 'Unrelated route must not open workload modal');
+  }
+  assert.strictEqual(runStartup(startupSource, '?action=quick_workload', true), 1, 'Modal failure is contained by actual startup');
+  // Test-only mutation: removing real startup routing must break the positive assertion.
+  const withoutRouting = startupSource.replace(/setTimeout\([\s\S]*$/, '');
+  assert.throws(() => assert.strictEqual(runStartup(withoutRouting, '?action=quick_workload'), 1),
+    assert.AssertionError, 'Regression must detect removal of production routing');
   console.log('✓ autoCheckLiffBinding purged; Quick Workload LIFF route correctly retained and executable.');
 
   // 3c. Test loadMyProfileData authoritative sync (M5 / R4): cached linked state must be cleared if server returns unlinked
