@@ -2748,7 +2748,7 @@
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260907.01";
+        const CURRENT_VERSION = "20260907.02";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -5941,15 +5941,9 @@
                     } else if (profile.avatarUrl && !currentObj.avatarUrl) {
                         currentObj.avatarUrl = profile.avatarUrl;
                     }
-                    const cachedLineUid = (MY_PROFILE_DATA && MY_PROFILE_DATA.lineUserId) || currentObj.lineUserId || '';
-                    const cachedLineName = (MY_PROFILE_DATA && MY_PROFILE_DATA.lineDisplayName) || currentObj.lineDisplayName || '';
-                    if (!profile.lineUserId && cachedLineUid) {
-                        profile.lineUserId = cachedLineUid;
-                        profile.lineDisplayName = cachedLineName;
-                    } else if (profile.lineUserId) {
-                        currentObj.lineUserId = profile.lineUserId;
-                        currentObj.lineDisplayName = profile.lineDisplayName || '';
-                    }
+                    // Synchronize authoritative LINE association from server response to memory caches
+                    currentObj.lineUserId = profile.lineUserId || '';
+                    currentObj.lineDisplayName = profile.lineDisplayName || '';
                 }
 
                 MY_PROFILE_DATA = profile;

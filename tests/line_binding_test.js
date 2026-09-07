@@ -61,6 +61,7 @@ async function runTests() {
   // 3. Test UI state rendering in renderMyProfileView (Read-only status card)
   console.log('\n[3/4] Testing UI rendering in renderMyProfileView...');
   const dom = {
+    'view-my-profile': {},
     'my-profile-name': { textContent: '' },
     'my-profile-branch-badge': { textContent: '' },
     'my-profile-dept-badge': { textContent: '' },
@@ -147,12 +148,51 @@ async function runTests() {
   assert(extractFunction(html, 'openQuickWorkloadModal') !== null, 'openQuickWorkloadModal function must be retained');
   console.log('✓ autoCheckLiffBinding purged; Quick Workload LIFF correctly retained.');
 
+  // 3c. Test loadMyProfileData authoritative sync (M5 / R4): cached linked state must be cleared if server returns unlinked
+  console.log('\n[3c/4] Testing loadMyProfileData authoritative profile sync...');
+  const loadProfileCode = extractFunction(html, 'loadMyProfileData');
+  assert(loadProfileCode, 'loadMyProfileData function must exist');
+
+  const profileSyncSandbox = {
+    sessionToken: 'valid-token',
+    currentUser: '250013',
+    currentUserId: '250013',
+    currentBranch: 'AKRA',
+    MY_PROFILE_MONTH: '2026-09',
+    MY_PROFILE_DATA: { lineUserId: 'U_CACHED_9999', lineDisplayName: 'Old_Name' },
+    GLOBAL_CONFIG_LIST: [{ uid: '250013', name: 'สมชาย', lineUserId: 'U_CACHED_9999', lineDisplayName: 'Old_Name' }],
+    AkraSupabaseKPI: {
+      getMyProfileSummary: async () => ({
+        profile: {
+          name: 'สมชาย',
+          lineUserId: null, // Server authoritatively says UNLINKED
+          lineDisplayName: null,
+          workloadStats: {},
+          roadmap: []
+        }
+      })
+    },
+    window: null,
+    renderMyProfileView: (p) => uiSandbox.renderMyProfileView(p),
+    document: { getElementById: (id) => dom[id] || null },
+    console
+  };
+  profileSyncSandbox.window = profileSyncSandbox;
+  vm.createContext(profileSyncSandbox);
+  await vm.runInContext(`(${loadProfileCode})(true)`, profileSyncSandbox);
+
+  // Assert memory caches are purged and NOT preserved by stale fallback
+  assert.strictEqual(profileSyncSandbox.GLOBAL_CONFIG_LIST[0].lineUserId, '', 'Cached config lineUserId must be cleared when server returns unlinked');
+  assert.strictEqual(profileSyncSandbox.MY_PROFILE_DATA.lineUserId, null, 'MY_PROFILE_DATA.lineUserId must reflect server null');
+  assert(dom['my-profile-line-status-badge'].textContent.includes('ยังไม่เชื่อมต่อ'), 'UI must show unlinked status');
+  console.log('✓ loadMyProfileData authoritatively clears stale cached LINE bindings.');
+
   // 4. Version parity check
   console.log('\n[4/4] Checking version parity...');
   const currentVersionMatch = html.match(/const\s+CURRENT_VERSION\s*=\s*["']([^"']+)["']/);
   assert(currentVersionMatch, 'CURRENT_VERSION must exist in index.html');
   assert.strictEqual(currentVersionMatch[1], versionJson.version, 'CURRENT_VERSION must match version.json');
-  assert.strictEqual(currentVersionMatch[1], '20260907.01', 'Version must be 20260907.01');
+  assert.strictEqual(currentVersionMatch[1], '20260907.02', 'Version must be 20260907.02');
   console.log(`✓ Version parity verified: ${versionJson.version}`);
 
   console.log('\nAll LINE binding tests passed successfully!');
