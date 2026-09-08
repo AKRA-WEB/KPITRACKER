@@ -32,7 +32,10 @@
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok || data.status !== 'success') {
-            throw new Error(data.reason || ('Supabase fetch failed: ' + response.statusText));
+            const error = new Error(data.reason === 'record_conflict' ? 'ข้อมูลถูกแก้ไขจากที่อื่น กรุณาโหลดข้อมูลล่าสุดและตรวจทานก่อนบันทึกใหม่' : (data.reason || ('Supabase fetch failed: ' + response.statusText)));
+            error.reason = data.reason;
+            error.status = response.status;
+            throw error;
         }
         return data;
     }
@@ -43,9 +46,31 @@
         return data;
     }
 
+    async function readPages(action, token, payload, field) {
+        const records = [];
+        let cursor = null;
+        const seen = new Set();
+        do {
+            const data = await fetchKpiAction(action, token, { ...payload, cursor, limit: 500 });
+            if (!Array.isArray(data[field])) throw new Error('invalid_kpi_response');
+            records.push(...data[field]);
+            cursor = data.nextCursor || null;
+            if (cursor && seen.has(cursor)) throw new Error('invalid_kpi_cursor');
+            if (cursor) seen.add(cursor);
+        } while (cursor);
+        return records;
+    }
+
     return {
         saveDailyRecord: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
-        fetchBranchData: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
+        fetchBranchData: async (token, branch, months = 3) => {
+            const endDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+            const start = new Date(endDate + 'T00:00:00Z');
+            start.setUTCMonth(start.getUTCMonth() - ((months || 3) - 1), 1);
+            start.setUTCDate(start.getUTCDate() - ((start.getUTCDay() + 6) % 7));
+            return readPages('getDailyData', token, { branch, startDate: months === null ? '1970-01-01' : start.toISOString().slice(0, 10), endDate, includeActivity: months === null }, 'records');
+        },
+        saveSection: (token, request) => fetchKpiAction('saveSection', token, request),
         getWeeklyRecords: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
         getEmployees: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
         getConfig: token => fetchConfigAction('getConfig', token),
@@ -172,7 +197,7 @@
             if (data.status !== 'success') throw new Error('invalid_unbind_line_response');
             return data;
         },
-        getActions: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
-        saveAction: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); }
+        getActions: (token, branch) => readPages('getActions', token, { branch }, 'actions'),
+        saveAction: (token, actionItem) => fetchKpiAction('saveAction', token, { actionItem, expectedRevision: actionItem.revision ?? (actionItem.lastUpdated ? null : 0) })
     };
 }));

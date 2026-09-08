@@ -2873,7 +2873,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260908.06</span>
+                <span id="drawer-version-text">KPI Suite v20260908.07</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2896,13 +2896,13 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260908.02"></script>
+    <script src="js/supabase-kpi-client.js?v=20260908.07"></script>
     <script src="js/incident-impact.js?v=20260908.05"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260908.06";
+        const CURRENT_VERSION = "20260908.07";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -9380,87 +9380,49 @@
             }
         });
 
+        function mergeDailySectionsIntoCache(branch, records) {
+            const key = 'kpiData_' + branch;
+            const map = new Map(JSON.parse(safeStorage.getItem(key) || '[]').map(day => [day.date, day]));
+            records.forEach(day => map.set(day.date, { ...(map.get(day.date) || {}), ...day }));
+            records.filter(day => day.sectionRevisions?.tasks !== undefined).forEach(monday => {
+                const end = new Date(monday.date + 'T00:00:00Z');
+                end.setUTCDate(end.getUTCDate() + 6);
+                const sunday = end.toISOString().slice(0,10);
+                map.forEach(day => { if (day.date > monday.date && day.date <= sunday) day.tasks = []; });
+            });
+            safeStorage.setItem(key, JSON.stringify(Array.from(map.values())));
+            safeStorage.setItem(key + '_ts', String(Date.now()));
+        }
+
         async function syncDataFromSheet() {
-            if(!currentBranch) return;
-            const btnSync = document.getElementById('btn-sync');
-            if (btnSync) { btnSync.innerHTML = '<i class="fa-solid fa-rotate fa-spin mr-1"></i> ซิงค์...'; btnSync.disabled = true; }
+            const branch = currentBranch;
+            if (!branch) return;
+            const btn = document.getElementById('btn-sync');
+            if (btn) btn.disabled = true;
             _dailyDataLoading = true;
             _dailyDataLoadError = '';
             updateDailyDashboard();
-
-            const supabasePromise = ScopedRefresher.trigger(currentBranch);
-
+            const scoped = ScopedRefresher.trigger(branch);
             try {
-                let data = null;
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 12000);
-                try {
-                    const fetchUrl = LOG_APP_SCRIPT_URL + "?action=getData&branch=" + currentBranch + "&token=" + encodeURIComponent(sessionToken || "") + "&months=3";
-                    const response = await fetch(fetchUrl, { signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    data = await response.json();
-                } catch (error) {
-                    clearTimeout(timeoutId);
-                    console.error('GAS sync error:', error);
-                }
-
-                if (Array.isArray(data)) {
-                    const latestCache = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
-                    
-                    const mergedMap = new Map();
-                    // Retain existing Supabase-driven data from cache
-                    latestCache.forEach(day => {
-                        const dateKey = typeof normalizeClientDateKey === 'function' ? normalizeClientDateKey(day.date) : String(day.date || '').slice(0, 10);
-                        mergedMap.set(dateKey, { ...day });
-                    });
-                    
-                    // Merge GAS response
-                    data.forEach(day => {
-                        const dateKey = typeof normalizeClientDateKey === 'function' ? normalizeClientDateKey(day.date) : String(day.date || '').slice(0, 10);
-                        const existing = mergedMap.get(dateKey) || {};
-                        mergedMap.set(dateKey, {
-                            ...existing,
-                            ...day,
-                            // Priority to existing Supabase data (which might have just been updated)
-                            workload: existing.workload || day.workload || [],
-                            errors: existing.errors || day.errors || [],
-                            incidentCases: existing.incidentCases || day.incidentCases || [],
-                            zeroErrorsConfirmed: existing.zeroErrorsConfirmed ?? day.zeroErrorsConfirmed
-                        });
-                    });
-                    
-                    const merged = Array.from(mergedMap.values());
-
-                    _dailyDataLoadError = '';
-                    safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(merged));
-                    safeStorage.setItem('kpiData_' + currentBranch + '_ts', String(Date.now()));
-                    
-                    if (currentBranch === 'AKRA') renderTeamWorkloadPreview();
-                    hydrateIncidentPreview(document.getElementById('record-date-error')?.value || _lastRecordDate);
-                    _adminFullLoaded = false;
-                    if(!document.getElementById('view-dashboard').classList.contains('hidden')) {
-                        loadDashboardData();
-                    } else if (!document.getElementById('view-admin-dash').classList.contains('hidden')) {
-                        renderAdminDashboard();
-                    } else {
-                        loadTasksForSelectedDate();
-                        hydrateSelectedDayRecord(document.getElementById('record-date').value);
-                    }
-                    updateDailyDashboard();
-                    showToast("ซิงค์ข้อมูลล่าสุดเรียบร้อย");
-                } else {
-                    _dailyDataLoadError = 'เชื่อมต่อข้อมูลล่าสุดไม่สำเร็จ';
-                    showToast("ทำงานโหมดออฟไลน์ (เชื่อมต่อข้อมูลไม่สำเร็จ)", true);
-                }
+                const records = await AkraSupabaseKPI.fetchBranchData(sessionToken, branch, 3);
+                mergeDailySectionsIntoCache(branch, records);
+                if (currentBranch !== branch) return;
+                _adminFullLoaded = false;
+                loadTasksForSelectedDate();
+                hydrateSelectedDayRecord(document.getElementById('record-date').value);
+                hydrateIncidentPreview(document.getElementById('record-date-error')?.value || _lastRecordDate);
+                if (!document.getElementById('view-dashboard').classList.contains('hidden')) loadDashboardData();
+                if (!document.getElementById('view-admin-dash').classList.contains('hidden')) renderAdminDashboard();
+                showToast('ซิงค์ข้อมูลล่าสุดเรียบร้อย');
             } catch (error) {
-                console.error('KPI sync error:', error);
-                _dailyDataLoadError = error?.message || 'เชื่อมต่อข้อมูลล่าสุดไม่สำเร็จ';
-                showToast("ซิงค์ข้อมูลไม่สำเร็จ กรุณาลองใหม่", true);
+                if (currentBranch === branch) {
+                    _dailyDataLoadError = error.message || 'เชื่อมต่อข้อมูลล่าสุดไม่สำเร็จ';
+                    showToast('โหลดข้อมูลรายวันไม่สำเร็จ กรุณาลองใหม่', true);
+                }
             } finally {
-                await supabasePromise;
-                _dailyDataLoading = false;
-                updateDailyDashboard();
-                if (btnSync) { btnSync.innerHTML = '<i class="fa-solid fa-rotate mr-1"></i> ซิงค์ข้อมูล'; btnSync.disabled = false; }
+                await scoped;
+                if (currentBranch === branch) { _dailyDataLoading = false; updateDailyDashboard(); }
+                if (btn) btn.disabled = false;
             }
         }
 
@@ -10417,26 +10379,10 @@
         }
 
         async function fetchBranchData(branch, monthsQuery) {
-            if (typeof window !== "undefined" && window.AkraSupabaseKPI) {
-                try {
-                    const months = monthsQuery ? (monthsQuery.includes('months=') ? parseInt(monthsQuery.split('months=')[1], 10) : 3) : 3;
-                    const data = await AkraSupabaseKPI.fetchBranchData(branch, months);
-                    if (Array.isArray(data) && data.length > 0) {
-                        safeStorage.setItem('kpiData_' + branch, JSON.stringify(data));
-                        safeStorage.setItem('kpiData_' + branch + '_ts', String(Date.now()));
-                        return;
-                    }
-                } catch (supaErr) {
-                    console.warn(`[Supabase KPI] fetchBranchData(${branch}) fallback to GAS:`, supaErr);
-                }
-            }
-            const res = await fetch(LOG_APP_SCRIPT_URL + "?action=getData&branch=" + branch + "&token=" + encodeURIComponent(sessionToken || "") + (monthsQuery || ""));
-            if (!res.ok) throw new Error(`โหลดข้อมูล ${branch} ไม่สำเร็จ (HTTP ${res.status})`);
-            let data = await res.json();
-            if (!Array.isArray(data)) throw new Error(`รูปแบบข้อมูล ${branch} ไม่ถูกต้อง`);
-            data = await mergeLatestWorkloadData(data, branch, monthsQuery ? (parseInt(String(monthsQuery).split('months=')[1], 10) || 3) : 3);
-            safeStorage.setItem('kpiData_' + branch, JSON.stringify(data));
-            safeStorage.setItem('kpiData_' + branch + '_ts', String(Date.now()));
+            const months = monthsQuery ? (parseInt(String(monthsQuery).split('months=')[1], 10) || 3) : null;
+            const records = await AkraSupabaseKPI.fetchBranchData(sessionToken, branch, months);
+            mergeDailySectionsIntoCache(branch, records);
+            await ScopedRefresher.trigger(branch);
         }
 
         async function syncAllBranchesForAdmin() {
@@ -11394,25 +11340,11 @@
             _fetchingActions = true;
             updateDailyDashboard();
 
-            if (typeof window !== "undefined" && window.AkraSupabaseKPI) {
-                try {
-                    const data = await AkraSupabaseKPI.getActions(currentBranch);
-                    if (Array.isArray(data)) {
-                        ALL_ACTIONS = data;
-                        _actionsLoadError = '';
-                        _fetchingActions = false;
-                        _actionsLoaded = true;
-                        updateDailyDashboard();
-                        return;
-                    }
-                } catch (supaErr) {
-                    console.warn('[Supabase KPI] refreshActions fallback to GAS:', supaErr);
-                }
-            }
-
             try {
-                const res = await fetch(LOG_APP_SCRIPT_URL + "?action=getActions&token=" + encodeURIComponent(sessionToken || ""));
-                const data = await res.json();
+                const roles = currentRoles || [];
+                const allBranches = roles.some(role => ['ADMIN','SUPERVISOR'].includes(String(role).toUpperCase()));
+                const branches = ['AKRA','TRD'].filter(branch => allBranches || roles.some(role => String(role).toUpperCase() === branch || (branch === 'AKRA' && String(role).toUpperCase() === 'WAREHOUSE') || (branch === 'TRD' && String(role).toUpperCase() === 'CASHIER')));
+                const data = (await Promise.all(branches.map(branch => AkraSupabaseKPI.getActions(sessionToken, branch)))).flat();
                 if (!Array.isArray(data)) {
                     const apiError = new Error((data && data.message) || 'Action API returned a non-array response');
                     apiError.reason = data && data.reason;
@@ -11426,15 +11358,14 @@
                 _actionsLoadError = '';
             } catch(e) {
                 console.error("Failed to fetch actions", e);
-                ALL_ACTIONS = [];
                 if (e.reason === 'no_token') {
                     _actionsLoadError = 'ระบบไม่ได้รับ SSO token สำหรับ Action Items (รหัสวินิจฉัย: no_token)';
                 } else if (e.reason === 'invalid_or_expired_token') {
                     _actionsLoadError = 'SSO token ถูกปฏิเสธหรือหมดอายุ (รหัสวินิจฉัย: invalid_or_expired_token)';
                 } else if (e.reason === 'verify_failed') {
-                    _actionsLoadError = 'GAS ไม่สามารถตรวจสอบ SSO token กับ Main ได้ (รหัสวินิจฉัย: verify_failed)';
+                    _actionsLoadError = 'ไม่สามารถตรวจสอบ SSO token กับ Main ได้ (รหัสวินิจฉัย: verify_failed)';
                 } else if (e.message === 'Action API schema mismatch') {
-                    _actionsLoadError = 'ไม่สามารถโหลด Action Items ได้ เนื่องจาก GAS backend และ frontend ใช้ schema คนละเวอร์ชัน';
+                    _actionsLoadError = 'ไม่สามารถโหลด Action Items ได้ เนื่องจาก API และหน้าเว็บ ใช้ schema คนละเวอร์ชัน';
                 } else {
                     _actionsLoadError = 'ไม่สามารถโหลด Action Items ได้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่';
                 }
@@ -11648,74 +11579,55 @@
         }
 
         async function saveRecordActionsToServer() {
-            if (localActionsDraft.length === 0) return;
-
             for (const act of localActionsDraft) {
-                const sendItem = { ...act };
-                let saved = false;
-
-                if (typeof window !== "undefined" && window.AkraSupabaseKPI) {
-                    try {
-                        const supaRes = await AkraSupabaseKPI.saveAction(sendItem);
-                        if (supaRes && supaRes.status === 'success') {
-                            if (supaRes.actionId) act.actionId = supaRes.actionId;
-                            if (supaRes.actionItem && supaRes.actionItem.lastUpdated) {
-                                act.lastUpdated = supaRes.actionItem.lastUpdated;
-                            }
-                            saved = true;
-                        }
-                    } catch (supaErr) {
-                        console.warn('[Supabase KPI] saveAction fallback to GAS:', supaErr);
-                    }
-                }
-
-                if (!saved) {
-                    const res = await postToAppScript({
-                        action: 'saveAction',
-                        actionItem: sendItem
-                    });
-
-                    if (res && res.status === 'conflict') {
-                        showModal(
-                            "ข้อขัดแย้งในการบันทึก",
-                            `ข้อมูล "${act.title}" ถูกแก้ไขโดยผู้ใช้อื่นในระบบจริงเมื่อ ${res.serverAction.lastUpdated}\n\nกรุณารีโหลดหน้าเว็บเพื่อดึงข้อมูลล่าสุดก่อนบันทึกใหม่`,
-                            "error"
-                        );
-                        throw new Error(`ข้อมูล "${act.title}" ถูกแก้ไขโดยผู้ใช้อื่น (Concurrency Conflict)`);
-                    }
-
-                    if (!res || res.status !== 'success') {
-                        throw new Error(res.message || 'บันทึก Action Item ไม่สำเร็จ');
-                    }
-
-                    if (res.actionId) act.actionId = res.actionId;
-                    if (res.actionItem && res.actionItem.lastUpdated) {
-                        act.lastUpdated = res.actionItem.lastUpdated;
-                    }
-                }
+                const result = await AkraSupabaseKPI.saveAction(sessionToken, act);
+                Object.assign(act, result.actionItem);
             }
             await refreshActions();
         }
 
-        async function postToAppScript(payload) {
-            const requestBody = {
-                ...payload,
-                token: sessionToken
-            };
-            const res = await fetch(LOG_APP_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-                body: JSON.stringify(requestBody)
+        const sectionEditRevisions = new Map();
+
+        function sectionEditKey(branch, date) {
+            return `kpiEditRevisions_${currentUser}_${branch}_${date}`;
+        }
+
+        function captureSectionRevision(date, section) {
+            let targetDate = date;
+            if (section === 'tasks') {
+                const day = new Date(date + 'T00:00:00Z');
+                day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));
+                targetDate = day.toISOString().slice(0,10);
+            }
+            const cached = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]').find(day => day.date === targetDate);
+            const key = sectionEditKey(currentBranch, date);
+            const revisions = sectionEditRevisions.get(key) || {};
+            revisions[section] = cached?.sectionRevisions?.[section] ?? 0;
+            sectionEditRevisions.set(key, revisions);
+        }
+
+        async function postToKpiApi(payload) {
+            if (payload.action === 'saveAction') return AkraSupabaseKPI.saveAction(sessionToken, payload.actionItem);
+            if (payload.action !== 'saveSection' || !['operations','tasks','endOfShift','vendorBills'].includes(payload.section)) throw new Error('กรุณาใช้แบบบันทึกปัจจุบัน');
+            const editKey = sectionEditKey(payload.branch, payload.date);
+            const revisions = sectionEditRevisions.get(editKey) || {};
+            const result = await AkraSupabaseKPI.saveSection(sessionToken, { ...payload, expectedRevision: revisions[payload.section] ?? 0 });
+            mergeDailySectionsIntoCache(payload.branch, [result.record]);
+            revisions[payload.section] = result.record.sectionRevisions[payload.section];
+            sectionEditRevisions.set(editKey, revisions);
+            return result;
+        }
+
+        function reconcileSavedActionDraft(item) {
+            const keys = [`kpiDraft_${currentUser}_${item.branch}_${item.sourceDate}_main`, 'kpiDraft_' + item.branch];
+            keys.forEach(key => {
+                const draft = JSON.parse(safeStorage.getItem(key) || 'null');
+                if (!draft || !Array.isArray(draft.actions)) return;
+                if (key === 'kpiDraft_' + item.branch && draft.date !== item.sourceDate) return;
+                if (!draft.actions.some(action => action.actionId === item.actionId)) draft.actions.push(item);
+                draft.actions = draft.actions.map(action => action.actionId === item.actionId ? item : action);
+                safeStorage.setItem(key, JSON.stringify(draft));
             });
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            const text = await res.text();
-            try {
-                return JSON.parse(text);
-            } catch(err) {
-                throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
-            }
         }
 
         function openActionModalForEdit(actionId) {
@@ -11736,6 +11648,7 @@
             document.getElementById('action-form-resolution-note').value = act.resolutionNote || '';
 
             document.getElementById('action-item-form').dataset.prevStatus = act.status || '';
+            document.getElementById('action-item-form').dataset.revision = String(act.revision ?? (act.lastUpdated ? -1 : 0));
 
             populateOwnerDatalist(act.branch || currentBranch);
             populateStatusOptions(act.status || '');
@@ -11758,6 +11671,7 @@
             document.getElementById('action-form-resolution-note').value = '';
 
             document.getElementById('action-item-form').dataset.prevStatus = '';
+            document.getElementById('action-item-form').dataset.revision = '0';
 
             populateOwnerDatalist(currentBranch);
             populateStatusOptions('');
@@ -11822,6 +11736,8 @@
 
         async function handleActionFormSubmit(event) {
             event.preventDefault();
+            const form = document.getElementById('action-item-form');
+            if (form.dataset.saving === 'true') return;
 
             const id = document.getElementById('action-form-id').value;
             const title = document.getElementById('action-form-title').value.trim();
@@ -11870,33 +11786,27 @@
                 dueDate: dueDate,
                 status: status,
                 resolutionNote: resolutionNote,
-                lastUpdated: existingAct ? existingAct.lastUpdated : ""
+                lastUpdated: existingAct ? existingAct.lastUpdated : "",
+                revision: Number(document.getElementById('action-item-form').dataset.revision ?? -1)
             };
 
-            const onRecordTab = !document.getElementById('view-dashboard')?.classList.contains('hidden') || !document.getElementById('view-workload')?.classList.contains('hidden');
-
-            if (onRecordTab) {
-                const idx = localActionsDraft.findIndex(a => a.actionId === actionItem.actionId);
-                if (idx !== -1) {
-                    localActionsDraft[idx] = actionItem;
-                } else {
-                    localActionsDraft.push(actionItem);
-                }
-                renderRecordActionsTable();
-                closeActionModal();
-                saveRecordDraftDebounced();
-                showToast("เพิ่มลงในรายการร่างเรียบร้อย (จะบันทึกเข้าระบบเมื่อบันทึกรายงานหลัก)");
-            } else {
-                closeActionModal();
+            {
                 showToast("กำลังบันทึกข้อมูล...");
+                form.dataset.saving = 'true';
+                document.getElementById('action-form-id').value = actionItem.actionId;
                 try {
-                    const res = await postToAppScript({
+                    const res = await postToKpiApi({
                         action: 'saveAction',
                         actionItem: actionItem
                     });
                     if (res && res.status === 'success') {
+                        reconcileSavedActionDraft(res.actionItem);
+                        closeActionModal();
                         showToast("บันทึก Action Item สำเร็จ!");
+                        const draftIndex = localActionsDraft.findIndex(act => act.actionId === actionItem.actionId);
+                        if (draftIndex >= 0) localActionsDraft[draftIndex] = res.actionItem;
                         await refreshActions();
+                        renderRecordActionsTable();
                     } else if (res && res.status === 'conflict') {
                         showModal(
                             "ข้อขัดแย้งในการบันทึก",
@@ -11907,7 +11817,9 @@
                         showToast("เกิดข้อผิดพลาด: " + (res.message || 'บันทึกไม่สำเร็จ'), true);
                     }
                 } catch(e) {
-                    showToast("บันทึกไม่สำเร็จ (ตรวจสอบการเชื่อมต่อ: " + e.message + ")", true);
+                    showToast(e.status === 409 ? "ข้อมูลถูกแก้ไขจากที่อื่น กรุณาโหลดข้อมูลล่าสุดและตรวจทานก่อนบันทึกใหม่" : "บันทึกไม่สำเร็จ: " + e.message, true);
+                } finally {
+                    form.dataset.saving = 'false';
                 }
             }
         }
@@ -12435,6 +12347,8 @@
                 return itemDate >= startOfWeek && itemDate <= endOfWeek;
             });
             targetWeekData.sort((a,b) => new Date(a.date) - new Date(b.date));
+            const canonicalTasks = targetWeekData.find(day => day.sectionRevisions?.tasks !== undefined);
+            if (canonicalTasks) targetWeekData = [canonicalTasks];
 
             let weeklyTasksMap = {};
             targetWeekData.forEach(day => {
@@ -12460,6 +12374,11 @@
             // ถ้ามีแบบร่างของวันเดียวกัน ให้ใช้แผนงานจากแบบร่างแทน (กัน sync เบื้องหลังเขียนทับงานที่กรอกค้าง)
             const draft = readRecordDraft();
             if (draft && draft.date === selectedDateStr) applyDraftTasks(draft);
+            const mainDraft = JSON.parse(safeStorage.getItem(`kpiDraft_${currentUser}_${currentBranch}_${selectedDateStr}_main`) || 'null');
+            const editKey = sectionEditKey(currentBranch, selectedDateStr);
+            if (!sectionEditRevisions.has(editKey)) sectionEditRevisions.set(editKey, { ...(mainDraft?._sectionRevisions || {}) });
+            if (mainDraft && Array.isArray(mainDraft.tasks)) applyDraftTasks(mainDraft);
+            if (!mainDraft?.tasks && !(draft && draft.date === selectedDateStr) && _draftTimer === null) captureSectionRevision(selectedDateStr, 'tasks');
             loadRecordActionsForSelectedDate();
         }
 
@@ -12537,12 +12456,22 @@
             const vendorKey = `kpiDraft_${currentUser}_${currentBranch}_${date}_vendorBills`;
             let mainDraft = null;
             try { mainDraft = JSON.parse(safeStorage.getItem(mainKey) || 'null'); } catch (e) {}
+            const editKey = sectionEditKey(currentBranch, date);
+            if (!sectionEditRevisions.has(editKey)) {
+                const vendorDraft = JSON.parse(safeStorage.getItem(vendorKey) || 'null');
+                sectionEditRevisions.set(editKey, { ...(mainDraft?._sectionRevisions || {}), ...(vendorDraft ? { vendorBills: vendorDraft._sectionRevision ?? 0 } : {}) });
+            }
+            if (sectionEditRevisions.get(editKey).vendorBills === undefined && safeStorage.getItem(vendorKey)) {
+                const vendorDraft = JSON.parse(safeStorage.getItem(vendorKey));
+                sectionEditRevisions.get(editKey).vendorBills = vendorDraft._sectionRevision ?? 0;
+            }
             const hydrateOperations = !hasPendingDraft && (!mainDraft || !Object.prototype.hasOwnProperty.call(mainDraft, 'volume') || !Object.prototype.hasOwnProperty.call(mainDraft, 'notes'));
             const hydrateEndOfShift = !hasPendingDraft && (!mainDraft || !Object.prototype.hasOwnProperty.call(mainDraft, 'endOfShift'));
             let mainHydrated = false;
             let vendorHydrated = false;
 
             if (hydrateOperations && BRANCH_CONFIG[currentBranch] && BRANCH_CONFIG[currentBranch].showZone2) {
+                    captureSectionRevision(date, 'operations');
                     const volume = (selectedDay && selectedDay.volume) || {};
                     const volumeFields = {
                         'vol-transfer': 'transfer',
@@ -12564,6 +12493,7 @@
             }
 
             if (hydrateEndOfShift) {
+                captureSectionRevision(date, 'endOfShift');
                 const endOfShift = normalizeEndOfShiftBrief(selectedDay && selectedDay.endOfShift);
                 const endOfShiftFields = { 'eos-summary': 'summary', 'eos-issues': 'issues', 'eos-actions': 'actions', 'eos-followups': 'followUps' };
                 Object.entries(endOfShiftFields).forEach(([id, key]) => {
@@ -12575,6 +12505,7 @@
             }
 
             if (currentBranch === 'AKRA' && !hasPendingDraft && !safeStorage.getItem(vendorKey)) {
+                captureSectionRevision(date, 'vendorBills');
                 const endOfShift = normalizeEndOfShiftBrief(selectedDay && selectedDay.endOfShift);
                 setVendorBillsForm(endOfShift.vendorBills);
                 vendorHydrated = true;
@@ -12707,7 +12638,7 @@
                 const vendorBills = collectVendorBills();
                 const hasVendor = vendorBills.totalToday !== '' || vendorBills.entryStatus || vendorBills.pendingAccumulated !== 0 || vendorBills.pendingNote.trim();
                 if (hasVendor) {
-                    safeStorage.setItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_vendorBills`, JSON.stringify(vendorBills));
+                    safeStorage.setItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_vendorBills`, JSON.stringify({ ...vendorBills, _sectionRevision: sectionEditRevisions.get(sectionEditKey(currentBranch, date))?.vendorBills ?? 0 }));
                 } else {
                     safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date}_vendorBills`);
                 }
@@ -12721,6 +12652,7 @@
             if (_restoringDraft || !currentBranch) return;
             const date = dateOverride || document.getElementById('record-date').value || formatDateKeyLocal(new Date());
             const mainDraft = {
+                _sectionRevisions: { ...(sectionEditRevisions.get(sectionEditKey(currentBranch, date)) || {}) },
                 tasks: [],
                 volume: {},
                 notes: {},
@@ -13079,7 +13011,7 @@
             const restoreScopedControls = lockScopedSaveControls(btn);
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
             try {
-                const res = await postToAppScript(request);
+                const res = await postToKpiApi(request);
                 if (!res || res.status !== 'success') {
                     showModal('บันทึกไม่สำเร็จ', (res && res.message) || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์', 'error');
                     return false;
@@ -13402,7 +13334,7 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
 
             try {
-                const res = await postToAppScript({
+                const res = await postToKpiApi({
                     action: 'saveSection',
                     branch: branch,
                     date: date,
@@ -13446,7 +13378,7 @@
             const vendorBillsVal = collectVendorBills();
 
             try {
-                const res = await postToAppScript({
+                const res = await postToKpiApi({
                     action: 'saveSection',
                     branch: currentBranch,
                     date: date,

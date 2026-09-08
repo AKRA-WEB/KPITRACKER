@@ -20,13 +20,7 @@ async function runTests() {
   );
   console.log('  -> getWeeklyRecords correctly deactivated with fallback notice');
 
-  // 3. fetchBranchData Query should throw containment error
-  console.log('\n[3/7] Testing fetchBranchData throws containment error...');
-  await assert.rejects(
-    async () => { await kpiClient.fetchBranchData('AKRA', 6); },
-    /Supabase KPI client deactivated/
-  );
-  console.log('  -> fetchBranchData correctly deactivated with fallback notice');
+  await assert.rejects(() => kpiClient.fetchBranchData('', 'AKRA'), /authenticated/);
 
   // 4. Employee roster/config must use the authenticated Edge boundary.
   console.log('\n[4/7] Testing authenticated getConfig Edge request...');
@@ -118,13 +112,7 @@ async function runTests() {
   await assert.rejects(() => kpiClient.getConfig(''), /authenticated Main session/);
   console.log('  -> getConfig used the signed Main token and returned the Edge response');
 
-  // 5. Executive Action Center should throw containment error
-  console.log('\n[7/7] Testing saveAction throws containment error...');
-  await assert.rejects(
-    async () => { await kpiClient.saveAction({ branch: 'AKRA' }); },
-    /Supabase KPI client deactivated/
-  );
-  console.log('  -> saveAction correctly deactivated with fallback notice');
+  await assert.rejects(() => kpiClient.saveAction('', { branch: 'AKRA' }), /authenticated/);
 
   console.log('\n🌟 ALL KPITRACKER SUPABASE CONTAINMENT & FALLBACK TESTS PASSED 100%! 🌟');
 }
