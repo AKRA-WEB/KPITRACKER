@@ -6,6 +6,12 @@ const path = require('path');
 const sourcePath = path.join(__dirname, '..', '..', 'database', 'supabase', 'functions', 'kpi-api', 'index.ts');
 
 function loadHandler(fixtures) {
+  // Config reads are mandatory now: an outage must not masquerade as legacy mode.
+  const readRows = fixtures.dbRows;
+  fixtures.dbRows = async (table, query) => {
+    if (table === 'kpi_system_configs') { fixtures.dbCalls.push({table, query}); return []; }
+    return readRows(table, query);
+  };
   let handler;
   let source = fs.readFileSync(sourcePath, 'utf8')
     .replace(/^import[^\n]+\n/, '')

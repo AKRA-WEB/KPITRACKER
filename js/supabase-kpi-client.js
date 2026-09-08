@@ -72,13 +72,16 @@
             }
             return data;
         },
-        deleteIncident: async (token, branch, date, caseId) => {
-            const data = await fetchKpiAction('deleteIncident', token, { branch, date, caseId });
+        deleteIncident: async (token, branch, date, caseId, expectedRevision, reason) => {
+            const data = await fetchKpiAction('deleteIncident', token, { branch, date, caseId, expectedRevision, reason });
             if (!Array.isArray(data.incidents) || typeof data.zeroConfirmed !== 'boolean') {
                 throw new Error('invalid_kpi_incident_response');
             }
             return data;
         },
+        updateIncident: (token, request) => fetchKpiAction('updateIncident', token, request),
+        getIncidentHistory: (token, branch, date, caseId) => fetchKpiAction('getIncidentHistory', token, { branch, date, caseId }),
+        saveIncidentCatalog: (token, configValue) => fetchKpiAction('saveIncidentCatalog', token, { configValue }),
         clearWorkload: async (token, employeeUid, date) => {
             const data = await fetchKpiAction('clearWorkload', token, { employeeUid, date });
             if (!Array.isArray(data.workload)) throw new Error('invalid_kpi_workload_response');

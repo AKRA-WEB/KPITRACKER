@@ -1,0 +1,515 @@
+{
+  "schemaVersion": 3,
+  "active": false,
+  "activatedAt": null,
+  "catalogRevision": 1,
+  "branches": {
+    "TRD": {
+      "categories": [
+        {
+          "key": "cashier",
+          "icon": "fa-cash-register",
+          "color": "text-purple-500",
+          "label": "แคชเชียร์ & บริการ"
+        },
+        {
+          "key": "admin_doc",
+          "icon": "fa-file-lines",
+          "color": "text-blue-500",
+          "label": "แอดมิน & งานเอกสาร"
+        },
+        {
+          "key": "shared",
+          "icon": "fa-handshake",
+          "color": "text-indigo-500",
+          "label": "รับผิดชอบร่วม"
+        },
+        {
+          "key": "cat_1787719959049",
+          "icon": "fa-truck-fast",
+          "color": "text-purple-500",
+          "label": "หน้าร้าน / ในร้าน"
+        }
+      ],
+      "types": [
+        {
+          "id": "trd-bc3523c19f88",
+          "name": "มาทำงานสาย / ขาดงานไม่แจ้ง",
+          "category": "shared",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "not_applicable",
+            "unknown"
+          ],
+          "legacyNames": [
+            "มาทำงานสาย / ขาดงานไม่แจ้ง"
+          ]
+        },
+        {
+          "id": "trd-d05685574081",
+          "name": "ร้านค้าไม่สะอาด / ชั้นวางของรก",
+          "category": "shared",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "not_applicable",
+            "unknown"
+          ],
+          "legacyNames": [
+            "ร้านค้าไม่สะอาด / ชั้นวางของรก"
+          ]
+        },
+        {
+          "id": "trd-e72f4167d739",
+          "name": "คิดเงินทอนเงินผิด",
+          "category": "cashier",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "คิดเงินทอนเงินผิด"
+          ]
+        },
+        {
+          "id": "trd-1c33bb5ee2fc",
+          "name": "เปิดบิลผิดรายการ / ผิดสาขา",
+          "category": "cashier",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "เปิดบิลผิดรายการ / ผิดสาขา"
+          ]
+        },
+        {
+          "id": "trd-2f41a1bdd3c2",
+          "name": "ลืมยิงบาร์โค้ด / จำนวนผิด",
+          "category": "cashier",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "ลืมยิงบาร์โค้ด / จำนวนผิด"
+          ]
+        },
+        {
+          "id": "trd-4138be583790",
+          "name": "พูดจาไม่สุภาพ / บริการล่าช้า",
+          "category": "cashier",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "พูดจาไม่สุภาพ / บริการล่าช้า"
+          ]
+        },
+        {
+          "id": "trd-6067c0e0ec11",
+          "name": "สินค้าหมดไม่แจ้ง",
+          "category": "cashier",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "สินค้าหมดไม่แจ้ง"
+          ]
+        },
+        {
+          "id": "trd-57004737a966",
+          "name": "ทำเอกสารวางบิลหาย / ผิดพลาด",
+          "category": "admin_doc",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "ทำเอกสารวางบิลหาย / ผิดพลาด"
+          ]
+        },
+        {
+          "id": "trd-614b4990020f",
+          "name": "รับออเดอร์ตกหล่น / ตอบแชทช้า",
+          "category": "admin_doc",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "รับออเดอร์ตกหล่น / ตอบแชทช้า"
+          ]
+        },
+        {
+          "id": "trd-d8a0ce7d38b8",
+          "name": "คีย์ข้อมูลสต๊อกเข้าระบบผิด",
+          "category": "admin_doc",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "คีย์ข้อมูลสต๊อกเข้าระบบผิด"
+          ]
+        },
+        {
+          "id": "trd-5c3880d2f7e2",
+          "name": "จัดสินค้าผิด",
+          "category": "cat_1787719959049",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "จัดสินค้าผิด (แก้ไขทัน)",
+            "จัดสินค้าผิด (ถึงลูกค้าแล้ว)"
+          ]
+        },
+        {
+          "id": "trd-8e59c893acd0",
+          "name": "ไม่ตรวจสอบสินค้าก่อนขึ้นรถ",
+          "category": "cat_1787719959049",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "ไม่ตรวจสอบสินค้าก่อนขึ้นรถ"
+          ]
+        },
+        {
+          "id": "trd-9859151c8b29",
+          "name": "ปล่อนสินค้าบนชั้นวางหมด",
+          "category": "cat_1787719959049",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "ปล่อนสินค้าบนชั้นวางหมด"
+          ]
+        },
+        {
+          "id": "trd-2bf2076b85e9",
+          "name": "เช็คเกอร์ตรวจสอบสินค้าไม่ถูกต้อง",
+          "category": "cat_1787719959049",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "เช็คเกอร์ตรวจสอบสินค้าไม่ถูกต้อง"
+          ]
+        }
+      ]
+    },
+    "AKRA": {
+      "categories": [
+        {
+          "key": "outbound",
+          "icon": "fa-truck-fast",
+          "color": "text-blue-500",
+          "label": "ขาออก & จัดส่ง"
+        },
+        {
+          "key": "store_stock",
+          "icon": "fa-store",
+          "color": "text-amber-500",
+          "label": "หน้าร้าน/สต๊อก"
+        },
+        {
+          "key": "inbound",
+          "icon": "fa-box-archive",
+          "color": "text-emerald-500",
+          "label": "ขารับเข้า"
+        },
+        {
+          "key": "transfer",
+          "icon": "fa-arrows-rotate",
+          "color": "text-purple-500",
+          "label": "โอนย้าย W2"
+        },
+        {
+          "key": "shared",
+          "icon": "fa-handshake",
+          "color": "text-indigo-500",
+          "label": "รับผิดชอบร่วม"
+        }
+      ],
+      "types": [
+        {
+          "id": "akra-e1d5804d61c7",
+          "name": "วางของเกะกะ ขวางทางสัญจร",
+          "category": "shared",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "not_applicable",
+            "unknown"
+          ],
+          "legacyNames": [
+            "วางของเกะกะ ขวางทางสัญจร"
+          ]
+        },
+        {
+          "id": "akra-9549cf955aad",
+          "name": "ไม่รักษาความสะอาดพื้นที่ทำงาน",
+          "category": "shared",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "not_applicable",
+            "unknown"
+          ],
+          "legacyNames": [
+            "ไม่รักษาความสะอาดพื้นที่ทำงาน"
+          ]
+        },
+        {
+          "id": "akra-99ea99eb67cf",
+          "name": "อุปกรณ์ส่วนกลางชำรุดไม่แจ้ง",
+          "category": "shared",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "not_applicable",
+            "unknown"
+          ],
+          "legacyNames": [
+            "อุปกรณ์ส่วนกลางชำรุดไม่แจ้ง"
+          ]
+        },
+        {
+          "id": "akra-24266877ca03",
+          "name": "วางสินค้าไม่เรียบร้อย/ผิดตำแหน่ง",
+          "category": "inbound",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "วางสินค้าไม่เรียบร้อย/ผิดตำแหน่ง"
+          ]
+        },
+        {
+          "id": "akra-c4ce30d6bff5",
+          "name": "ลงรับสินค้าในแอปผิด",
+          "category": "inbound",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "ลงรับสินค้าในแอปผิด"
+          ]
+        },
+        {
+          "id": "akra-b60ac3ad0f35",
+          "name": "รับสินค้าชำรุดเข้ามาไม่แจ้ง",
+          "category": "inbound",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "รับสินค้าชำรุดเข้ามาไม่แจ้ง"
+          ]
+        },
+        {
+          "id": "akra-40310200fe60",
+          "name": "จัดสินค้าผิด",
+          "category": "outbound",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "หยิบผิด แก้ทันก่อนจัดส่ง",
+            "หยิบผิด ถึงหน้าร้านแล้ว",
+            "หยิบผิด ถึงลูกค้าแล้ว"
+          ]
+        },
+        {
+          "id": "akra-33179ed4abc0",
+          "name": "จำนวนไม่ครบ / ขาดเกิน",
+          "category": "outbound",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "จำนวนไม่ครบ / ขาดเกิน"
+          ]
+        },
+        {
+          "id": "akra-75335078361f",
+          "name": "จัดของโอนย้าย W2 ผิดรายการ",
+          "category": "transfer",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "จัดของโอนย้าย W2 ผิดรายการ"
+          ]
+        },
+        {
+          "id": "akra-3dcdf51f0e50",
+          "name": "จัดของโอนย้าย W2 ขาด/เกิน",
+          "category": "transfer",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "จัดของโอนย้าย W2 ขาด/เกิน"
+          ]
+        },
+        {
+          "id": "akra-aeffd86536bc",
+          "name": "ไม่ลงบันทึกการโอนย้าย",
+          "category": "transfer",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "ไม่ลงบันทึกการโอนย้าย"
+          ]
+        },
+        {
+          "id": "akra-93f962b4dfff",
+          "name": "ตกเบิกสต๊อก / ของหมดไม่แจ้ง",
+          "category": "store_stock",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "ตกเบิกสต๊อก / ของหมดไม่แจ้ง"
+          ]
+        },
+        {
+          "id": "akra-2d62f50b2054",
+          "name": "ปล่อยชั้นวางว่าง / เติมของช้า",
+          "category": "store_stock",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "ปล่อยชั้นวางว่าง / เติมของช้า"
+          ]
+        },
+        {
+          "id": "akra-f020f42a89c6",
+          "name": "สต๊อกสินค้าไม่พอใช้ / สั่งของช้า",
+          "category": "store_stock",
+          "active": true,
+          "quick": true,
+          "impacts": [
+            "contained",
+            "escaped_internal",
+            "reached_customer",
+            "unknown"
+          ],
+          "legacyNames": [
+            "สต๊อกสินค้าไม่พอใช้ / สั่งของช้า"
+          ]
+        }
+      ]
+    }
+  }
+}

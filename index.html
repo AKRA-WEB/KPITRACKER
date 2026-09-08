@@ -411,7 +411,7 @@
                         <i class="fa-solid fa-triangle-exclamation text-red-600"></i>
                         บันทึกความผิดพลาดหน้างาน (Multi-Category Incident Log)
                     </h2>
-                    <p class="text-xs text-slate-500">บันทึกเคสตามระดับผลกระทบ • แยกปัญหากระบวนการ (0 HP) และปัญหาบุคคล • คิดคะแนน Daily Cap</p>
+                    <p class="text-xs text-slate-500">บันทึกประเภท ผลกระทบ และผู้เกี่ยวข้อง เพื่อทบทวนและปรับปรุงการทำงาน</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-xs bg-red-100 text-red-800 font-bold px-3 py-1.5 rounded-xl">Checker / Lead</span>
@@ -613,7 +613,7 @@
                                 </div>
                                 <div>
                                     <h3 class="text-xs font-bold text-emerald-950">บันทึกผลงาน &amp; Good Catch (Spotlight &amp; Recognition)</h3>
-                                    <p class="text-[10px] text-emerald-700">บันทึกผลงานดีเด่น, สกัดข้อผิดพลาด, ซัพพอร์ตเพื่อน, ปรับปรุงงาน • เพิ่มดาวผลงาน (+1 Star) ไม่หัก HP</p>
+                                    <p class="text-[10px] text-emerald-700">บันทึกผลงานดีเด่น, สกัดข้อผิดพลาด, ซัพพอร์ตเพื่อน, ปรับปรุงงาน • เพิ่มดาวผลงาน (+1 Star)</p>
                                 </div>
                             </div>
                             <span class="text-[10px] bg-emerald-200/80 text-emerald-900 px-2.5 py-1 rounded-lg font-bold border border-emerald-300 shrink-0 font-num">
@@ -691,8 +691,8 @@
                 <div class="space-y-3.5">
                     <section class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-2xl border border-slate-700 shadow-md space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-slate-200 flex items-center gap-2"><i class="fa-solid fa-heart-pulse text-red-400"></i>คะแนน Team HP วันนี้ (Daily Cap)</span>
-                            <span class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-bold">ฐาน 100 ต่อคน</span>
+                            <span id="incident-team-heading" class="text-xs font-bold text-slate-200 flex items-center gap-2"><i class="fa-solid fa-heart-pulse text-red-400"></i>คะแนน Team HP วันนี้ (Daily Cap)</span>
+                            <span class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-bold" id="incident-team-basis">ฐาน 100 ต่อคน</span>
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-xs" id="err-team-hp-grid"></div>
                     </section>
@@ -1430,7 +1430,7 @@
                 <!-- 1. Quality Score Card -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Quality Score</span>
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider" id="my-profile-quality-label">Quality Score</span>
                         <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center text-xs"><i class="fa-solid fa-star"></i></span>
                     </div>
                     <div class="mt-2 flex items-baseline gap-2">
@@ -1975,7 +1975,7 @@
                             <i class="fa-solid fa-sliders text-blue-400"></i>
                             <span>ตั้งค่าระบบ &amp; จัดการข้อมูล</span>
                         </h2>
-                        <p class="mt-1 text-xs text-slate-300">ปรับแต่งหัวข้องาน Workload, หมวดหมู่ความผิดพลาด, และคะแนนหัก HP (สำหรับ ADMIN)</p>
+                        <p class="mt-1 text-xs text-slate-300">ปรับแต่งหัวข้องาน Workload และประเภทความผิดพลาด (สำหรับ ADMIN)</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <span id="admin-active-badge" class="px-2.5 py-1 rounded-lg bg-blue-600/30 border border-blue-500/50 text-blue-300 text-[11px] font-bold">ADMIN MODE</span>
@@ -2090,9 +2090,9 @@
                     <div>
                         <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
                             <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
-                            <span>ตั้งค่าหมวดหมู่ &amp; คะแนนความผิดพลาด (Incident QC)</span>
+                            <span id="admin-incident-heading">ตั้งค่าหมวดหมู่ &amp; คะแนนความผิดพลาด (Incident QC)</span>
                         </h3>
-                        <p class="text-xs text-slate-500">เพิ่ม/ลด หัวข้อความผิดพลาด ปรับคะแนน HP และเพิ่มหมวดหมู่ใหม่</p>
+                        <p id="admin-incident-description" class="text-xs text-slate-500">เพิ่ม/ลด หัวข้อความผิดพลาด ปรับคะแนน HP และเพิ่มหมวดหมู่ใหม่</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="openAddCategoryModal()" class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center gap-1.5 transition-all">
@@ -2476,7 +2476,7 @@
             <!-- KPI & Multi-Skill Key Metrics -->
             <div class="grid grid-cols-3 gap-2 sm:gap-3">
                 <div class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-center">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">Quality HP</p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase" id="emp-profile-quality-label">Quality HP</p>
                     <p id="emp-profile-hp" class="text-base sm:text-lg font-black text-emerald-400 font-num mt-0.5">100%</p>
                 </div>
                 <div class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-center">
@@ -2896,12 +2896,13 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260903.03"></script>
+    <script src="js/supabase-kpi-client.js?v=20260908.01"></script>
+    <script src="js/incident-impact.js?v=20260908.01"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260907.07";
+        const CURRENT_VERSION = "20260908.01";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -3613,7 +3614,7 @@
         }
 
         function getRealErrorEntries(errors, sourceBranch) {
-            return (errors || []).filter(error => !isNoErrorsConfirmation(error, sourceBranch));
+            return (errors || []).filter(error => !isNoErrorsConfirmation(error, sourceBranch) && !globalThis.KpiIncident?.isAchievement(error));
         }
 
         function getLegacyPenaltyDetail(error) {
@@ -3651,6 +3652,7 @@
         }
 
         function getErrorDetail(error, sourceBranch) {
+            if (globalThis.KpiIncident) { const detail=KpiIncident.detail(error,sourceBranch); if(detail)return detail; }
             if (sourceBranch === 'AKRA') {
                 const parsed = parseAkraCaseNote(error.note);
                 if (parsed.meta) {
@@ -6130,6 +6132,7 @@
                 if (!profileData) {
                     const mySkills = GLOBAL_EMPLOYEE_SKILLS.filter(s => s.employeeUid === empObj.uid || s.employeeName === empObj.name);
                     profileData = {
+                        incidentDataUnavailable: true,
                         skills: mySkills,
                         qualityHp: 100,
                         workloadStats: {
@@ -6146,11 +6149,14 @@
 
                 const skills = profileData.skills || [];
                 const ws = profileData.rolling30WorkloadStats || profileData.workloadStats || {};
-                const hp = profileData.qualityHp !== undefined ? profileData.qualityHp : 100;
+                const unscored = profileData.scoringMode === 'none' || window.KpiIncident?.enabled();
+                const hp = profileData.qualityHp ?? 100;
+                document.getElementById('emp-profile-quality-label').textContent = unscored ? 'เหตุการณ์ที่เกี่ยวข้อง' : 'Quality HP';
 
                 if (hpEl) {
-                    hpEl.textContent = `${hp}%`;
+                    hpEl.textContent = unscored ? (profileData.incidentDataUnavailable ? 'โหลดไม่สำเร็จ' : `${profileData.incidentCount || 0} เคส`) : `${hp}%`;
                     hpEl.className = hp >= 90 ? 'text-base sm:text-lg font-black text-emerald-400 font-num mt-0.5' : (hp >= 75 ? 'text-base sm:text-lg font-black text-amber-400 font-num mt-0.5' : 'text-base sm:text-lg font-black text-red-400 font-num mt-0.5');
+                    if (unscored) hpEl.className = 'text-base sm:text-lg font-black text-slate-200 font-num mt-0.5';
                 }
                 if (skillCountEl) skillCountEl.textContent = `${skills.length} ทักษะ`;
                 if (flexEl) flexEl.textContent = `${ws.flexibilityIndex || 0}%`;
@@ -6332,6 +6338,7 @@
                     });
 
                     profile = {
+                        incidentDataUnavailable: true,
                         uid: currentObj.uid,
                         name: currentObj.name,
                         roles: currentObj.roles || [],
@@ -6460,7 +6467,9 @@
             const safeStreakEl = document.getElementById('my-profile-safe-streak');
             const incidentHint = document.getElementById('my-profile-incident-hint');
 
-            if (scoreEl) scoreEl.textContent = p.qualityHp !== undefined ? p.qualityHp : 100;
+            const impactOnly = p.scoringMode === 'none' || window.KpiIncident?.enabled();
+            if (scoreEl) { scoreEl.textContent = impactOnly ? (p.incidentCount || 0) : (p.qualityHp ?? 100); if (scoreEl.nextElementSibling) scoreEl.nextElementSibling.textContent = impactOnly ? ' เคส' : '/100'; }
+            document.getElementById('my-profile-quality-label').textContent = impactOnly ? 'เหตุการณ์ที่เกี่ยวข้อง' : 'Quality Score';
             if (goodCatchEl) goodCatchEl.textContent = p.goodCatchCount || 0;
             if (safeStreakEl) safeStreakEl.textContent = p.safeStreakDays || 0;
 
@@ -6595,6 +6604,15 @@
                     momentumDesc.textContent = `คะแนนคุณภาพลดลง ${m.qualityDelta} คะแนน มุ่งเน้นการตรวจเช็คก่อนส่งมอบเพื่อผลงานที่ยอดเยี่ยมยิ่งขึ้น`;
                 } else {
                     momentumDesc.textContent = `คะแนนคุณภาพและสถิติเวลาทำงานรักษามาตรฐานได้ยอดเยี่ยมต่อเนื่อง`;
+                }
+            }
+
+            if (impactOnly) {
+                if (momentumBadge) momentumBadge.textContent = `ถึงลูกค้า ${p.customerIncidentCount || 0} เคส`;
+                if (momentumDesc) momentumDesc.textContent = 'ดูประเภทที่เกิดซ้ำและผลกระทบ เพื่อวางแผนปรับปรุงการทำงาน';
+                if (p.incidentDataUnavailable) {
+                    [scoreEl,goodCatchEl,safeStreakEl,momentumBadge].forEach(el=>{if(el)el.textContent='—';});
+                    if (incidentHint) incidentHint.textContent='โหลดข้อมูลเหตุการณ์ไม่สำเร็จ กรุณาลองใหม่';
                 }
             }
 
@@ -7248,6 +7266,7 @@
         }
 
         function renderAdminIncidentSettings() {
+            if (window.KpiIncident?.enabled()) return KpiIncident.admin();
             initAdminSettingsState();
             const branch = ADMIN_SETTINGS_STATE.incidentBranch;
             const container = document.getElementById('admin-incident-categories-list');
@@ -7316,6 +7335,7 @@
         }
 
         function openAddCategoryModal() {
+            if (window.KpiIncident?.enabled()) return KpiIncident.adminAddCategory();
             initAdminSettingsState();
             const modal = document.getElementById('category-modal');
             const labelInput = document.getElementById('cat-modal-label');
@@ -7398,6 +7418,7 @@
         }
 
         async function saveAdminIncidentSettings() {
+            if (window.KpiIncident?.enabled()) return KpiIncident.adminSave();
             if (!sessionToken || !IS_ADMIN || !window.AkraSupabaseKPI?.saveSystemConfig) {
                 showToast('ต้องการสิทธิ์ Admin ในการบันทึกการตั้งค่า', true);
                 return;
@@ -7617,6 +7638,7 @@
         let selectedCustomCatalogItem = null;
 
         function renderQuickIncidentTemplates() {
+            if (window.KpiIncident?.enabled()) return KpiIncident.render();
             renderConfirmZeroErrorsButton();
             const branch = currentBranch || 'AKRA';
             const container = document.getElementById('inc-quick-templates');
@@ -7767,6 +7789,7 @@
         }
 
         function updateIncidentMetadataSummary(cat = null, item = null, penalty = null) {
+            if (window.KpiIncident?.enabled()) { KpiIncident.dirty(); return KpiIncident.summary(); }
             const metaCat = document.getElementById('inc-meta-cat');
             const metaResp = document.getElementById('inc-meta-resp');
             const metaHp = document.getElementById('inc-meta-hp');
@@ -7804,6 +7827,7 @@
         }
 
         function onIncidentSearchInput(query) {
+            if (window.KpiIncident?.enabled()) return KpiIncident.search(query);
             const q = String(query || '').trim().toLowerCase();
             const resultsContainer = document.getElementById('inc-search-results');
             const frequentContainer = document.getElementById('inc-frequent-container');
@@ -7924,6 +7948,7 @@
         }
 
         function resetIncidentFormForNextCase() {
+            if (window.KpiIncident?.enabled()) return KpiIncident.reset();
             dismissIncidentSuccessCard();
             clearIncidentSearch();
             const noteInput = document.getElementById('pc-err-note-input');
@@ -7944,6 +7969,7 @@
         }
 
         function renderErrSeverity() {
+            if (window.KpiIncident?.enabled()) return KpiIncident.render();
             if (typeof dismissIncidentSuccessCard === 'function') {
                 dismissIncidentSuccessCard();
             }
@@ -8008,7 +8034,8 @@
 
             if (container) {
                 const options = ['ทุกคนในกะ', ...emps];
-                if (!selectedErrWorker || !options.includes(selectedErrWorker)) {
+                const preserveEditedPerson = window.KpiIncident?.enabled() && KpiIncident.state.editing && !KpiIncident.state.participantsChanged;
+                if ((!selectedErrWorker || !options.includes(selectedErrWorker)) && !preserveEditedPerson) {
                     selectedErrWorker = options[0] || 'ทุกคนในกะ';
                 }
                 const badge = document.getElementById('inc-worker-selected-badge');
@@ -8043,6 +8070,7 @@
         }
 
         function toggleErrEmp(name, btn) {
+            if (window.KpiIncident?.enabled()) KpiIncident.state.participantsChanged = true;
             selectedErrWorker = name;
             document.querySelectorAll('#pc-err-emp-chips .emp-chip').forEach(el => el.classList.remove('emp-chip-active'));
             if (btn) btn.classList.add('emp-chip-active');
@@ -8112,6 +8140,7 @@
         }
 
         function renderErrTimeline() {
+            if (window.KpiIncident?.enabled()) return KpiIncident.timeline();
             const container = document.getElementById('pc-err-timeline');
             const countEl = document.getElementById('err-case-count');
             if (!container) return;
@@ -8194,6 +8223,11 @@
         }
 
         function renderErrTeamHp() {
+            if (window.KpiIncident?.enabled()) {
+                const grid = document.getElementById('err-team-hp-grid');
+                if (grid) { grid.innerHTML = KpiIncident.metrics(recordedErrorCases); const heading=document.getElementById('incident-team-heading'); if(heading) heading.textContent='เหตุการณ์และผลกระทบ'; document.getElementById('incident-team-basis').textContent='นับตามเคส'; }
+                return;
+            }
             const grid = document.getElementById('err-team-hp-grid');
             if (!grid) return;
             const emps = getBranchActiveRoster(currentBranch);
@@ -8225,6 +8259,7 @@
         }
 
         async function saveErrorCaseFromPreview() {
+            if (window.KpiIncident?.enabled()) return KpiIncident.save();
             if (incidentSaveInFlight) return;
             const activeSev = document.querySelector('#pc-err-severity-list .severity-chip-active');
             const noteInput = document.getElementById('pc-err-note-input');
@@ -8433,7 +8468,7 @@
             }
             const date = document.getElementById('record-date-error')?.value || '';
             if (!date) return showToast('กรุณาเลือกวันที่บันทึก', true);
-            if (recordedErrorCases.length > 0) {
+            if (recordedErrorCases.some(row => !window.KpiIncident?.isAchievement(row))) {
                 return showModal('ยืนยัน Zero Error ไม่ได้', 'วันนี้มีเคสความผิดพลาดที่บันทึกแล้ว', 'error');
             }
             if (!sessionToken || !window.AkraSupabaseKPI?.saveIncident) {
@@ -8452,7 +8487,7 @@
                 applyIncidentSaveResultToCache(date, currentBranch, result);
                 renderErrTimeline();
                 renderErrTeamHp();
-                showToast('ยืนยัน 0 ข้อผิดพลาดเรียบร้อย! Team HP 100%');
+                showToast('ยืนยันแล้วว่าไม่พบข้อผิดพลาดในวันนี้');
                 loadDashboardData();
                 updateDailyDashboard();
             } catch (error) {
@@ -8465,6 +8500,7 @@
         }
 
         async function deleteErrorCase(caseId) {
+            if (window.KpiIncident?.enabled()) return KpiIncident.cancel(caseId);
             if (!caseId) return;
             const dateInput = document.getElementById('record-date-error');
             const date = dateInput ? dateInput.value : '';
@@ -9058,6 +9094,7 @@
         }
 
         function selectBranch(branch, perms = null) {
+            if (window.KpiIncident?.state.busy) return showToast('กำลังบันทึกเหตุการณ์ กรุณารอสักครู่', true);
             currentBranch = branch;
             dashboardSelectedDate = 'ALL';
             safeSessionStorage.setItem('active_branch', branch);
@@ -9943,6 +9980,7 @@
             let weeklyTasksMap = {};
             let hasAnyNotes = false;
             let errorTypeCounts = {};
+            const errorTypeLabels = {};
             let errorNotesList = {};
             let teamLostHP = 0;
             let dailyEmployeePenalties = {};
@@ -9952,7 +9990,7 @@
                     totalVol += (day.volume.transfer + day.volume.pickup + day.volume.upcountry + day.volume.inmarket + day.volume.outmarket);
                 }
                 const realErrors = getRealErrorEntries(day.errors, currentBranch);
-                totalErr += realErrors.length;
+                totalErr += getDistinctIncidentEntries(day.errors, currentBranch).length;
 
                 if (BRANCH_CONFIG[currentBranch].showZone2 && day.customerNotes && day.customerNotes.trim() !== '') {
                     let notesLines = day.customerNotes.split('\n').filter(line => line.trim() !== '');
@@ -9968,7 +10006,8 @@
                     `;
                 }
 
-                realErrors.forEach(e => {
+                const countedTypes = new Set();
+                realErrors.forEach((e, index) => {
                     let empName = normalizeEmpName(e.emp);
 
                     if(empErrCount[empName] === undefined) {
@@ -9980,23 +10019,26 @@
                     const displayType = detail.type || e.type;
                     empErrCount[empName]++;
                     if(!categorizedNotes[empName][displayType]) categorizedNotes[empName][displayType] = [];
-                    if(errorTypeCounts[displayType] === undefined) {
-                        errorTypeCounts[displayType] = 0;
-                        errorNotesList[displayType] = [];
+                    const typeKey = detail.typeId || displayType;
+                    errorTypeLabels[typeKey] = displayType;
+                    if(errorTypeCounts[typeKey] === undefined) {
+                        errorTypeCounts[typeKey] = 0;
+                        errorNotesList[typeKey] = [];
                     }
-                    errorTypeCounts[displayType]++;
+                    const typeCaseId = detail.caseId || e.caseId || `legacy-${index}`;
+                    if (!countedTypes.has(typeCaseId)) { errorTypeCounts[typeKey]++; countedTypes.add(typeCaseId); }
 
                     let penaltyToApply = detail.penalty;
                     let cleanNote = detail.cleanNote;
 
-                    if(!errorNotesList[displayType].includes(cleanNote)) errorNotesList[displayType].push(cleanNote);
+                    if(!errorNotesList[typeKey].includes(cleanNote)) errorNotesList[typeKey].push(cleanNote);
 
                     let stageBadge = '';
                     if (detail.isReachedCustomer) stageBadge = `<span class="text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-red-200 shadow-sm align-middle whitespace-nowrap"><i class="fa-solid fa-triangle-exclamation mr-1"></i>ถึงลูกค้า</span>`;
                     else if (detail.isFixedBefore) stageBadge = `<span class="text-emerald-600 font-bold bg-emerald-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-emerald-200 shadow-sm align-middle whitespace-nowrap"><i class="fa-solid fa-shield-halved mr-1"></i>แก้ทัน</span>`;
                     if (detail.isAkraCase && detail.coreLabel) stageBadge += `<span class="text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-amber-100 shadow-sm align-middle whitespace-nowrap">${esc(detail.coreLabel)}</span>`;
 
-                    let displayNote = `<span class="text-red-600 font-black bg-red-100 px-1.5 py-0.5 rounded-md mr-1.5 shadow-sm border border-red-200 text-[9px] inline-block whitespace-nowrap align-middle">-${penaltyToApply} HP</span>${stageBadge}<span class="text-gray-700 leading-snug">${esc(cleanNote)}</span>`;
+                    let displayNote = `${detail.schemaVersion === 3 ? esc(KpiIncident.labels[detail.impact]) + " · " : `<span class="text-xs text-slate-500">คะแนนเดิม -${penaltyToApply} HP</span>`}${stageBadge}<span class="text-gray-700 leading-snug">${esc(cleanNote)}</span>`;
 
                     categorizedNotes[empName][displayType].push({ note: displayNote, date: day.date });
                     hasAnyNotes = true;
@@ -10071,6 +10113,11 @@
                 </div>
             `;
 
+            if (window.KpiIncident?.enabled()) {
+                const rows = targetWeekData.flatMap(day => getDistinctIncidentEntries(day.errors, currentBranch).map(e => ({...e, branch:currentBranch})));
+                document.getElementById('dash-team-kpi').innerHTML = `<div class="bg-white p-4 rounded-xl border"><h3 class="font-bold mb-2">เหตุการณ์สัปดาห์นี้ · ${currentBranch}</h3>${KpiIncident.metrics(rows)}</div>`;
+            }
+
             // Render Tasks
             let tasksHtml = '';
             if (Object.keys(weeklyTasksMap).length === 0) {
@@ -10132,8 +10179,9 @@
                 const itemD = new Date(d.date); itemD.setHours(0,0,0,0);
                 if(itemD >= lastWeekStart && itemD <= lastWeekEnd) {
                     const realErrors = getRealErrorEntries(d.errors, currentBranch);
-                    lastWeekErrTotal += realErrors.length;
-                    realErrors.forEach(e => {
+                    lastWeekErrTotal += getDistinctIncidentEntries(d.errors, currentBranch).length;
+                    const countedTypes = new Set();
+                realErrors.forEach((e, index) => {
                         let empName = normalizeEmpName(e.emp);
                         if(lastWeekEmpErrCount[empName] === undefined) lastWeekEmpErrCount[empName] = 0;
                         lastWeekEmpErrCount[empName]++;
@@ -10161,10 +10209,11 @@
                 smartSummaryHtml += `<div class="mb-2 pb-2 border-b border-indigo-200/50"><i class="fa-solid fa-chart-pie text-indigo-400 mr-1.5"></i><b>ภาพรวม:</b> สัปดาห์นี้พบความผิดพลาดรวม <b>${totalErr}</b> ครั้ง ซึ่ง${trendHtml}</div>`;
 
                 if(topErrorCount > 0) {
+                    const topErrorLabel = errorTypeLabels[topErrorType] || topErrorType;
                     let sampleNotes = errorNotesList[topErrorType].slice(0, 2).join(', ').replace(/<span.*?>.*?<\/span>\s*/g, '');
                     let noteContext = sampleNotes ? ` <span class="text-[11px] text-gray-500 block mt-1">(ตย. ${esc(sampleNotes)})</span>` : '';
-                    smartSummaryHtml += `<div class="mb-2 pb-2 border-b border-indigo-200/50"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1.5"></i><b>จุดที่ต้องระวัง:</b> ปัญหาที่พบมากที่สุดคือ <span class="text-orange-600 font-bold bg-orange-50 px-1 rounded">"${esc(topErrorType)}"</span> (${topErrorCount} ครั้ง)${noteContext}</div>`;
-                    smartSummaryHtml += `<div><i class="fa-regular fa-lightbulb text-yellow-500 mr-1.5"></i><b>ข้อเสนอแนะ:</b> ${getSmartSuggestion(topErrorType, totalErr)}</div>`;
+                    smartSummaryHtml += `<div class="mb-2 pb-2 border-b border-indigo-200/50"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1.5"></i><b>จุดที่ต้องระวัง:</b> ปัญหาที่พบมากที่สุดคือ <span class="text-orange-600 font-bold bg-orange-50 px-1 rounded">"${esc(topErrorLabel)}"</span> (${topErrorCount} ครั้ง)${noteContext}</div>`;
+                    smartSummaryHtml += `<div><i class="fa-regular fa-lightbulb text-yellow-500 mr-1.5"></i><b>ข้อเสนอแนะ:</b> ${getSmartSuggestion(topErrorLabel, totalErr)}</div>`;
                 }
 
                 let combinedNotesStr = Object.values(errorNotesList).flat().join(" ").toLowerCase();
@@ -10498,7 +10547,7 @@
                     hasVolumeData = true;
                     volume += (day.volume.transfer || 0) + (day.volume.pickup || 0) + (day.volume.upcountry || 0) + (day.volume.inmarket || 0) + (day.volume.outmarket || 0);
                 }
-                errors += getRealErrorEntries(day.errors, day.sourceBranch).length;
+                errors += getDistinctIncidentEntries(day.errors, day.sourceBranch).length;
                 (day.tasks || []).forEach(task => {
                     totalTasks++;
                     if (task.status === 'เสร็จแล้ว') completedTasks++;
@@ -10744,6 +10793,7 @@
         }
 
         function renderAdminAkraHpSummary(lossMap, branchFilter, empFilter) {
+            if (window.KpiIncident?.enabled()) { document.getElementById('admin-akra-hp-card')?.classList.add('hidden'); return; }
             const card = document.getElementById('admin-akra-hp-card');
             const container = document.getElementById('admin-akra-hp-summary');
             if (!card || !container) return;
@@ -10797,6 +10847,8 @@
         }
 
         function getErrorImpact(branch, detail) {
+            if (detail.schemaVersion === 3) return ({contained:'แก้ก่อนส่ง', reached_customer:'ถึงลูกค้า', escaped_internal:'กระทบภายใน', not_applicable:'ไม่เกี่ยวกับส่งมอบ', unknown:'ยังไม่ทราบ'})[detail.impact] || 'ยังไม่ทราบ';
+            if (globalThis.KpiIncident?.enabled()) return ({contained:'แก้ก่อนส่ง',reached_customer:'ถึงลูกค้า',escaped_internal:'กระทบภายใน',unknown:'ไม่ระบุผลกระทบ'})[KpiIncident.legacyImpact({type:detail.type,note:detail.cleanNote})];
             if (detail.isReachedCustomer) return 'ถึงลูกค้า';
             if (detail.isFixedBefore) return 'แก้ก่อนส่ง';
             if (branch === 'AKRA') {
@@ -10807,33 +10859,48 @@
             return 'ไม่ระบุผลกระทบ';
         }
 
+        function getDistinctIncidentEntries(errors, branch) {
+            const cases = new Map();
+            getRealErrorEntries(errors, branch).forEach((error, index) => {
+                const detail = getErrorDetail(error, branch);
+                const id = detail.caseId || error.caseId || `legacy-${index}`;
+                if (!cases.has(id)) cases.set(id, { ...error, involvedEmployees: [] });
+                const item = cases.get(id);
+                const people = detail.meta?.participants?.length ? detail.meta.participants : [error.emp];
+                people.forEach(name => { if (name && !item.involvedEmployees.includes(normalizeEmpName(name))) item.involvedEmployees.push(normalizeEmpName(name)); });
+            });
+            return Array.from(cases.values());
+        }
+
         function buildParetoAnalysis(data, branchFilter, empFilter, totalVolume) {
             const events = [];
             data.forEach(day => {
                 const branch = day.sourceBranch || '';
                 if (branchFilter !== 'ALL' && branch !== branchFilter) return;
-                getRealErrorEntries(day.errors, branch).forEach(error => {
-                    const employee = normalizeEmpName(error.emp);
-                    if (empFilter !== 'ALL' && employee !== empFilter) return;
+                getDistinctIncidentEntries(day.errors, branch).forEach(error => {
+                    const employee = error.involvedEmployees.join(', ');
+                    if (empFilter !== 'ALL' && !error.involvedEmployees.includes(empFilter)) return;
                     const detail = getErrorDetail(error, branch);
                     const type = String(detail.type || error.type || '').trim().replace(/\s+/g, ' ') || 'ไม่ระบุประเภท';
                     events.push({
-                        key: `${branch}\u0000${getErrorProcess(branch, detail, error.type)}\u0000${type}`,
+                        key: detail.typeId ? `${branch}\u0000${detail.typeId}` : `${branch}\u0000${getErrorProcess(branch, detail, error.type)}\u0000${type}`,
                         date: String(day.date || '').slice(0, 10), branch, employee, type,
                         process: getErrorProcess(branch, detail, error.type),
-                        note: detail.cleanNote || '', penalty: detail.penalty,
+                        note: detail.cleanNote || '', penalty: detail.penalty, schemaVersion: detail.schemaVersion, impactId: detail.impact || globalThis.KpiIncident?.legacyImpact(error),
                         impact: getErrorImpact(branch, detail)
                     });
                 });
             });
             const groups = new Map();
             events.forEach(event => {
-                if (!groups.has(event.key)) groups.set(event.key, { ...event, events: [], dates: new Set(), reached: 0, fixed: 0, unknown: 0 });
+                if (!groups.has(event.key)) groups.set(event.key, { ...event, events: [], dates: new Set(), reached: 0, fixed: 0, unknown: 0, escaped: 0, notApplicable: 0 });
                 const row = groups.get(event.key);
                 row.events.push(event);
                 if (event.date) row.dates.add(event.date);
-                if (event.impact === 'ถึงลูกค้า') row.reached++;
-                else if (event.impact === 'แก้ก่อนส่ง') row.fixed++;
+                if (event.impactId === 'reached_customer' || event.impact === 'ถึงลูกค้า') row.reached++;
+                else if (event.impactId === 'contained' || event.impact === 'แก้ก่อนส่ง') row.fixed++;
+                else if (event.impactId === 'escaped_internal') row.escaped++;
+                else if (event.impactId === 'not_applicable') row.notApplicable++;
                 else row.unknown++;
             });
             const rows = Array.from(groups.values()).sort((a, b) => b.events.length - a.events.length || a.type.localeCompare(b.type, 'th') || a.branch.localeCompare(b.branch));
@@ -10885,7 +10952,7 @@
                     <td class="p-2 border border-slate-200 text-right">${row.rate === null ? 'N/A' : (row.rate * 100).toFixed(2) + '%'}</td>
                     <td class="p-2 border border-slate-200 text-right">${(row.cumulative * 100).toFixed(1)}%</td>
                     <td class="p-2 border border-slate-200 text-right">${row.affectedDays}</td>
-                    <td class="p-2 border border-slate-200 text-left text-xs">ถึงลูกค้า ${row.reached} · แก้ก่อนส่ง ${row.fixed} · ไม่ระบุผลกระทบ ${row.unknown}</td>
+                    <td class="p-2 border border-slate-200 text-left text-xs">ถึงลูกค้า ${row.reached} · แก้ก่อนส่ง ${row.fixed} · กระทบภายใน ${row.escaped} · ไม่เกี่ยวกับส่งมอบ ${row.notApplicable} · ไม่ระบุผลกระทบ ${row.unknown}</td>
                     <td class="p-2 border border-slate-200 text-center"><button type="button" class="text-blue-700 underline font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" onclick="showParetoEvidence(${index}, this)">ดู ${row.count}</button></td>
                 </tr>`).join('');
         }
@@ -10900,7 +10967,7 @@
                     <h4 class="font-bold text-sm text-slate-800">หลักฐาน ${events.length} รายการ</h4>
                     <button type="button" class="text-xs font-bold text-slate-600 underline" onclick="closeParetoEvidence()">ปิด</button>
                 </div>
-                <ul class="space-y-2">${events.map(event => `<li class="bg-white border border-slate-200 rounded p-2 text-xs"><span class="font-bold">${esc(event.date)} · ${esc(event.branch)} · ${esc(event.type)}</span><span class="block text-slate-500 mt-1">${esc(event.employee)} · -${event.penalty} HP · ${esc(event.impact)}</span><span class="block text-slate-700 mt-1 whitespace-pre-wrap break-words">${esc(event.note || 'ไม่มีหมายเหตุ')}</span></li>`).join('')}</ul>`;
+                <ul class="space-y-2">${events.map(event => `<li class="bg-white border border-slate-200 rounded p-2 text-xs"><span class="font-bold">${esc(event.date)} · ${esc(event.branch)} · ${esc(event.type)}</span><span class="block text-slate-500 mt-1">${esc(event.employee)} · ${event.schemaVersion === 3 ? "" : `คะแนนเดิม -${event.penalty} HP · `}${esc(event.impact)}</span><span class="block text-slate-700 mt-1 whitespace-pre-wrap break-words">${esc(event.note || 'ไม่มีหมายเหตุ')}</span></li>`).join('')}</ul>`;
             target.classList.remove('hidden');
             target.focus();
         }
@@ -10919,8 +10986,8 @@
 
         function exportParetoEvidenceCSV() {
             if (!_paretoEvidence.length) return showToast('ไม่มีหลักฐานสำหรับ Export', true);
-            const header = ['วันที่', 'สาขา', 'กระบวนการ', 'ประเภท', 'พนักงาน', 'ผลกระทบ', 'HP', 'หมายเหตุ'];
-            const rows = _paretoEvidence.map(event => [event.date, event.branch, event.process, event.type, event.employee, event.impact, event.penalty, event.note]);
+            const header = ['วันที่', 'สาขา', 'กระบวนการ', 'ประเภท', 'พนักงาน', 'ผลกระทบ', 'คะแนนเดิม (เฉพาะข้อมูลเก่า)', 'หมายเหตุ'];
+            const rows = _paretoEvidence.map(event => [event.date, event.branch, event.process, event.type, event.employee, event.impact, event.schemaVersion === 3 ? '' : event.penalty, event.note]);
             const blob = new Blob(['\uFEFF' + [header, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -10995,6 +11062,7 @@
 
             let totalVol = 0;
             let totalErrors = 0;
+            const countedCases = new Set();
             let empErrorMap = {};
             let akraPeriodLossMap = {};
             let logsHtmlContent = '';
@@ -11029,8 +11097,9 @@
                     const coreBadge = detail.isAkraCase && detail.coreLabel
                         ? `<span class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded mr-1">${esc(detail.coreLabel)}</span>`
                         : '';
-                    const penaltyBadge = `<span class="text-xs font-black text-red-600 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded mr-1">-${detail.penalty} HP</span>`;
-                    totalErrors++;
+                    const penaltyBadge = `<span class="text-xs font-bold border px-1.5 py-0.5 rounded mr-1">${detail.schemaVersion === 3 ? esc(KpiIncident.labels[detail.impact]) : `คะแนนเดิม -${detail.penalty} HP`}</span>`;
+                    const countKey = `${day.sourceBranch}|${day.date}|${detail.caseId || err.caseId || JSON.stringify(err)}`;
+                    if (!countedCases.has(countKey)) { totalErrors++; countedCases.add(countKey); }
                     if (!empErrorMap[empName]) empErrorMap[empName] = 0;
                     empErrorMap[empName]++;
 
@@ -11782,22 +11851,22 @@
             filteredData.sort((a,b) => new Date(b.date) - new Date(a.date));
 
             let csvContent = "\uFEFF";
-            csvContent += "วันที่,สาขา,ชื่อพนักงาน,ประเภทความผิดพลาด,หมายเหตุ\n";
+            csvContent += "วันที่,สาขา,ผู้เกี่ยวข้อง,ประเภทความผิดพลาด,ผลกระทบ,หมายเหตุ\n";
 
             let hasData = false;
             filteredData.forEach(day => {
                 let safeDate = (day.date || "").split('T')[0];
 
-                getRealErrorEntries(day.errors, day.sourceBranch).forEach(err => {
-                    let empName = normalizeEmpName(err.emp);
-                    if (empFilter !== 'ALL' && empName !== empFilter) return;
+                getDistinctIncidentEntries(day.errors, day.sourceBranch).forEach(err => {
+                    let empName = err.involvedEmployees.join(', ');
+                    if (empFilter !== 'ALL' && !err.involvedEmployees.includes(empFilter)) return;
 
                     hasData = true;
                     const detail = getErrorDetail(err, day.sourceBranch);
                     let safeType = (detail.type || err.type || "").replace(/"/g, '""').replace(/\n/g, ' ');
                     let safeNote = (detail.cleanNote || stripErrorNoteForExport(err.note, day.sourceBranch)).replace(/"/g, '""').replace(/\n/g, ' ');
 
-                    csvContent += `"${safeDate}","${day.sourceBranch}","${empName}","${safeType}","${safeNote}"\n`;
+                    csvContent += [safeDate,day.sourceBranch,empName,detail.type || err.type,getErrorImpact(day.sourceBranch,detail),detail.cleanNote || ''].map(csvCell).join(',') + '\n';
                 });
             });
 
@@ -12079,6 +12148,7 @@
 
         // ================= RECORD LOGIC =================
         function addErrorEntryRow() {
+            if (window.KpiIncident?.enabled()) return switchTab('error');
             if (!currentBranch || !BRANCH_CONFIG[currentBranch]) return;
             const container = document.getElementById('error-entries-container');
             const rowId = Date.now() + Math.floor(Math.random() * 1000);
@@ -13132,6 +13202,7 @@
         }
 
         async function saveErrorsCard() {
+            if (window.KpiIncident?.enabled()) return showToast('กรุณาบันทึกเหตุการณ์ในแท็บ Incident', true);
             const btn = document.getElementById('btn-save-errors');
             if (btn.disabled) return;
             const dateControl = document.getElementById('record-date');
@@ -13440,7 +13511,8 @@
                         departments: [],
                         type: detail.type || error.type || 'ไม่ระบุประเภท',
                         process: getErrorProcess(branch, detail, error.type),
-                        stage,
+                        stage: detail.schemaVersion === 3 ? KpiIncident.labels[detail.impact] : stage,
+                        schemaVersion: detail.schemaVersion,
                         penalty: Number(detail.penalty) || 0,
                         note: detail.cleanNote || '',
                         reporter: meta.updatedBy || error.updatedBy || '',
@@ -13455,7 +13527,7 @@
                     if (branch === 'TRD') {
                         const department = getTRDDept(normalized) || 'ไม่ระบุแผนก';
                         if (!item.departments.includes(department)) item.departments.push(department);
-                        dailyHpImpact[normalized] = Math.max(dailyHpImpact[normalized] || 0, Number(detail.penalty) || 0);
+                        if (detail.schemaVersion !== 3) dailyHpImpact[normalized] = Math.max(dailyHpImpact[normalized] || 0, Number(detail.penalty) || 0);
                     }
                 });
             });
@@ -13766,7 +13838,7 @@
 
             let errorsBody;
             if (model.errors.state === 'recorded') {
-                const impactHtml = model.branch === 'TRD'
+                const impactHtml = model.branch === 'TRD' && !window.KpiIncident?.enabled()
                     ? `<div class="mb-3 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-800"><strong>ผลหักรายวันแบบ worst case:</strong> ${Object.entries(model.errors.dailyHpImpact).map(([name, value]) => `${esc(name)} -${value} HP`).join(' · ')}</div>`
                     : '';
                 errorsBody = impactHtml + `<ol class="space-y-2">${model.errors.cases.map((item, index) => `
@@ -13776,7 +13848,7 @@
                                 <p class="text-xs font-bold text-red-700">เคส ${index + 1} · ${esc(item.process)}</p>
                                 <h4 class="mt-0.5 font-black leading-snug text-slate-900">${esc(item.type)}</h4>
                             </div>
-                            <span class="shrink-0 rounded border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-black text-red-800">-${item.penalty} HP</span>
+                            <span class="shrink-0 rounded border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-black text-red-800">${item.schemaVersion === 3 ? esc(item.stage) : `คะแนนเดิม -${item.penalty} HP`}</span>
                         </div>
                         <p class="mt-2 text-xs text-slate-700"><strong class="text-slate-900">พนักงาน:</strong> ${item.employees.length ? item.employees.map(esc).join(', ') : 'ไม่ระบุ'}${item.departments.length ? ` · <strong class="text-slate-900">แผนก:</strong> ${item.departments.map(esc).join(', ')}` : ''}</p>
                         ${item.stage ? `<p class="mt-1 text-xs text-slate-700"><strong class="text-slate-900">ขั้นตอน/ผลกระทบ:</strong> ${esc(item.stage)}</p>` : ''}
@@ -13893,6 +13965,7 @@
         }
 
         async function saveDailyRecord() {
+            if (window.KpiIncident?.enabled()) return showToast('กรุณาใช้ปุ่มบันทึกของแต่ละส่วนงาน และบันทึกเหตุการณ์ในแท็บ Incident', true);
             if (await AppVersionGuard.blockIfStale()) return;
             const btn = document.getElementById('btn-save');
             const date = document.getElementById('record-date').value;
