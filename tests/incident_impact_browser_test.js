@@ -119,7 +119,16 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
   await host.getByRole('button',{name:'ลบผลกระทบ',exact:true}).last().click();
   const revision=await page.evaluate(()=>KPI_SYSTEM_CONFIG.incidentModel.catalogRevision);
   await page.locator('#btn-save-admin-incidents').click();
-  assert.equal(await page.evaluate(()=>KPI_SYSTEM_CONFIG.incidentModel.catalogRevision),revision,'active type with no impact cannot save');
+  await page.waitForFunction(rev=>KPI_SYSTEM_CONFIG.incidentModel.catalogRevision > rev, revision);
+  // Type with no impacts: can be selected and saved without error
+  await page.evaluate(()=>{switchTab('error');selectedErrWorker='A';KpiIncident.reset();});
+  await page.locator('#inc-quick-search').fill('ประเภททดลอง');await page.locator(`[data-type-id="${custom.type.id}"]`).click();
+  assert.match(await page.locator('#inc-impact-options').innerText(),/ไม่มีผลกระทบต่อลูกค้า/);
+  assert.match(await page.locator('#impact-summary').innerText(),/ไม่มีผลกระทบ/);
+  await page.locator('#btn-save-error-preview').click();await page.waitForFunction(()=>!KpiIncident.state.busy);
+  assert.equal(writes.at(-1).incident.impact,'');
+  assert.match(await page.locator('#inc-success-summary').innerText(),/ไม่มีผลกระทบ/);
+  await page.evaluate(()=>{switchTab('admin');switchAdminSubTab('incidents');});
   await host.locator('article').last().getByRole('button',{name:'ลบประเภท',exact:true}).click();await page.locator('#btn-save-admin-incidents').click();
   await page.waitForFunction(({b,id})=>!KPI_SYSTEM_CONFIG.incidentModel.branches[b].types.some(t=>t.id===id),{b:branch,id:custom.type.id});
   await page.evaluate(()=>switchTab('error'));

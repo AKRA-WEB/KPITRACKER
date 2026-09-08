@@ -90,11 +90,30 @@
         || Object.entries(labels).map(([id, label]) => ({id, label}));
 
     function impactLabel(value, branch = currentBranch) {
-        if (value && typeof value === 'object') return value.impactLabel || labels[value.impact] || value.impact || 'ข้อมูลเดิม';
-        return impactDefinitions(branch).find(i => i.id === value)?.label || labels[value] || value || '';
+        if (value && typeof value === 'object') {
+            if (value.impact === '' || value.impact === null) return value.impactLabel || 'ไม่มีผลกระทบ';
+            return value.impactLabel || labels[value.impact] || value.impact || 'ข้อมูลเดิม';
+        }
+        if (value === '' || value === null) return 'ไม่มีผลกระทบ';
+        return impactDefinitions(branch).find(i => i.id === value)?.label || labels[value] || value || 'ไม่มีผลกระทบ';
     }
 
     function visualImpact(id) {
+        if (!id) {
+            return {
+                title: 'ไม่มีผลกระทบ',
+                sub: 'ไม่มีผลกระทบต่อลูกค้า',
+                badge: 'ไม่มีผลกระทบ',
+                icon: 'fa-minus',
+                borderAccent: 'border-l-slate-300',
+                bgLight: 'bg-slate-50',
+                borderLight: 'border-slate-200',
+                textColor: 'text-slate-600',
+                iconColor: 'text-slate-400',
+                activeRing: 'border-slate-400 bg-slate-100 ring-2 ring-slate-400/25 text-slate-800',
+                dot: 'bg-slate-400'
+            };
+        }
         const original = impactMeta[id] || impactMeta.not_applicable;
         const label = impactLabel(id);
         return label === labels[id] ? original : {...original, badge: label, sub: label};
@@ -432,6 +451,21 @@
             return;
         }
 
+        if (!type.impacts || !type.impacts.length) {
+            container.innerHTML = `
+                <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/80 flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 text-sm border border-slate-200">
+                        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xs text-slate-800">ไม่มีผลกระทบต่อลูกค้า</span>
+                        <p class="text-[11px] text-slate-500 mt-0.5">ประเภทนี้ไม่มีผลกระทบถึงลูกค้า ไม่ต้องเลือกระดับผลกระทบ สามารถกดบันทึกได้ทันที</p>
+                    </div>
+                </div>`;
+            summary();
+            return;
+        }
+
         container.innerHTML = type.impacts.map(i => {
             const isSelected = state.impact === i;
             const meta = visualImpact(i);
@@ -487,13 +521,19 @@
                 const m = visualImpact(state.impact);
                 impactBadge.className = `text-[10px] font-bold px-2.5 py-0.5 rounded-lg ${m.bgLight} ${m.textColor} border ${m.borderLight}`;
                 impactBadge.textContent = m.badge;
+            } else if (selected() && (!selected().impacts || !selected().impacts.length)) {
+                impactBadge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200';
+                impactBadge.textContent = 'ไม่มีผลกระทบ';
             } else {
                 impactBadge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200';
                 impactBadge.textContent = 'ระดับผลกระทบ';
             }
         }
 
-        byId('impact-summary').textContent = `${currentBranch} · ${selected()?.name || 'ยังไม่เลือกประเภท'} · ${impactLabel(state.impact) || 'ยังไม่เลือกผลกระทบ'} · ${people.join(', ') || 'ยังไม่เลือกผู้เกี่ยวข้อง'}`;
+        const impactText = (selected() && (!selected().impacts || !selected().impacts.length))
+            ? 'ไม่มีผลกระทบ'
+            : (impactLabel(state.impact) || 'ยังไม่เลือกผลกระทบ');
+        byId('impact-summary').textContent = `${currentBranch} · ${selected()?.name || 'ยังไม่เลือกประเภท'} · ${impactText} · ${people.join(', ') || 'ยังไม่เลือกผู้เกี่ยวข้อง'}`;
     }
 
     function message(error) {
@@ -522,7 +562,10 @@
     async function save() {
         if (state.busy) return;
         const type = selected(), date = byId('record-date-error')?.value;
-        if (!type || !type.impacts.includes(state.impact)) return showToast('กรุณาเลือกประเภทและผลกระทบให้ครบ', true);
+        if (!type) return showToast('กรุณาเลือกประเภทข้อผิดพลาด', true);
+        if (type.impacts && type.impacts.length > 0 && !type.impacts.includes(state.impact)) {
+            return showToast('กรุณาเลือกผลกระทบให้ครบ', true);
+        }
         if (state.revision !== model().catalogRevision) return showToast('รายการมีการเปลี่ยนแปลง กรุณาเลือกใหม่', true);
         if (!date || !selectedErrWorker) return showToast('กรุณาเลือกวันที่และผู้เกี่ยวข้อง', true);
         const reason = byId('impact-reason').value.trim();
@@ -543,7 +586,7 @@
                     kind: 'case',
                     caseId: state.editing?.caseId || `ERR-${date}-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
                     typeId: type.id,
-                    impact: state.impact,
+                    impact: (type.impacts && type.impacts.length > 0) ? state.impact : '',
                     catalogRevision: state.revision,
                     worker: preservePeople ? state.editing.worker : selectedErrWorker,
                     participants: preservePeople ? [...state.editing.participants] : selectedErrWorker === 'ทุกคนในกะ' ? roster : [selectedErrWorker],
@@ -772,14 +815,21 @@
             timelineContainer.innerHTML = rows.map(r => {
                 const isNewCase = isNew(r);
                 const impactKey = isNewCase ? r.impact : 'legacy';
-                const meta = impactMeta[impactKey] || {
+                const meta = isNewCase && !r.impact ? {
+                    badge: 'ไม่มีผลกระทบ',
+                    borderAccent: 'border-l-slate-300',
+                    bgLight: 'bg-slate-100',
+                    borderLight: 'border-slate-200',
+                    textColor: 'text-slate-700',
+                    icon: 'fa-minus'
+                } : (impactMeta[impactKey] || {
                     badge: 'ข้อมูลเดิม',
                     borderAccent: 'border-l-slate-400',
                     bgLight: 'bg-slate-100',
                     borderLight: 'border-slate-200',
                     textColor: 'text-slate-700',
                     icon: 'fa-clock'
-                };
+                });
                 const rowImpactLabel = isNewCase ? impactLabel(r) : 'ข้อมูลเดิม';
                 const workerDisplay = (r.participants && r.participants.length ? r.participants.join(', ') : r.worker) || 'ไม่ระบุ';
 
@@ -1042,7 +1092,7 @@
                                     <button type="button" class="text-xs text-red-600 hover:text-red-800" onclick="KpiIncident.adminDeleteType('${t.id}')">ลบประเภท</button>
                                 </div>
                                 <div class="pt-1 border-t border-slate-100">
-                                    <span class="text-[10px] text-slate-400 block mb-1">ผลกระทบที่อนุญาตให้เลือก:</span>
+                                    <span class="text-[10px] text-slate-400 block mb-1">ผลกระทบที่อนุญาตให้เลือก (หากไม่มีผลกระทบต่อลูกค้า ไม่ต้องเลือกข้อใด):</span>
                                     <div class="flex flex-wrap gap-2 text-xs">
                                         ${data.impacts.map(({id, label}) => `
                                             <label class="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-100">
@@ -1117,10 +1167,6 @@
 
     async function adminSave() {
         try {
-            for (const branch of ['AKRA', 'TRD']) {
-                const empty = adminDraft.branches[branch].types.find(t => t.active && !t.impacts.length);
-                if (empty) return showToast(`${branch}: เลือกผลกระทบให้ประเภท “${empty.name}” หรือปิดใช้งานก่อนบันทึก`, true);
-            }
             const r = await AkraSupabaseKPI.saveIncidentCatalog(sessionToken, adminDraft);
             KPI_SYSTEM_CONFIG.incidentModel = r.configValue;
             adminDraft = null;
