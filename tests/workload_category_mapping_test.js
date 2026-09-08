@@ -251,7 +251,7 @@ async function runTests() {
     sessionToken: 'valid-token',
     currentBranch: 'AKRA',
     getAkraWorkloadValues: () => [{
-      employee: 'WorkerA', capacity: 10, outbound: 10, inbound: 0, transfer: 0, shared: 0,
+      employeeUid: 'WorkerA', employee: 'WorkerA', capacity: 10, outbound: 10, inbound: 0, transfer: 0, shared: 0,
       primaryCore: 'คลังหลัก W1', supportDuties: []
     }],
     AkraSupabaseKPI: {

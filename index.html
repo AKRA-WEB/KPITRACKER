@@ -2873,7 +2873,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260908.07</span>
+                <span id="drawer-version-text">KPI Suite v20260908.08</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2896,13 +2896,13 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260908.07"></script>
+    <script src="js/supabase-kpi-client.js?v=20260908.08"></script>
     <script src="js/incident-impact.js?v=20260908.05"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260908.07";
+        const CURRENT_VERSION = "20260908.08";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -3508,19 +3508,13 @@
             const employees = Array.isArray(configList) ? configList : [];
             const normalizeKey = value => String(value || '').trim().toLowerCase();
             const uidKey = normalizeKey(uid);
-            const nameKey = normalizeKey(name);
             const exactUid = uidKey
                 ? employees.find(employee => normalizeKey(employee.uid || employee.username) === uidKey)
                 : null;
             const aliasedUid = !exactUid && uidKey
                 ? employees.find(employee => (employee.aliasUids || []).some(alias => normalizeKey(alias) === uidKey))
                 : null;
-            const nameMatches = !uidKey && nameKey
-                ? employees.filter(employee => normalizeKey(employee.name) === nameKey
-                    || (employee.aliasNames || []).some(alias => normalizeKey(alias) === nameKey))
-                : [];
-            const nameMatch = nameMatches.length === 1 ? nameMatches[0] : null;
-            const canonical = exactUid || aliasedUid || nameMatch;
+            const canonical = exactUid || aliasedUid;
             return canonical
                 ? { uid: String(canonical.uid || canonical.username || ''), name: String(canonical.name || '') }
                 : { uid, name: name || uid };
@@ -3535,9 +3529,9 @@
 
         function getCanonicalWorkloadEntries(workloadArr, configList) {
             const latestByIdentity = new Map();
-            (Array.isArray(workloadArr) ? workloadArr : []).forEach(entry => {
+            (Array.isArray(workloadArr) ? workloadArr : []).forEach((entry, index) => {
                 const normalized = getCanonicalWorkloadEntry(entry, configList);
-                const identityKey = String(normalized.uid || `name:${normalized.name}`).trim().toLowerCase();
+                const identityKey = normalized.uid ? String(normalized.uid).trim().toLowerCase() : `legacy-row:${index}`;
                 const candidate = { ...entry, ...normalized, identityKey };
                 const previous = latestByIdentity.get(identityKey);
                 const previousTime = previous ? Date.parse(String(previous.updatedAt || '').replace(' ', 'T')) : NaN;
@@ -4257,21 +4251,14 @@
             if (workloadStatus.previousDate && workloadStatus.previousDate !== getPreviousKpiDate(bangkokDate)) {
                 return { state: 'unavailable', label: 'ยังตรวจสอบ Workload ไม่ได้' };
             }
-            const employeeName = normalizeEmpName(employee?.name);
             const employeeUid = String(employee?.uid || employee?.username || '').trim().toLowerCase();
-            const previousRecorded = new Set((workloadStatus?.previousRecordedEmployees || []).map(name => normalizeEmpName(name)));
             const previousRecordedUids = new Set((workloadStatus?.previousRecordedEmployeeUids || []).map(uid => String(uid).trim().toLowerCase()));
-            const wasPreviouslyRecorded = Array.isArray(workloadStatus?.previousRecordedEmployeeUids) && employeeUid
-                ? previousRecordedUids.has(employeeUid)
-                : previousRecorded.has(employeeName);
+            const wasPreviouslyRecorded = Boolean(employeeUid) && previousRecordedUids.has(employeeUid);
             if (workloadStatus?.previousDate && !wasPreviouslyRecorded) {
                 return { state: 'missing', label: `ไม่ได้บันทึก Workload วันที่ ${workloadStatus.previousDate}` };
             }
-            const recorded = new Set((workloadStatus?.recordedEmployees || []).map(name => normalizeEmpName(name)));
             const recordedUids = new Set((workloadStatus?.recordedEmployeeUids || []).map(uid => String(uid).trim().toLowerCase()));
-            const isRecorded = Array.isArray(workloadStatus?.recordedEmployeeUids) && employeeUid
-                ? recordedUids.has(employeeUid)
-                : recorded.has(employeeName);
+            const isRecorded = Boolean(employeeUid) && recordedUids.has(employeeUid);
             if (isRecorded) return { state: 'recorded', label: 'บันทึก Workload วันนี้แล้ว' };
             const currentMinutes = Number(bangkokHour) * 60 + Number(bangkokMinute || 0);
             if (currentMinutes < 1050) {
@@ -5512,6 +5499,7 @@
 
             return [{
                 employee: targetEmp,
+                employeeUid: String(currentUser || '').trim(),
                 capacity: totalHours,
                 outbound: Math.round(outbound * 10) / 10,
                 inbound: Math.round(inbound * 10) / 10,
@@ -6984,6 +6972,8 @@
                 branch: 'AKRA',
                 workload: {
                     date: dateStr,
+                    employeeUid: currentUid,
+                    employee: targetEmp,
                     capacity: s.totalHours,
                     outbound: Math.round(outbound * 10) / 10,
                     inbound: Math.round(inbound * 10) / 10,
@@ -7002,7 +6992,7 @@
 
             try {
                 if (sessionToken && window.AkraSupabaseKPI?.saveWorkload) {
-                    const res = await AkraSupabaseKPI.saveWorkload(sessionToken, payload);
+                    const res = await AkraSupabaseKPI.saveWorkload(sessionToken, currentUid, dateStr, payload.workload);
                     if (res && res.status === 'success') {
                         showToast(`✅ บันทึกเวลา ${s.totalHours} ชม. สำเร็จเรียบร้อย!`);
                         setTimeout(() => {
@@ -13090,7 +13080,7 @@
 
             let workload = getAkraWorkloadValues();
             if (!isUserAdmin) {
-                workload = workload.filter(w => normalizeEmpName(w.employee) === normalizeEmpName(displayUserName) || normalizeEmpName(w.employee) === normalizeEmpName(currentUser));
+                workload = workload.filter(w => String(w.employeeUid || '').trim().toLowerCase() === String(currentUser || '').trim().toLowerCase());
                 if (workload.length === 0) {
                     return showToast("ไม่พบข้อมูล Workload ของคุณ หรือคุณไม่ได้เข้ากะในวันนี้", true);
                 }
@@ -13122,8 +13112,7 @@
                 if (!window.AkraSupabaseKPI?.saveWorkload) {
                     throw new Error('ระบบบันทึก Workload ยังไม่พร้อม กรุณาโหลดหน้าใหม่');
                 }
-                const targetEmp = (typeof displayUserName !== 'undefined' && displayUserName) ? displayUserName : (currentUser || '');
-                const res = await AkraSupabaseKPI.saveWorkload(sessionToken, targetEmp, date, workload[0]);
+                const res = await AkraSupabaseKPI.saveWorkload(sessionToken, String(currentUser || '').trim(), date, workload[0]);
 
                 if (res && res.status === 'success') {
                     showToast("บันทึก Workload สำเร็จ!");
@@ -13174,8 +13163,7 @@
             }
 
             try {
-                const targetEmp = (typeof displayUserName !== 'undefined' && displayUserName) ? displayUserName : (currentUser || '');
-                const res = await AkraSupabaseKPI.clearWorkload(sessionToken, targetEmp, date || todayBangkok);
+                const res = await AkraSupabaseKPI.clearWorkload(sessionToken, String(currentUser || '').trim(), date || todayBangkok);
                 if (res && res.status === 'success') {
                     showToast('ล้างข้อมูล Workload ของคุณเรียบร้อยแล้ว');
                     safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date || todayBangkok}_workload`);

@@ -16,6 +16,8 @@ const {chromium}=require(pw || 'playwright');
    const p=route.request().postDataJSON();calls.push(p);let data={status:'success',records:[],nextCursor:null};
    if(p.action==='getDailyData')data.records=rows;
    if(p.action==='getActions')data.actions=actions;
+   if(p.action==='saveWorkload')data.workload=[{...p.workload,employeeUid:p.employeeUid}];
+   if(p.action==='clearWorkload')data.workload=[];
    if(p.action==='saveSection') {
     if(conflict)return route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({status:'error',reason:'record_conflict'})});
     const record={date:p.date,branch:p.branch,volume:p.volume,customerNotes:p.customerNotes,sectionRevisions:{[p.section]:p.expectedRevision+1}};rows=[record];data.record=record;
@@ -66,6 +68,21 @@ const {chromium}=require(pw || 'playwright');
  assert.equal(calls.filter(p=>p.action==='saveAction').at(-1).expectedRevision,1);
  assert.equal(await page.evaluate(()=>JSON.parse(safeStorage.getItem('kpiDraft_a_AKRA_2026-09-08_main')).actions[0].revision),2);
  assert.equal(await page.evaluate(()=>JSON.parse(safeStorage.getItem('kpiDraft_a_AKRA_2026-09-08_main')).actions[0].title),'my edit');
+ assert.equal(errors.length,0,errors.join('\n'));
+ await page.evaluate(async()=>{
+  currentUser='UID-123';displayUserName='Same display name';currentBranch='AKRA';sessionToken='test';
+  syncDataFromSheet=async()=>{};loadDashboardData=()=>{};updateDailyDashboard=()=>{};
+  AppVersionGuard.blockIfStale=async()=>false;window.confirm=()=>true;
+  const date=getTodayBangkokDateStr();document.getElementById('record-date').value=date;
+  await executeSaveWorkload(getAkraWorkloadValues(),date);
+  await clearWorkloadCard();
+  QUICK_WORKLOAD_STATE={totalHours:10,primaryHours:10,primaryCore:'คลัง W1',hasSupport:false,supportHours:0};
+  await submitQuickWorkload();
+ });
+ const wlCalls=calls.filter(p=>['saveWorkload','clearWorkload'].includes(p.action));
+ assert.deepEqual(wlCalls.map(p=>[p.action,p.employeeUid]),[['saveWorkload','UID-123'],['clearWorkload','UID-123'],['saveWorkload','UID-123']]);
+ assert.ok(wlCalls.every(p=>/^\d{4}-\d\d-\d\d$/.test(p.date)));
+ assert.equal(wlCalls[2].workload.employee,'Same display name');
  assert.equal(errors.length,0,errors.join('\n'));
  console.log('PASS browser: real form CAS/draft retention, direct Action save, viewer branch scope and canonical weekly deletion');
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}

@@ -362,3 +362,7 @@ const executive = context.aggregateDescriptivePeriod([{
 assert.strictEqual(executive.workloadCapacity, 10, 'Executive Workload capacity must not double-count a verified UID alias');
 
 console.log('KPI Workload identity and Dashboard alignment behavior passed.');
+assert.equal(context.resolveWorkloadEmployee({employee:'TRAINEE (SORN)'},context.GLOBAL_CONFIG_LIST).uid,'','names never infer a Main UID');
+const unlinked=context.getCanonicalWorkloadEntries([{employee:'Former',outbound:2},{employee:'Former',outbound:3}],context.GLOBAL_CONFIG_LIST);
+assert.equal(unlinked.length,2,'UID-less historical entries remain distinct and are never merged by name');
+assert.equal(context.resolveWorkloadEmployee({employeeUid:'FORMER-1',employee:'Former'},[]).uid,'FORMER-1','former employee UID remains in historical reporting');

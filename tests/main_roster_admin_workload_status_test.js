@@ -54,7 +54,7 @@ assert.deepStrictEqual(
   'Bangkok date must not fall back to the previous UTC date before 07:00'
 );
 
-const snapshot = { date: '2026-08-23', recordedEmployees: ['Somchai'] };
+const snapshot = { date: '2026-08-23', recordedEmployees: ['Somchai'], recordedEmployeeUids: ['250001'] };
 const akraEmployee = { uid: '250001', name: 'Somchai', roles: ['WAREHOUSE'], branches: 'AKRA', status: 'Active' };
 const missingEmployee = { uid: '250002', name: 'Somsri', roles: ['AKRA'], branches: 'AKRA', status: 'Active' };
 
@@ -71,7 +71,7 @@ assert.strictEqual(getEmployeeWorkloadStatus(missingEmployee, {
   date: '2026-08-24',
   recordedEmployees: [],
   previousDate: '2026-08-23',
-  previousRecordedEmployees: ['Somsri']
+  previousRecordedEmployees: ['Somsri'], previousRecordedEmployeeUids: ['250002']
 }, '2026-08-24', 0).state, 'pending');
 assert.strictEqual(getEmployeeWorkloadStatus({ ...missingEmployee, roles: ['TRD'], branches: 'TRD' }, snapshot, '2026-08-23', 19).state, 'not_required');
 assert.strictEqual(getEmployeeWorkloadStatus({ ...missingEmployee, roles: ['ADMIN'], branches: 'AKRA,TRD' }, snapshot, '2026-08-23', 19).state, 'not_required');
@@ -250,14 +250,14 @@ async function verifyWorkloadRoleAuthority() {
     canAccessAdminSettings,
     normalizeEmpName,
     getAkraWorkloadValues: () => [
-      { employee: '250013', outbound: 1, inbound: 1, transfer: 1, shared: 1, capacity: 4 },
-      { employee: 'Other', outbound: 1, inbound: 1, transfer: 1, shared: 1, capacity: 4 }
+      { employeeUid:'250013', employee: '250013', outbound: 7, inbound: 1, transfer: 1, shared: 1, capacity: 10 },
+      { employeeUid:'Other', employee: 'Other', outbound: 7, inbound: 1, transfer: 1, shared: 1, capacity: 10 }
     ],
     postToAppScript: async request => {
       context.savedAdminWorkloads = request.workload;
       return { status: 'success' };
     },
-    showToast: () => {}, showModal: () => {}, sendAppLog: () => {},
+    showToast: () => {}, showModal: (_title,_text,_type,confirm) => confirm?.(), sendAppLog: () => {},
     safeStorage: { removeItem: () => {} },
     applyWorkloadSaveResultToCache: () => {},
     renderTeamWorkloadPreview: () => {},
@@ -265,6 +265,7 @@ async function verifyWorkloadRoleAuthority() {
     syncDataFromSheet: async () => {}, loadDashboardData: () => {}, updateDailyDashboard: () => {}
   });
   vm.runInContext(extractFunction('saveWorkloadCard'), context);
+  vm.runInContext(extractFunction('executeSaveWorkload'), context);
   await context.saveWorkloadCard();
   assert.strictEqual(edgeSaves.length, 1, 'a non-admin must save its own Workload through the authenticated Edge boundary');
   assert.strictEqual(edgeSaves[0].employeeUid, '250013');
