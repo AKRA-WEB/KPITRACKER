@@ -1,5 +1,5 @@
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
-const playwrightPath = [path.resolve(__dirname, '../../../../SOP/node_modules/playwright'), path.resolve(__dirname, '../../../../../../SOP/node_modules/playwright')].find(p => fs.existsSync(p)) || 'playwright';
+const playwrightPath = [path.resolve(__dirname, '../../SOP/node_modules/playwright'), path.resolve(__dirname, '../../../../SOP/node_modules/playwright'), path.resolve(__dirname, '../../../../../../SOP/node_modules/playwright')].find(p => fs.existsSync(p)) || 'playwright';
 const {chromium}=require(playwrightPath);
 const root=path.resolve(__dirname,'..'),model=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/incident-model.json'),'utf8'));model.active=true;
 const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://localhost'),file=path.resolve(root,'.'+(url.pathname==='/'?'/index.html':url.pathname));if(!file.startsWith(root+path.sep))return res.writeHead(403).end();try{res.setHeader('Content-Type',file.endsWith('.html')?'text/html; charset=utf-8':file.endsWith('.js')?'application/javascript':'application/json');res.end(fs.readFileSync(file));}catch{res.writeHead(404).end();}});
