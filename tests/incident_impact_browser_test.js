@@ -99,7 +99,7 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
  await page.evaluate(()=>{_paretoEvidence=buildParetoAnalysis([{date:'2026-09-08',sourceBranch:'AKRA',errors:recordedErrorCases.flatMap(r=>r.participants.map(emp=>({...r,emp})))}],'ALL','ALL',0).events;exportParetoEvidenceCSV();});
  const csv=fs.readFileSync(await(await download).path(),'utf8');assert.doesNotMatch(csv,/undefined|\"0\",/);assert.match(csv,/ผลกระทบ/);
  await page.evaluate(()=>{switchTab('error');KpiIncident.reset();});
- const artifacts=path.resolve(root,'../../..','.artifacts/kpi-incident-audit');fs.mkdirSync(artifacts,{recursive:true});
+ const artifacts=path.resolve(root,'..','.artifacts/kpi-incident-audit');fs.mkdirSync(artifacts,{recursive:true});
  await page.screenshot({path:path.join(artifacts,'impact-mobile.png'),fullPage:true});
  await page.setViewportSize({width:1440,height:1000});await page.screenshot({path:path.join(artifacts,'impact-desktop.png'),fullPage:true});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no desktop horizontal overflow');

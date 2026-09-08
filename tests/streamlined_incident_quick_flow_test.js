@@ -30,7 +30,7 @@ const versionJson = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
 const versionMatch = scriptCode.match(/const CURRENT_VERSION = ["']([^"']+)["'];/);
 assert.ok(versionMatch, 'CURRENT_VERSION must be declared in index.html');
 assert.equal(versionMatch[1], versionJson.version, 'index.html CURRENT_VERSION must match version.json');
-assert.equal(versionJson.version, '20260908.02', 'Current release version');
+assert.equal(versionJson.version, '20260908.03', 'Current release version');
 console.log(`✓ Version parity verified: ${versionJson.version}`);
 
 // [3/5] Setup mock DOM and runtime environment for functional tests
