@@ -1,6 +1,6 @@
 # Impact-only Incident contract (20260908-004)
 
-Released frontend: `20260908.01`. Impact-only recording is active for AKRA and TRD from September 8, 2026, 11:40 Asia/Bangkok. The migration itself seeds the catalog disabled; activation is a separate server operation.
+Released frontend: `20260908.02`. Impact-only recording is active for AKRA and TRD from September 8, 2026, 11:40 Asia/Bangkok. The migration itself seeds the catalog disabled; activation is a separate server operation.
 
 ## Selection and storage
 
@@ -8,7 +8,7 @@ Quick buttons and search select the same stable type ID. An explicit allowed imp
 
 Types allow `contained`, `escaped_internal`, `reached_customer`, `unknown`, or `not_applicable` as declared by the catalog. Shipping/picking types exclude `not_applicable`; shared housekeeping/attendance types currently allow `not_applicable` and `unknown`. Administrators may edit names, categories, quick flags and allowed impacts; retire a type by deactivating its stable ID. Catalog writes use a compare-and-swap revision and preserve activation fields.
 
-Daily storage retains existing participant projections. The new RPC locks the branch/day, validates projections and changes the full case atomically with an append-only revision containing actor, reason and before/after snapshots. Create/retry, same-day update and same-day cancellation use stable case IDs and optimistic revisions. Edits preserve original participants unless the operator explicitly changes them.
+Daily storage retains existing participant projections. The new RPC locks the branch/day, validates projections and changes the full case atomically with an append-only revision containing actor, reason and before/after snapshots. Create/retry, historical update and cancellation use stable case IDs and optimistic revisions. Edits preserve original participants unless the operator explicitly changes them.
 
 New ordinary legacy writes are blocked at both API and database boundaries after activation. Explicit positive achievements and authorized Zero Error declarations have a narrow compatibility route which cannot replace or resurrect an audited Incident ID. Anonymous/authenticated roles cannot call these RPCs or read revision storage directly. History is authorized by branch through kpi-api.
 
@@ -17,7 +17,7 @@ New ordinary legacy writes are blocked at both API and database boundaries after
 | Consumer | New behavior | Historical compatibility |
 | --- | --- | --- |
 | Entry form, quick/search, summary | Catalog ID plus explicit impact; immutable confirmed save | Old form only before cutover |
-| Timeline and same-day edit/cancel | Impact labels, involved people, reason and revision history | Old scores labeled as historical; old cases may be canceled, not converted |
+| Timeline and historical edit/delete | Impact labels, involved people, reason and revision history | Old scores labeled as historical; explicitly edited old cases adopt the unscored model while their original score survives in revision history |
 | Good Catch and Zero Error | Separate positive timeline; no incident count; Zero role/conflict enforcement | Original positive payload shape retained |
 | Daily detail and weekly branch cards | Distinct cases, impact totals, individual involvement | Raw old rows unchanged; no inferred new severity from penalty |
 | Executive totals, trends and Pareto | Distinct case counts; stable-ID recurrence; impact filters/evidence | Legacy IDs/markers retained, unknown remains explicit |
@@ -73,3 +73,5 @@ This maps 31 configured legacy labels to 28 stable IDs. It changes future choice
 5. If a mismatch occurs after v3 writes, set active false while retaining activatedAt, pause mutations and forward-fix. Never restore an old writer, delete new history or recalculate historical scores.
 
 The database migration and API are deployed and the matching frontend is published. Deployed RPC checks passed for both branches with all probe writes rolled back; 261 backed-up historical daily records retained identical Incident and Workload data. Authenticated operator acceptance remains pending. See root Conductor plan `20260908-004` for detailed evidence and the existing strict TypeScript-check limitation.
+
+Every currently authorized branch user may edit/delete case-identified Incidents for past dates in that branch. Future dates and cross-branch access remain denied. Deletion is an audited cancellation. Reasons and expected revisions are required; unchanged historical participants/detector are preserved even if inactive. Workload and standalone Good Catch cancellation time limits are unchanged.

@@ -78,7 +78,7 @@
                 <p id="impact-summary" role="status" class="p-3 rounded-xl bg-blue-50 text-blue-900 text-sm"></p>
                 <button id="btn-save-error-preview" type="button" onclick="saveErrorCaseFromPreview()" class="w-full rounded-xl p-4 bg-red-600 text-white font-bold">บันทึกเหตุการณ์</button>
                 <button type="button" onclick="KpiIncident.reset()" class="w-full p-2 text-slate-600">ล้างรายการ / ยกเลิกการแก้ไข</button></fieldset>
-                <button type="button" onclick="KpiIncident.history()" class="w-full p-3 border rounded-xl text-sm">ประวัติการบันทึกและแก้ไขของวันนี้</button>`;
+                <button type="button" onclick="KpiIncident.history()" class="w-full p-3 border rounded-xl text-sm">ประวัติการบันทึกและแก้ไขของวันที่เลือก</button>`;
             renderErrEmpChips();
             byId('impact-detector').innerHTML='<option value="">ไม่ระบุ / ตรวจพบเอง</option>'+getBranchActiveRoster(currentBranch).map(n=>`<option>${escape(n)}</option>`).join('');
             byId('impact-responsibility').value=selectedIncidentResponsibility || 'individual';
@@ -145,12 +145,13 @@
         }catch(e){showToast(message(e),true);}finally{state.busy=false;if(byId('impact-fields'))byId('impact-fields').disabled=false;dateInputs.forEach(({el,disabled})=>el.disabled=disabled);}
     }
     function edit(caseId){
-        const row=recordedErrorCases.find(r=>r.caseId===caseId);if(!isNew(row))return;
-        const date=byId('record-date-error').value;if(date!==formatDateKeyLocal(new Date()))return showToast('แก้ไขได้เฉพาะรายการของวันนี้',true);
-        state.editing=row;state.participantsChanged=false;state.typeId=row.typeId;state.impact=row.impact;state.revision=model().catalogRevision;state.pending=null;
+        const row=recordedErrorCases.find(r=>r.caseId===caseId);if(!row || isAchievement(row) || state.busy)return;
+        const date=byId('record-date-error').value;state.branch=currentBranch;state.date=date;
+        state.editing=row;state.participantsChanged=false;state.typeId=row.typeId || types().find(t=>t.active && t.legacyNames?.includes(row.type))?.id || '';state.impact=isNew(row)?row.impact:'';state.revision=model().catalogRevision;state.pending=null;
         selectedErrWorker=row.worker;selectedIncidentResponsibility=row.responsibility;render();renderErrEmpChips();
+        const detector=byId('impact-detector');if(row.detectedBy && !Array.from(detector.options).some(o=>o.value===row.detectedBy))detector.add(new Option(row.detectedBy,row.detectedBy));
         byId('pc-err-note-input').value=row.note || '';byId('impact-detector').value=row.detectedBy || '';byId('impact-responsibility').value=row.responsibility;
-        byId('impact-reason').value='';byId('inc-form-body').scrollIntoView({block:'start'});
+        byId('impact-reason').value='';if(!isNew(row))showToast('รายการเดิม: เลือกประเภทและผลกระทบใหม่ คะแนนเดิมจะเก็บไว้ในประวัติ');byId('inc-form-body').scrollIntoView({block:'start'});
     }
     function dialog(title){
         byId('impact-dialog')?.remove();const d=document.createElement('dialog');d.id='impact-dialog';d.className='rounded-2xl p-5 w-full max-w-xl';
@@ -160,8 +161,8 @@
     function cancel(caseId){
         const row=recordedErrorCases.find(r=>r.caseId===caseId);if(!row)return;
         const branch=currentBranch,date=byId('record-date-error').value;
-        const body=dialog('ยกเลิกรายการ โดยเก็บประวัติ');
-        body.innerHTML=`<p class="text-sm">${escape(row.type)}</p><label class="block text-sm">เหตุผล<textarea id="impact-cancel-reason" maxlength="1000" class="w-full border p-2"></textarea></label><button id="impact-cancel-submit" type="button" class="p-3 bg-red-600 text-white rounded-lg">ยืนยันยกเลิกรายการ</button>`;
+        const body=dialog('ลบ Incident โดยเก็บประวัติ');
+        body.innerHTML=`<p class="text-sm">${escape(row.type)}</p><label class="block text-sm">เหตุผล<textarea id="impact-cancel-reason" maxlength="1000" class="w-full border p-2"></textarea></label><button id="impact-cancel-submit" type="button" class="p-3 bg-red-600 text-white rounded-lg">ยืนยันลบรายการ</button>`;
         byId('impact-cancel-submit').onclick=async()=>{
             const reason=byId('impact-cancel-reason').value.trim();if(!reason)return;
             const button=byId('impact-cancel-submit');button.disabled=true;
@@ -172,13 +173,13 @@
     async function history(caseId=''){
         const body=dialog('ประวัติเหตุการณ์และการแก้ไข');body.textContent='กำลังโหลด...';
         try{const result=await AkraSupabaseKPI.getIncidentHistory(sessionToken,currentBranch,byId('record-date-error').value,caseId);
-            body.innerHTML=result.revisions.map(r=>{const before=r.before_entries?.[0],after=r.after_entries?.[0];return `<article class="border rounded-lg p-3 text-xs"><p>${escape(r.created_at)} · ${escape(r.actor)} · ครั้งที่ ${r.revision}</p><p>${escape({create:'บันทึก',update:'แก้ไข',cancel:'ยกเลิก'}[r.action])}: ${escape((after||before)?.type)}</p>${before?`<p>เดิม: ${escape(labels[before.impact]||'ข้อมูลเดิม')} · ${escape(before.displayNote)}</p>`:''}${after?`<p>ใหม่: ${escape(labels[after.impact]||'ข้อมูลเดิม')} · ${escape(after.displayNote)}</p>`:''}<p>${escape(r.reason)}</p></article>`;}).join('')||'ยังไม่มีประวัติการแก้ไข';
+            body.innerHTML=result.revisions.map(r=>{const before=r.before_entries?.[0],after=r.after_entries?.[0];return `<article class="border rounded-lg p-3 text-xs"><p>${escape(r.created_at)} · ${escape(r.actor)} · ครั้งที่ ${r.revision}</p><p>${escape({create:'บันทึก',update:'แก้ไข',cancel:'ลบ'}[r.action])}: ${escape((after||before)?.type)}</p>${before?`<p>เดิม: ${escape(labels[before.impact]||'ข้อมูลเดิม')} · ${escape(before.displayNote)}</p>`:''}${after?`<p>ใหม่: ${escape(labels[after.impact]||'ข้อมูลเดิม')} · ${escape(after.displayNote)}</p>`:''}<p>${escape(r.reason)}</p></article>`;}).join('')||'ยังไม่มีประวัติการแก้ไข';
         }catch(e){body.textContent=message(e);}
     }
     function timeline(){
         const rows=recordedErrorCases.filter(r=>!isAchievement(r));byId('err-case-count').textContent=`${rows.length} เคส`;
         const today=byId('record-date-error').value===formatDateKeyLocal(new Date());
-        byId('pc-err-timeline').innerHTML=rows.map(r=>`<article class="border rounded-xl p-3 space-y-2 text-xs"><p class="font-bold">${escape(r.type)} · ${isNew(r)?escape(labels[r.impact]):'ข้อมูลเดิม'}</p><p>${escape(r.worker)} · ${escape(r.time)}</p><p>${escape(r.note)}</p>${!isNew(r)?`<p class="text-slate-500">คะแนนเดิม: -${Number(r.penalty)||0} HP</p>`:''}<div class="flex gap-3">${today&&isNew(r)?`<button onclick="KpiIncident.edit('${escape(r.caseId)}')">แก้ไข</button>`:''}${today?`<button onclick="KpiIncident.cancel('${escape(r.caseId)}')">ยกเลิก</button>`:''}<button onclick="KpiIncident.history('${escape(r.caseId)}')">ประวัติ</button></div></article>`).join('')||`<p class="text-sm text-slate-500">${incidentZeroConfirmed?'ตรวจแล้ว ไม่พบข้อผิดพลาด':'ยังไม่มีเหตุการณ์ที่บันทึก'}</p>`;
+        byId('pc-err-timeline').innerHTML=rows.map(r=>`<article class="border rounded-xl p-3 space-y-2 text-xs"><p class="font-bold">${escape(r.type)} · ${isNew(r)?escape(labels[r.impact]):'ข้อมูลเดิม'}</p><p>${escape(r.worker)} · ${escape(r.time)}</p><p>${escape(r.note)}</p>${!isNew(r)?`<p class="text-slate-500">คะแนนเดิม: -${Number(r.penalty)||0} HP</p>`:''}<div class="flex gap-3">${`<button class="px-3 py-2 rounded-lg border border-blue-200 text-blue-700" onclick="KpiIncident.edit('${escape(r.caseId)}')">แก้ไข</button>`}${`<button class="px-3 py-2 rounded-lg border border-red-200 text-red-700" onclick="KpiIncident.cancel('${escape(r.caseId)}')">ลบ</button>`}<button onclick="KpiIncident.history('${escape(r.caseId)}')">ประวัติ</button></div></article>`).join('')||`<p class="text-sm text-slate-500">${incidentZeroConfirmed?'ตรวจแล้ว ไม่พบข้อผิดพลาด':'ยังไม่มีเหตุการณ์ที่บันทึก'}</p>`;
         const positive=recordedErrorCases.filter(isAchievement);
         if(positive.length)byId('pc-err-timeline').innerHTML+=`<h3 class="font-bold text-emerald-800 pt-3">ผลงาน / Good Catch · ${positive.length} รายการ</h3>`+positive.map(r=>`<article class="border border-emerald-200 bg-emerald-50 rounded-xl p-3 text-xs space-y-2"><p class="font-bold">${escape(r.type)}</p><p>${escape(r.worker)} · ${escape(r.time)}</p><p>${escape(r.note)}</p>${today?`<button onclick="KpiIncident.cancel('${escape(r.caseId)}')">ยกเลิกผลงาน</button>`:''}</article>`).join('');
     }

@@ -15,7 +15,7 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
   if(['saveIncident','updateIncident'].includes(p.action)){
    writes.push(p);if(holdNext){holdNext=false;await new Promise(r=>release=r);}
    const t=model.branches[p.branch].types.find(t=>t.id===p.incident.typeId),old=records[p.branch].find(r=>r.caseId===p.incident.caseId);
-   const saved={...p.incident,type:t.name,penalty:0,revision:p.action==='updateIncident'?old.revision+1:1};
+   const saved={...p.incident,type:t.name,penalty:0,revision:p.action==='updateIncident'?(old.revision||0)+1:1};
    records[p.branch]=[...records[p.branch].filter(r=>r.caseId!==saved.caseId),saved];
    if(failNext){failNext=false;return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({status:'error',reason:'temporary_failure'})});}
    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result())});
@@ -69,6 +69,23 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
  assert.match(await page.locator('#inc-success-summary').innerText(),/AKRA/);
  // Read saved records back through the client and restore the actual timeline after clearing memory.
  await page.evaluate(async()=>{recordedErrorCases=[];const r=await AkraSupabaseKPI.getIncidentData(sessionToken,'AKRA',3);recordedErrorCases=r.records[0].incidents;KpiIncident.timeline();});assert.match(await page.locator('#pc-err-timeline').innerText(),/ยังไม่ทราบ/);
+ // Historical cases expose real Edit/Delete controls to ordinary branch users, including scored legacy cases.
+ for(const branch of ['AKRA','TRD']){
+  const t=model.branches[branch].types.find(t=>t.name==='จัดสินค้าผิด');
+  const legacy={kind:'case',caseId:`ERR-2026-09-07-history-${branch}`,worker:'A',participants:['A'],responsibility:'individual',detectedBy:'Former detector',type:t.legacyNames[0],category:t.category,penalty:20,time:'11:00 น.',note:'past entry',revision:0};
+  records[branch].push(legacy);
+  await page.evaluate(({branch,legacy})=>{currentBranch=branch;currentRoles=[branch];document.getElementById('record-date-error').value='2026-09-07';recordedErrorCases=[legacy];KpiIncident.render();KpiIncident.timeline();},{branch,legacy});
+  await page.locator('#pc-err-timeline').getByRole('button',{name:'แก้ไข',exact:true}).click();
+  assert.equal(await page.locator('#impact-detector').inputValue(),'Former detector','historical detector remains selectable');
+  assert.equal(await page.evaluate(()=>KpiIncident.state.impact),'','legacy correction requires explicit impact');
+  const before=writes.length;await page.locator('#impact-reason').fill('แก้ไขย้อนหลัง');await page.locator('#btn-save-error-preview').click();assert.equal(writes.length,before);
+  await page.locator('[data-impact="reached_customer"]').click();await page.locator('#btn-save-error-preview').click();await page.waitForFunction(()=>!KpiIncident.state.busy);
+  assert.equal(writes.at(-1).action,'updateIncident');assert.equal(writes.at(-1).date,'2026-09-07');assert.equal(writes.at(-1).incident.caseId,legacy.caseId);assert.equal(writes.at(-1).incident.detectedBy,'Former detector');
+  await page.evaluate(id=>{recordedErrorCases=recordedErrorCases.filter(r=>r.caseId===id);KpiIncident.timeline();},legacy.caseId);
+  await page.locator('#pc-err-timeline').getByRole('button',{name:'ลบ',exact:true}).click();await page.locator('#impact-cancel-reason').fill('ลบรายการย้อนหลังที่บันทึกผิด');await page.locator('#impact-cancel-submit').click();await page.waitForFunction(()=>!document.getElementById('impact-dialog').open);
+  assert.equal(writes.at(-1).date,'2026-09-07');assert.equal(records[branch].some(r=>r.caseId===legacy.caseId),false);
+ }
+ await page.evaluate(rows=>{currentBranch='AKRA';currentRoles=['ADMIN'];document.getElementById('record-date-error').value='2026-09-08';recordedErrorCases=rows;KpiIncident.render();KpiIncident.timeline();},records.AKRA);
  // Admin: stable IDs survive rename/deactivation and category edits.
  await page.evaluate(()=>{ADMIN_SETTINGS_STATE.incidentBranch='AKRA';KpiIncident.admin();});
  await page.evaluate(id=>{KpiIncident.adminChange(id,'name','Renamed type');KpiIncident.adminChange(id,'active',false);KpiIncident.adminAddCategory();return KpiIncident.adminSave();},shared.id);
