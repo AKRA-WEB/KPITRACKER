@@ -2,7 +2,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
-const { chromium } = require(path.resolve(__dirname, '../../SOP/node_modules/playwright'));
+const playwrightPath = [path.resolve(__dirname, '../../../../SOP/node_modules/playwright'), path.resolve(__dirname, '../../../../../../SOP/node_modules/playwright')].find(p => fs.existsSync(p)) || 'playwright';
+const { chromium } = require(playwrightPath);
 
 const appRoot = path.resolve(__dirname, '..');
 const mimeTypes = {
