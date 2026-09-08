@@ -86,6 +86,42 @@
     const selected = () => types().find(t => t.id === state.typeId && t.active);
     const isNew = row => row?.schemaVersion === 3 && row?.scoringMode === 'none';
 
+    const impactDefinitions = (branch = currentBranch) => model()?.branches?.[branch]?.impacts
+        || Object.entries(labels).map(([id, label]) => ({id, label}));
+
+    function impactLabel(value, branch = currentBranch) {
+        if (value && typeof value === 'object') return value.impactLabel || labels[value.impact] || value.impact || 'ข้อมูลเดิม';
+        return impactDefinitions(branch).find(i => i.id === value)?.label || labels[value] || value || '';
+    }
+
+    function visualImpact(id) {
+        const original = impactMeta[id] || impactMeta.not_applicable;
+        const label = impactLabel(id);
+        return label === labels[id] ? original : {...original, badge: label, sub: label};
+    }
+
+    function weekRange(date) {
+        const day = new Date(`${date}T00:00:00Z`);
+        if (!Number.isFinite(day.getTime())) return {start: '', end: ''};
+        day.setUTCDate(day.getUTCDate() - (day.getUTCDay() + 6) % 7);
+        const start = day.toISOString().slice(0, 10);
+        day.setUTCDate(day.getUTCDate() + 6);
+        return {start, end: day.toISOString().slice(0, 10)};
+    }
+
+    function weekCases() {
+        const date = byId('record-date-error')?.value, range = weekRange(date);
+        const days = JSON.parse(safeStorage.getItem(`kpiData_${currentBranch}`) || '[]');
+        const byDate = new Map(days.filter(d => !d.branch || d.branch === currentBranch)
+            .map(d => [normalizeClientDateKey(d.date), d.incidentCases || []]));
+        // Keep the selected day's authoritative preview while a save refreshes the cache.
+        if (recordedErrorCases.length || !byDate.has(date)) byDate.set(date, recordedErrorCases);
+        return [...byDate].filter(([d]) => d >= range.start && d <= range.end)
+            .flatMap(([recordDate, rows]) => rows.filter(r => r.caseId && r.caseId !== 'NO_ERRORS' && !r.cancelled)
+                .map(r => ({...r, recordDate, branch: currentBranch})))
+            .sort((a, b) => b.recordDate.localeCompare(a.recordDate) || String(b.time || '').localeCompare(String(a.time || '')));
+    }
+
     function isAchievement(row) {
         return !isNew(row) && String(row?.type || '').startsWith('ผลงาน: ')
             && ['good_catch','team_support','kaizen','special','service','5s'].includes(row?.category)
@@ -116,8 +152,8 @@
         });
         const result = { total: unique.size, impact: Object.fromEntries(Object.keys(labels).map(k => [k, 0])), types: {}, people: {} };
         for (const row of unique.values()) {
-            const impact = isNew(row) && labels[row.impact] ? row.impact : legacyImpact(row);
-            result.impact[impact]++;
+            const impact = isNew(row) ? row.impact : legacyImpact(row);
+            result.impact[impact] = (result.impact[impact] || 0) + 1;
             const key = row.typeId || row.type || 'ไม่ระบุประเภท';
             result.types[key] = (result.types[key] || 0) + 1;
             for (const name of new Set(row.participants || [row.worker || row.emp].filter(Boolean))) {
@@ -398,8 +434,8 @@
 
         container.innerHTML = type.impacts.map(i => {
             const isSelected = state.impact === i;
-            const meta = impactMeta[i] || impactMeta.unknown;
-            const fullLabel = labels[i] || i;
+            const meta = visualImpact(i);
+            const fullLabel = impactLabel(i);
             const radioStyle = isSelected ? `${meta.dot} border-transparent` : 'border-slate-300 bg-white';
             return `
                 <button type="button" data-impact="${escape(i)}" onclick="KpiIncident.impact('${escape(i)}')" aria-pressed="${isSelected}" class="w-full p-3.5 rounded-2xl border text-left transition-all active:scale-[0.99] flex items-center justify-between gap-3 cursor-pointer ${isSelected ? meta.activeRing + ' shadow-sm' : 'border-slate-200 bg-white hover:bg-slate-50/80 hover:border-slate-300 text-slate-700'}">
@@ -447,8 +483,8 @@
 
         const impactBadge = byId('inc-impact-selected-badge');
         if (impactBadge) {
-            if (state.impact && impactMeta[state.impact]) {
-                const m = impactMeta[state.impact];
+            if (state.impact) {
+                const m = visualImpact(state.impact);
                 impactBadge.className = `text-[10px] font-bold px-2.5 py-0.5 rounded-lg ${m.bgLight} ${m.textColor} border ${m.borderLight}`;
                 impactBadge.textContent = m.badge;
             } else {
@@ -457,7 +493,7 @@
             }
         }
 
-        byId('impact-summary').textContent = `${currentBranch} · ${selected()?.name || 'ยังไม่เลือกประเภท'} · ${labels[state.impact] || 'ยังไม่เลือกผลกระทบ'} · ${people.join(', ') || 'ยังไม่เลือกผู้เกี่ยวข้อง'}`;
+        byId('impact-summary').textContent = `${currentBranch} · ${selected()?.name || 'ยังไม่เลือกประเภท'} · ${impactLabel(state.impact) || 'ยังไม่เลือกผลกระทบ'} · ${people.join(', ') || 'ยังไม่เลือกผู้เกี่ยวข้อง'}`;
     }
 
     function message(error) {
@@ -478,6 +514,7 @@
             renderErrTimeline();
             renderErrTeamHp();
         }
+        if (currentBranch === branch) renderErrTimeline();
         loadDashboardData();
         updateDailyDashboard();
     }
@@ -533,7 +570,7 @@
             if (!saved) throw Error('invalid_incident_response');
             applyResult(request.branch, request.date, result);
             if (currentBranch === request.branch && byId('record-date-error').value === request.date) {
-                byId('inc-success-summary').textContent = `${request.branch} · ${saved.type} · ${labels[saved.impact]} · ${(saved.participants || [saved.worker]).join(', ')}`;
+                byId('inc-success-summary').textContent = `${request.branch} · ${saved.type} · ${impactLabel(saved)} · ${(saved.participants || [saved.worker]).join(', ')}`;
                 byId('inc-success-card').classList.remove('hidden');
                 state.pending = null;
                 state.editing = null;
@@ -553,9 +590,10 @@
     }
 
     function edit(caseId) {
-        const row = recordedErrorCases.find(r => r.caseId === caseId);
+        const row = weekCases().find(r => r.caseId === caseId);
         if (!row || isAchievement(row) || state.busy) return;
-        const date = byId('record-date-error').value;
+        const date = row.recordDate;
+        if (byId('record-date-error').value !== date) syncAppRecordDate(date);
         state.branch = currentBranch;
         state.date = date;
         state.editing = row;
@@ -606,9 +644,9 @@
     }
 
     function cancel(caseId) {
-        const row = recordedErrorCases.find(r => r.caseId === caseId);
+        const row = weekCases().find(r => r.caseId === caseId);
         if (!row) return;
-        const branch = currentBranch, date = byId('record-date-error').value;
+        const branch = currentBranch, date = row.recordDate;
         const body = dialog('ลบ Incident โดยเก็บประวัติ');
         body.innerHTML = `
             <div class="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-900 text-xs flex items-start gap-3">
@@ -662,7 +700,8 @@
             </div>
         `;
         try {
-            const result = await AkraSupabaseKPI.getIncidentHistory(sessionToken, currentBranch, byId('record-date-error').value, caseId);
+            const date = weekCases().find(r => r.caseId === caseId)?.recordDate || byId('record-date-error').value;
+            const result = await AkraSupabaseKPI.getIncidentHistory(sessionToken, currentBranch, date, caseId);
             const actionMap = {
                 create: { label: 'สร้างบันทึก', badge: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
                 update: { label: 'แก้ไขรายการ', badge: 'bg-blue-100 text-blue-800 border-blue-200' },
@@ -687,13 +726,13 @@
                         ${before ? `
                             <div class="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 text-[11px] space-y-0.5">
                                 <span class="font-bold text-slate-500 block">เดิม:</span>
-                                <p>${escape(labels[before.impact] || 'ข้อมูลเดิม')} · ${escape(before.displayNote || before.note || 'ไม่มีโน้ต')}</p>
+                                <p>${escape(impactLabel(before))} · ${escape(before.displayNote || before.note || 'ไม่มีโน้ต')}</p>
                             </div>
                         ` : ''}
                         ${after ? `
                             <div class="p-2 rounded-xl bg-blue-50/50 border border-blue-200 text-blue-900 text-[11px] space-y-0.5">
                                 <span class="font-bold text-blue-700 block">ใหม่:</span>
-                                <p>${escape(labels[after.impact] || 'ข้อมูลเดิม')} · ${escape(after.displayNote || after.note || 'ไม่มีโน้ต')}</p>
+                                <p>${escape(impactLabel(after))} · ${escape(after.displayNote || after.note || 'ไม่มีโน้ต')}</p>
                             </div>
                         ` : ''}
                         ${r.reason ? `
@@ -710,7 +749,10 @@
     }
 
     function timeline() {
-        const rows = recordedErrorCases.filter(r => !isAchievement(r));
+        const rows = weekCases().filter(r => !isAchievement(r));
+        const range = weekRange(byId('record-date-error')?.value);
+        const heading = byId('incident-timeline-heading');
+        if (heading) heading.textContent = `ไทม์ไลน์เคสรายสัปดาห์ (จันทร์–อาทิตย์) · ${range.start} – ${range.end}`;
         const countEl = byId('err-case-count');
         if (countEl) countEl.textContent = `${rows.length} เคส`;
         const today = byId('record-date-error')?.value === formatDateKeyLocal(new Date());
@@ -723,8 +765,8 @@
                     <div class="w-10 h-10 mx-auto rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-sm">
                         <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
                     </div>
-                    <p class="text-xs font-bold text-slate-600">${incidentZeroConfirmed ? '✅ วันนี้ตรวจแล้ว ไม่พบข้อผิดพลาด (Zero Error)' : 'ยังไม่มีเหตุการณ์ที่บันทึกสำหรับวันนี้'}</p>
-                    <p class="text-[11px] text-slate-400">${incidentZeroConfirmed ? 'Checker ยืนยันว่าไม่มีความผิดพลาดเกิดขึ้น' : 'เหตุการณ์ที่บันทึกจะแสดงในหน้านี้ตามลำดับเวลา'}</p>
+                    <p class="text-xs font-bold text-slate-600">ยังไม่มีเหตุการณ์ที่บันทึกสำหรับสัปดาห์นี้</p>
+                    <p class="text-[11px] text-slate-400">เหตุการณ์ที่บันทึกจะแสดงในหน้านี้ตามลำดับเวลา</p>
                 </div>`;
         } else {
             timelineContainer.innerHTML = rows.map(r => {
@@ -738,7 +780,7 @@
                     textColor: 'text-slate-700',
                     icon: 'fa-clock'
                 };
-                const impactLabel = isNewCase ? (labels[r.impact] || r.impact) : 'ข้อมูลเดิม';
+                const rowImpactLabel = isNewCase ? impactLabel(r) : 'ข้อมูลเดิม';
                 const workerDisplay = (r.participants && r.participants.length ? r.participants.join(', ') : r.worker) || 'ไม่ระบุ';
 
                 const respLabels = {
@@ -757,7 +799,7 @@
                             <h4 class="font-bold text-slate-900 text-sm leading-snug break-words">${escape(r.type)}</h4>
                             <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full ${meta.bgLight} ${meta.textColor} border ${meta.borderLight} shrink-0">
                                 <i class="fa-solid ${meta.icon} text-[10px]" aria-hidden="true"></i>
-                                <span>${escape(impactLabel)}</span>
+                                <span>${escape(rowImpactLabel)}</span>
                             </span>
                         </div>
                         <div class="flex flex-wrap items-center gap-2 text-xs">
@@ -767,7 +809,7 @@
                             </span>
                             <span class="inline-flex items-center gap-1 text-slate-400">
                                 <i class="fa-solid fa-clock text-[10px]" aria-hidden="true"></i>
-                                <span>${escape(r.time)}</span>
+                                <span>${escape(r.recordDate)} · ${escape(r.time)}</span>
                             </span>
                             ${respBadge}
                         </div>
@@ -837,7 +879,7 @@
                         <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
                     </div>
                     <div>
-                        <div class="text-[11px] text-slate-400 font-medium">เหตุการณ์ทั้งหมดวันนี้</div>
+                        <div class="text-[11px] text-slate-400 font-medium">เหตุการณ์ทั้งหมดในช่วงที่เลือก</div>
                         <div class="text-[10px] text-slate-500">นับตามเคสจริง (Unique Cases)</div>
                     </div>
                 </div>
@@ -891,6 +933,12 @@
                 </span>
                 <span class="font-bold text-slate-300 font-num">${s.impact.not_applicable}</span>
             </div>
+            ${Object.entries(s.impact).filter(([id]) => !labels[id]).map(([id, count]) => `
+                <div class="col-span-2 p-2 rounded-xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-between text-xs text-slate-400">
+                    <span>${escape(impactLabel((rows || []).find(r => r.impact === id) || id))}</span>
+                    <span class="font-bold text-slate-300 font-num">${count}</span>
+                </div>`).join('')}
+
         `;
     }
 
@@ -910,6 +958,7 @@
             typeId: data.typeId,
             type: data.type,
             impact: data.impact,
+            impactLabel: impactLabel(data, branch),
             isReachedCustomer: data.impact === 'reached_customer',
             isFixedBefore: data.impact === 'contained',
             caseId: data.caseId,
@@ -927,9 +976,12 @@
         const host = byId('admin-incident-categories-list');
         if (!host) return;
         if (!adminDraft) adminDraft = JSON.parse(JSON.stringify(model()));
+        for (const b of ['AKRA', 'TRD']) {
+            if (!adminDraft.branches[b].impacts) adminDraft.branches[b].impacts = impactDefinitions(b).map(i => ({...i}));
+        }
         const branch = ADMIN_SETTINGS_STATE.incidentBranch || 'AKRA', data = adminDraft.branches[branch];
         byId('admin-incident-heading').textContent = 'ตั้งค่าประเภทและผลกระทบ';
-        byId('admin-incident-description').textContent = 'เพิ่มประเภท เปลี่ยนชื่อ หรือปิดใช้งาน โดยเก็บข้อมูลเดิมไว้';
+        byId('admin-incident-description').textContent = 'เพิ่ม แก้ไข หรือลบประเภทและผลกระทบ โดยเก็บรายการที่บันทึกแล้วไว้';
         byId('btn-save-admin-incidents').textContent = 'บันทึกประเภทและผลกระทบ';
         host.innerHTML = `
             <div class="space-y-4">
@@ -944,6 +996,21 @@
                                 <span class="text-[10px] text-slate-400 font-mono">${escape(c.key)}</span>
                                 <input aria-label="ชื่อหมวด" value="${escape(c.label)}" class="w-full border border-slate-300 p-2 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500/20 outline-none" onchange="KpiIncident.adminCategory('${c.key}',this.value)">
                             </label>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-700">ผลกระทบ (${data.impacts.length})</span>
+                        <button type="button" class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer" onclick="KpiIncident.adminAddImpact()"><i class="fa-solid fa-plus text-[10px]"></i> เพิ่มผลกระทบ</button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        ${data.impacts.map(i => `
+                            <div class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200 block space-y-1">
+                                <input aria-label="ชื่อผลกระทบ" value="${escape(i.label)}" maxlength="150" class="w-full border border-slate-300 p-2 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500/20 outline-none" onchange="KpiIncident.adminRenameImpact('${i.id}',this.value)">
+                                <button type="button" class="text-xs text-red-600 hover:text-red-800" onclick="KpiIncident.adminDeleteImpact('${i.id}')">ลบผลกระทบ</button>
+                            </div>
                         `).join('')}
                     </div>
                 </div>
@@ -972,14 +1039,15 @@
                                 <div class="flex items-center gap-4 text-xs font-medium text-slate-700">
                                     <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" ${t.active ? 'checked' : ''} onchange="KpiIncident.adminChange('${t.id}','active',this.checked)" class="rounded text-blue-600 focus:ring-blue-500"> <span>เปิดใช้งาน</span></label>
                                     <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" ${t.quick ? 'checked' : ''} onchange="KpiIncident.adminChange('${t.id}','quick',this.checked)" class="rounded text-amber-500 focus:ring-amber-400"> <span>⭐ แสดงในใช้บ่อย</span></label>
+                                    <button type="button" class="text-xs text-red-600 hover:text-red-800" onclick="KpiIncident.adminDeleteType('${t.id}')">ลบประเภท</button>
                                 </div>
                                 <div class="pt-1 border-t border-slate-100">
                                     <span class="text-[10px] text-slate-400 block mb-1">ผลกระทบที่อนุญาตให้เลือก:</span>
                                     <div class="flex flex-wrap gap-2 text-xs">
-                                        ${Object.entries(labels).map(([id, label]) => `
+                                        ${data.impacts.map(({id, label}) => `
                                             <label class="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-100">
                                                 <input type="checkbox" ${t.impacts.includes(id) ? 'checked' : ''} onchange="KpiIncident.adminImpact('${t.id}','${id}',this.checked)" class="rounded text-blue-600 focus:ring-blue-500">
-                                                <span class="text-[11px]">${escape(label)}</span>
+                                                <span data-admin-impact-label="${escape(id)}" class="text-[11px]">${escape(label)}</span>
                                             </label>
                                         `).join('')}
                                     </div>
@@ -1006,7 +1074,7 @@
 
     function adminAdd() {
         const b = ADMIN_SETTINGS_STATE.incidentBranch || 'AKRA', d = adminDraft.branches[b];
-        d.types.push({ id: `${b.toLowerCase()}-${crypto.randomUUID()}`, name: 'ประเภทใหม่', category: d.categories[0].key, active: true, quick: false, impacts: ['unknown'] });
+        d.types.push({ id: `${b.toLowerCase()}-${crypto.randomUUID()}`, name: 'ประเภทใหม่', category: d.categories[0].key, active: true, quick: false, impacts: [] });
         admin();
     }
 
@@ -1022,12 +1090,45 @@
         admin();
     }
 
+    function adminDeleteType(id) {
+        const data = adminDraft.branches[ADMIN_SETTINGS_STATE.incidentBranch || 'AKRA'];
+        data.types = data.types.filter(t => t.id !== id);
+        admin();
+    }
+
+    function adminAddImpact() {
+        const data = adminDraft.branches[ADMIN_SETTINGS_STATE.incidentBranch || 'AKRA'];
+        data.impacts.push({id: `impact_${crypto.randomUUID()}`, label: 'ผลกระทบใหม่'});
+        admin();
+    }
+
+    function adminRenameImpact(id, label) {
+        const data = adminDraft.branches[ADMIN_SETTINGS_STATE.incidentBranch || 'AKRA'];
+        data.impacts.find(i => i.id === id).label = label;
+        document.querySelectorAll(`[data-admin-impact-label="${id}"]`).forEach(el => el.textContent = label);
+    }
+
+    function adminDeleteImpact(id) {
+        const data = adminDraft.branches[ADMIN_SETTINGS_STATE.incidentBranch || 'AKRA'];
+        data.impacts = data.impacts.filter(i => i.id !== id);
+        data.types.forEach(t => t.impacts = t.impacts.filter(i => i !== id));
+        admin();
+    }
+
     async function adminSave() {
         try {
+            for (const branch of ['AKRA', 'TRD']) {
+                const empty = adminDraft.branches[branch].types.find(t => t.active && !t.impacts.length);
+                if (empty) return showToast(`${branch}: เลือกผลกระทบให้ประเภท “${empty.name}” หรือปิดใช้งานก่อนบันทึก`, true);
+            }
             const r = await AkraSupabaseKPI.saveIncidentCatalog(sessionToken, adminDraft);
             KPI_SYSTEM_CONFIG.incidentModel = r.configValue;
             adminDraft = null;
             admin();
+            state.typeId = '';
+            state.impact = '';
+            state.pending = null;
+            render();
             showToast('บันทึกประเภทและผลกระทบแล้ว');
         } catch (e) {
             showToast(message(e), true);
@@ -1036,6 +1137,9 @@
 
     const api = {
         labels,
+        impactLabel,
+        weekRange,
+        weekCases,
         state,
         enabled,
         isNew,
@@ -1062,7 +1166,8 @@
         adminAdd,
         adminSave,
         adminCategory,
-        adminAddCategory
+        adminAddCategory,
+        adminDeleteType, adminAddImpact, adminRenameImpact, adminDeleteImpact
     };
 
     if (typeof module === 'object' && module.exports) module.exports = api;

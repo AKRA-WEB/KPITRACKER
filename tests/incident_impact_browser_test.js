@@ -5,25 +5,25 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
 (async()=>{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({headless:true,executablePath:'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'});
  try{
- const page=await browser.newPage({viewport:{width:390,height:844}}),writes=[],errors=[],records={AKRA:[],TRD:[]};let failNext=false,holdNext=false,release;
+ const page=await browser.newPage({viewport:{width:390,height:844}}),writes=[],reads=[],errors=[],records={AKRA:[],TRD:[]};let failNext=false,holdNext=false,release;
  await page.clock.install({time:new Date('2026-09-08T04:00:00Z')});
  page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/*',async route=>{const req=route.request();if(req.url().startsWith('http://127.0.0.1:'))return route.continue();
  if(['cdn.tailwindcss.com','cdnjs.cloudflare.com','fonts.googleapis.com','fonts.gstatic.com'].includes(new URL(req.url()).hostname))return route.continue();
  if(req.url().endsWith('/kpi-api')){
-  const p=req.postDataJSON();const result=()=>({status:'success',incidents:records[p.branch],errors:records[p.branch].flatMap(r=>r.participants.map(emp=>({...r,emp,displayNote:r.note}))),zeroConfirmed:false});
+  const p=req.postDataJSON();reads.push(p);const result=(date=p.date)=>{const rows=records[p.branch].filter(r=>!date || r.caseId.startsWith(`ERR-${date}-`));return {status:'success',incidents:rows,errors:rows.flatMap(r=>r.participants.map(emp=>({...r,emp,displayNote:r.note}))),zeroConfirmed:false};};
   if(['saveIncident','updateIncident'].includes(p.action)){
    writes.push(p);if(holdNext){holdNext=false;await new Promise(r=>release=r);}
    const t=model.branches[p.branch].types.find(t=>t.id===p.incident.typeId),old=records[p.branch].find(r=>r.caseId===p.incident.caseId);
-   const saved={...p.incident,type:t.name,penalty:0,revision:p.action==='updateIncident'?(old.revision||0)+1:1};
+   const saved={...p.incident,type:t.name,impactLabel:model.branches[p.branch].impacts?.find(i=>i.id===p.incident.impact)?.label,penalty:0,revision:p.action==='updateIncident'?(old.revision||0)+1:1};
    records[p.branch]=[...records[p.branch].filter(r=>r.caseId!==saved.caseId),saved];
    if(failNext){failNext=false;return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({status:'error',reason:'temporary_failure'})});}
    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result())});
   }
   if(p.action==='deleteIncident'){writes.push(p);records[p.branch]=records[p.branch].filter(r=>r.caseId!==p.caseId);return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result())});}
-  if(p.action==='getIncidentData')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'success',records:[{date:'2026-09-08',...result()}]})});
+  if(p.action==='getIncidentData')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'success',records:[...new Set(records[p.branch].map(r=>r.caseId.slice(4,14)))].map(date=>({date,...result(date)}))})});
   if(p.action==='getIncidentHistory')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'success',revisions:[{revision:1,actor:'a',action:'create',created_at:'2026-09-08',after_entries:[records[p.branch][0]],reason:''}]})});
-  if(p.action==='saveIncidentCatalog')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'success',configValue:{...p.configValue,catalogRevision:p.configValue.catalogRevision+1}})});
+  if(p.action==='saveIncidentCatalog'){Object.assign(model,p.configValue,{catalogRevision:p.configValue.catalogRevision+1});return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'success',configValue:model})});}
   return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'success',records:[],revisions:[]})});}
  return route.abort();});
  await page.goto(`http://127.0.0.1:${server.address().port}/?mock=1`);await page.waitForFunction(()=>document.getElementById('system-loading').classList.contains('hidden'));
@@ -74,22 +74,59 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
   const t=model.branches[branch].types.find(t=>t.name==='จัดสินค้าผิด');
   const legacy={kind:'case',caseId:`ERR-2026-09-07-history-${branch}`,worker:'A',participants:['A'],responsibility:'individual',detectedBy:'Former detector',type:t.legacyNames[0],category:t.category,penalty:20,time:'11:00 น.',note:'past entry',revision:0};
   records[branch].push(legacy);
-  await page.evaluate(({branch,legacy})=>{currentBranch=branch;currentRoles=[branch];document.getElementById('record-date-error').value='2026-09-07';recordedErrorCases=[legacy];KpiIncident.render();KpiIncident.timeline();},{branch,legacy});
-  await page.locator('#pc-err-timeline').getByRole('button',{name:'แก้ไข',exact:true}).click();
+  await page.evaluate(({branch,legacy})=>{currentBranch=branch;currentRoles=[branch];applyIncidentSaveResultToCache('2026-09-07',branch,{incidents:[legacy],errors:[legacy]});document.getElementById('record-date-error').value='2026-09-08';hydrateIncidentPreview('2026-09-08');KpiIncident.render();KpiIncident.timeline();},{branch,legacy});
+  await page.locator(`#pc-err-timeline button[onclick="KpiIncident.history('${legacy.caseId}')"]`).click();await page.locator('#impact-dialog-body').getByText(/ครั้งที่ 1/).waitFor();
+  assert.equal(reads.at(-1).date,'2026-09-07','weekly history uses original date');await page.locator('#impact-dialog button').last().click();
+  await page.locator(`#pc-err-timeline button[onclick="KpiIncident.edit('${legacy.caseId}')"]`).click();
   assert.equal(await page.locator('#impact-detector').inputValue(),'Former detector','historical detector remains selectable');
   assert.equal(await page.evaluate(()=>KpiIncident.state.impact),'','legacy correction requires explicit impact');
   const before=writes.length;await page.locator('#impact-reason').fill('แก้ไขย้อนหลัง');await page.locator('#btn-save-error-preview').click();assert.equal(writes.length,before);
   await page.locator('[data-impact="reached_customer"]').click();await page.locator('#btn-save-error-preview').click();await page.waitForFunction(()=>!KpiIncident.state.busy);
   assert.equal(writes.at(-1).action,'updateIncident');assert.equal(writes.at(-1).date,'2026-09-07');assert.equal(writes.at(-1).incident.caseId,legacy.caseId);assert.equal(writes.at(-1).incident.detectedBy,'Former detector');
-  await page.evaluate(id=>{recordedErrorCases=recordedErrorCases.filter(r=>r.caseId===id);KpiIncident.timeline();},legacy.caseId);
-  await page.locator('#pc-err-timeline').getByRole('button',{name:'ลบ',exact:true}).click();await page.locator('#impact-cancel-reason').fill('ลบรายการย้อนหลังที่บันทึกผิด');await page.locator('#impact-cancel-submit').click();await page.waitForFunction(()=>!document.getElementById('impact-dialog').open);
+  await page.evaluate(()=>{syncAppRecordDate('2026-09-08');KpiIncident.timeline();});
+  await page.locator(`#pc-err-timeline button[onclick="KpiIncident.cancel('${legacy.caseId}')"]`).click();await page.locator('#impact-cancel-reason').fill('ลบรายการย้อนหลังที่บันทึกผิด');await page.locator('#impact-cancel-submit').click();await page.waitForFunction(()=>!document.getElementById('impact-dialog').open);
   assert.equal(writes.at(-1).date,'2026-09-07');assert.equal(records[branch].some(r=>r.caseId===legacy.caseId),false);
+  assert.equal(await page.locator(`#pc-err-timeline button[onclick="KpiIncident.cancel('${legacy.caseId}')"]`).count(),0,'deleted past case disappears with another date selected');
  }
  await page.evaluate(rows=>{currentBranch='AKRA';currentRoles=['ADMIN'];document.getElementById('record-date-error').value='2026-09-08';recordedErrorCases=rows;KpiIncident.render();KpiIncident.timeline();},records.AKRA);
  // Admin: stable IDs survive rename/deactivation and category edits.
  await page.evaluate(()=>{ADMIN_SETTINGS_STATE.incidentBranch='AKRA';KpiIncident.admin();});
  await page.evaluate(id=>{KpiIncident.adminChange(id,'name','Renamed type');KpiIncident.adminChange(id,'active',false);KpiIncident.adminAddCategory();return KpiIncident.adminSave();},shared.id);
  assert.equal(await page.evaluate(id=>KPI_SYSTEM_CONFIG.incidentModel.branches.AKRA.types.find(t=>t.id===id).name,shared.id),'Renamed type');
+ // Real existing admin screen: add, rename, associate and delete type/impact controls for both branches.
+ for(const branch of ['TRD','AKRA']){
+  await page.evaluate(b=>{currentBranch=b;currentRoles=['ADMIN'];IS_ADMIN=true;switchTab('admin');switchAdminSubTab('incidents');switchAdminIncidentBranch(b);},branch);
+  const host=page.locator('#admin-incident-categories-list');
+  await host.locator('button[onclick="KpiIncident.adminAddImpact()"] ').click();
+  await host.getByLabel('ชื่อผลกระทบ',{exact:true}).last().fill('ผลกระทบทดลอง');
+  await host.locator('button[onclick="KpiIncident.adminAdd()"] ').click();
+  let card=host.locator('article').last();
+  await card.getByLabel('ชื่อประเภท',{exact:true}).fill('ประเภททดลอง');
+  await card.getByText('ผลกระทบทดลอง',{exact:true}).click();
+  await page.locator('#btn-save-admin-incidents').click();
+  await page.waitForFunction(b=>KPI_SYSTEM_CONFIG.incidentModel.branches[b].types.some(t=>t.name==='ประเภททดลอง'),branch);
+  const custom=await page.evaluate(b=>({type:KPI_SYSTEM_CONFIG.incidentModel.branches[b].types.find(t=>t.name==='ประเภททดลอง'),impact:KPI_SYSTEM_CONFIG.incidentModel.branches[b].impacts.find(i=>i.label==='ผลกระทบทดลอง')}),branch);
+  await page.evaluate(()=>{switchTab('error');selectedErrWorker='A';KpiIncident.reset();});
+  await page.locator('#inc-quick-search').fill('ประเภททดลอง');await page.locator(`[data-type-id="${custom.type.id}"]`).click();
+  await page.locator(`[data-impact="${custom.impact.id}"]`).click();
+  assert.match(await page.locator('#impact-summary').innerText(),/ผลกระทบทดลอง/);
+  await page.locator('#btn-save-error-preview').click();await page.waitForFunction(()=>!KpiIncident.state.busy);
+  assert.equal(writes.at(-1).incident.impact,custom.impact.id);assert.match(await page.locator('#inc-success-summary').innerText(),/ผลกระทบทดลอง/);
+  const caseId=writes.at(-1).incident.caseId;
+  await page.evaluate(()=>{switchTab('admin');switchAdminSubTab('incidents');});
+  await host.getByLabel('ชื่อผลกระทบ',{exact:true}).last().fill('ชื่อผลกระทบใหม่');await page.locator('#btn-save-admin-incidents').click();
+  await page.waitForFunction(({b,id})=>KPI_SYSTEM_CONFIG.incidentModel.branches[b].impacts.find(i=>i.id===id).label==='ชื่อผลกระทบใหม่',{b:branch,id:custom.impact.id});
+  await host.getByRole('button',{name:'ลบผลกระทบ',exact:true}).last().click();
+  const revision=await page.evaluate(()=>KPI_SYSTEM_CONFIG.incidentModel.catalogRevision);
+  await page.locator('#btn-save-admin-incidents').click();
+  assert.equal(await page.evaluate(()=>KPI_SYSTEM_CONFIG.incidentModel.catalogRevision),revision,'active type with no impact cannot save');
+  await host.locator('article').last().getByRole('button',{name:'ลบประเภท',exact:true}).click();await page.locator('#btn-save-admin-incidents').click();
+  await page.waitForFunction(({b,id})=>!KPI_SYSTEM_CONFIG.incidentModel.branches[b].types.some(t=>t.id===id),{b:branch,id:custom.type.id});
+  await page.evaluate(()=>switchTab('error'));
+  const savedCard=page.locator('#pc-err-timeline article').filter({has:page.locator(`button[onclick="KpiIncident.edit('${caseId}')"]`)});
+  assert.match(await savedCard.innerText(),/ผลกระทบทดลอง/,'history displays original snapshot after catalog rename/delete');
+  assert.doesNotMatch(await savedCard.innerText(),/ชื่อผลกระทบใหม่/);
+ }
  // Actual weekly dashboard must render impact metrics without a new HP score.
  await page.evaluate(()=>{originalLoadDashboardData();});assert.doesNotMatch(await page.locator('#dash-team-kpi').innerText(),/HP|Health Point/);
  await page.evaluate(()=>renderMyProfileView({name:'A',scoringMode:'none',qualityHp:null,incidentCount:7,customerIncidentCount:2,goodCatchCount:1,skills:[],roadmap:[],workloadStats:{}}));

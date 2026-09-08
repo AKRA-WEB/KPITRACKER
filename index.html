@@ -699,7 +699,7 @@
 
                     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
                         <div class="flex justify-between items-center text-xs border-b border-slate-100 pb-2">
-                            <h3 class="font-bold text-slate-800 flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-slate-400"></i>ไทม์ไลน์เคสที่บันทึกวันนี้</h3>
+                            <h3 class="font-bold text-slate-800 flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-slate-400"></i><span id="incident-timeline-heading">ไทม์ไลน์เคสรายสัปดาห์ (จันทร์–อาทิตย์)</span></h3>
                             <span class="text-[10px] text-slate-500" id="err-case-count">0 เคส</span>
                         </div>
                         <div id="pc-err-timeline" class="space-y-2"></div>
@@ -2897,12 +2897,12 @@
         }
     </style>
     <script src="js/supabase-kpi-client.js?v=20260908.02"></script>
-    <script src="js/incident-impact.js?v=20260908.03"></script>
+    <script src="js/incident-impact.js?v=20260908.04"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260908.03";
+        const CURRENT_VERSION = "20260908.04";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -10038,7 +10038,7 @@
                     else if (detail.isFixedBefore) stageBadge = `<span class="text-emerald-600 font-bold bg-emerald-100 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-emerald-200 shadow-sm align-middle whitespace-nowrap"><i class="fa-solid fa-shield-halved mr-1"></i>แก้ทัน</span>`;
                     if (detail.isAkraCase && detail.coreLabel) stageBadge += `<span class="text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded-md mr-1.5 text-[9px] border border-amber-100 shadow-sm align-middle whitespace-nowrap">${esc(detail.coreLabel)}</span>`;
 
-                    let displayNote = `${detail.schemaVersion === 3 ? esc(KpiIncident.labels[detail.impact]) + " · " : `<span class="text-xs text-slate-500">คะแนนเดิม -${penaltyToApply} HP</span>`}${stageBadge}<span class="text-gray-700 leading-snug">${esc(cleanNote)}</span>`;
+                    let displayNote = `${detail.schemaVersion === 3 ? esc(KpiIncident.impactLabel(detail)) + " · " : `<span class="text-xs text-slate-500">คะแนนเดิม -${penaltyToApply} HP</span>`}${stageBadge}<span class="text-gray-700 leading-snug">${esc(cleanNote)}</span>`;
 
                     categorizedNotes[empName][displayType].push({ note: displayNote, date: day.date });
                     hasAnyNotes = true;
@@ -11097,7 +11097,7 @@
                     const coreBadge = detail.isAkraCase && detail.coreLabel
                         ? `<span class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded mr-1">${esc(detail.coreLabel)}</span>`
                         : '';
-                    const penaltyBadge = `<span class="text-xs font-bold border px-1.5 py-0.5 rounded mr-1">${detail.schemaVersion === 3 ? esc(KpiIncident.labels[detail.impact]) : `คะแนนเดิม -${detail.penalty} HP`}</span>`;
+                    const penaltyBadge = `<span class="text-xs font-bold border px-1.5 py-0.5 rounded mr-1">${detail.schemaVersion === 3 ? esc(KpiIncident.impactLabel(detail)) : `คะแนนเดิม -${detail.penalty} HP`}</span>`;
                     const countKey = `${day.sourceBranch}|${day.date}|${detail.caseId || err.caseId || JSON.stringify(err)}`;
                     if (!countedCases.has(countKey)) { totalErrors++; countedCases.add(countKey); }
                     if (!empErrorMap[empName]) empErrorMap[empName] = 0;
@@ -13511,7 +13511,7 @@
                         departments: [],
                         type: detail.type || error.type || 'ไม่ระบุประเภท',
                         process: getErrorProcess(branch, detail, error.type),
-                        stage: detail.schemaVersion === 3 ? KpiIncident.labels[detail.impact] : stage,
+                        stage: detail.schemaVersion === 3 ? KpiIncident.impactLabel(detail) : stage,
                         schemaVersion: detail.schemaVersion,
                         penalty: Number(detail.penalty) || 0,
                         note: detail.cleanNote || '',
