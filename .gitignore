@@ -3,3 +3,5 @@ Code.gs.txt
 mockups/
 output/
 .playwright-cli/
+
+.worktrees/
