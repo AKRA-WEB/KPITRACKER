@@ -68,6 +68,7 @@ const context = vm.createContext({
   'getStartOfWeek',
   'computeWorkloadTrend',
   'aggregateDescriptivePeriod',
+  'getDistinctIncidentEntries',
   'renderAkraWorkloadEditor',
   'setCheckedValues',
   'applyAkraRosterDraft',

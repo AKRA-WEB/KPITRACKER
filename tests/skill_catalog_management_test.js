@@ -5,7 +5,8 @@ const path = require('node:path');
 const http = require('node:http');
 
 // Load Playwright for true headless browser testing
-const { chromium } = require(path.join(__dirname, '..', '..', 'SOP', 'node_modules', 'playwright-core'));
+const playwrightPath = [path.resolve(__dirname, '../../SOP/node_modules/playwright-core'), path.resolve(__dirname, '../../../../SOP/node_modules/playwright-core')].find(p => fs.existsSync(p));
+const { chromium } = require(playwrightPath || 'playwright-core');
 
 const indexPath = path.resolve(__dirname, '..', 'index.html');
 const indexHtml = fs.readFileSync(indexPath, 'utf8');

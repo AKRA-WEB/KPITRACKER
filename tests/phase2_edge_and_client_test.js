@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { stripTypeScriptTypes } = require('node:module');
 
 function loadEdgeHandler(fixtures = {}) {
   const edgePath = path.resolve(__dirname, '..', '..', 'database', 'supabase', 'functions', 'kpi-api', 'index.ts');
@@ -48,7 +49,7 @@ function loadEdgeHandler(fixtures = {}) {
   };
 
   vm.createContext(context);
-  new vm.Script(edgeCode).runInContext(context);
+  new vm.Script(stripTypeScriptTypes(edgeCode)).runInContext(context);
   assert.ok(typeof handler === 'function', 'Deno.serve handler must be registered');
   return { handler, context };
 }
