@@ -1,6 +1,6 @@
 # Impact-only Incident contract (20260908-004)
 
-Local release candidate: `20260908.01`. Catalog is seeded disabled; this document does not authorize activation.
+Released frontend: `20260908.01`. Impact-only recording is active for AKRA and TRD from September 8, 2026, 11:40 Asia/Bangkok. The migration itself seeds the catalog disabled; activation is a separate server operation.
 
 ## Selection and storage
 
@@ -72,4 +72,4 @@ This maps 31 configured legacy labels to 28 stable IDs. It changes future choice
 4. After release authorization and acceptance, set server catalog active with an exact activation timestamp. Verify new cases and stale-client rejection using approved operator tests.
 5. If a mismatch occurs after v3 writes, set active false while retaining activatedAt, pause mutations and forward-fix. Never restore an old writer, delete new history or recalculate historical scores.
 
-See the root Conductor plan for executable evidence, outstanding release prerequisites and exact delivery state. Cached CLI access was verified read-only; production release/activation has not been performed.
+The database migration and API are deployed and the matching frontend is published. Deployed RPC checks passed for both branches with all probe writes rolled back; 261 backed-up historical daily records retained identical Incident and Workload data. Authenticated operator acceptance remains pending. See root Conductor plan `20260908-004` for detailed evidence and the existing strict TypeScript-check limitation.
