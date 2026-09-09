@@ -945,16 +945,16 @@
 
                 <!-- Category Breakdown Pills -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs pt-1 border-t border-slate-800">
-                    <div class="bg-indigo-900/40 p-2.5 rounded-xl text-center border border-indigo-700/30 flex items-center justify-between sm:flex-col sm:justify-center">
-                        <span class="text-[11px] text-indigo-300 flex items-center gap-1.5"><i class="fa-solid fa-store text-indigo-400"></i> เติมหน้าร้าน TRD</span>
-                        <b class="text-white font-num text-xs sm:mt-1" id="live-trd-count">—</b>
-                    </div>
                     <div class="bg-amber-900/40 p-2.5 rounded-xl text-center border border-amber-700/30 flex items-center justify-between sm:flex-col sm:justify-center">
-                        <span class="text-[11px] text-amber-300 flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-400"></i> บิลด่วน</span>
+                        <span class="text-[11px] text-amber-300 flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-400"></i> 1. บิลด่วน / เบิกด่วน</span>
                         <b class="text-white font-num text-xs sm:mt-1" id="live-urgent-count">—</b>
                     </div>
-                    <div class="bg-emerald-900/40 p-2.5 rounded-xl text-center border border-emerald-700/30 flex items-center justify-between sm:flex-col sm:justify-center">
-                        <span class="text-[11px] text-emerald-300 flex items-center gap-1.5"><i class="fa-solid fa-truck text-emerald-400"></i> จัดส่งปกติ/ตจว.</span>
+                    <div class="bg-sky-900/40 p-2.5 rounded-xl text-center border border-sky-700/30 flex items-center justify-between sm:flex-col sm:justify-center">
+                        <span class="text-[11px] text-sky-300 flex items-center gap-1.5"><i class="fa-solid fa-boxes-packing text-sky-400"></i> 2. บิลจัด / เตรียมสินค้าไว้ก่อน</span>
+                        <b class="text-white font-num text-xs sm:mt-1" id="live-trd-count">—</b>
+                    </div>
+                    <div class="bg-indigo-900/40 p-2.5 rounded-xl text-center border border-indigo-700/30 flex items-center justify-between sm:flex-col sm:justify-center">
+                        <span class="text-[11px] text-indigo-300 flex items-center gap-1.5"><i class="fa-solid fa-store text-indigo-400"></i> 3. บิลเบิกเรียงของหน้าร้าน</span>
                         <b class="text-white font-num text-xs sm:mt-1" id="live-regular-count">—</b>
                     </div>
                 </div>
@@ -985,9 +985,9 @@
                 <!-- Filter Pills -->
                 <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100" id="live-bill-filter-tabs">
                     <button type="button" onclick="setLiveBillFilter('all')" data-filter="all" class="live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm transition-all cursor-pointer">ทั้งหมด</button>
-                    <button type="button" onclick="setLiveBillFilter('urgent')" data-filter="urgent" class="live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer">⚡ บิลด่วน</button>
-                    <button type="button" onclick="setLiveBillFilter('trd')" data-filter="trd" class="live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer">🏪 เติมหน้าร้าน TRD</button>
-                    <button type="button" onclick="setLiveBillFilter('regular')" data-filter="regular" class="live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer">🚚 จัดส่งปกติ/ตจว.</button>
+                    <button type="button" onclick="setLiveBillFilter('urgent')" data-filter="urgent" class="live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer">⚡ 1. บิลด่วน / เบิกด่วน</button>
+                    <button type="button" onclick="setLiveBillFilter('staged')" data-filter="staged" class="live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer">📦 2. บิลจัด / เตรียมสินค้าไว้ก่อน</button>
+                    <button type="button" onclick="setLiveBillFilter('store')" data-filter="store" class="live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer">🏪 3. บิลเบิกเรียงของหน้าร้าน</button>
                 </div>
 
                 <div class="space-y-2.5 text-xs max-h-[40rem] md:max-h-[30rem] overflow-y-auto overscroll-contain pr-1" id="live-bill-list-cards" role="region" aria-label="รายการใบเบิกตามวันที่เลือก เลื่อนเพื่อดูรายการเพิ่มเติม" tabindex="0">
@@ -2886,7 +2886,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260909.04</span>
+                <span id="drawer-version-text">KPI Suite v20260909.05</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2909,13 +2909,13 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260909.04"></script>
-    <script src="js/incident-impact.js?v=20260909.04"></script>
+    <script src="js/supabase-kpi-client.js?v=20260909.05"></script>
+    <script src="js/incident-impact.js?v=20260909.05"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260909.04";
+        const CURRENT_VERSION = "20260909.05";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -8555,11 +8555,71 @@
         let liveRequisitionRequest = 0;
         let liveBillCurrentFilter = 'all';
 
+        function classifyRequisition(req) {
+            if (!req || typeof req !== 'object') {
+                return {
+                    key: 'store',
+                    label: '3. บิลเบิกเรียงของหน้าร้าน',
+                    shortLabel: 'เรียงของหน้าร้าน',
+                    icon: 'fa-store',
+                    badgeClass: 'bg-indigo-100 text-indigo-800 border-indigo-200'
+                };
+            }
+            const combined = `${req.billType || ''} ${req.itemsSummary || ''} ${req.rawText || ''}`.toLowerCase();
+            // 1. บิลด่วน / เบิกด่วน
+            if (
+                combined.includes('ด่วน') ||
+                combined.includes('ด่่วน') ||
+                combined.includes('เบิกด่วน') ||
+                combined.includes('บิลด่วน')
+            ) {
+                return {
+                    key: 'urgent',
+                    label: '1. บิลด่วน / เบิกด่วน',
+                    shortLabel: 'บิลด่วน',
+                    icon: 'fa-bolt',
+                    badgeClass: 'bg-amber-100 text-amber-800 border-amber-200'
+                };
+            }
+            // 2. บิลจัด / เตรียมสินค้าไว้ก่อน
+            if (
+                combined.includes('บิลจัด') ||
+                combined.includes('เตรียมสินค้า') ||
+                combined.includes('จัดเตรียม') ||
+                combined.includes('เตรียมไว้ก่อน') ||
+                combined.includes('ยังไม่ต้องเอามา') ||
+                combined.includes('แช่แข็ง') ||
+                combined.includes('📘เบิกสินค้า(บิลจัด)')
+            ) {
+                return {
+                    key: 'staged',
+                    label: '2. บิลจัด / เตรียมสินค้าไว้ก่อน',
+                    shortLabel: 'บิลจัดเตรียม',
+                    icon: 'fa-boxes-packing',
+                    badgeClass: 'bg-sky-100 text-sky-800 border-sky-200'
+                };
+            }
+            // 3. บิลเบิกเรียงของหน้าร้าน (default / store replenishment)
+            return {
+                key: 'store',
+                label: '3. บิลเบิกเรียงของหน้าร้าน',
+                shortLabel: 'เรียงของหน้าร้าน',
+                icon: 'fa-store',
+                badgeClass: 'bg-indigo-100 text-indigo-800 border-indigo-200'
+            };
+        }
+
         function setLiveBillFilter(filter) {
-            liveBillCurrentFilter = filter || 'all';
+            let normalized = filter || 'all';
+            if (normalized === 'trd') normalized = 'staged';
+            if (normalized === 'regular') normalized = 'store';
+            liveBillCurrentFilter = normalized;
             if (typeof document !== 'undefined' && document.querySelectorAll) {
                 document.querySelectorAll('.live-bill-filter-btn').forEach(btn => {
-                    const isActive = btn.getAttribute('data-filter') === liveBillCurrentFilter;
+                    const btnFilter = btn.getAttribute('data-filter');
+                    const isActive = btnFilter === liveBillCurrentFilter ||
+                        (liveBillCurrentFilter === 'staged' && btnFilter === 'trd') ||
+                        (liveBillCurrentFilter === 'store' && btnFilter === 'regular');
                     btn.className = isActive
                         ? 'live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm transition-all cursor-pointer'
                         : 'live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer';
@@ -8579,8 +8639,11 @@
             if (!parts.length) return esc(str);
             return parts.map(part => {
                 const escaped = esc(part);
-                if (part.startsWith('🆗') || part.includes('จัดเตรียมไว้ก่อน') || part.includes('ยังไม่ต้องเอามา')) {
+                if (part.startsWith('🆗') || part.includes('จัดเตรียมไว้ก่อน') || part.includes('ยังไม่ต้องเอามา') || part.includes('เตรียมสินค้า') || part.includes('บิลจัด')) {
                     return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 font-medium text-[11px]"><i class="fa-solid fa-bell text-[10px] text-amber-600"></i>${escaped}</span>`;
+                }
+                if (part.includes('เบิกด่วน') || part.includes('บิลด่วน')) {
+                    return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 text-rose-800 border border-rose-200 font-medium text-[11px]"><i class="fa-solid fa-bolt text-[10px] text-rose-600"></i>${escaped}</span>`;
                 }
                 if (part.startsWith('@')) {
                     return `<span class="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100 text-[10px] font-medium">${escaped}</span>`;
@@ -8636,6 +8699,18 @@
                 if (listEl) listEl.innerHTML = `<div class="p-6 text-center text-slate-500">${message}</div>`;
                 return;
             }
+
+            const classify = (typeof classifyRequisition === 'function') ? classifyRequisition : (r) => {
+                const combined = `${r?.billType || ''} ${r?.itemsSummary || ''} ${r?.rawText || ''}`.toLowerCase();
+                if (combined.includes('ด่วน') || combined.includes('ด่่วน') || combined.includes('เบิกด่วน') || combined.includes('บิลด่วน')) {
+                    return { key: 'urgent', label: '1. บิลด่วน / เบิกด่วน', shortLabel: 'บิลด่วน', icon: 'fa-bolt', badgeClass: 'bg-amber-100 text-amber-800 border-amber-200' };
+                }
+                if (combined.includes('บิลจัด') || combined.includes('เตรียมสินค้า') || combined.includes('จัดเตรียม') || combined.includes('เตรียมไว้ก่อน') || combined.includes('ยังไม่ต้องเอามา') || combined.includes('แช่แข็ง') || combined.includes('📘เบิกสินค้า(บิลจัด)')) {
+                    return { key: 'staged', label: '2. บิลจัด / เตรียมสินค้าไว้ก่อน', shortLabel: 'บิลจัดเตรียม', icon: 'fa-boxes-packing', badgeClass: 'bg-sky-100 text-sky-800 border-sky-200' };
+                }
+                return { key: 'store', label: '3. บิลเบิกเรียงของหน้าร้าน', shortLabel: 'เรียงของหน้าร้าน', icon: 'fa-store', badgeClass: 'bg-indigo-100 text-indigo-800 border-indigo-200' };
+            };
+
             const seen = new Set();
             const rows = (Array.isArray(liveRequisitionsList) ? liveRequisitionsList : []).filter(req => {
                 if (!req || typeof req !== 'object') return false;
@@ -8651,9 +8726,9 @@
             let totalBills = rows.length;
             let totalSKU = 0;
             let totalUnits = 0;
-            let trdBills = 0, trdUnits = 0;
             let urgentBills = 0, urgentUnits = 0;
-            let regularBills = 0, regularUnits = 0;
+            let stagedBills = 0, stagedUnits = 0;
+            let storeBills = 0, storeUnits = 0;
 
             rows.forEach(req => {
                 const sku = Number(req.skuCount) || (Array.isArray(req.items) ? req.items.length : 1);
@@ -8661,25 +8736,25 @@
                 totalSKU += sku;
                 totalUnits += units;
 
-                const bType = String(req.billType || '').toLowerCase();
-                if (bType.includes('ด่วน')) {
+                const c = classify(req);
+                if (c.key === 'urgent') {
                     urgentBills++;
                     urgentUnits += units;
-                } else if (bType.includes('ตจว') || bType.includes('ส่ง') || bType.includes('ขนส่ง')) {
-                    regularBills++;
-                    regularUnits += units;
+                } else if (c.key === 'staged') {
+                    stagedBills++;
+                    stagedUnits += units;
                 } else {
-                    trdBills++;
-                    trdUnits += units;
+                    storeBills++;
+                    storeUnits += units;
                 }
             });
 
             if (billCountEl) billCountEl.innerText = String(totalBills);
             if (skuCountEl) skuCountEl.innerText = totalBills ? String(totalSKU) : '0';
             if (unitCountEl) unitCountEl.innerText = totalBills ? totalUnits.toLocaleString() : '0';
-            if (trdCountEl) trdCountEl.innerText = `${trdBills} บิล (${trdUnits} ชิ้น)`;
             if (urgentCountEl) urgentCountEl.innerText = `${urgentBills} บิล (${urgentUnits} ชิ้น)`;
-            if (regularCountEl) regularCountEl.innerText = `${regularBills} บิล (${regularUnits} ชิ้น)`;
+            if (trdCountEl) trdCountEl.innerText = `${stagedBills} บิล (${stagedUnits} ชิ้น)`;
+            if (regularCountEl) regularCountEl.innerText = `${storeBills} บิล (${storeUnits} ชิ้น)`;
             if (stateEl) stateEl.innerText = totalBills ? 'รายการเบิกตามวันที่เลือก' : 'ไม่มีรายการเบิกในวันที่เลือก';
 
             if (!listEl) return;
@@ -8689,28 +8764,25 @@
 
             let visibleRows = rows;
             const activeFilter = (typeof liveBillCurrentFilter !== 'undefined') ? liveBillCurrentFilter : 'all';
-            if (activeFilter === 'urgent') {
-                visibleRows = visibleRows.filter(r => String(r.billType || '').toLowerCase().includes('ด่วน'));
-            } else if (activeFilter === 'trd') {
+            if (activeFilter !== 'all') {
                 visibleRows = visibleRows.filter(r => {
-                    const t = String(r.billType || '').toLowerCase();
-                    return !t.includes('ด่วน') && !t.includes('ตจว') && !t.includes('ส่ง') && !t.includes('ขนส่ง');
-                });
-            } else if (activeFilter === 'regular') {
-                visibleRows = visibleRows.filter(r => {
-                    const t = String(r.billType || '').toLowerCase();
-                    return t.includes('ตจว') || t.includes('ส่ง') || t.includes('ขนส่ง');
+                    const c = classify(r);
+                    return c.key === activeFilter ||
+                        (activeFilter === 'trd' && c.key === 'staged') ||
+                        (activeFilter === 'regular' && c.key === 'store');
                 });
             }
 
             if (query) {
                 visibleRows = visibleRows.filter(r => {
+                    const c = classify(r);
                     const billNo = String(r.billNo || '').toLowerCase();
                     const billType = String(r.billType || '').toLowerCase();
+                    const catLabel = String(c.label || '').toLowerCase();
                     const requester = String(r.requester || '').toLowerCase();
                     const items = String(r.itemsSummary || '').toLowerCase();
                     const raw = String(r.rawText || '').toLowerCase();
-                    return billNo.includes(query) || billType.includes(query) || requester.includes(query) || items.includes(query) || raw.includes(query);
+                    return billNo.includes(query) || billType.includes(query) || catLabel.includes(query) || requester.includes(query) || items.includes(query) || raw.includes(query);
                 });
             }
 
@@ -8734,17 +8806,7 @@
             const formatItems = (typeof formatRequisitionItems === 'function') ? formatRequisitionItems : s => esc(s);
 
             listEl.innerHTML = visibleRows.map((req, idx) => {
-                const bType = String(req.billType || '').toLowerCase();
-                let badgeStyle = 'bg-indigo-100 text-indigo-700 border-indigo-200';
-                let typeIcon = 'fa-store';
-                if (bType.includes('ด่วน')) {
-                    badgeStyle = 'bg-amber-100 text-amber-800 border-amber-200';
-                    typeIcon = 'fa-bolt';
-                } else if (bType.includes('ตจว') || bType.includes('ส่ง') || bType.includes('ขนส่ง')) {
-                    badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-200';
-                    typeIcon = 'fa-truck';
-                }
-
+                const cat = classify(req);
                 const sku = Number(req.skuCount) || (Array.isArray(req.items) ? req.items.length : (req.itemsSummary ? String(req.itemsSummary).split(',').length : 1));
                 const units = Number(req.totalUnits) || 0;
                 const billBadge = req.billNo || ('#' + (rows.length - idx));
@@ -8753,13 +8815,13 @@
                     <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-300 transition-colors space-y-2">
                         <div class="flex flex-wrap items-start justify-between gap-2">
                             <div class="flex items-start gap-2.5 min-w-0">
-                                <span class="shrink-0 px-2 py-1 rounded-lg ${badgeStyle} border text-center font-black font-num text-xs flex items-center gap-1">
-                                    <i class="fa-solid ${typeIcon} text-[10px]"></i>
+                                <span class="shrink-0 px-2 py-1 rounded-lg ${cat.badgeClass} border text-center font-black font-num text-xs flex items-center gap-1">
+                                    <i class="fa-solid ${cat.icon} text-[10px]"></i>
                                     <span>${esc(billBadge)}</span>
                                 </span>
                                 <div class="min-w-0">
                                     <p class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-1.5 flex-wrap">
-                                        <span>${esc(req.billType || 'บิลเบิก')}</span>
+                                        <span>${esc(cat.label)}</span>
                                         ${req.uid ? `<span class="text-[9px] font-mono text-slate-400 font-normal">(${esc(req.uid)})</span>` : ''}
                                     </p>
                                     <p class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">

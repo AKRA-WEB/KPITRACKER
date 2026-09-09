@@ -26,7 +26,7 @@ console.log(`✓ Script compilation passed (zero syntax errors across ${scriptIn
 const versionMatch = html.match(/const CURRENT_VERSION = ["']([^"']+)["'];/);
 assert.ok(versionMatch, 'CURRENT_VERSION must be defined');
 assert.strictEqual(versionMatch[1], versionJson.version, 'CURRENT_VERSION must match version.json');
-assert.strictEqual(versionJson.version, '20260909.04', 'version.json must be 20260909.04');
+assert.strictEqual(versionJson.version, '20260909.05', 'version.json must be 20260909.05');
 assert.ok(html.includes(`KPI Suite v${versionJson.version}`), 'Drawer version text must match version.json');
 assert.ok(html.includes(`js/supabase-kpi-client.js?v=${versionJson.version}`), 'supabase-kpi-client asset param must match version');
 assert.ok(html.includes(`js/incident-impact.js?v=${versionJson.version}`), 'incident-impact asset param must match version');
@@ -92,7 +92,17 @@ const sandbox = {
 vm.createContext(sandbox);
 vm.runInContext(controller, sandbox);
 
-// 4.1 Sample data with various categories, SKU, and unit counts
+// 4.0 Direct classifyRequisition unit tests
+assert.strictEqual(typeof sandbox.classifyRequisition, 'function', 'classifyRequisition must be a function');
+assert.strictEqual(sandbox.classifyRequisition({ billType: '⚡ บิลด่วน' }).key, 'urgent');
+assert.strictEqual(sandbox.classifyRequisition({ itemsSummary: 'เบิกด่วน 1 รายการ' }).key, 'urgent');
+assert.strictEqual(sandbox.classifyRequisition({ itemsSummary: '📘เบิกสินค้า(บิลจัด) 1 รายการ, จัดเตรียมไว้ก่อน' }).key, 'staged');
+assert.strictEqual(sandbox.classifyRequisition({ rawText: 'เตรียมสินค้าไว้ก่อน พรุ่งนี้เช้า' }).key, 'staged');
+assert.strictEqual(sandbox.classifyRequisition({ billType: '🏪 เติมหน้าร้าน TRD', itemsSummary: 'เติมเรียงหน้าร้าน' }).key, 'store');
+assert.strictEqual(sandbox.classifyRequisition({}).key, 'store');
+console.log('✓ Direct classifyRequisition classification rules verified');
+
+// 4.1 Sample data with the 3 operational categories
 const mockRequisitions = [
     {
         uid: 'REQ-001',
@@ -120,9 +130,9 @@ const mockRequisitions = [
         uid: 'REQ-003',
         billNo: '#3',
         time: '09:00 น.',
-        billType: '🚚 จัดส่งต่างจังหวัด',
+        billType: '🏪 เติมหน้าร้าน TRD',
         requester: 'ฝ่ายขาย',
-        itemsSummary: 'เนยสด 10 ลัง, @PeTer 1 รายการ',
+        itemsSummary: 'เนยสด 10 ลัง, เบิกเรียงของหน้าร้าน @PeTer',
         skuCount: 2,
         totalUnits: 10,
         rawText: 'LINE raw text 003'
@@ -155,15 +165,18 @@ assert.strictEqual(totalBills, '3', 'Total unique bills must be 3');
 assert.strictEqual(totalSKU, '9', 'Total SKU must be 3 + 4 + 2 = 9');
 assert.strictEqual(totalUnits, '22', 'Total units must be 5 + 7 + 10 = 22');
 assert.ok(urgentBreakdown.includes('1 บิล (5 ชิ้น)'), `Urgent breakdown must match: ${urgentBreakdown}`);
-assert.ok(trdBreakdown.includes('1 บิล (7 ชิ้น)'), `TRD breakdown must match: ${trdBreakdown}`);
-assert.ok(regularBreakdown.includes('1 บิล (10 ชิ้น)'), `Regular breakdown must match: ${regularBreakdown}`);
-console.log('✓ Summary statistics computation and category breakdown verified');
+assert.ok(trdBreakdown.includes('1 บิล (7 ชิ้น)'), `Staged breakdown must match: ${trdBreakdown}`);
+assert.ok(regularBreakdown.includes('1 บิล (10 ชิ้น)'), `Store breakdown must match: ${regularBreakdown}`);
+console.log('✓ Summary statistics computation and 3-category breakdown verified');
 
 // Verify Cards Rendering
 const cardsHtml = domStore.get('live-bill-list-cards').innerHTML;
 assert.ok(cardsHtml.includes('#1'), 'Must include bill #1');
 assert.ok(cardsHtml.includes('#2'), 'Must include bill #2');
 assert.ok(cardsHtml.includes('#3'), 'Must include bill #3');
+assert.ok(cardsHtml.includes('1. บิลด่วน / เบิกด่วน'), 'Must include category 1 label for bill #1');
+assert.ok(cardsHtml.includes('2. บิลจัด / เตรียมสินค้าไว้ก่อน'), 'Must include category 2 label for bill #2');
+assert.ok(cardsHtml.includes('3. บิลเบิกเรียงของหน้าร้าน'), 'Must include category 3 label for bill #3');
 assert.ok(cardsHtml.includes('3 SKU'), 'Must include SKU badge for bill 1');
 assert.ok(cardsHtml.includes('5 ชิ้น'), 'Must include units badge for bill 1');
 assert.ok(cardsHtml.includes('4 SKU'), 'Must include SKU badge for bill 2');
@@ -172,7 +185,7 @@ assert.ok(cardsHtml.includes('ทาร์ตไข่206 : 1 ลัง'), 'Must
 assert.ok(cardsHtml.includes('จัดเตรียมไว้ก่อน'), 'Must render instruction badge');
 assert.ok(cardsHtml.includes('LINE raw text 001'), 'Must include rawText in details');
 assert.ok(!cardsHtml.includes('จัดเสร็จแล้ว') && !cardsHtml.includes('รอจัดสินค้า'), 'Must NOT track or render completion statuses');
-console.log('✓ Cards rendering with SKU, units, item pills, and instruction badges verified');
+console.log('✓ Cards rendering with 3-category titles, SKU, units, item pills, and instruction badges verified');
 
 // Verify Filtering by category
 sandbox.setLiveBillFilter('urgent');
@@ -181,15 +194,28 @@ assert.ok(urgentHtml.includes('#1'), 'Urgent filter must include bill #1');
 assert.ok(!urgentHtml.includes('#2'), 'Urgent filter must NOT include bill #2');
 assert.ok(!urgentHtml.includes('#3'), 'Urgent filter must NOT include bill #3');
 
-sandbox.setLiveBillFilter('trd');
-const trdHtml = domStore.get('live-bill-list-cards').innerHTML;
-assert.ok(trdHtml.includes('#2'), 'TRD filter must include bill #2');
-assert.ok(!trdHtml.includes('#1'), 'TRD filter must NOT include bill #1');
+sandbox.setLiveBillFilter('staged');
+const stagedHtml = domStore.get('live-bill-list-cards').innerHTML;
+assert.ok(stagedHtml.includes('#2'), 'Staged filter must include bill #2');
+assert.ok(!stagedHtml.includes('#1'), 'Staged filter must NOT include bill #1');
+assert.ok(!stagedHtml.includes('#3'), 'Staged filter must NOT include bill #3');
+
+sandbox.setLiveBillFilter('trd'); // Backward compatibility alias
+assert.strictEqual(stagedHtml, domStore.get('live-bill-list-cards').innerHTML, 'trd alias must match staged filter');
+
+sandbox.setLiveBillFilter('store');
+const storeHtml = domStore.get('live-bill-list-cards').innerHTML;
+assert.ok(storeHtml.includes('#3'), 'Store filter must include bill #3');
+assert.ok(!storeHtml.includes('#1'), 'Store filter must NOT include bill #1');
+assert.ok(!storeHtml.includes('#2'), 'Store filter must NOT include bill #2');
+
+sandbox.setLiveBillFilter('regular'); // Backward compatibility alias
+assert.strictEqual(storeHtml, domStore.get('live-bill-list-cards').innerHTML, 'regular alias must match store filter');
 
 sandbox.setLiveBillFilter('all');
 const allHtml = domStore.get('live-bill-list-cards').innerHTML;
 assert.ok(allHtml.includes('#1') && allHtml.includes('#2') && allHtml.includes('#3'), 'All filter must include all bills');
-console.log('✓ Category filters (urgent, trd, all) verified');
+console.log('✓ Category filters (urgent, staged, store, all, aliases) verified');
 
 // Verify Search input
 domStore.get('live-bill-search').value = 'ทาร์ตไข่';
