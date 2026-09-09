@@ -71,6 +71,11 @@ async function verifyAuthenticatedSupabaseInitialization(page, origin) {
     await page.route('https://hgxrrskztbpejirrdpbq.supabase.co/functions/v1/kpi-api', async route => {
         const payload = route.request().postDataJSON();
         assert.ok(payload.token, 'Authenticated initialization must forward the Main token');
+        if (payload.action === 'getDailyData' || payload.action === 'getActions') {
+            return route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify({
+                status: 'success', records: [], actions: [], nextCursor: null
+            })});
+        }
         if (payload.action === 'getWorkloadData') {
             getWorkloadDataCalls++;
             return route.fulfill({
@@ -496,6 +501,13 @@ async function verifyBoundedLiveBillList(page) {
             releaseFocusFromModal('custom-modal');
         });
         await verifyResponsivePrimaryNavigation(page);
+        if (process.argv.includes('--billcount-only')) {
+            await verifyBoundedLiveBillList(page);
+            assert.deepEqual(pageErrors, []);
+            assert.deepEqual(consoleErrors, []);
+            console.log('PASS: responsive navigation and count-only bill list keyboard scrolling');
+            return;
+        }
         await verifyVisualHierarchy(page);
         await verifyBranchDashboardIsolation(page);
         await verifyDashboardTeamHpRemoval(page);

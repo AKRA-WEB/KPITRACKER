@@ -399,6 +399,7 @@ async function testLiveSyncAsync() {
         _lastRecordDate: '2026-08-22',
         LINE_REQUISITION_API_URL: 'https://script.google.com/mock',
         liveRequisitionsList: [],
+        liveRequisitionRequest: 0,
         renderLiveRequisitions: () => {},
         fetch: async (url) => {
             const m = url.match(/date=([^&]+)/);
@@ -438,16 +439,17 @@ async function testLiveSyncAsync() {
 // =========================================================================
 // TEST 7: P2 - Honest Metrics Semantics & Live Sync Completion Rate
 // =========================================================================
-console.log('\n[7/8] Testing Metric Semantics & Live Sync Completion Rate...');
+console.log('\n[7/8] Testing Requisition Count-Only Semantics...');
 
 {
     let displayedRate = '';
     let displayedSub = '';
+    let displayedCount = '';
     const sandbox = {
         liveRequisitionsList: [],
         document: {
             getElementById: (id) => {
-                if (id === 'live-bill-count') return { innerText: '' };
+                if (id === 'live-bill-count') return { set innerText(v) { displayedCount = v; } };
                 if (id === 'live-sku-count') return { innerText: '' };
                 if (id === 'live-unit-count') return { innerText: '' };
                 if (id === 'live-ontime-rate') return { set innerText(v) { displayedRate = v; } };
@@ -477,12 +479,13 @@ console.log('\n[7/8] Testing Metric Semantics & Live Sync Completion Rate...');
     vm.createContext(sandbox);
     vm.runInContext(extractFn(htmlContent, 'renderLiveRequisitions'), sandbox);
 
-    // Case A: 0 bills -> rate must be '-', NOT 100%
+    // Case A: empty result is zero bills; retired metrics are never updated.
     sandbox.liveRequisitionsList = [];
     sandbox.renderLiveRequisitions();
-    assert.strictEqual(displayedRate, '-', 'Empty requisitions list must show - rather than misleading 100%');
+    assert.strictEqual(displayedCount, '0');
+    assert.strictEqual(displayedRate, '');
 
-    // Case B: 10 bills, 7 done -> 70.0%
+    // Case B: historical status does not exclude any of the ten requests.
     sandbox.liveRequisitionsList = [
         { uid: '1', status: 'จัดเสร็จแล้ว' }, { uid: '2', status: 'จัดเสร็จแล้ว' },
         { uid: '3', status: 'จัดเสร็จแล้ว' }, { uid: '4', status: 'จัดเสร็จแล้ว' },
@@ -491,9 +494,10 @@ console.log('\n[7/8] Testing Metric Semantics & Live Sync Completion Rate...');
         { uid: '9', status: 'รอจัดสินค้า' }, { uid: '10', status: 'รอจัดสินค้า' }
     ];
     sandbox.renderLiveRequisitions();
-    assert.strictEqual(displayedRate, '70.0%', 'Completion rate must be 70.0%');
-    assert.strictEqual(displayedSub, '7/10 บิลจัดเสร็จ', 'Subtext must state exact completed count');
-    console.log('  -> Passed: Metric semantics reflect true completion rate.');
+    assert.strictEqual(displayedCount, '10');
+    assert.strictEqual(displayedRate, '', 'Completion rate is retired');
+    assert.strictEqual(displayedSub, '', 'Completion count is retired');
+    console.log('  -> Passed: All requisitions counted independently of status.');
 }
 
 // =========================================================================
