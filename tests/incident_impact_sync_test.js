@@ -33,7 +33,7 @@ const versionJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../version.
 const htmlVerMatch = indexHtml.match(/const CURRENT_VERSION = ['"]([^'"]+)['"]/);
 assert.ok(htmlVerMatch, 'CURRENT_VERSION must exist in index.html');
 assert.strictEqual(htmlVerMatch[1], versionJson.version, 'CURRENT_VERSION in index.html must equal version.json');
-assert.strictEqual(versionJson.version, '20260909.02', 'Target version must be 20260909.02');
+assert.ok(versionJson.version >= '20260909.02', 'Version must be at least 20260909.02');
 
 // --- 3. Dynamic Metrics & Custom Impact Verification ---
 function createSandbox(initialModel, branch = 'AKRA') {

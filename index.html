@@ -908,16 +908,89 @@
                 </div>
             </div>
 
-            <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white p-5 rounded-2xl border border-indigo-700/50 shadow-md">
-                <p class="text-xs text-indigo-200">บิลเบิกจาก TRD โดยประมาณ</p>
-                <p class="mt-2"><span class="text-4xl font-black font-num" id="live-bill-count">—</span> <span class="text-sm text-slate-300">บิล</span></p>
-                <p class="text-xs text-slate-300 mt-2">นับ 1 ข้อความเบิกเป็น 1 บิล หากแยกส่งหลายข้อความ ยอดอาจมากกว่าบิลจริง</p>
-                <p id="live-bill-read-state" class="text-xs text-indigo-200 mt-2" role="status" aria-live="polite">ยังไม่ได้โหลดข้อมูล</p>
+            <!-- Summary Stats Banner -->
+            <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white p-5 rounded-2xl border border-indigo-700/50 shadow-md space-y-3.5">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-800/40 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
+                        <span class="text-xs font-bold text-indigo-200 tracking-wider">สรุปปริมาณบิลเบิกจาก TRD</span>
+                    </div>
+                    <p id="live-bill-read-state" class="text-xs text-indigo-300 font-medium" role="status" aria-live="polite">ยังไม่ได้โหลดข้อมูล</p>
+                </div>
+
+                <!-- 3 Primary Metrics (Bills, SKU, Units) -->
+                <div class="grid grid-cols-3 gap-2.5 text-center">
+                    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 shadow-sm">
+                        <span class="text-[10px] sm:text-[11px] text-slate-400 block font-medium">บิลเบิกทั้งหมด</span>
+                        <div class="mt-1 flex items-baseline justify-center gap-1">
+                            <span class="text-2xl sm:text-3xl font-black text-white font-num" id="live-bill-count">—</span>
+                            <span class="text-[10px] sm:text-xs text-slate-400">บิล</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 shadow-sm">
+                        <span class="text-[10px] sm:text-[11px] text-slate-400 block font-medium">รายการสินค้า (SKU)</span>
+                        <div class="mt-1 flex items-baseline justify-center gap-1">
+                            <span class="text-2xl sm:text-3xl font-black text-amber-400 font-num" id="live-sku-count">—</span>
+                            <span class="text-[10px] sm:text-xs text-slate-400">SKU</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 shadow-sm">
+                        <span class="text-[10px] sm:text-[11px] text-slate-400 block font-medium">จำนวนรวม</span>
+                        <div class="mt-1 flex items-baseline justify-center gap-1">
+                            <span class="text-2xl sm:text-3xl font-black text-emerald-400 font-num" id="live-unit-count">—</span>
+                            <span class="text-[10px] sm:text-xs text-slate-400">ชิ้น/ลัง</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown Pills -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs pt-1 border-t border-slate-800">
+                    <div class="bg-indigo-900/40 p-2.5 rounded-xl text-center border border-indigo-700/30 flex items-center justify-between sm:flex-col sm:justify-center">
+                        <span class="text-[11px] text-indigo-300 flex items-center gap-1.5"><i class="fa-solid fa-store text-indigo-400"></i> เติมหน้าร้าน TRD</span>
+                        <b class="text-white font-num text-xs sm:mt-1" id="live-trd-count">—</b>
+                    </div>
+                    <div class="bg-amber-900/40 p-2.5 rounded-xl text-center border border-amber-700/30 flex items-center justify-between sm:flex-col sm:justify-center">
+                        <span class="text-[11px] text-amber-300 flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-400"></i> บิลด่วน</span>
+                        <b class="text-white font-num text-xs sm:mt-1" id="live-urgent-count">—</b>
+                    </div>
+                    <div class="bg-emerald-900/40 p-2.5 rounded-xl text-center border border-emerald-700/30 flex items-center justify-between sm:flex-col sm:justify-center">
+                        <span class="text-[11px] text-emerald-300 flex items-center gap-1.5"><i class="fa-solid fa-truck text-emerald-400"></i> จัดส่งปกติ/ตจว.</span>
+                        <b class="text-white font-num text-xs sm:mt-1" id="live-regular-count">—</b>
+                    </div>
+                </div>
+
+                <p class="text-[10px] text-slate-400 text-center sm:text-left">
+                    <i class="fa-solid fa-circle-info mr-1 text-slate-500"></i> นับ 1 ข้อความเบิกเป็น 1 บิล ข้อมูลอัปเดตสดจากกลุ่ม LINE เบิกย้าย
+                </p>
             </div>
 
+            <!-- Detailed Bill Table / Cards -->
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                <h3 class="text-xs font-bold text-slate-800">รายการเบิกผ่าน LINE ตามวันที่เลือก</h3>
-                <div class="space-y-2 text-xs max-h-[40rem] md:max-h-[25rem] overflow-y-auto overscroll-contain pr-1" id="live-bill-list-cards" role="region" aria-label="รายการใบเบิกตามวันที่เลือก เลื่อนเพื่อดูรายการเพิ่มเติม" tabindex="0">
+                <div class="flex flex-wrap items-center justify-between gap-2.5">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-list-check text-indigo-600"></i>
+                            <span>รายการเบิกผ่าน LINE ตามวันที่เลือก</span>
+                        </h3>
+                        <span id="live-bill-filtered-badge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200"></span>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="relative w-full sm:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="live-bill-search" oninput="filterLiveRequisitions()" placeholder="ค้นหาสินค้า, เลขบิล, ผู้ขอ..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <!-- Filter Pills -->
+                <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100" id="live-bill-filter-tabs">
+                    <button type="button" onclick="setLiveBillFilter('all')" data-filter="all" class="live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm transition-all cursor-pointer">ทั้งหมด</button>
+                    <button type="button" onclick="setLiveBillFilter('urgent')" data-filter="urgent" class="live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer">⚡ บิลด่วน</button>
+                    <button type="button" onclick="setLiveBillFilter('trd')" data-filter="trd" class="live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer">🏪 เติมหน้าร้าน TRD</button>
+                    <button type="button" onclick="setLiveBillFilter('regular')" data-filter="regular" class="live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer">🚚 จัดส่งปกติ/ตจว.</button>
+                </div>
+
+                <div class="space-y-2.5 text-xs max-h-[40rem] md:max-h-[30rem] overflow-y-auto overscroll-contain pr-1" id="live-bill-list-cards" role="region" aria-label="รายการใบเบิกตามวันที่เลือก เลื่อนเพื่อดูรายการเพิ่มเติม" tabindex="0">
                     <div class="p-6 text-center text-slate-400">เลือกวันที่หรือรีเฟรชเพื่อโหลดรายการเบิก</div>
                 </div>
             </div>
@@ -2813,7 +2886,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260909.03</span>
+                <span id="drawer-version-text">KPI Suite v20260909.04</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2836,13 +2909,13 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260909.03"></script>
-    <script src="js/incident-impact.js?v=20260909.03"></script>
+    <script src="js/supabase-kpi-client.js?v=20260909.04"></script>
+    <script src="js/incident-impact.js?v=20260909.04"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260909.03";
+        const CURRENT_VERSION = "20260909.04";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -8480,6 +8553,44 @@
         const LINE_REQUISITION_API_URL = "https://script.google.com/macros/s/AKfycbxmPSklqwsZOtf1sQSZbNmXla3uz4pm6QRiulRUixgyqWGi247dyiF_LsN4ag8OwNk/exec";
         let liveRequisitionsList = [];
         let liveRequisitionRequest = 0;
+        let liveBillCurrentFilter = 'all';
+
+        function setLiveBillFilter(filter) {
+            liveBillCurrentFilter = filter || 'all';
+            if (typeof document !== 'undefined' && document.querySelectorAll) {
+                document.querySelectorAll('.live-bill-filter-btn').forEach(btn => {
+                    const isActive = btn.getAttribute('data-filter') === liveBillCurrentFilter;
+                    btn.className = isActive
+                        ? 'live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm transition-all cursor-pointer'
+                        : 'live-bill-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer';
+                });
+            }
+            renderLiveRequisitions();
+        }
+
+        function filterLiveRequisitions() {
+            renderLiveRequisitions();
+        }
+
+        function formatRequisitionItems(summary) {
+            if (!summary) return '';
+            const str = String(summary).trim();
+            const parts = str.split(',').map(s => s.trim()).filter(Boolean);
+            if (!parts.length) return esc(str);
+            return parts.map(part => {
+                const escaped = esc(part);
+                if (part.startsWith('🆗') || part.includes('จัดเตรียมไว้ก่อน') || part.includes('ยังไม่ต้องเอามา')) {
+                    return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 font-medium text-[11px]"><i class="fa-solid fa-bell text-[10px] text-amber-600"></i>${escaped}</span>`;
+                }
+                if (part.startsWith('@')) {
+                    return `<span class="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100 text-[10px] font-medium">${escaped}</span>`;
+                }
+                if (part.includes('เบิกสินค้า(')) {
+                    return `<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[10px] font-bold">${escaped}</span>`;
+                }
+                return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-800 text-[11px] shadow-2xs font-medium"><i class="fa-solid fa-cube text-[9px] text-indigo-400"></i>${escaped}</span>`;
+            }).join(' ');
+        }
 
         async function fetchLiveRequisitions(targetDate = null) {
             const d = targetDate || (typeof _lastRecordDate !== 'undefined' && _lastRecordDate) || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().split('T')[0]);
@@ -8505,10 +8616,22 @@
         function renderLiveRequisitions(state = 'ready') {
             const listEl = document.getElementById('live-bill-list-cards');
             const billCountEl = document.getElementById('live-bill-count');
+            const skuCountEl = document.getElementById('live-sku-count');
+            const unitCountEl = document.getElementById('live-unit-count');
+            const trdCountEl = document.getElementById('live-trd-count');
+            const urgentCountEl = document.getElementById('live-urgent-count');
+            const regularCountEl = document.getElementById('live-regular-count');
             const stateEl = document.getElementById('live-bill-read-state');
+            const filterBadge = document.getElementById('live-bill-filtered-badge');
+
             if (state !== 'ready') {
                 const message = state === 'loading' ? 'กำลังโหลดรายการเบิก…' : 'โหลดรายการไม่สำเร็จ กรุณากดรีเฟรชอีกครั้ง';
                 if (billCountEl) billCountEl.innerText = '—';
+                if (skuCountEl) skuCountEl.innerText = '—';
+                if (unitCountEl) unitCountEl.innerText = '—';
+                if (trdCountEl) trdCountEl.innerText = '—';
+                if (urgentCountEl) urgentCountEl.innerText = '—';
+                if (regularCountEl) regularCountEl.innerText = '—';
                 if (stateEl) stateEl.innerText = message;
                 if (listEl) listEl.innerHTML = `<div class="p-6 text-center text-slate-500">${message}</div>`;
                 return;
@@ -8524,19 +8647,156 @@
                 seen.add(key);
                 return true;
             });
-            if (billCountEl) billCountEl.innerText = String(rows.length);
-            if (stateEl) stateEl.innerText = rows.length ? 'รายการเบิกตามวันที่เลือก' : 'ไม่มีรายการเบิกในวันที่เลือก';
+
+            let totalBills = rows.length;
+            let totalSKU = 0;
+            let totalUnits = 0;
+            let trdBills = 0, trdUnits = 0;
+            let urgentBills = 0, urgentUnits = 0;
+            let regularBills = 0, regularUnits = 0;
+
+            rows.forEach(req => {
+                const sku = Number(req.skuCount) || (Array.isArray(req.items) ? req.items.length : 1);
+                const units = Number(req.totalUnits) || 0;
+                totalSKU += sku;
+                totalUnits += units;
+
+                const bType = String(req.billType || '').toLowerCase();
+                if (bType.includes('ด่วน')) {
+                    urgentBills++;
+                    urgentUnits += units;
+                } else if (bType.includes('ตจว') || bType.includes('ส่ง') || bType.includes('ขนส่ง')) {
+                    regularBills++;
+                    regularUnits += units;
+                } else {
+                    trdBills++;
+                    trdUnits += units;
+                }
+            });
+
+            if (billCountEl) billCountEl.innerText = String(totalBills);
+            if (skuCountEl) skuCountEl.innerText = totalBills ? String(totalSKU) : '0';
+            if (unitCountEl) unitCountEl.innerText = totalBills ? totalUnits.toLocaleString() : '0';
+            if (trdCountEl) trdCountEl.innerText = `${trdBills} บิล (${trdUnits} ชิ้น)`;
+            if (urgentCountEl) urgentCountEl.innerText = `${urgentBills} บิล (${urgentUnits} ชิ้น)`;
+            if (regularCountEl) regularCountEl.innerText = `${regularBills} บิล (${regularUnits} ชิ้น)`;
+            if (stateEl) stateEl.innerText = totalBills ? 'รายการเบิกตามวันที่เลือก' : 'ไม่มีรายการเบิกในวันที่เลือก';
+
             if (!listEl) return;
-            listEl.innerHTML = rows.length ? rows.map((req, idx) => `
-                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3">
-                    <span class="shrink-0 min-w-8 p-2 rounded-lg bg-indigo-100 text-indigo-700 text-center font-bold font-num">${esc(req.billNo || ('#' + (rows.length - idx)))}</span>
-                    <div class="min-w-0 break-words">
-                        <p class="font-bold text-slate-900">${esc(req.billType || 'บิลเบิก')}: ${esc(req.itemsSummary || '')}</p>
-                        <p class="text-[11px] text-slate-500">ผู้ขอเบิก: ${esc(req.requester || 'หน้าร้าน')} • เวลา: ${esc(req.time || '')}</p>
-                        ${req.rawText ? `<details class="mt-2"><summary class="cursor-pointer text-indigo-700">ข้อความต้นทาง</summary><p class="whitespace-pre-wrap mt-1">${esc(req.rawText)}</p></details>` : ''}
+
+            const searchInput = document.getElementById('live-bill-search');
+            const query = searchInput && searchInput.value ? searchInput.value.trim().toLowerCase() : '';
+
+            let visibleRows = rows;
+            const activeFilter = (typeof liveBillCurrentFilter !== 'undefined') ? liveBillCurrentFilter : 'all';
+            if (activeFilter === 'urgent') {
+                visibleRows = visibleRows.filter(r => String(r.billType || '').toLowerCase().includes('ด่วน'));
+            } else if (activeFilter === 'trd') {
+                visibleRows = visibleRows.filter(r => {
+                    const t = String(r.billType || '').toLowerCase();
+                    return !t.includes('ด่วน') && !t.includes('ตจว') && !t.includes('ส่ง') && !t.includes('ขนส่ง');
+                });
+            } else if (activeFilter === 'regular') {
+                visibleRows = visibleRows.filter(r => {
+                    const t = String(r.billType || '').toLowerCase();
+                    return t.includes('ตจว') || t.includes('ส่ง') || t.includes('ขนส่ง');
+                });
+            }
+
+            if (query) {
+                visibleRows = visibleRows.filter(r => {
+                    const billNo = String(r.billNo || '').toLowerCase();
+                    const billType = String(r.billType || '').toLowerCase();
+                    const requester = String(r.requester || '').toLowerCase();
+                    const items = String(r.itemsSummary || '').toLowerCase();
+                    const raw = String(r.rawText || '').toLowerCase();
+                    return billNo.includes(query) || billType.includes(query) || requester.includes(query) || items.includes(query) || raw.includes(query);
+                });
+            }
+
+            if (filterBadge) {
+                if (visibleRows.length !== totalBills) {
+                    if (filterBadge.classList && filterBadge.classList.remove) filterBadge.classList.remove('hidden');
+                    filterBadge.innerText = `แสดง ${visibleRows.length} จาก ${totalBills} บิล`;
+                } else {
+                    if (filterBadge.classList && filterBadge.classList.add) filterBadge.classList.add('hidden');
+                }
+            }
+
+            if (!visibleRows.length) {
+                const emptyMsg = totalBills > 0
+                    ? 'ไม่พบรายการที่ตรงกับตัวกรองหรือคำค้นหา'
+                    : 'ไม่มีรายการเบิกในวันที่เลือก';
+                listEl.innerHTML = `<div class="p-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">${emptyMsg}</div>`;
+                return;
+            }
+
+            const formatItems = (typeof formatRequisitionItems === 'function') ? formatRequisitionItems : s => esc(s);
+
+            listEl.innerHTML = visibleRows.map((req, idx) => {
+                const bType = String(req.billType || '').toLowerCase();
+                let badgeStyle = 'bg-indigo-100 text-indigo-700 border-indigo-200';
+                let typeIcon = 'fa-store';
+                if (bType.includes('ด่วน')) {
+                    badgeStyle = 'bg-amber-100 text-amber-800 border-amber-200';
+                    typeIcon = 'fa-bolt';
+                } else if (bType.includes('ตจว') || bType.includes('ส่ง') || bType.includes('ขนส่ง')) {
+                    badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                    typeIcon = 'fa-truck';
+                }
+
+                const sku = Number(req.skuCount) || (Array.isArray(req.items) ? req.items.length : (req.itemsSummary ? String(req.itemsSummary).split(',').length : 1));
+                const units = Number(req.totalUnits) || 0;
+                const billBadge = req.billNo || ('#' + (rows.length - idx));
+
+                return `
+                    <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-300 transition-colors space-y-2">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <div class="flex items-start gap-2.5 min-w-0">
+                                <span class="shrink-0 px-2 py-1 rounded-lg ${badgeStyle} border text-center font-black font-num text-xs flex items-center gap-1">
+                                    <i class="fa-solid ${typeIcon} text-[10px]"></i>
+                                    <span>${esc(billBadge)}</span>
+                                </span>
+                                <div class="min-w-0">
+                                    <p class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-1.5 flex-wrap">
+                                        <span>${esc(req.billType || 'บิลเบิก')}</span>
+                                        ${req.uid ? `<span class="text-[9px] font-mono text-slate-400 font-normal">(${esc(req.uid)})</span>` : ''}
+                                    </p>
+                                    <p class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
+                                        <span><i class="fa-solid fa-user text-[10px] mr-1 text-slate-400"></i>ผู้ขอเบิก: <b class="text-slate-700">${esc(req.requester || 'หน้าร้าน')}</b></span>
+                                        <span>•</span>
+                                        <span><i class="fa-regular fa-clock text-[10px] mr-1 text-slate-400"></i>เวลา: <b class="text-slate-700 font-num">${esc(req.time || '—')}</b></span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0 self-start">
+                                <span class="px-2 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200/80 text-indigo-700 font-bold font-num text-[11px]" title="จำนวนรายการสินค้า">${sku} SKU</span>
+                                <span class="px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200/80 text-emerald-700 font-black font-num text-[11px]" title="จำนวนชิ้น/ลังรวม">${units} ชิ้น</span>
+                            </div>
+                        </div>
+
+                        <!-- Item pills breakdown -->
+                        ${req.itemsSummary ? `
+                            <div class="pt-2 border-t border-slate-200/80">
+                                <div class="flex flex-wrap gap-1.5 leading-normal">
+                                    ${formatItems(req.itemsSummary)}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <!-- Collapsible Raw Text -->
+                        ${req.rawText ? `
+                            <details class="pt-1 text-slate-500 text-xs">
+                                <summary class="cursor-pointer hover:text-indigo-600 text-[10px] font-semibold transition-colors inline-flex items-center gap-1 select-none">
+                                    <i class="fa-regular fa-message text-[9px]"></i>
+                                    <span>ข้อความต้นทาง LINE</span>
+                                </summary>
+                                <pre class="whitespace-pre-wrap font-sans mt-1 p-2 bg-white rounded-lg border border-slate-200 text-[11px] text-slate-700 leading-relaxed overflow-x-auto">${esc(req.rawText)}</pre>
+                            </details>
+                        ` : ''}
                     </div>
-                </div>
-            `).join('') : '<div class="p-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">ไม่มีรายการเบิกในวันที่เลือก</div>';
+                `;
+            }).join('');
         }
 
         function applyAkraWorkloadDraft(workload) {
