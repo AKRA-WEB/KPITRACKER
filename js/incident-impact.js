@@ -229,7 +229,7 @@
                     <button type="button" id="btn-confirm-zero-errors" onclick="handleZeroErrorClick()" class="w-full py-2.5 px-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center justify-between transition-all active:scale-98 shadow-sm cursor-pointer">
                         <div class="flex items-center gap-2">
                             <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs shrink-0">
-                                <i class="fa-solid fa-shield-check" aria-hidden="true"></i>
+                                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
                             </div>
                             <span>วันนี้ตรวจแล้ว ไม่พบข้อผิดพลาด</span>
                         </div>
@@ -929,8 +929,8 @@
                         <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
                     </div>
                     <div>
-                        <div class="text-[11px] text-slate-400 font-medium">เหตุการณ์ทั้งหมดในช่วงที่เลือก</div>
-                        <div class="text-[10px] text-slate-500">นับตามเคสจริง (Unique Cases)</div>
+                        <div class="text-[11px] text-slate-400 font-medium">เหตุการณ์ทั้งหมดในสัปดาห์นี้</div>
+                        <div class="text-[10px] text-slate-500">นับตามเคสจริง (จันทร์–อาทิตย์)</div>
                     </div>
                 </div>
                 <div class="text-right">
