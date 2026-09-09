@@ -21,7 +21,12 @@
             textColor: 'text-emerald-800',
             iconColor: 'text-emerald-600',
             activeRing: 'border-emerald-500 bg-gradient-to-r from-emerald-50/90 to-teal-50/50 ring-2 ring-emerald-500/25 text-emerald-950',
-            dot: 'bg-emerald-500'
+            dot: 'bg-emerald-500',
+            metricBg: 'bg-emerald-950/30',
+            metricBorder: 'border-emerald-800/40',
+            metricText: 'text-emerald-200',
+            metricCount: 'text-emerald-400',
+            metricDot: 'bg-emerald-500'
         },
         escaped_internal: {
             title: 'ออกจากจุดงานแล้ว',
@@ -34,7 +39,12 @@
             textColor: 'text-amber-800',
             iconColor: 'text-amber-600',
             activeRing: 'border-amber-500 bg-gradient-to-r from-amber-50/90 to-orange-50/50 ring-2 ring-amber-500/25 text-amber-950',
-            dot: 'bg-amber-500'
+            dot: 'bg-amber-500',
+            metricBg: 'bg-amber-950/30',
+            metricBorder: 'border-amber-800/40',
+            metricText: 'text-amber-200',
+            metricCount: 'text-amber-400',
+            metricDot: 'bg-amber-500'
         },
         reached_customer: {
             title: 'ถึงลูกค้าแล้ว',
@@ -47,7 +57,12 @@
             textColor: 'text-rose-800',
             iconColor: 'text-rose-600',
             activeRing: 'border-rose-500 bg-gradient-to-r from-rose-50/90 to-red-50/50 ring-2 ring-rose-500/25 text-rose-950',
-            dot: 'bg-rose-500'
+            dot: 'bg-rose-500',
+            metricBg: 'bg-rose-950/30',
+            metricBorder: 'border-rose-800/40',
+            metricText: 'text-rose-200',
+            metricCount: 'text-rose-400',
+            metricDot: 'bg-rose-500'
         },
         unknown: {
             title: 'ยังไม่ทราบ',
@@ -60,7 +75,12 @@
             textColor: 'text-sky-800',
             iconColor: 'text-sky-600',
             activeRing: 'border-sky-500 bg-gradient-to-r from-sky-50/90 to-blue-50/50 ring-2 ring-sky-500/25 text-sky-950',
-            dot: 'bg-sky-500'
+            dot: 'bg-sky-500',
+            metricBg: 'bg-sky-950/30',
+            metricBorder: 'border-sky-800/40',
+            metricText: 'text-sky-200',
+            metricCount: 'text-sky-400',
+            metricDot: 'bg-sky-500'
         },
         not_applicable: {
             title: 'ไม่เกี่ยวกับส่งมอบ',
@@ -73,7 +93,12 @@
             textColor: 'text-slate-700',
             iconColor: 'text-slate-500',
             activeRing: 'border-slate-400 bg-slate-100 ring-2 ring-slate-400/25 text-slate-900',
-            dot: 'bg-slate-400'
+            dot: 'bg-slate-400',
+            metricBg: 'bg-slate-800/50',
+            metricBorder: 'border-slate-700/50',
+            metricText: 'text-slate-300',
+            metricCount: 'text-slate-200',
+            metricDot: 'bg-slate-400'
         }
     };
 
@@ -86,19 +111,22 @@
     const selected = () => types().find(t => t.id === state.typeId && t.active);
     const isNew = row => row?.schemaVersion === 3 && row?.scoringMode === 'none';
 
-    const impactDefinitions = (branch = currentBranch) => model()?.branches?.[branch]?.impacts
-        || Object.entries(labels).map(([id, label]) => ({id, label}));
+    const impactDefinitions = (branch = currentBranch) => {
+        const branchImpacts = model()?.branches?.[branch]?.impacts;
+        if (Array.isArray(branchImpacts)) return branchImpacts;
+        return Object.entries(labels).map(([id, label]) => ({id, label}));
+    };
 
     function impactLabel(value, branch = currentBranch) {
         if (value && typeof value === 'object') {
             if (value.impact === '' || value.impact === null) return value.impactLabel || 'ไม่มีผลกระทบ';
-            return value.impactLabel || labels[value.impact] || value.impact || 'ข้อมูลเดิม';
+            return value.impactLabel || impactDefinitions(branch).find(i => i.id === value.impact)?.label || labels[value.impact] || value.impact || 'ข้อมูลเดิม';
         }
         if (value === '' || value === null) return 'ไม่มีผลกระทบ';
         return impactDefinitions(branch).find(i => i.id === value)?.label || labels[value] || value || 'ไม่มีผลกระทบ';
     }
 
-    function visualImpact(id) {
+    function visualImpact(id, branch = currentBranch) {
         if (!id) {
             return {
                 title: 'ไม่มีผลกระทบ',
@@ -111,12 +139,52 @@
                 textColor: 'text-slate-600',
                 iconColor: 'text-slate-400',
                 activeRing: 'border-slate-400 bg-slate-100 ring-2 ring-slate-400/25 text-slate-800',
-                dot: 'bg-slate-400'
+                dot: 'bg-slate-400',
+                metricBg: 'bg-slate-800/50',
+                metricBorder: 'border-slate-700/50',
+                metricText: 'text-slate-300',
+                metricCount: 'text-slate-200',
+                metricDot: 'bg-slate-400'
             };
         }
-        const original = impactMeta[id] || impactMeta.not_applicable;
-        const label = impactLabel(id);
-        return label === labels[id] ? original : {...original, badge: label, sub: label};
+        const label = impactLabel(id, branch);
+        let base = impactMeta[id];
+        if (!base) {
+            if (label.includes('ลูกค้า') || label.includes('ภายนอก') || label.includes('เสียหาย')) {
+                base = impactMeta.reached_customer;
+            } else if (label.includes('แก้ทัน') || label.includes('สกัด') || label.includes('ก่อนส่ง')) {
+                base = impactMeta.contained;
+            } else if (label.includes('ภายใน') || label.includes('จุดงาน') || label.includes('ข้าม')) {
+                base = impactMeta.escaped_internal;
+            } else if (label.includes('รอ') || label.includes('ตรวจสอบ') || label.includes('ไม่แน่')) {
+                base = impactMeta.unknown;
+            } else {
+                base = {
+                    title: label,
+                    sub: label,
+                    badge: label,
+                    icon: 'fa-tag',
+                    borderAccent: 'border-l-indigo-500',
+                    bgLight: 'bg-indigo-50',
+                    borderLight: 'border-indigo-200',
+                    textColor: 'text-indigo-800',
+                    iconColor: 'text-indigo-600',
+                    activeRing: 'border-indigo-500 bg-gradient-to-r from-indigo-50/90 to-blue-50/50 ring-2 ring-indigo-500/25 text-indigo-950',
+                    dot: 'bg-indigo-500',
+                    metricBg: 'bg-indigo-950/30',
+                    metricBorder: 'border-indigo-800/40',
+                    metricText: 'text-indigo-200',
+                    metricCount: 'text-indigo-400',
+                    metricDot: 'bg-indigo-500'
+                };
+            }
+        }
+        return {
+            ...base,
+            badge: label,
+            title: base.title || label,
+            sub: base.sub || label
+        };
     }
 
     function weekRange(date) {
@@ -169,9 +237,10 @@
             const key = `${row.branch || ''}|${row.caseId || `legacy-${i}`}`;
             if (!unique.has(key)) unique.set(key, row);
         });
-        const result = { total: unique.size, impact: Object.fromEntries(Object.keys(labels).map(k => [k, 0])), types: {}, people: {} };
+        const defs = impactDefinitions(currentBranch);
+        const result = { total: unique.size, impact: Object.fromEntries(defs.map(d => [d.id, 0])), types: {}, people: {} };
         for (const row of unique.values()) {
-            const impact = isNew(row) ? row.impact : legacyImpact(row);
+            const impact = isNew(row) ? (row.impact ?? '') : legacyImpact(row);
             result.impact[impact] = (result.impact[impact] || 0) + 1;
             const key = row.typeId || row.type || 'ไม่ระบุประเภท';
             result.types[key] = (result.types[key] || 0) + 1;
@@ -814,23 +883,15 @@
         } else {
             timelineContainer.innerHTML = rows.map(r => {
                 const isNewCase = isNew(r);
-                const impactKey = isNewCase ? r.impact : 'legacy';
-                const meta = isNewCase && !r.impact ? {
-                    badge: 'ไม่มีผลกระทบ',
-                    borderAccent: 'border-l-slate-300',
-                    bgLight: 'bg-slate-100',
-                    borderLight: 'border-slate-200',
-                    textColor: 'text-slate-700',
-                    icon: 'fa-minus'
-                } : (impactMeta[impactKey] || {
+                const meta = isNewCase ? visualImpact(r.impact, r.branch || currentBranch) : {
                     badge: 'ข้อมูลเดิม',
                     borderAccent: 'border-l-slate-400',
                     bgLight: 'bg-slate-100',
                     borderLight: 'border-slate-200',
                     textColor: 'text-slate-700',
                     icon: 'fa-clock'
-                });
-                const rowImpactLabel = isNewCase ? impactLabel(r) : 'ข้อมูลเดิม';
+                };
+                const rowImpactLabel = isNewCase ? impactLabel(r, r.branch || currentBranch) : 'ข้อมูลเดิม';
                 const workerDisplay = (r.participants && r.participants.length ? r.participants.join(', ') : r.worker) || 'ไม่ระบุ';
 
                 const respLabels = {
@@ -921,6 +982,10 @@
 
     function metrics(rows) {
         const s = summarize(rows);
+        const defs = impactDefinitions(currentBranch);
+        const configuredIds = new Set(defs.map(d => d.id));
+        const unconfiguredHistorical = Object.entries(s.impact).filter(([id, count]) => count > 0 && id !== '' && !configuredIds.has(id));
+
         return `
             <!-- Total Cases Hero Banner -->
             <div class="col-span-2 p-3 rounded-xl bg-slate-800/90 border border-slate-700/80 flex items-center justify-between shadow-inner">
@@ -939,56 +1004,40 @@
                 </div>
             </div>
 
-            <!-- ถึงลูกค้า -->
-            <div class="p-2.5 rounded-xl bg-rose-950/30 border border-rose-800/40 flex items-center justify-between">
-                <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>
-                    <span class="text-xs text-rose-200 truncate">ถึงลูกค้า</span>
-                </div>
-                <span class="font-black text-rose-400 font-num text-sm shrink-0">${s.impact.reached_customer}</span>
-            </div>
+            <!-- Dynamic configured impact cards -->
+            ${defs.map((d, idx) => {
+                const meta = visualImpact(d.id, currentBranch);
+                const count = s.impact[d.id] || 0;
+                const isOddLast = (defs.length % 2 === 1) && (idx === defs.length - 1);
+                return `
+                    <div class="${isOddLast ? 'col-span-2' : ''} p-2.5 rounded-xl ${meta.metricBg} border ${meta.metricBorder} flex items-center justify-between">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="w-2 h-2 rounded-full ${meta.metricDot} shrink-0"></span>
+                            <span class="text-xs ${meta.metricText} truncate">${escape(d.label)}</span>
+                        </div>
+                        <span class="font-black ${meta.metricCount} font-num text-sm shrink-0">${count}</span>
+                    </div>
+                `;
+            }).join('')}
 
-            <!-- แก้ทันก่อนส่ง -->
-            <div class="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-800/40 flex items-center justify-between">
-                <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                    <span class="text-xs text-emerald-200 truncate">แก้ทันก่อนส่ง</span>
-                </div>
-                <span class="font-black text-emerald-400 font-num text-sm shrink-0">${s.impact.contained}</span>
-            </div>
-
-            <!-- กระทบภายใน -->
-            <div class="p-2.5 rounded-xl bg-amber-950/30 border border-amber-800/40 flex items-center justify-between">
-                <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
-                    <span class="text-xs text-amber-200 truncate">กระทบภายใน</span>
-                </div>
-                <span class="font-black text-amber-400 font-num text-sm shrink-0">${s.impact.escaped_internal}</span>
-            </div>
-
-            <!-- ยังไม่ทราบ -->
-            <div class="p-2.5 rounded-xl bg-sky-950/30 border border-sky-800/40 flex items-center justify-between">
-                <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2 h-2 rounded-full bg-sky-500 shrink-0"></span>
-                    <span class="text-xs text-sky-200 truncate">ยังไม่ทราบ</span>
-                </div>
-                <span class="font-black text-sky-400 font-num text-sm shrink-0">${s.impact.unknown}</span>
-            </div>
-
-            <!-- ไม่เกี่ยวส่งมอบ -->
-            <div class="col-span-2 p-2 rounded-xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-between text-xs text-slate-400">
-                <span class="flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-slate-500"></span>
-                    <span>ไม่เกี่ยวกับขั้นตอนส่งมอบ</span>
-                </span>
-                <span class="font-bold text-slate-300 font-num">${s.impact.not_applicable}</span>
-            </div>
-            ${Object.entries(s.impact).filter(([id]) => !labels[id]).map(([id, count]) => `
+            <!-- ไม่มีผลกระทบต่อลูกค้า (ถ้ามีในสัปดาห์นี้) -->
+            ${(s.impact[''] || 0) > 0 ? `
                 <div class="col-span-2 p-2 rounded-xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-between text-xs text-slate-400">
-                    <span>${escape(impactLabel((rows || []).find(r => r.impact === id) || id))}</span>
-                    <span class="font-bold text-slate-300 font-num">${count}</span>
-                </div>`).join('')}
+                    <span class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                        <span>ไม่มีผลกระทบต่อลูกค้า</span>
+                    </span>
+                    <span class="font-bold text-slate-300 font-num">${s.impact['']}</span>
+                </div>
+            ` : ''}
 
+            <!-- รายการประวัติเดิมที่ไม่อยู่ในการตั้งค่าปัจจุบัน -->
+            ${unconfiguredHistorical.map(([id, count]) => `
+                <div class="col-span-2 p-2 rounded-xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-between text-xs text-slate-400">
+                    <span class="truncate">${escape(impactLabel(id, currentBranch))} (ประวัติเดิม)</span>
+                    <span class="font-bold text-slate-300 font-num">${count}</span>
+                </div>
+            `).join('')}
         `;
     }
 
@@ -1027,7 +1076,9 @@
         if (!host) return;
         if (!adminDraft) adminDraft = JSON.parse(JSON.stringify(model()));
         for (const b of ['AKRA', 'TRD']) {
-            if (!adminDraft.branches[b].impacts) adminDraft.branches[b].impacts = impactDefinitions(b).map(i => ({...i}));
+            if (!Array.isArray(adminDraft.branches[b]?.impacts)) {
+                adminDraft.branches[b].impacts = impactDefinitions(b).map(i => ({...i}));
+            }
         }
         const branch = ADMIN_SETTINGS_STATE.incidentBranch || 'AKRA', data = adminDraft.branches[branch];
         byId('admin-incident-heading').textContent = 'ตั้งค่าประเภทและผลกระทบ';
@@ -1169,12 +1220,25 @@
         try {
             const r = await AkraSupabaseKPI.saveIncidentCatalog(sessionToken, adminDraft);
             KPI_SYSTEM_CONFIG.incidentModel = r.configValue;
+            try {
+                const cachedRaw = safeStorage.getItem('kpi_cached_config');
+                if (cachedRaw) {
+                    const cached = JSON.parse(cachedRaw);
+                    if (cached.systemConfig) {
+                        cached.systemConfig.incidentModel = r.configValue;
+                        safeStorage.setItem('kpi_cached_config', JSON.stringify(cached));
+                    }
+                }
+            } catch (cacheErr) {
+                console.warn('[KPI SWR] Failed to update cached incidentModel:', cacheErr);
+            }
             adminDraft = null;
             admin();
             state.typeId = '';
             state.impact = '';
             state.pending = null;
             render();
+            if (typeof renderErrTeamHp === 'function') renderErrTeamHp();
             showToast('บันทึกประเภทและผลกระทบแล้ว');
         } catch (e) {
             showToast(message(e), true);
@@ -1206,6 +1270,8 @@
         timeline,
         metrics,
         detail,
+        visualImpact,
+        impactDefinitions,
         admin,
         adminChange,
         adminImpact,
