@@ -198,6 +198,24 @@
             return data;
         },
         getActions: (token, branch) => readPages('getActions', token, { branch }, 'actions'),
-        saveAction: (token, actionItem) => fetchKpiAction('saveAction', token, { actionItem, expectedRevision: actionItem.revision ?? (actionItem.lastUpdated ? null : 0) })
+        saveAction: (token, actionItem) => fetchKpiAction('saveAction', token, { actionItem, expectedRevision: actionItem.revision ?? (actionItem.lastUpdated ? null : 0) }),
+        getLiveRequisitions: async (targetDate) => {
+            const d = targetDate || new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date());
+            const url = `${SUPABASE_CONFIG.URL}/rest/v1/rpc/kpi_get_live_requisitions_v1`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_CONFIG.KEY,
+                    'Authorization': `Bearer ${SUPABASE_CONFIG.KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ p_date: d })
+            });
+            if (!response.ok) {
+                throw new Error('Supabase getLiveRequisitions failed: ' + response.statusText);
+            }
+            const data = await response.json();
+            return data;
+        }
     };
 }));

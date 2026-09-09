@@ -184,6 +184,23 @@
         ];
     
         sheet.appendRow(rowData);
+
+        // Dual-write to Supabase in real-time
+        syncRequisitionToSupabase({
+          uid: uid,
+          billNo: billNo,
+          recordDate: parsed.date,
+          recordTime: parsed.time,
+          billType: parsed.billType,
+          requester: parsed.requester,
+          itemsSummary: parsed.itemsSummary,
+          skuCount: parsed.skuCount,
+          totalUnits: parsed.totalUnits,
+          rawText: rawText,
+          groupId: groupId,
+          userId: userId,
+          messageId: messageId
+        });
       } catch (err) {
         console.error("Error saving parsed LINE requisition: " + (err && err.stack ? err.stack : err));
       } finally {
@@ -257,6 +274,7 @@
           sheet.getRange(rowIdx, 11).setValue(statusText);           // Col K: status
           sheet.getRange(rowIdx, 12).setValue(actorName || "");      // Col L: doneBy
           sheet.getRange(rowIdx, 13).setValue(doneDate ? doneDate : ""); // Col M: doneAt
+          syncStatusToSupabase(messageId, statusText, actorName);
           return true;
         }
       }
@@ -649,4 +667,73 @@
 
     function jsonOutput(data) {
       return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ================= SUPABASE DUAL-WRITE BRIDGE =================
+
+    function getSupabaseConfig() {
+      var props = PropertiesService.getScriptProperties();
+      return {
+        url: props.getProperty("SUPABASE_URL") || "https://hgxrrskztbpejirrdpbq.supabase.co",
+        key: props.getProperty("SUPABASE_SERVICE_ROLE_KEY") || props.getProperty("SUPABASE_KEY") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneHJyc2t6dGJwZWppcnJkcGJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMjQ1ODAsImV4cCI6MjEwMjcwMDU4MH0.IQWpcgqCCVVLwRJso1eamXHuCH4tKeWohd2oCUCVavw"
+      };
+    }
+
+    function syncRequisitionToSupabase(req) {
+      try {
+        var conf = getSupabaseConfig();
+        var endpoint = conf.url + "/rest/v1/rpc/kpi_upsert_line_requisition_v1";
+        var payload = {
+          p_uid: req.uid,
+          p_bill_no: req.billNo,
+          p_record_date: req.recordDate,
+          p_record_time: req.recordTime || "",
+          p_bill_type: req.billType || "",
+          p_requester: req.requester || "",
+          p_items_summary: req.itemsSummary || "",
+          p_sku_count: Number(req.skuCount) || 1,
+          p_total_units: Number(req.totalUnits) || 0,
+          p_raw_text: req.rawText || "",
+          p_group_id: req.groupId || TARGET_LINE_GROUP_ID,
+          p_user_id: req.userId || "",
+          p_message_id: req.messageId || ""
+        };
+        UrlFetchApp.fetch(endpoint, {
+          method: "post",
+          contentType: "application/json",
+          headers: {
+            "apikey": conf.key,
+            "Authorization": "Bearer " + conf.key
+          },
+          payload: JSON.stringify(payload),
+          muteHttpExceptions: true
+        });
+      } catch (err) {
+        console.error("syncRequisitionToSupabase error: " + (err && err.stack ? err.stack : err));
+      }
+    }
+
+    function syncStatusToSupabase(messageId, statusText, doneBy) {
+      try {
+        if (!messageId) return;
+        var conf = getSupabaseConfig();
+        var endpoint = conf.url + "/rest/v1/rpc/kpi_update_line_requisition_status_v1";
+        var payload = {
+          p_message_id: messageId,
+          p_status: statusText,
+          p_done_by: doneBy || ""
+        };
+        UrlFetchApp.fetch(endpoint, {
+          method: "post",
+          contentType: "application/json",
+          headers: {
+            "apikey": conf.key,
+            "Authorization": "Bearer " + conf.key
+          },
+          payload: JSON.stringify(payload),
+          muteHttpExceptions: true
+        });
+      } catch (err) {
+        console.error("syncStatusToSupabase error: " + (err && err.stack ? err.stack : err));
+      }
     }

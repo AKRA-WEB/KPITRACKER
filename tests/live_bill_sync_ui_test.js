@@ -26,7 +26,7 @@ console.log(`✓ Script compilation passed (zero syntax errors across ${scriptIn
 const versionMatch = html.match(/const CURRENT_VERSION = ["']([^"']+)["'];/);
 assert.ok(versionMatch, 'CURRENT_VERSION must be defined');
 assert.strictEqual(versionMatch[1], versionJson.version, 'CURRENT_VERSION must match version.json');
-assert.strictEqual(versionJson.version, '20260909.05', 'version.json must be 20260909.05');
+assert.strictEqual(versionJson.version, '20260909.06', 'version.json must be 20260909.06');
 assert.ok(html.includes(`KPI Suite v${versionJson.version}`), 'Drawer version text must match version.json');
 assert.ok(html.includes(`js/supabase-kpi-client.js?v=${versionJson.version}`), 'supabase-kpi-client asset param must match version');
 assert.ok(html.includes(`js/incident-impact.js?v=${versionJson.version}`), 'incident-impact asset param must match version');
@@ -243,6 +243,76 @@ assert.strictEqual(domStore.get('live-unit-count').innerText, '0');
 
 console.log('✓ Loading, error, and empty states verified');
 
-console.log('=============================================================');
-console.log('🎉 ALL LIVE BILL SYNC UI & DETAILS TESTS PASSED 100%! 🎉');
-console.log('=============================================================');
+// [5] Supabase Client Integration & Async Fetch Tests
+const kpiClient = require('../js/supabase-kpi-client.js');
+assert.strictEqual(typeof kpiClient.getLiveRequisitions, 'function', 'AkraSupabaseKPI must export getLiveRequisitions');
+console.log('✓ AkraSupabaseKPI.getLiveRequisitions export verified');
+
+// Test fetchLiveRequisitions using AkraSupabaseKPI
+let supabaseCalledWithDate = null;
+sandbox.AkraSupabaseKPI = {
+    getLiveRequisitions: async (date) => {
+        supabaseCalledWithDate = date;
+        return {
+            success: true,
+            date: date,
+            requisitions: [
+                {
+                    uid: 'REQ-SP-001',
+                    billNo: '#1',
+                    time: '08:00',
+                    billType: '⚡ บิลด่วน',
+                    itemsSummary: 'Supabase item 1',
+                    skuCount: 1,
+                    totalUnits: 3
+                }
+            ]
+        };
+    }
+};
+
+(async () => {
+    await sandbox.fetchLiveRequisitions('2026-09-09');
+    assert.strictEqual(supabaseCalledWithDate, '2026-09-09', 'fetchLiveRequisitions must route through AkraSupabaseKPI');
+    assert.strictEqual(domStore.get('live-bill-count').innerText, '1');
+    assert.strictEqual(domStore.get('live-sku-count').innerText, '1');
+    assert.strictEqual(domStore.get('live-unit-count').innerText, '3');
+    console.log('✓ fetchLiveRequisitions routed through Supabase client with verified DOM rendering');
+
+    // Test fallback to fetch when AkraSupabaseKPI is undefined
+    sandbox.AkraSupabaseKPI = undefined;
+    let fetchFallbackUrl = null;
+    sandbox.fetch = async (url) => {
+        fetchFallbackUrl = url;
+        return {
+            ok: true,
+            json: async () => ({
+                success: true,
+                date: '2026-09-09',
+                requisitions: [
+                    {
+                        uid: 'REQ-FB-001',
+                        billNo: '#1',
+                        time: '09:00',
+                        billType: '🏪 เติมหน้าร้าน TRD',
+                        itemsSummary: 'Fallback item',
+                        skuCount: 2,
+                        totalUnits: 4
+                    }
+                ]
+            })
+        };
+    };
+    await sandbox.fetchLiveRequisitions('2026-09-09');
+    assert.ok(fetchFallbackUrl.includes('date=2026-09-09'), 'Fallback must query LINE_REQUISITION_API_URL');
+    assert.strictEqual(domStore.get('live-bill-count').innerText, '1');
+    assert.strictEqual(domStore.get('live-unit-count').innerText, '4');
+    console.log('✓ Fallback to LINE_REQUISITION_API_URL verified when AkraSupabaseKPI is absent');
+
+    console.log('=============================================================');
+    console.log('🎉 ALL LIVE BILL SYNC UI & SUPABASE TESTS PASSED 100%! 🎉');
+    console.log('=============================================================');
+})().catch(err => {
+    console.error('Async test failed:', err);
+    process.exitCode = 1;
+});
