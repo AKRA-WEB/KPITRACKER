@@ -26,7 +26,7 @@ console.log(`✓ Script compilation passed (zero syntax errors across ${scriptIn
 const versionMatch = html.match(/const CURRENT_VERSION = ["']([^"']+)["'];/);
 assert.ok(versionMatch, 'CURRENT_VERSION must be defined');
 assert.strictEqual(versionMatch[1], versionJson.version, 'CURRENT_VERSION must match version.json');
-assert.strictEqual(versionJson.version, '20260909.06', 'version.json must be 20260909.06');
+assert.match(versionJson.version, /^\d{8}\.\d{2}$/, 'version.json must use the application release format');
 assert.ok(html.includes(`KPI Suite v${versionJson.version}`), 'Drawer version text must match version.json');
 assert.ok(html.includes(`js/supabase-kpi-client.js?v=${versionJson.version}`), 'supabase-kpi-client asset param must match version');
 assert.ok(html.includes(`js/incident-impact.js?v=${versionJson.version}`), 'incident-impact asset param must match version');
