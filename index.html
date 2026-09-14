@@ -16,7 +16,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --app-bg: #f1f5f9;
@@ -30,8 +30,8 @@
             --app-radius: 0.625rem;
             --app-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
         }
-        body { font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--app-bg); color: #1e293b; -webkit-tap-highlight-color: rgba(29, 78, 216, 0.12); touch-action: manipulation; }
-        .font-num { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', 'Noto Sans Thai', system-ui, sans-serif; background-color: var(--app-bg); color: #1e293b; -webkit-tap-highlight-color: rgba(29, 78, 216, 0.12); touch-action: manipulation; }
+        .font-num { font-family: 'Inter', system-ui, sans-serif; }
         .enterprise-card { border: 1px solid #dbe3ee; border-radius: 0.875rem; background: #ffffff; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
         .executive-metric { position: relative; overflow: hidden; border: 1px solid #dbe3ee; border-radius: 0.75rem; background: #ffffff; padding: 0.875rem; }
         .executive-metric::before { content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 0.25rem; background: var(--metric-accent, #2563eb); }
@@ -2895,7 +2895,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260910.01</span>
+                <span id="drawer-version-text">KPI Suite v20260914.02</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -2918,13 +2918,217 @@
             .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260910.01"></script>
-    <script src="js/incident-impact.js?v=20260910.01"></script>
+    <style id="kpi-cross-app-ui">
+        /* Cross-app visual baseline: presentation-only; existing markup and handlers stay intact. */
+        :root {
+            --kpi-canvas: #ffffff;
+            --kpi-soft: #f7f9fc;
+            --kpi-border: #e2e8f0;
+            --kpi-border-strong: #cbd5e1;
+            --kpi-ink: #182230;
+            --kpi-muted: #667085;
+            --kpi-nav: #0b111c;
+            --kpi-nav-2: #121c2b;
+            --kpi-blue: #3448d8;
+            --kpi-blue-soft: #eaf0ff;
+            --kpi-orange: #ef6a35;
+            --kpi-green: #0b6f4b;
+            --kpi-red: #b23c3c;
+            --kpi-shadow: 0 8px 22px rgba(25, 35, 48, .06);
+        }
+
+        html { background: var(--kpi-canvas); }
+        body {
+            min-width: 320px;
+            overflow-x: hidden;
+            background: var(--kpi-canvas) !important;
+            color: var(--kpi-ink);
+            font-family: 'Inter', 'Noto Sans Thai', system-ui, sans-serif;
+            letter-spacing: 0;
+            line-height: 1.45;
+        }
+        button, input, select, textarea { font-family: inherit; }
+        :where(button, input, select, textarea, a):focus-visible {
+            outline: 3px solid rgba(52, 72, 216, .3) !important;
+            outline-offset: 2px;
+        }
+
+        .app-header {
+            min-height: 72px;
+            background:
+                radial-gradient(circle at 76% -40%, rgba(83, 104, 235, .28), transparent 36%),
+                linear-gradient(110deg, var(--kpi-nav), var(--kpi-nav-2)) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, .08) !important;
+            box-shadow: 0 10px 26px rgba(3, 7, 18, .14) !important;
+        }
+        .app-header > div {
+            width: min(1440px, calc(100% - 44px));
+            max-width: none !important;
+            min-height: 72px;
+            padding: 0 !important;
+        }
+        .app-header > div > div:first-child { gap: 12px; }
+        .app-header > div > div:first-child > div:first-child {
+            width: 38px;
+            height: 38px;
+            border: 1px solid rgba(255, 255, 255, .26);
+            border-radius: 11px;
+            background: linear-gradient(145deg, rgba(52, 72, 216, .9), rgba(52, 72, 216, .4));
+            box-shadow: 0 0 26px rgba(91, 111, 255, .2), inset 0 1px 0 rgba(255, 255, 255, .24);
+        }
+        .app-header h1 {
+            color: #f4f7fb;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -.045em;
+            line-height: 1.2;
+        }
+        .app-header #desktop-primary-nav {
+            gap: 3px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .app-header #desktop-primary-nav::-webkit-scrollbar { display: none; }
+        .app-header .desktop-tab {
+            min-height: 38px;
+            padding: 0 11px;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            color: #aeb9c8;
+            background: transparent;
+            font-size: 11px;
+            font-weight: 650;
+            transition: color .2s ease, background .2s ease, border-color .2s ease, transform .2s ease;
+        }
+        .app-header .desktop-tab:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, .07);
+            border-color: rgba(255, 255, 255, .08);
+            transform: translateY(-1px);
+        }
+        .app-header .desktop-tab-active {
+            color: #fff !important;
+            background: rgba(52, 72, 216, .9) !important;
+            border-color: rgba(146, 160, 255, .48) !important;
+            box-shadow: 0 8px 20px rgba(34, 48, 154, .3) !important;
+        }
+        .app-header #btn-open-drawer {
+            width: 36px;
+            height: 36px;
+            border: 1px solid rgba(255, 255, 255, .13);
+            border-radius: 9px;
+            background: rgba(255, 255, 255, .045);
+            color: #b8c4d5;
+        }
+        .app-header #btn-open-drawer:hover {
+            color: #fff;
+            border-color: rgba(146, 160, 255, .7);
+            background: rgba(82, 100, 231, .18);
+        }
+
+        #app-content {
+            width: min(1440px, calc(100% - 44px));
+            max-width: none !important;
+            margin: 0 auto;
+            padding: 30px 0 72px !important;
+            background: var(--kpi-canvas) !important;
+        }
+        .ops-view {
+            width: min(1200px, 100%);
+            max-width: none !important;
+            margin-inline: auto;
+        }
+        .ops-view > .bg-white,
+        .ops-view > section.bg-white,
+        .ops-view > .grid > div > section.bg-white,
+        .ops-view > .grid > div > .bg-white,
+        #view-dashboard .bg-white,
+        #view-my-profile .bg-white,
+        #view-audit .bg-white,
+        #view-billcount .bg-white {
+            border-color: var(--kpi-border) !important;
+            border-radius: 14px !important;
+            box-shadow: var(--kpi-shadow) !important;
+        }
+        .ops-view input:not([type="file"]),
+        .ops-view select,
+        .ops-view textarea {
+            border-color: var(--kpi-border-strong) !important;
+            border-radius: 9px !important;
+            background: #fff !important;
+            color: var(--kpi-ink) !important;
+        }
+        .ops-view input:not([type="file"]):focus,
+        .ops-view select:focus,
+        .ops-view textarea:focus {
+            border-color: var(--kpi-blue) !important;
+            box-shadow: 0 0 0 3px rgba(52, 72, 216, .12) !important;
+        }
+        #dashboard-branch-context {
+            background:
+                radial-gradient(circle at 84% -30%, rgba(83, 104, 235, .24), transparent 38%),
+                linear-gradient(110deg, #0b111c, #121c2b) !important;
+            border-color: rgba(255, 255, 255, .1) !important;
+            box-shadow: 0 12px 30px rgba(3, 7, 18, .14) !important;
+        }
+        #dashboard-branch-context h2 { letter-spacing: -.035em; }
+        .executive-metric {
+            border-color: var(--kpi-border) !important;
+            border-radius: 12px !important;
+            box-shadow: var(--kpi-shadow) !important;
+        }
+        .executive-metric::before {
+            inset: 0 0 auto;
+            width: auto;
+            height: 3px;
+            background: var(--metric-accent, var(--kpi-blue));
+        }
+
+        #bottom-nav {
+            border-top-color: var(--kpi-border) !important;
+            background: rgba(255, 255, 255, .96) !important;
+            box-shadow: 0 -8px 20px rgba(25, 35, 48, .08) !important;
+        }
+        #bottom-nav > div { width: min(100%, 420px); }
+        #bottom-nav button {
+            min-height: 52px;
+            border-radius: 10px;
+        }
+        #bottom-nav button.tab-active {
+            color: var(--kpi-blue) !important;
+            border-bottom: 0;
+            background: var(--kpi-blue-soft) !important;
+        }
+
+        @media (max-width: 767px) {
+            .app-header { min-height: 64px; }
+            .app-header > div {
+                width: calc(100% - 24px);
+                min-height: 64px;
+            }
+            .app-header > div > div:first-child > div:first-child {
+                width: 34px;
+                height: 34px;
+                border-radius: 9px;
+            }
+            .app-header h1 { font-size: 14px; }
+            .app-header #btn-open-drawer { width: 34px; height: 34px; }
+            #app-content {
+                width: 100%;
+                padding: 16px 12px 96px !important;
+            }
+            .ops-view { width: 100%; }
+            #bottom-nav > div { width: calc(100% - 24px); }
+        }
+    </style>
+    <script src="js/supabase-kpi-client.js?v=20260914.02"></script>
+    <script src="js/incident-impact.js?v=20260914.02"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260910.01";
+        const CURRENT_VERSION = "20260914.02";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
