@@ -2895,7 +2895,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260914.03</span>
+                <span id="drawer-version-text">KPI Suite v20260914.04</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -3139,13 +3139,13 @@
             #bottom-nav button span { max-width: 100%; overflow-wrap: anywhere; }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260914.03"></script>
-    <script src="js/incident-impact.js?v=20260914.03"></script>
+    <script src="js/supabase-kpi-client.js?v=20260914.04"></script>
+    <script src="js/incident-impact.js?v=20260914.04"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260914.03";
+        const CURRENT_VERSION = "20260914.04";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -9618,7 +9618,7 @@
             updateDailyDashboard();
             loadSkillsData();
             // Cached-first: แสดงข้อมูลจาก cache ทันที แล้วค่อย sync เบื้องหลังเมื่อ cache เก่า
-            if (isKpiCacheStale(currentBranch)) syncDataFromSheet();
+            if (isKpiCacheStale(currentBranch)) syncDataFromSheet(false);
         }
 
         // ================= API / SYNC =================
@@ -9733,60 +9733,76 @@
         }
 
         const ScopedRefresher = {
-            inFlight: { AKRA: { incident: null, workload: null }, TRD: { incident: null, workload: null } },
-            
+            inFlight: {},
+
+            invalidate(branch) {
+                this.inFlight[branch] = {};
+            },
+
+            read(branch, kind, load, apply) {
+                const token = sessionToken;
+                if (!token) return Promise.resolve();
+                const scope = this.inFlight[branch] || (this.inFlight[branch] = {});
+                const existing = scope[kind];
+                if (existing?.token === token) return existing.promise;
+                const entry = { token, promise: null };
+                const isCurrent = () => sessionToken === token && this.inFlight[branch]?.[kind] === entry;
+                entry.promise = Promise.resolve().then(() => load(token)).then(result => {
+                    if (!isCurrent()) return;
+                    apply(result);
+                    return result;
+                }).finally(() => {
+                    if (this.inFlight[branch]?.[kind] === entry) delete this.inFlight[branch][kind];
+                });
+                scope[kind] = entry;
+                return entry.promise;
+            },
+
             async refreshIncident(branch) {
-                if (!sessionToken || !window.AkraSupabaseKPI?.getIncidentData) return;
-                const p = AkraSupabaseKPI.getIncidentData(sessionToken, branch, 3);
-                this.inFlight[branch].incident = p;
+                if (!window.AkraSupabaseKPI?.getIncidentData) return;
                 try {
-                    const res = await p;
-                    if (this.inFlight[branch].incident !== p) return;
-                    
-                    const dailyData = JSON.parse(safeStorage.getItem('kpiData_' + branch) || '[]');
-                    const merged = mergeAuthoritativeIncidentData(dailyData, res.records, branch);
-                    safeStorage.setItem('kpiData_' + branch, JSON.stringify(merged));
-                    safeStorage.setItem('kpiData_' + branch + '_ts', String(Date.now()));
-                    
-                    if (currentBranch === branch) {
-                        hydrateIncidentPreview(document.getElementById('record-date-error')?.value || _lastRecordDate);
-                        updateDailyDashboard();
-                    }
+                    await this.read(branch, 'incident', token => AkraSupabaseKPI.getIncidentData(token, branch, 3), res => {
+                        const dailyData = JSON.parse(safeStorage.getItem('kpiData_' + branch) || '[]');
+                        const merged = mergeAuthoritativeIncidentData(dailyData, res.records, branch);
+                        safeStorage.setItem('kpiData_' + branch, JSON.stringify(merged));
+                        safeStorage.setItem('kpiData_' + branch + '_ts', String(Date.now()));
+                        if (currentBranch === branch) {
+                            hydrateIncidentPreview(document.getElementById('record-date-error')?.value || _lastRecordDate);
+                            updateDailyDashboard();
+                        }
+                    });
                 } catch (e) {
                     console.error('Incident refresh error:', e);
                 }
             },
-            
+
             async refreshWorkload(branch) {
-                if (branch !== 'AKRA') return;
-                if (!sessionToken || !window.AkraSupabaseKPI?.getWorkloadData) return;
-                const p = AkraSupabaseKPI.getWorkloadData(sessionToken, branch, 3);
-                this.inFlight[branch].workload = p;
+                if (branch !== 'AKRA' || !window.AkraSupabaseKPI?.getWorkloadData) return;
                 try {
-                    const res = await p;
-                    if (this.inFlight[branch].workload !== p) return;
-                    
-                    const dailyData = JSON.parse(safeStorage.getItem('kpiData_' + branch) || '[]');
-                    const merged = mergeAuthoritativeWorkloadData(dailyData, res.records, branch);
-                    safeStorage.setItem('kpiData_' + branch, JSON.stringify(merged));
-                    safeStorage.setItem('kpiData_' + branch + '_ts', String(Date.now()));
-                    
-                    if (currentBranch === branch) {
-                        renderTeamWorkloadPreview();
-                        updateDailyDashboard();
-                    }
+                    await this.read(branch, 'workload', token => AkraSupabaseKPI.getWorkloadData(token, branch, 3), res => {
+                        const dailyData = JSON.parse(safeStorage.getItem('kpiData_' + branch) || '[]');
+                        const merged = mergeAuthoritativeWorkloadData(dailyData, res.records, branch);
+                        safeStorage.setItem('kpiData_' + branch, JSON.stringify(merged));
+                        safeStorage.setItem('kpiData_' + branch + '_ts', String(Date.now()));
+                        if (currentBranch === branch) {
+                            renderTeamWorkloadPreview();
+                            updateDailyDashboard();
+                        }
+                    });
                 } catch (e) {
                     console.error('Workload refresh error:', e);
                 }
             },
-            
+
+            refreshDaily(branch, months = 3) {
+                return this.read(branch, 'daily:' + months,
+                    token => AkraSupabaseKPI.fetchBranchData(token, branch, months),
+                    records => mergeDailySectionsIntoCache(branch, records));
+            },
+
             trigger(branch) {
                 if (!branch) return Promise.resolve();
-                if (!this.inFlight[branch]) this.inFlight[branch] = { incident: null, workload: null };
-                return Promise.allSettled([
-                    this.refreshIncident(branch),
-                    this.refreshWorkload(branch)
-                ]);
+                return Promise.allSettled([this.refreshIncident(branch), this.refreshWorkload(branch)]);
             }
         };
 
@@ -9810,9 +9826,16 @@
             safeStorage.setItem(key + '_ts', String(Date.now()));
         }
 
-        async function syncDataFromSheet() {
+        let dailySyncRun = null;
+        async function syncDataFromSheet(force = true) {
             const branch = currentBranch;
-            if (!branch) return;
+            if (!branch || !sessionToken) return;
+            const token = sessionToken;
+            const run = {};
+            dailySyncRun = run;
+            const isCurrent = () => dailySyncRun === run && sessionToken === token && currentBranch === branch;
+            // A refresh after a mutation must never reuse a pre-mutation read.
+            if (force) ScopedRefresher.invalidate(branch);
             const btn = document.getElementById('btn-sync');
             if (btn) btn.disabled = true;
             _dailyDataLoading = true;
@@ -9820,9 +9843,8 @@
             updateDailyDashboard();
             const scoped = ScopedRefresher.trigger(branch);
             try {
-                const records = await AkraSupabaseKPI.fetchBranchData(sessionToken, branch, 3);
-                mergeDailySectionsIntoCache(branch, records);
-                if (currentBranch !== branch) return;
+                await ScopedRefresher.refreshDaily(branch, 3);
+                if (!isCurrent()) return;
                 _adminFullLoaded = false;
                 loadTasksForSelectedDate();
                 hydrateSelectedDayRecord(document.getElementById('record-date').value);
@@ -9831,14 +9853,14 @@
                 if (!document.getElementById('view-admin-dash').classList.contains('hidden')) renderAdminDashboard();
                 showToast('ซิงค์ข้อมูลล่าสุดเรียบร้อย');
             } catch (error) {
-                if (currentBranch === branch) {
+                if (isCurrent()) {
                     _dailyDataLoadError = error.message || 'เชื่อมต่อข้อมูลล่าสุดไม่สำเร็จ';
                     showToast('โหลดข้อมูลรายวันไม่สำเร็จ กรุณาลองใหม่', true);
                 }
             } finally {
                 await scoped;
-                if (currentBranch === branch) { _dailyDataLoading = false; updateDailyDashboard(); }
-                if (btn) btn.disabled = false;
+                if (isCurrent()) { _dailyDataLoading = false; updateDailyDashboard(); }
+                if (dailySyncRun === run && btn) btn.disabled = false;
             }
         }
 
@@ -10796,9 +10818,7 @@
 
         async function fetchBranchData(branch, monthsQuery) {
             const months = monthsQuery ? (parseInt(String(monthsQuery).split('months=')[1], 10) || 3) : null;
-            const records = await AkraSupabaseKPI.fetchBranchData(sessionToken, branch, months);
-            mergeDailySectionsIntoCache(branch, records);
-            await ScopedRefresher.trigger(branch);
+            await Promise.all([ScopedRefresher.refreshDaily(branch, months), ScopedRefresher.trigger(branch)]);
         }
 
         async function syncAllBranchesForAdmin() {
