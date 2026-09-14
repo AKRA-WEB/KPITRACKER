@@ -270,7 +270,7 @@
                                 </button>
                             </div>
 
-                            <div class="p-3.5 rounded-xl border-2 border-blue-500 bg-blue-50/60 flex items-center justify-between gap-3 transition-all">
+                            <div class="workload-primary-summary p-3.5 rounded-xl border-2 border-blue-500 bg-blue-50/60 flex items-center justify-between gap-3 transition-all">
                                 <div class="flex items-center gap-3 min-w-0">
                                     <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-base shrink-0 font-bold shadow-sm" id="main-wl-primary-icon-box">
                                         <i class="fa-solid fa-warehouse" id="main-wl-primary-icon"></i>
@@ -2895,7 +2895,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260914.02</span>
+                <span id="drawer-version-text">KPI Suite v20260914.03</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -3101,6 +3101,7 @@
             background: var(--kpi-blue-soft) !important;
         }
 
+        #main-wl-primary-name { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
         @media (max-width: 767px) {
             .app-header { min-height: 64px; }
             .app-header > div {
@@ -3113,22 +3114,38 @@
                 border-radius: 9px;
             }
             .app-header h1 { font-size: 14px; }
-            .app-header #btn-open-drawer { width: 34px; height: 34px; }
+            .app-header #btn-open-drawer { width: 44px; height: 44px; flex-shrink: 0; }
+            #btn-toggle-main-duty-picker,
+            #support-modal button,
+            #duty-modal button,
+            #action-modal-content button { min-height: 44px; min-width: 44px; }
+            .workload-primary-summary { flex-wrap: wrap; }
+            .workload-primary-summary > div:first-child { width: 100%; align-items: flex-start; }
+            .workload-primary-summary > div:first-child > div:last-child { flex: 1; }
+            .workload-primary-summary > div:first-child > div:last-child > div { flex-wrap: wrap; }
+            #main-wl-primary-name,
+            #main-wl-primary-desc { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+            .workload-primary-summary > div:last-child { margin-left: auto; }
+            #view-workload > div:first-child > div:last-child { min-width: 0; max-width: 100%; }
+            #wl-capacity-select,
+            #record-date { min-width: 0; max-width: 100%; min-height: 44px; }
             #app-content {
                 width: 100%;
                 padding: 16px 12px 96px !important;
             }
             .ops-view { width: 100%; }
-            #bottom-nav > div { width: calc(100% - 24px); }
+            #bottom-nav > div { width: 100%; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+            #bottom-nav button { min-width: 0; margin-inline: 0; padding-inline: 2px; }
+            #bottom-nav button span { max-width: 100%; overflow-wrap: anywhere; }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260914.02"></script>
-    <script src="js/incident-impact.js?v=20260914.02"></script>
+    <script src="js/supabase-kpi-client.js?v=20260914.03"></script>
+    <script src="js/incident-impact.js?v=20260914.03"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260914.02";
+        const CURRENT_VERSION = "20260914.03";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
