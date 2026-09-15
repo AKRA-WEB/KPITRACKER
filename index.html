@@ -16,7 +16,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --app-bg: #f1f5f9;
@@ -701,7 +701,7 @@
 
                 <!-- Col 2: Team HP & Incident Timeline -->
                 <div class="space-y-3.5">
-                    <section class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-2xl border border-slate-700 shadow-md space-y-3">
+                    <section class="kpi-incident-summary bg-white p-4 rounded-2xl border border-slate-200 space-y-3">
                         <div class="flex items-center justify-between">
                             <span id="incident-team-heading" class="text-xs font-bold text-slate-200 flex items-center gap-2"><i class="fa-solid fa-heart-pulse text-red-400"></i>คะแนน Team HP วันนี้ (Daily Cap)</span>
                             <span class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-bold" id="incident-team-basis">ฐาน 100 ต่อคน</span>
@@ -1114,6 +1114,7 @@
 
         <!-- ================= VIEW 4: DASHBOARD & EXECUTIVE COCKPIT ================= -->
         <div id="view-dashboard" class="ops-view hidden space-y-4 max-w-5xl mx-auto">
+            <div class="kpi-dashboard-toolbar">
             <!-- Active Branch Dashboard Header -->
             <section id="dashboard-branch-context" class="bg-slate-900 text-white p-4 rounded-2xl border border-slate-800 shadow-md sm:p-5" aria-labelledby="dashboard-branch-title">
                 <div class="flex flex-wrap items-start justify-between gap-3">
@@ -1128,7 +1129,7 @@
                 </div>
             </section>
 
-            <div class="flex justify-between items-center bg-white p-2 rounded-xl shadow-sm border border-gray-100 md-colspan-2">
+            <div class="kpi-week-control flex justify-between items-center bg-white p-2 rounded-xl shadow-sm border border-gray-100 md-colspan-2">
                 <button onclick="changeWeek(-1)" aria-label="ดูสัปดาห์ก่อนหน้า" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors"><i class="fa-solid fa-chevron-left"></i></button>
                 <div class="text-center">
                     <h3 class="font-bold text-gray-800 text-sm" id="dash-week-label">สัปดาห์นี้</h3>
@@ -1137,14 +1138,15 @@
                 <button onclick="changeWeek(1)" aria-label="ดูสัปดาห์ถัดไป" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400" id="btn-next-week" disabled><i class="fa-solid fa-chevron-right"></i></button>
             </div>
 
-            <!-- Team KPI Card (secondary context) -->
+            </div>
+            <!-- Incident metrics -->
             <div id="dash-team-kpi" class="mb-1"></div>
 
             <div id="dashboard-priority-grid">
             <!-- Details Note -->
             <section class="kpi-priority-panel bg-white p-3 rounded-xl border border-gray-100">
                 <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2"><i class="fa-solid fa-book-open text-red-500 mr-2"></i>รายการ Incident และรายละเอียดเหตุการณ์</h3>
-                <div id="dash-error-notes" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+                <div id="dash-error-notes"></div>
             </section>
 
             <!-- Weekly Tasks -->            <!-- Active Actions Card on Dashboard -->
@@ -2896,7 +2898,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260915.02</span>
+                <span id="drawer-version-text">KPI Suite v20260915.04</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -3219,14 +3221,91 @@
             #dash-error-notes { max-height: 460px; }
             #bottom-nav { box-shadow: none !important; }
         }
+
+        #view-dashboard [hidden] { display:none !important; }
+        /* Reference-aligned dashboard and incident workspace. */
+        .kpi-dashboard-toolbar { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+        #dashboard-branch-context { flex:1; min-width:0; }
+        #dashboard-branch-context > div { align-items:center; }
+        #dashboard-branch-context h2 { font-size:22px; margin:0; }
+        #dashboard-branch-badge { display:none; }
+        .kpi-week-control { flex:0 0 280px; gap:12px; padding:6px; box-shadow:none; border-color:#e2e8f0; }
+        .kpi-week-control button { width:40px; height:40px; border-radius:8px; }
+        #dash-team-kpi > div { padding:0; border:0; background:transparent; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+        #dash-team-kpi h3 { font-size:14px; color:#475569; margin:0; }
+        #dash-team-kpi > div > div, #dash-team-kpi > div > div:first-of-type { grid-column:auto; background:#fff; padding:16px; min-height:82px; border:1px solid #e2e8f0; border-radius:12px; flex-direction:row; align-items:center; }
+        #dash-team-kpi .font-num { font-size:26px; font-weight:700; }
+        #dash-team-kpi > div > div:first-of-type > div:first-child > div:first-child { display:none; }
+        #dash-team-kpi > div > div:first-of-type > div:first-child > div:last-child > div:last-child { display:none; }
+        #dashboard-priority-grid { grid-template-columns:minmax(0,1fr); }
+        #dashboard-priority-grid > .kpi-priority-panel { padding:0; overflow:hidden; }
+        #dashboard-priority-grid > .kpi-priority-panel > h3 { margin:0; padding:18px 20px; border-bottom:1px solid #e2e8f0; }
+        #dash-error-notes { max-height:none; overflow:visible; }
+        .kpi-incident-register { width:100%; border-collapse:collapse; font-size:13px; text-align:left; }
+        .kpi-incident-register th { background:#f8fafc; color:#475569; font-size:12px; font-weight:600; padding:11px 20px; }
+        .kpi-incident-register td { padding:14px 20px; border-top:1px solid #edf0f5; vertical-align:top; }
+        .kpi-incident-register tr:hover td { background:#fafbfe; }
+        .kpi-case-date { width:112px; white-space:nowrap; color:#64748b; }
+        .kpi-case-employee { width:180px; font-weight:600; overflow-wrap:anywhere; }
+        .kpi-case-detail { overflow-wrap:anywhere; }
+        .kpi-case-detail strong { display:block; font-weight:600; margin-bottom:5px; color:#172033; }
+        .kpi-case-detail > div { font-size:12px; line-height:1.7; color:#475569; }
+        .kpi-case-detail .shadow-sm { box-shadow:none; }
+        .kpi-register-empty { margin:0; padding:32px 20px; text-align:center; color:#64748b; }
+        .kpi-incident-summary { color:#172033; box-shadow:none; }
+        #incident-team-heading { color:#172033; font-size:14px; }
+        #incident-team-basis { background:#eff6ff; color:#1e40af; border:0; font-weight:500; }
+        #err-team-hp-grid > div { background:#f8fafc; border:0; border-radius:8px; box-shadow:none; padding:12px; }
+        #err-team-hp-grid span:not(.rounded-full), #err-team-hp-grid [class*="text-slate"], #err-team-hp-grid .font-num { color:#334155; }
+        #err-team-hp-grid .font-num { font-size:22px; font-weight:700; }
+        #err-team-hp-grid .truncate { white-space:normal; font-size:12px; }
+        #err-team-hp-grid i { color:#2563eb; }
+        #pc-err-timeline > :is(div, article) { border:0; border-bottom:1px solid #e2e8f0; border-radius:0; box-shadow:none; margin:0; padding:16px 0; }
+        #pc-err-timeline > :last-child { border-bottom:0; }
+        #pc-err-timeline .shadow-sm { box-shadow:none; }
+        #view-error .text-\[10px\], #view-error .text-\[11px\] { font-size:12px; }
+        #view-error button { min-height:40px; }
+        #view-error input:not([type="checkbox"]):not([type="radio"]), #view-error select { min-height:40px; border-radius:8px; }
+        #view-error textarea { border-radius:8px; }
+        #view-error h2 { font-size:18px; }
+        #view-error .rounded-2xl { border-radius:12px; }
+        @media (min-width:1280px) {
+            #dash-team-kpi > div { grid-template-columns:repeat(6,minmax(0,1fr)); }
+            #dash-team-kpi > div > div, #dash-team-kpi > div > div:first-of-type { align-items:flex-start; flex-direction:column; gap:12px; }
+        }
+        @media (max-width:767px) {
+            .kpi-dashboard-toolbar { display:block; }
+            #dashboard-branch-context h2 { font-size:18px; line-height:1.5; }
+            #dashboard-branch-description { font-size:12px; }
+            .kpi-week-control { width:100%; margin-top:10px; padding:3px; }
+            .kpi-week-control > div { display:flex; align-items:center; gap:8px; }
+            #dash-date-range { margin:0; font-size:11px; }
+            #dash-week-label { font-size:12px; }
+            #dash-team-kpi > div { grid-template-columns:repeat(2,minmax(0,1fr)); padding:0; gap:8px; }
+            #dash-team-kpi h3 { font-size:13px; }
+            #dash-team-kpi > div > div, #dash-team-kpi > div > div:first-of-type { padding:10px; min-height:64px; gap:7px; grid-column:auto; }
+            #dash-team-kpi .font-num { font-size:22px; }
+            #dash-team-kpi .truncate { font-size:11px; }
+            #dashboard-priority-grid > .kpi-priority-panel { padding:0; }
+            #dashboard-priority-grid > .kpi-priority-panel > h3 { padding:14px; font-size:14px; }
+            .kpi-incident-register, .kpi-incident-register tbody { display:block; }
+            .kpi-incident-register thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+            .kpi-incident-register tr { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 10px; padding:12px 14px; border-top:1px solid #e2e8f0; }
+            .kpi-incident-register td { display:block; width:auto; padding:0; border:0; }
+            .kpi-case-date { grid-column:2; grid-row:1; font-size:11px; }
+            .kpi-case-employee { grid-column:1; grid-row:1; font-size:12px; }
+            .kpi-case-detail { grid-column:1 / -1; }
+            #view-error h2 { font-size:16px; }
+            #incident-team-heading { font-size:13px; }
+        }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260915.02"></script>
-    <script src="js/incident-impact.js?v=20260915.02"></script>
+    <script src="js/supabase-kpi-client.js?v=20260915.04"></script>
+    <script src="js/incident-impact.js?v=20260915.04"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260915.02";
+        const CURRENT_VERSION = "20260915.04";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -4114,7 +4193,7 @@
 
             const buckets = computeWorkloadTrend(rawData, workloadTrendWeeks);
             const hasAny = buckets.some(b => b.recordedDays > 0);
-            container.classList.remove('hidden');
+            container.classList.toggle('hidden', !hasAny);
 
             // Update selector styling
             const btn4 = document.getElementById('trend-btn-4w');
@@ -8542,6 +8621,20 @@
             }).join('');
         }
 
+        function renderDashboardIncidentRegister(rows, hasAnyNotes) {
+            if (!rows.length) return `<p class="kpi-register-empty">${hasAnyNotes
+                ? 'มีบันทึกข้อผิดพลาดของอดีตพนักงาน (สามารถดูรายละเอียดได้จากการส่งออกข้อมูลประวัติ)'
+                : 'ไม่มีข้อผิดพลาดในสัปดาห์นี้'}</p>`;
+            const sorted = [...rows].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+            return `<table class="kpi-incident-register"><caption class="sr-only">รายการ Incident และรายละเอียดเหตุการณ์</caption>
+                <thead><tr><th scope="col">วันที่</th><th scope="col">พนักงาน</th><th scope="col">เหตุการณ์ / ผลกระทบ</th></tr></thead>
+                <tbody>${sorted.map(row => `<tr>
+                    <td class="kpi-case-date">${esc(formatDisplayDate(row.date))}</td>
+                    <td class="kpi-case-employee">${esc(row.emp)}</td>
+                    <td class="kpi-case-detail"><strong>${esc(row.type)}</strong><div>${row.note}</div></td>
+                </tr>`).join('')}</tbody></table>`;
+        }
+
         function renderErrTeamHp() {
             if (window.KpiIncident?.enabled()) {
                 const grid = document.getElementById('err-team-hp-grid');
@@ -10178,6 +10271,7 @@
             const count = document.getElementById('dash-vendor-bills-count');
             const list = document.getElementById('dash-vendor-bills');
             if (!count || !list) return;
+            list.parentElement.hidden = records.length === 0;
             count.innerText = `${records.length} วัน`;
             if (!records.length) {
                 list.innerHTML = '<div class="text-center text-gray-400 text-sm py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">ไม่มีข้อมูลงาน Vendor Bills ในสัปดาห์นี้</div>';
@@ -10213,6 +10307,7 @@
             const status = document.getElementById('dash-eos-status');
             const metrics = document.getElementById('dash-eos-metrics');
             const list = document.getElementById('dash-eos-list');
+            list.closest('section').hidden = reports.length === 0;
 
             status.className = reports.length === 0
                 ? 'text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md'
@@ -10245,6 +10340,7 @@
             for (let i = 0; i < 7; i++) {
                 const d = new Date(startOfCurrentWeek);
                 d.setDate(d.getDate() + i);
+                if (!reports.some(report => report.date === formatDateKeyLocal(d))) continue;
                 weekDates.push({
                     dateStr: formatDateKeyLocal(d),
                     dayLabel: dayNamesThShort[d.getDay()],
@@ -10289,10 +10385,7 @@
                 }
             }
 
-            if (datesToRender.length === 0) {
-                list.innerHTML = '<div class="text-center text-slate-500 text-xs py-6 bg-slate-50 rounded-lg border border-dashed border-slate-300">ยังไม่มีรายงานในสัปดาห์นี้</div>';
-                return;
-            }
+
 
             const endOfWeek = new Date(startOfCurrentWeek);
             endOfWeek.setDate(endOfWeek.getDate() + 6);
@@ -10316,6 +10409,7 @@
             const dashActionsCount = document.getElementById('dash-actions-count');
             const dashActionsList = document.getElementById('dash-actions-list');
             if (dashActionsCount && dashActionsList) {
+                dashActionsList.parentElement.hidden = !(_fetchingActions || _actionsLoadError || dashboardActions.length);
                 if (_fetchingActions) {
                     dashActionsCount.innerText = '...';
                     dashActionsList.innerHTML = '<p class="text-xs text-slate-400 text-center py-4"><i class="fa-solid fa-rotate fa-spin mr-1.5"></i>กำลังโหลดข้อมูล...</p>';
@@ -10442,19 +10536,8 @@
                             </div>
                         </article>
                     `;
-                } else {
-                    return `
-                        <article class="border border-dashed border-slate-200 rounded-xl bg-slate-50/50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-slate-500">
-                            <div>
-                                <h4 class="text-xs font-bold text-slate-700">วันที่ ${formatDisplayDate(wd.dateStr)} (${wd.fullDayLabel})</h4>
-                                <p class="text-xs mt-0.5 text-slate-450">ยังไม่มีรายงานประจำวัน</p>
-                            </div>
-                            <button type="button" onclick="drillDownToRecord('${wd.dateStr}')" class="self-start sm:self-auto text-blue-600 hover:text-blue-800 font-bold text-xs bg-white border border-blue-200 hover:bg-blue-50 px-3 py-1.5 rounded-lg shadow-sm transition-all active:scale-95 flex items-center gap-1.5 min-h-[36px]">
-                                <i class="fa-solid fa-pen"></i> เขียนรายงาน
-                            </button>
-                        </article>
-                    `;
                 }
+                return '';
             }).join('');
         }
 
@@ -10729,38 +10812,27 @@
                     `;
                 }
             }
+            document.getElementById('dash-weekly-tasks').parentElement.hidden = Object.keys(weeklyTasksMap).length === 0;
             document.getElementById('dash-weekly-tasks').innerHTML = tasksHtml;
 
             // Render Notes & Errors
             let allNotesHtml = '';
-            const colorThemes = [{bg: 'red-50', border: 'red-100', text: 'red-700', icon: 'red-500'}, {bg: 'orange-50', border: 'orange-100', text: 'orange-700', icon: 'orange-500'}, {bg: 'amber-50', border: 'amber-100', text: 'amber-700', icon: 'amber-500'}, {bg: 'blue-50', border: 'blue-100', text: 'blue-700', icon: 'blue-500'}, {bg: 'purple-50', border: 'purple-100', text: 'purple-700', icon: 'purple-500'}];
-
-            if (!hasAnyNotes) {
-                allNotesHtml = '<div class="text-center text-gray-400 text-sm py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200"><i class="fa-regular fa-face-smile-beam text-2xl mb-2 block text-green-400"></i>ไม่มีข้อผิดพลาดในสัปดาห์นี้</div>';
-            } else {
-                for (const [emp, types] of Object.entries(categorizedNotes)) {
-                    if (!isEmployeeActive(emp)) continue;
-                    if (Object.keys(types).length === 0) continue;
-                    allNotesHtml += `<div class="mb-3 border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white"><div class="bg-gray-50 px-2.5 py-1.5 font-black text-gray-800 border-b border-gray-200 flex items-center text-xs"><i class="fa-solid fa-user-tag text-blue-500 mr-2"></i>${emp}</div><div class="p-2 space-y-2">`;
-                    let cIdx = 0;
-                    for (const [errType, notes] of Object.entries(types)) {
-                        let theme = colorThemes[cIdx % colorThemes.length];
-                        allNotesHtml += `<div class="bg-${theme.bg} rounded-lg border border-${theme.border} p-2"><div class="text-xs font-black text-${theme.text} mb-1 border-b border-${theme.border} pb-1 flex items-center"><i class="fa-solid fa-caret-right mr-1.5 text-${theme.icon}"></i>${errType}</div>`;
-                        notes.forEach(err => { allNotesHtml += `<div class="text-[12px] flex justify-between items-start mb-1.5 last:mb-0"><div class="pr-2 flex-1">${err.note}</div><span class="text-[9px] text-gray-400 font-medium whitespace-nowrap mt-0.5 bg-white px-1.5 py-0.5 rounded border border-gray-100 shadow-sm">${formatDisplayDate(err.date)}</span></div>`; });
-                        allNotesHtml += `</div>`; cIdx++;
-                    }
-                    allNotesHtml += `</div></div>`;
-                }
-                if (!allNotesHtml) {
-                    allNotesHtml = '<div class="text-center text-gray-500 text-xs py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200"><i class="fa-solid fa-clock-rotate-left text-xl mb-2 block text-blue-400"></i>มีบันทึกข้อผิดพลาดของอดีตพนักงาน (สามารถดูรายละเอียดได้จากการส่งออกข้อมูลประวัติ)</div>';
+            const incidentRows = [];
+            for (const [emp, types] of Object.entries(categorizedNotes)) {
+                if (!isEmployeeActive(emp)) continue;
+                for (const [type, notes] of Object.entries(types)) {
+                    notes.forEach(note => incidentRows.push({emp, type, ...note}));
                 }
             }
+            allNotesHtml = renderDashboardIncidentRegister(incidentRows, hasAnyNotes);
 
             document.getElementById('dash-total-errors').innerText = totalErr;
             document.getElementById('dash-total-volume').innerText = totalVol;
             document.getElementById('dash-err-percent').innerText = totalVol > 0 ? ((totalErr / totalVol) * 100).toFixed(1) + '%' : '0%';
+            document.getElementById('dash-error-notes').parentElement.hidden = !hasAnyNotes;
             document.getElementById('dash-error-notes').innerHTML = allNotesHtml;
             document.getElementById('dash-customer-notes').innerHTML = allCustomerNotesHtml || '<div class="text-center text-gray-400 text-sm py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">ไม่มีบันทึกข้อมูลลูกค้า</div>';
+            document.getElementById('dash-customer-notes-container').hidden = totalCustomerNotesCount === 0;
             document.getElementById('dash-customer-notes-count').innerText = `${totalCustomerNotesCount} รายการ`;
 
             const lastWeekStart = new Date(startOfCurrentWeek); lastWeekStart.setDate(lastWeekStart.getDate() - 7);
@@ -10820,7 +10892,7 @@
             if (currentBranch === 'AKRA') {
                 const workloadContainer = document.getElementById('dash-workload-container');
                 if (workloadContainer) {
-                    workloadContainer.classList.remove('hidden');
+                    workloadContainer.classList.toggle('hidden', !hasWorkloadData);
                     teamWorkload.employeeCount = workloadEmployees.size;
                     teamWorkload.recordedDays = workloadDates.size;
                     document.getElementById('dash-workload-count').innerText = `${teamWorkload.employeeCount} คน (${teamWorkload.recordedDays} วัน)`;
@@ -10903,6 +10975,8 @@
             _cachedTrendData = rawData;
             renderWorkloadTrend(rawData);
 
+            document.getElementById('dash-smart-summary').parentElement.hidden = targetWeekData.length === 0;
+            document.getElementById('dash-err-card').parentElement.hidden = targetWeekData.length === 0;
             document.getElementById('dash-smart-summary').innerHTML = smartSummaryHtml;
 
         }
@@ -14359,14 +14433,15 @@
                 : (model.dataState.state === 'error'
                     ? `<p class="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm leading-relaxed text-amber-900"><i class="fa-solid fa-triangle-exclamation mr-2" aria-hidden="true"></i>${esc(model.dataState.error || 'โหลดข้อมูลล่าสุดไม่สำเร็จ')}${model.dataState.hasCachedDay ? ' — ข้อมูลด้านล่างมาจาก cache ในเครื่อง' : ' — ยังไม่มีข้อมูลของวันที่เลือกในเครื่อง'}</p>`
                     : '');
-            let html = dataStateHtml + renderDailyDashboardSection(
+            let html = dataStateHtml;
+            if (model.operations.state !== 'missing' && model.operations.state !== 'not_applicable') html += renderDailyDashboardSection(
                 'ภาพรวมการปฏิบัติงาน',
                 'fa-chart-column',
                 renderDailyDashboardStatus(model.operations.state, model.branch === 'TRD' ? 'ข้อมูลตามสาขา' : 'บันทึกแล้ว', model.operations.state === 'partial' ? 'ข้อมูลไม่ครบ' : 'ยังไม่ได้สรุป'),
                 overviewBody
             );
 
-            if (model.workload) {
+            if (model.workload && (model.workload.entries.length || model.roster?.state === 'confirmed')) {
                 const rosterSummary = model.roster?.state === 'confirmed'
                     ? `<div class="mb-2 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-slate-200 pb-2 text-xs"><span class="shrink-0 font-black text-slate-900">ทีมเข้ากะ ${model.roster.names.length} คน</span><span class="min-w-0 break-words text-slate-600">${model.roster.names.map(esc).join(', ')}</span></div>`
                     : '<p class="mb-2 border-b border-amber-200 pb-2 text-xs text-amber-800">ยังไม่มี roster ที่ยืนยันสำหรับวันที่เลือก</p>';
@@ -14420,14 +14495,14 @@
             } else {
                 errorsBody = '<p class="text-sm text-amber-800">ยังไม่ได้สรุป — ต้องบันทึกเหตุการณ์ หรือยืนยันว่าไม่มีความผิดพลาด</p>';
             }
-            html += renderDailyDashboardSection(
+            if (model.errors.state === 'recorded' || (model.errors.state === 'zero' && !model.errors.assumedZero)) html += renderDailyDashboardSection(
                 `ความผิดพลาด (${model.errors.cases.length} เคส)`,
                 'fa-triangle-exclamation',
                 renderDailyDashboardStatus(model.errors.state, model.errors.state === 'zero' ? (model.errors.assumedZero ? 'ไม่พบความผิดพลาด' : 'ยืนยัน 0 เคส') : 'บันทึกแล้ว', 'ยังไม่ได้สรุป'),
                 errorsBody
             );
 
-            if (model.vendorBills) {
+            if (model.vendorBills && model.vendorBills.state !== 'missing') {
                 let vendorBody = '<p class="text-sm text-amber-800">ยังไม่ได้สรุปจำนวนและสถานะ Vendor Bills</p>';
                 if (model.vendorBills.state === 'completed' || model.vendorBills.state === 'pending') {
                     const isPending = model.vendorBills.state === 'pending';
@@ -14453,13 +14528,13 @@
             ];
             const briefBody = model.brief.state === 'missing'
                 ? '<p class="text-sm text-amber-800">ยังไม่มีข้อมูลของวันที่เลือก</p>'
-                : `<div class="grid grid-cols-1 gap-2 lg:grid-cols-2">${briefLabels.map(([key, label, icon, emptyText]) => `
+                : `<div class="grid grid-cols-1 gap-2 lg:grid-cols-2">${briefLabels.filter(([key]) => String(model.brief.fields[key] || '').trim()).map(([key, label, icon, emptyText]) => `
                     <article class="min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-3">
                         <h4 class="text-xs font-black text-blue-700"><i class="fa-solid ${icon} mr-1.5" aria-hidden="true"></i>${esc(label)}</h4>
                         <p class="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed ${model.brief.fields[key] ? 'text-slate-900' : 'text-slate-700'}">${model.brief.fields[key] ? esc(model.brief.fields[key]) : emptyText}</p>
                     </article>
                 `).join('')}</div>`;
-            html += renderDailyDashboardSection('Daily Brief', 'fa-clipboard-list', renderDailyDashboardStatus(model.brief.state, 'สรุปแล้ว', 'ยังไม่มีข้อมูล'), briefBody);
+            if (model.brief.state !== 'missing') html += renderDailyDashboardSection('Daily Brief', 'fa-clipboard-list', renderDailyDashboardStatus(model.brief.state, 'สรุปแล้ว', 'ยังไม่มีข้อมูล'), briefBody);
 
             let actionsBody;
             if (model.actions.state === 'loading') {
@@ -14487,7 +14562,7 @@
                 ` : '';
                 actionsBody = `<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">${renderActionList(model.actions.active, false)}${renderActionList(model.actions.resolved, true)}</div>`;
             }
-            html += renderDailyDashboardSection('Actions ของวันที่เลือก', 'fa-list-check', renderDailyDashboardStatus(model.actions.state, 'โหลดแล้ว', model.actions.state === 'error' ? 'โหลดไม่สำเร็จ' : 'กำลังโหลด'), actionsBody);
+            if (model.actions.state === 'loading' || model.actions.state === 'error' || model.actions.active.length || model.actions.resolved.length) html += renderDailyDashboardSection('Actions ของวันที่เลือก', 'fa-list-check', renderDailyDashboardStatus(model.actions.state, 'โหลดแล้ว', model.actions.state === 'error' ? 'โหลดไม่สำเร็จ' : 'กำลังโหลด'), actionsBody);
             content.innerHTML = html;
         }
 
@@ -14521,6 +14596,7 @@
                 fallbackRoster: [],
                 cacheTimestamp: safeStorage.getItem('kpiData_' + currentBranch + '_ts')
             });
+            if (card) card.hidden = !dayData && !(_dailyDataLoading || _dailyDataLoadError || _fetchingActions || _actionsLoadError || model.actions.active.length || model.actions.resolved.length);
             renderDetailedDailyDashboard(model);
         }
 
