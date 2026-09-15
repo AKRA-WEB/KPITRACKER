@@ -3,19 +3,21 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
-const controller = html.slice(html.indexOf('        const LINE_REQUISITION_API_URL'), html.indexOf('        function applyAkraWorkloadDraft'));
+const controller = html.slice(html.indexOf('        let liveRequisitionsList'), html.indexOf('        function applyAkraWorkloadDraft'));
 const nodes = new Map(['live-bill-count', 'live-bill-list-cards', 'live-bill-read-state'].map(id => [id, { innerText: '', innerHTML: '' }]));
 const requests = [];
 const ctx = vm.createContext({
     document: { getElementById: id => nodes.get(id) || null },
     console: { warn() {} },
+    sessionToken: 'count-test-token',
+    AkraSupabaseKPI: { getLiveRequisitions: (token, date) => new Promise(resolve => requests.push({ token, date, resolve })) },
     esc: value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;'),
     fetch: (url, options) => new Promise(resolve => requests.push({ url, options, resolve }))
 });
 vm.runInContext(controller, ctx);
 const run = code => vm.runInContext(code, ctx);
 const count = () => nodes.get('live-bill-count').innerText;
-const respond = (i, data, ok = true) => requests[i].resolve({ ok, json: async () => data });
+const respond = (i, data, ok = true) => requests[i].resolve(ok ? data : {});
 (async () => {
     run(`liveRequisitionsList = [
         {uid:'1',status:'จัดเสร็จแล้ว',doneBy:'private actor',itemsSummary:'<img src=x onerror=alert(1)>',rawText:'source text'},
@@ -49,7 +51,7 @@ const respond = (i, data, ok = true) => requests[i].resolve({ ok, json: async ()
     const wrong = run("fetchLiveRequisitions('2026-09-11')");
     respond(3, {success:true,date:'2026-09-10',requisitions:[]}); await wrong;
     assert.equal(count(), '—');
-    assert.ok(requests.every(r => !r.options), 'Count-only flow only reads');
+    assert.ok(requests.every(r => r.token === 'count-test-token'), 'Count-only flow uses authenticated read calls');
     assert.equal(run('typeof markReqStatus'), 'undefined');
     console.log('PASS count-only: status-independent counts, stable-ID dedup, history preserved, escaped text, empty/error and stale-date isolation; no status writer');
 })().catch(error => { console.error(error); process.exitCode = 1; });

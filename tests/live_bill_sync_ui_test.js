@@ -53,7 +53,7 @@ console.log('✓ All 11 required Live Bill Sync DOM IDs present in markup');
 
 // [4] Functional Controller Test in VM Context
 const controller = html.slice(
-    html.indexOf('        const LINE_REQUISITION_API_URL'),
+    html.indexOf('        let liveRequisitionsList'),
     html.indexOf('        function applyAkraWorkloadDraft')
 );
 
@@ -86,7 +86,8 @@ const sandbox = {
     },
     console: { warn() {} },
     esc: value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;'),
-    fetch: () => Promise.resolve({ ok: true, json: async () => ({ success: true, requisitions: [] }) })
+    fetch: () => Promise.resolve({ ok: true, json: async () => ({ success: true, requisitions: [] }) }),
+    sessionToken: 'session-token-1'
 };
 
 vm.createContext(sandbox);
@@ -248,11 +249,28 @@ const kpiClient = require('../js/supabase-kpi-client.js');
 assert.strictEqual(typeof kpiClient.getLiveRequisitions, 'function', 'AkraSupabaseKPI must export getLiveRequisitions');
 console.log('✓ AkraSupabaseKPI.getLiveRequisitions export verified');
 
+const nativeFetch = global.fetch;
+let clientRequest = null;
+async function testKpiClientAuthContract() {
+    global.fetch = async (url, options) => {
+        clientRequest = { url, options, body: JSON.parse(options.body) };
+        return { ok: true, json: async () => ({ status: 'success', feedStatus: 'ok', date: '2026-09-09', requisitions: [] }) };
+    };
+    await kpiClient.getLiveRequisitions('session-token-1', '2026-09-09');
+    assert.ok(clientRequest.url.endsWith('/functions/v1/kpi-api'), 'Live Bill client must call kpi-api');
+    assert.strictEqual(clientRequest.body.action, 'getLiveRequisitions');
+    assert.strictEqual(clientRequest.body.token, 'session-token-1');
+    assert.strictEqual(clientRequest.body.date, '2026-09-09');
+    await assert.rejects(() => kpiClient.getLiveRequisitions('', '2026-09-09'), /authenticated Main session/);
+    global.fetch = nativeFetch;
+    console.log('✓ Live Bill client sends the Main session token and rejects unauthenticated reads');
+}
+
 // Test fetchLiveRequisitions using AkraSupabaseKPI
-let supabaseCalledWithDate = null;
+let supabaseCalledWith = null;
 sandbox.AkraSupabaseKPI = {
-    getLiveRequisitions: async (date) => {
-        supabaseCalledWithDate = date;
+    getLiveRequisitions: async (token, date) => {
+        supabaseCalledWith = { token, date };
         return {
             success: true,
             date: date,
@@ -272,14 +290,15 @@ sandbox.AkraSupabaseKPI = {
 };
 
 (async () => {
+    await testKpiClientAuthContract();
     await sandbox.fetchLiveRequisitions('2026-09-09');
-    assert.strictEqual(supabaseCalledWithDate, '2026-09-09', 'fetchLiveRequisitions must route through AkraSupabaseKPI');
+    assert.deepEqual(supabaseCalledWith, { token: 'session-token-1', date: '2026-09-09' }, 'fetchLiveRequisitions must route through authenticated AkraSupabaseKPI');
     assert.strictEqual(domStore.get('live-bill-count').innerText, '1');
     assert.strictEqual(domStore.get('live-sku-count').innerText, '1');
     assert.strictEqual(domStore.get('live-unit-count').innerText, '3');
     console.log('✓ fetchLiveRequisitions routed through Supabase client with verified DOM rendering');
 
-    // Test fallback to fetch when AkraSupabaseKPI is undefined
+    // Missing authenticated Supabase client must surface an error, never query the legacy GAS endpoint.
     sandbox.AkraSupabaseKPI = undefined;
     let fetchFallbackUrl = null;
     sandbox.fetch = async (url) => {
@@ -304,10 +323,10 @@ sandbox.AkraSupabaseKPI = {
         };
     };
     await sandbox.fetchLiveRequisitions('2026-09-09');
-    assert.ok(fetchFallbackUrl.includes('date=2026-09-09'), 'Fallback must query LINE_REQUISITION_API_URL');
-    assert.strictEqual(domStore.get('live-bill-count').innerText, '1');
-    assert.strictEqual(domStore.get('live-unit-count').innerText, '4');
-    console.log('✓ Fallback to LINE_REQUISITION_API_URL verified when AkraSupabaseKPI is absent');
+    assert.strictEqual(fetchFallbackUrl, null, 'Live Bill must not query LINE_REQUISITION_API_URL');
+    assert.strictEqual(domStore.get('live-bill-count').innerText, '—');
+    assert.strictEqual(domStore.get('live-unit-count').innerText, '—');
+    console.log('✓ Missing Supabase client surfaces an error without a legacy GAS fallback');
 
     console.log('=============================================================');
     console.log('🎉 ALL LIVE BILL SYNC UI & SUPABASE TESTS PASSED 100%! 🎉');
