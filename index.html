@@ -1118,7 +1118,6 @@
             <section id="dashboard-branch-context" class="bg-slate-900 text-white p-4 rounded-2xl border border-slate-800 shadow-md sm:p-5" aria-labelledby="dashboard-branch-title">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div class="min-w-0">
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Dashboard ประจำสาขา</p>
                         <h2 id="dashboard-branch-title" class="mt-1 text-base font-bold text-white flex items-center gap-2 sm:text-lg">
                             <i class="fa-solid fa-chart-pie text-amber-400" aria-hidden="true"></i>
                             <span id="dashboard-branch-title-text">ภาพรวมการปฏิบัติงานสาขา AKRA</span>
@@ -1126,88 +1125,6 @@
                         <p id="dashboard-branch-description" class="mt-1 text-xs leading-relaxed text-slate-300">ข้อมูล Workload, ปัญหาหน้างาน, รายงานประจำวัน และงานติดตามของ AKRA เท่านั้น</p>
                     </div>
                     <span id="dashboard-branch-badge" class="shrink-0 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-black text-amber-300">AKRA WAREHOUSE</span>
-                </div>
-            </section>
-
-            <!-- Daily End-of-Shift Executive Brief -->
-            <section id="daily-eos-card" data-scoped-save-card class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm" aria-labelledby="eos-title">
-                <div class="border-b border-slate-100 pb-3 mb-4">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <h2 id="eos-title" class="text-base font-semibold text-slate-900">สรุปรายงานประจำวัน (End of Shift)</h2>
-                            <p class="text-[11px] text-slate-500 mt-1">สรุปรายงานประจำวัน เน้นผลลัพธ์ ประเด็น และสิ่งที่ต้องติดตาม</p>
-                        </div>
-                        <span class="shrink-0 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 px-2 py-1 rounded-md">รายงานประจำวัน</span>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="eos-summary" class="block text-sm font-bold text-slate-700 mb-1.5">ผลงานและสิ่งที่เสร็จวันนี้</label>
-                        <textarea id="eos-summary" name="endOfShiftSummary" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="สรุปผลลัพธ์สำคัญ ปริมาณงาน หรือ milestone ที่เสร็จ..."></textarea>
-                    </div>
-                    <div>
-                        <label for="eos-issues" class="block text-sm font-bold text-slate-700 mb-1.5">ปัญหา / อุปสรรคที่พบ</label>
-                        <textarea id="eos-issues" name="endOfShiftIssues" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="ระบุผลกระทบและสาเหตุที่ทราบ หากไม่มีให้เว้นว่าง..."></textarea>
-                    </div>
-                    <div>
-                        <label for="eos-actions" class="block text-sm font-bold text-slate-700 mb-1.5">แนวทางแก้ไข / การตอบสนอง</label>
-                        <textarea id="eos-actions" name="endOfShiftActions" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="สิ่งที่ดำเนินการแล้ว หรือแนวทางแก้ในขั้นถัดไป..."></textarea>
-                    </div>
-                    <!-- EoS Promotion Card for Admins -->
-                    <div id="eos-promotion-card" class="hidden flex flex-col justify-between p-4 rounded-lg border border-purple-100 bg-purple-50/50 min-h-[140px]">
-                        <div class="space-y-2">
-                            <h3 class="text-sm font-bold text-purple-950 flex items-center"><i class="fa-solid fa-square-check mr-1.5"></i>เรื่องที่ต้องติดตาม / แก้ไขด่วน</h3>
-                            <p class="text-xs text-purple-800 leading-relaxed">เปลี่ยนปัญหาหรือเรื่องค้างที่ต้องการการติดตาม ให้เป็น <strong class="text-purple-950">Structured Action</strong> เพื่อกำหนดผู้รับผิดชอบและวันครบกำหนดอย่างเป็นระบบ</p>
-                            <div id="eos-legacy-followups-container" class="hidden p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 mt-2 shadow-sm">
-                                <span class="font-bold block mb-1 text-[11px]"><i class="fa-solid fa-clock-rotate-left mr-1"></i>ข้อมูลติดตามเดิม (Legacy):</span>
-                                <p id="eos-legacy-followups-text" class="whitespace-pre-wrap font-mono text-[10px] leading-relaxed text-slate-700"></p>
-                            </div>
-                        </div>
-                        <button type="button" onclick="createActionFromDailyBrief()" class="w-full mt-3 py-2.5 px-4 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white rounded-lg text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-plus text-xs"></i> สร้าง Action จากรายงานประจำวัน
-                        </button>
-                    </div>
-
-                    <!-- Traditional Follow-ups Textarea for Non-Admins -->
-                    <div id="eos-legacy-textarea-container" class="hidden">
-                        <label for="eos-followups" class="block text-sm font-bold text-slate-700 mb-1.5">ระบบงาน / เรื่องที่ต้องติดตาม</label>
-                        <textarea id="eos-followups" name="endOfShiftFollowUps" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="ระบุระบบ งานค้าง ผู้รับช่วงต่อ หรือประเด็นที่ต้องติดตามพรุ่งนี้..."></textarea>
-                    </div>
-                </div>
-
-                <button type="button" id="btn-save-end-of-shift" data-skip-draft-autosave onclick="saveEndOfShiftCard()" class="mt-4 min-h-12 w-full bg-slate-700 hover:bg-slate-800 active:scale-95 transition-all text-white font-bold px-4 py-3 rounded-xl text-sm shadow-md flex justify-center items-center border border-slate-900">
-                    <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึกสรุปรายงานประจำวัน
-                </button>
-            </section>
-
-            <!-- Structured Action Items Section -->
-            <section id="record-actions-card" class="enterprise-card p-4 md-colspan-2 border-l-4 border-l-purple-700" aria-labelledby="record-actions-title">
-                <div class="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center">
-                    <div>
-                        <h2 id="record-actions-title" class="text-lg font-semibold text-slate-900">รายการติดตามงาน / แก้ไขด่วน (Structured Actions)</h2>
-                        <p class="text-[11px] text-slate-500 mt-1">บันทึกประเด็นที่ต้องติดตามเป็นรายข้อ พร้อมผู้รับผิดชอบและวันครบกำหนด</p>
-                    </div>
-                    <button type="button" onclick="openActionModalForCreate()" class="bg-purple-600 hover:bg-purple-700 active:scale-95 transition-all text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md flex items-center">
-                        <i class="fa-solid fa-plus mr-1.5"></i> เพิ่ม Action
-                    </button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[600px] text-xs text-left border-collapse">
-                        <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                            <tr>
-                                <th scope="col" class="p-2.5">หัวข้อ / รายละเอียด</th>
-                                <th scope="col" class="p-2.5">หมวดหมู่</th>
-                                <th scope="col" class="p-2.5">ระดับความรุนแรง</th>
-                                <th scope="col" class="p-2.5">ผู้รับผิดชอบ</th>
-                                <th scope="col" class="p-2.5">วันครบกำหนด</th>
-                                <th scope="col" class="p-2.5">สถานะ</th>
-                                <th scope="col" class="p-2.5 text-center">จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="record-actions-table-body">
-                            <tr><td colspan="7" class="p-4 text-center text-gray-400 bg-gray-50 border border-dashed border-gray-200 rounded-lg">ยังไม่มีรายการติดตามงานสำหรับวันนี้ · คลิก "+ เพิ่ม Action" เพื่อระบุหัวข้อ</td></tr>
-                        </tbody>
-                    </table>
                 </div>
             </section>
 
@@ -1220,11 +1137,31 @@
                 <button onclick="changeWeek(1)" aria-label="ดูสัปดาห์ถัดไป" class="p-2 w-9 h-9 flex justify-center items-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 active:bg-blue-200 transition-colors disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400" id="btn-next-week" disabled><i class="fa-solid fa-chevron-right"></i></button>
             </div>
 
+            <!-- Team KPI Card (secondary context) -->
+            <div id="dash-team-kpi" class="mb-1"></div>
+
+            <div id="dashboard-priority-grid">
+            <!-- Details Note -->
+            <section class="kpi-priority-panel bg-white p-3 rounded-xl border border-gray-100">
+                <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2"><i class="fa-solid fa-book-open text-red-500 mr-2"></i>รายการ Incident และรายละเอียดเหตุการณ์</h3>
+                <div id="dash-error-notes" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+            </section>
+
+            <!-- Weekly Tasks -->            <!-- Active Actions Card on Dashboard -->
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2 flex justify-between items-center">
+                    <span><i class="fa-solid fa-circle-exclamation text-purple-600 mr-2"></i>รายการติดตามงาน (Active Actions)</span>
+                    <span id="dash-actions-count" class="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-md text-[9px] font-bold border border-purple-200">0 รายการ</span>
+                </h3>
+                <div id="dash-actions-list" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+            </div>
+
+            </div>
+
             <!-- Executive End-of-Shift Snapshot -->
             <section class="enterprise-card p-4 md-colspan-2" aria-labelledby="dash-eos-title">
                 <div class="flex flex-wrap justify-between items-start gap-3 border-b border-slate-100 pb-3 mb-3">
                     <div>
-                        <p class="text-xs font-medium text-slate-500">สรุปการปฏิบัติงาน</p>
                         <h3 id="dash-eos-title" class="font-semibold text-slate-900 text-base mt-1">รายงานประจำวัน</h3>
                     </div>
                     <span id="dash-eos-status" class="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md">ยังไม่มีรายงาน</span>
@@ -1259,9 +1196,6 @@
                 <h3 class="font-semibold text-slate-900 mb-2 text-sm relative z-10">สรุปประจำสัปดาห์</h3>
                 <div id="dash-smart-summary" class="text-xs text-gray-700 space-y-1.5 leading-relaxed relative z-10 font-medium"></div>
             </div>
-
-            <!-- Team KPI Card (secondary context) -->
-            <div id="dash-team-kpi" class="mb-1"></div>
 
             <!-- Overview Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 md-colspan-2">
@@ -1345,21 +1279,6 @@
                 </div>
             </div>
 
-            <!-- Details Note -->
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2"><i class="fa-solid fa-book-open text-red-500 mr-2"></i>ประวัติหมายเหตุความผิด</h3>
-                <div id="dash-error-notes" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
-            </div>
-
-            <!-- Weekly Tasks -->            <!-- Active Actions Card on Dashboard -->
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2 flex justify-between items-center">
-                    <span><i class="fa-solid fa-circle-exclamation text-purple-600 mr-2"></i>รายการติดตามงาน (Active Actions)</span>
-                    <span id="dash-actions-count" class="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-md text-[9px] font-bold border border-purple-200">0 รายการ</span>
-                </h3>
-                <div id="dash-actions-list" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
-            </div>
-
             <!-- Weekly Tasks -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
                 <h3 class="font-bold text-gray-800 mb-2 text-sm border-b border-gray-50 pb-2"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i>สถานะแผนงานสัปดาห์นี้</h3>
@@ -1377,6 +1296,88 @@
                 </div>
                 <div id="dash-emp-breakdown" class="space-y-2.5"></div>
             </div>
+
+            <!-- Daily End-of-Shift Executive Brief -->
+            <section id="daily-eos-card" data-scoped-save-card class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm" aria-labelledby="eos-title">
+                <div class="border-b border-slate-100 pb-3 mb-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <h2 id="eos-title" class="text-base font-semibold text-slate-900">สรุปรายงานประจำวัน (End of Shift)</h2>
+                            <p class="text-[11px] text-slate-500 mt-1">สรุปรายงานประจำวัน เน้นผลลัพธ์ ประเด็น และสิ่งที่ต้องติดตาม</p>
+                        </div>
+                        <span class="shrink-0 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 px-2 py-1 rounded-md">รายงานประจำวัน</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="eos-summary" class="block text-sm font-bold text-slate-700 mb-1.5">ผลงานและสิ่งที่เสร็จวันนี้</label>
+                        <textarea id="eos-summary" name="endOfShiftSummary" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="สรุปผลลัพธ์สำคัญ ปริมาณงาน หรือ milestone ที่เสร็จ..."></textarea>
+                    </div>
+                    <div>
+                        <label for="eos-issues" class="block text-sm font-bold text-slate-700 mb-1.5">ปัญหา / อุปสรรคที่พบ</label>
+                        <textarea id="eos-issues" name="endOfShiftIssues" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="ระบุผลกระทบและสาเหตุที่ทราบ หากไม่มีให้เว้นว่าง..."></textarea>
+                    </div>
+                    <div>
+                        <label for="eos-actions" class="block text-sm font-bold text-slate-700 mb-1.5">แนวทางแก้ไข / การตอบสนอง</label>
+                        <textarea id="eos-actions" name="endOfShiftActions" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="สิ่งที่ดำเนินการแล้ว หรือแนวทางแก้ในขั้นถัดไป..."></textarea>
+                    </div>
+                    <!-- EoS Promotion Card for Admins -->
+                    <div id="eos-promotion-card" class="hidden flex flex-col justify-between p-4 rounded-lg border border-purple-100 bg-purple-50/50 min-h-[140px]">
+                        <div class="space-y-2">
+                            <h3 class="text-sm font-bold text-purple-950 flex items-center"><i class="fa-solid fa-square-check mr-1.5"></i>เรื่องที่ต้องติดตาม / แก้ไขด่วน</h3>
+                            <p class="text-xs text-purple-800 leading-relaxed">เปลี่ยนปัญหาหรือเรื่องค้างที่ต้องการการติดตาม ให้เป็น <strong class="text-purple-950">Structured Action</strong> เพื่อกำหนดผู้รับผิดชอบและวันครบกำหนดอย่างเป็นระบบ</p>
+                            <div id="eos-legacy-followups-container" class="hidden p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 mt-2 shadow-sm">
+                                <span class="font-bold block mb-1 text-[11px]"><i class="fa-solid fa-clock-rotate-left mr-1"></i>ข้อมูลติดตามเดิม (Legacy):</span>
+                                <p id="eos-legacy-followups-text" class="whitespace-pre-wrap font-mono text-[10px] leading-relaxed text-slate-700"></p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="createActionFromDailyBrief()" class="w-full mt-3 py-2.5 px-4 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white rounded-lg text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-plus text-xs"></i> สร้าง Action จากรายงานประจำวัน
+                        </button>
+                    </div>
+
+                    <!-- Traditional Follow-ups Textarea for Non-Admins -->
+                    <div id="eos-legacy-textarea-container" class="hidden">
+                        <label for="eos-followups" class="block text-sm font-bold text-slate-700 mb-1.5">ระบบงาน / เรื่องที่ต้องติดตาม</label>
+                        <textarea id="eos-followups" name="endOfShiftFollowUps" rows="4" maxlength="1200" class="w-full min-h-28 resize-y p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600" placeholder="ระบุระบบ งานค้าง ผู้รับช่วงต่อ หรือประเด็นที่ต้องติดตามพรุ่งนี้..."></textarea>
+                    </div>
+                </div>
+
+                <button type="button" id="btn-save-end-of-shift" data-skip-draft-autosave onclick="saveEndOfShiftCard()" class="mt-4 min-h-12 w-full bg-slate-700 hover:bg-slate-800 active:scale-95 transition-all text-white font-bold px-4 py-3 rounded-xl text-sm shadow-md flex justify-center items-center border border-slate-900">
+                    <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> บันทึกสรุปรายงานประจำวัน
+                </button>
+            </section>
+
+            <!-- Structured Action Items Section -->
+            <section id="record-actions-card" class="enterprise-card p-4 md-colspan-2 border-l-4 border-l-purple-700" aria-labelledby="record-actions-title">
+                <div class="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center">
+                    <div>
+                        <h2 id="record-actions-title" class="text-lg font-semibold text-slate-900">รายการติดตามงาน / แก้ไขด่วน (Structured Actions)</h2>
+                        <p class="text-[11px] text-slate-500 mt-1">บันทึกประเด็นที่ต้องติดตามเป็นรายข้อ พร้อมผู้รับผิดชอบและวันครบกำหนด</p>
+                    </div>
+                    <button type="button" onclick="openActionModalForCreate()" class="bg-purple-600 hover:bg-purple-700 active:scale-95 transition-all text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md flex items-center">
+                        <i class="fa-solid fa-plus mr-1.5"></i> เพิ่ม Action
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[600px] text-xs text-left border-collapse">
+                        <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                            <tr>
+                                <th scope="col" class="p-2.5">หัวข้อ / รายละเอียด</th>
+                                <th scope="col" class="p-2.5">หมวดหมู่</th>
+                                <th scope="col" class="p-2.5">ระดับความรุนแรง</th>
+                                <th scope="col" class="p-2.5">ผู้รับผิดชอบ</th>
+                                <th scope="col" class="p-2.5">วันครบกำหนด</th>
+                                <th scope="col" class="p-2.5">สถานะ</th>
+                                <th scope="col" class="p-2.5 text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="record-actions-table-body">
+                            <tr><td colspan="7" class="p-4 text-center text-gray-400 bg-gray-50 border border-dashed border-gray-200 rounded-lg">ยังไม่มีรายการติดตามงานสำหรับวันนี้ · คลิก "+ เพิ่ม Action" เพื่อระบุหัวข้อ</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
             <div class="h-4"></div>
         </div>
@@ -2895,7 +2896,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260915.01</span>
+                <span id="drawer-version-text">KPI Suite v20260915.02</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -3139,13 +3140,93 @@
             #bottom-nav button span { max-width: 100%; overflow-wrap: anywhere; }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260915.01"></script>
-    <script src="js/incident-impact.js?v=20260915.01"></script>
+    <style id="kpi-saas-ui">
+        :root { --kpi-canvas: #f5f7fa; --kpi-nav: #0e1729; --kpi-blue: #2563eb; --kpi-ink: #172033; --kpi-muted: #475569; --kpi-shadow: none; }
+        html { scrollbar-color: #94a3b8 #f5f7fa; scroll-padding-top: 90px; }
+        ::selection { background: #dbeafe; color: #172033; }
+        input, textarea { caret-color: #2563eb; }
+        .app-header { background: #fff !important; color: #172033; box-shadow: none !important; border-bottom: 1px solid #e2e8f0 !important; }
+        .app-header h1 { color: #172033; letter-spacing: -.02em; }
+        .app-header > div > div:first-child > div:first-child { background: #eff6ff; color: #2563eb; border: 0; box-shadow: none; }
+        .app-header #desktop-branch-label, .app-header #showUserName { color: #475569; }
+        .app-header > div > div:last-child > div { color: #475569; }
+        .app-header #header-section-badge { color: #1d4ed8; }
+        .app-header #btn-open-drawer { background: #f1f5f9; color: #475569; border-color: #e2e8f0; box-shadow: none; }
+        .app-header #btn-open-drawer:hover { background: #e2e8f0; color: #172033; }
+        .app-header .desktop-tab { font-size: 13px; color: #475569; box-shadow: none !important; }
+        .app-header .desktop-tab:hover { color: #1d4ed8; background: #eff6ff; transform: none; }
+        .app-header .desktop-tab-active { background: #2563eb !important; border-color: transparent !important; }
+        #app-content { width: calc(100% - 48px); padding-top: 28px !important; }
+        .ops-view { width: 100%; }
+        .ops-view > .bg-white, .ops-view section.bg-white, #view-dashboard .bg-white, .enterprise-card { box-shadow: none !important; }
+        #view-dashboard > * { min-width: 0; }
+        #view-dashboard > .bg-white, #view-dashboard > section, #view-dashboard .enterprise-card { padding: 20px; border: 1px solid #e2e8f0; border-radius: 14px; }
+        #dashboard-branch-context { padding: 0 0 6px !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+        #dashboard-branch-context h2 { color: #172033; font-size: 24px; letter-spacing: -.02em; }
+        #dashboard-branch-context h2 i { color: #2563eb; }
+        #dashboard-branch-description { color: #475569; font-size: 13px; }
+        #dashboard-branch-badge { color: #1d4ed8; background: #eff6ff; border-color: #dbeafe; }
+        #dash-team-kpi > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 14px; }
+        #dash-team-kpi h3 { grid-column: 1 / -1; font-size: 16px; margin: 0 0 4px; }
+        #dash-team-kpi > div > div { grid-column: auto; min-width: 0; min-height: 66px; background: #f8fafc; border-color: #e2e8f0; box-shadow: none; padding: 12px; gap: 10px; }
+        #dash-team-kpi > div > div:first-of-type { background: #eff6ff; border-color: #bfdbfe; }
+        #dash-team-kpi > div > div span:not(.rounded-full), #dash-team-kpi > div > div [class*="text-slate"] { color: #334155; }
+        #dash-team-kpi .font-num { color: #172033 !important; font-size: 24px; font-variant-numeric: tabular-nums; }
+        #dash-team-kpi .truncate { white-space: normal; overflow: visible; font-size: 12px; }
+        #dash-team-kpi i { color: #2563eb; }
+        #dashboard-priority-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+        #dashboard-priority-grid > * { min-width: 0; padding: 20px; border: 1px solid #e2e8f0; border-radius: 14px; }
+        #dashboard-priority-grid h3 { font-size: 15px; padding-bottom: 12px; margin-bottom: 12px; gap: 8px; flex-wrap: wrap; }
+        #dash-error-notes, #dash-actions-list { max-height: 420px; scrollbar-width: thin; }
+        #dash-error-notes { font-size: 13px; }
+        #view-dashboard [class~="text-[9px]"], #view-dashboard [class~="text-[10px]"], #view-dashboard [class~="text-[11px]"] { font-size: 12px; line-height: 1.5; }
+        #view-dashboard .text-gray-400, #view-dashboard .text-slate-400, #view-dashboard .text-gray-500, #view-dashboard .text-slate-500 { color: #475569; }
+        #view-dashboard input::placeholder, #view-dashboard textarea::placeholder { color: #64748b; }
+        #view-dashboard button, #view-dashboard select { min-height: 40px; }
+        #dash-err-card, #dash-vol-card { border-bottom-width: 1px; }
+        #record-actions-card { border-left-width: 1px; }
+        #view-dashboard .executive-metric::before { display: none; }
+        #view-dashboard .executive-metric { box-shadow: none; }
+        #view-dashboard table { font-variant-numeric: tabular-nums; }
+        #view-dashboard :where(button, select, textarea):focus-visible { outline-color: #2563eb !important; }
+        @media (min-width: 1024px) {
+            .app-header { margin-left: 220px; }
+            .app-header > div { width: calc(100% - 48px); min-height: 76px; }
+            .app-header #desktop-primary-nav { position: fixed; left: 0; top: 0; bottom: 0; width: 220px; padding: 26px 12px; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 8px; overflow-y: auto; background: #0e1729; }
+            #desktop-primary-nav::before { content: 'KPI Tracker'; color: #f8fafc; font-size: 19px; font-weight: 700; padding: 0 12px 28px; }
+            .app-header .desktop-tab { min-height: 46px; padding: 12px; gap: 12px; text-align: left; color: #cbd5e1; flex-shrink: 0; }
+            .app-header .desktop-tab i { width: 18px; text-align: center; }
+            .app-header .desktop-tab:hover { color: #fff; background: #1e293b; }
+            #dtab-dashboard { order: -1; }
+            #desktop-primary-nav::before { order: -2; }
+            #dtab-my-profile { margin-top: auto; }
+            #app-content { margin-left: 244px; margin-right: 24px; width: calc(100% - 268px); }
+        }
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .app-header > div { flex-wrap: wrap; padding-block: 10px !important; }
+            .app-header #desktop-primary-nav { order: 3; flex-basis: 100%; justify-content: flex-start; }
+        }
+        @media (max-width: 767px) {
+            #dash-team-kpi > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            #dash-team-kpi > div > div { padding: 10px; align-items: flex-start; flex-direction: column; gap: 6px; }
+            #dash-team-kpi > div > div:first-of-type { grid-column: 1 / -1; flex-direction: row; align-items: center; }
+            #app-content { width: 100%; margin: 0; padding: 20px 12px 96px !important; }
+            #dashboard-branch-context h2 { font-size: 20px; line-height: 1.45; }
+            #dashboard-branch-badge { font-size: 11px; padding: 4px 8px; }
+            #dashboard-priority-grid { grid-template-columns: minmax(0, 1fr); }
+            #dashboard-priority-grid > *, #dash-team-kpi > div, #view-dashboard > .bg-white, #view-dashboard > section { padding: 16px; }
+            #view-dashboard button, #view-dashboard select { min-height: 44px; }
+            #dash-error-notes { max-height: 460px; }
+            #bottom-nav { box-shadow: none !important; }
+        }
+    </style>
+    <script src="js/supabase-kpi-client.js?v=20260915.02"></script>
+    <script src="js/incident-impact.js?v=20260915.02"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260915.01";
+        const CURRENT_VERSION = "20260915.02";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
