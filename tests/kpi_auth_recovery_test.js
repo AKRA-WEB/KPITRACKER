@@ -43,6 +43,7 @@ function createRuntime() {
     const context = {
         PORTAL_URL: 'https://akra-web.github.io/Main/',
         sessionToken: 'stale-token',
+        _kpiAuthRedirecting: false,
         safeStorage: storage,
         document: { getElementById(id) { return id === 'app-content' ? appContent : null; } },
         window: { location: { replace(url) { redirects.push(url); } } },

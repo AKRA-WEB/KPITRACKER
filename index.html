@@ -3843,6 +3843,7 @@
         let _kpiPerms = [];
         let _dailyDataLoading = false;
         let _dailyDataLoadError = '';
+        let _kpiAuthRedirecting = false;
         let sessionToken = safeStorage.getItem('akra_sso_token') || null;
         let KPI_MAIN_VIEWER = null;
         let KPI_WORKLOAD_STATUS = { date: '', hour: 0, recordedEmployees: [] };
@@ -3852,6 +3853,21 @@
             if (!sessionToken) return false;
             if (_kpiPerms.length > 0) return _kpiPerms.includes(perm);
             return IS_ADMIN;
+        }
+
+        function handleKpiAuthFailure(error) {
+            const reason = String(error?.reason || error?.message || '');
+            const isAuthFailure = error?.status === 401 || reason === 'invalid_or_expired_token';
+            if (!isAuthFailure) return false;
+            if (_kpiAuthRedirecting) return true;
+            _kpiAuthRedirecting = true;
+            sessionToken = null;
+            ['akra_sso_token', 'akra_sso_user_data', 'akra_session_token', 'akra_user_data']
+                .forEach(key => safeStorage.removeItem(key));
+            document.getElementById('app-content')?.classList.add('hidden');
+            showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', true);
+            setTimeout(() => window.location.replace(PORTAL_URL), 0);
+            return true;
         }
 
         // ================= HELPER FUNCTIONS =================
@@ -10071,6 +10087,7 @@
                 showToast('ซิงค์ข้อมูลล่าสุดเรียบร้อย');
             } catch (error) {
                 if (isCurrent()) {
+                    if (handleKpiAuthFailure(error)) return;
                     _dailyDataLoadError = error.message || 'เชื่อมต่อข้อมูลล่าสุดไม่สำเร็จ';
                     showToast('โหลดข้อมูลรายวันไม่สำเร็จ กรุณาลองใหม่', true);
                 }
