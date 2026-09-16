@@ -2898,7 +2898,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260915.04</span>
+                <span id="drawer-version-text">KPI Suite v20260916.01</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -3299,13 +3299,13 @@
             #incident-team-heading { font-size:13px; }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260915.04"></script>
-    <script src="js/incident-impact.js?v=20260915.04"></script>
+    <script src="js/supabase-kpi-client.js?v=20260916.01"></script>
+    <script src="js/incident-impact.js?v=20260916.01"></script>
     <script>
         // ================= CONFIGURATION =================
         const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260915.04";
+        const CURRENT_VERSION = "20260916.01";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -9061,11 +9061,16 @@
             }).join(' ');
         }
 
-        async function fetchLiveRequisitions(targetDate = null) {
-            const d = targetDate || (typeof _lastRecordDate !== 'undefined' && _lastRecordDate) || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().split('T')[0]);
+        async function fetchLiveRequisitions(targetDate = null, silent = false) {
+            const billDateEl = document.getElementById('record-date-billcount');
+            const d = targetDate || (billDateEl && billDateEl.value) || (typeof _lastRecordDate !== 'undefined' && _lastRecordDate) || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().split('T')[0]);
             const request = ++liveRequisitionRequest;
-            liveRequisitionsList = [];
-            renderLiveRequisitions('loading');
+            const hasExisting = Array.isArray(liveRequisitionsList) && liveRequisitionsList.length > 0;
+            const isSilent = silent && hasExisting;
+            if (!isSilent) {
+                liveRequisitionsList = [];
+                renderLiveRequisitions('loading');
+            }
             try {
                 let res;
                 const authToken = typeof sessionToken !== 'undefined' ? sessionToken : null;
@@ -9085,7 +9090,12 @@
             } catch (e) {
                 if (request !== liveRequisitionRequest) return;
                 console.warn('fetchLiveRequisitions error:', e);
-                renderLiveRequisitions('error');
+                if (!isSilent) {
+                    renderLiveRequisitions('error');
+                } else {
+                    const stateEl = document.getElementById('live-bill-read-state');
+                    if (stateEl) stateEl.innerText = 'อัปเดตเบื้องหลังไม่สำเร็จ (แสดงข้อมูลล่าสุด)';
+                }
             }
         }
 
@@ -9097,7 +9107,7 @@
         async function pollLiveRequisitions() {
             liveRequisitionRefreshTimer = null;
             if (document.visibilityState !== 'hidden' && liveBillIsVisible()) {
-                const result = await fetchLiveRequisitions();
+                const result = await fetchLiveRequisitions(null, true);
                 liveRequisitionRefreshDelay = result ? 10000 : Math.min(liveRequisitionRefreshDelay * 2, 60000);
             }
             scheduleLiveRequisitionRefresh();
@@ -9112,10 +9122,10 @@
             if (typeof window === 'undefined' || liveRequisitionRefreshBound) return;
             liveRequisitionRefreshBound = true;
             window.addEventListener('focus', () => {
-                if (document.visibilityState !== 'hidden' && liveBillIsVisible()) fetchLiveRequisitions();
+                if (document.visibilityState !== 'hidden' && liveBillIsVisible()) fetchLiveRequisitions(null, true);
             });
             document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState !== 'hidden' && liveBillIsVisible()) fetchLiveRequisitions();
+                if (document.visibilityState !== 'hidden' && liveBillIsVisible()) fetchLiveRequisitions(null, true);
             });
             scheduleLiveRequisitionRefresh();
         }
@@ -12667,7 +12677,7 @@
             } else if (tab === 'billcount') {
                 startLiveRequisitionRefresh();
                 renderLiveRequisitions();
-                fetchLiveRequisitions();
+                fetchLiveRequisitions(null, true);
             } else if (tab === 'admin-dash') {
                 renderAdminDashboard();
                 refreshActions();
