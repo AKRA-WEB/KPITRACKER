@@ -25,6 +25,7 @@ function extractFunction(name) {
 [
   'normalizeEmpName',
   'getBranchesFromMainRoles',
+  'hasKpiAdminRole',
   'canAccessAdminSettings',
   'getKpiBangkokClock',
   'getEmployeeWorkloadStatus',
@@ -40,7 +41,7 @@ assert.deepStrictEqual(getBranchesFromMainRoles(['AKRA', 'TRD']), ['AKRA', 'TRD'
 
 assert.strictEqual(canAccessAdminSettings(['ADMIN'], true), true);
 assert.strictEqual(canAccessAdminSettings(['Admin'], true), true);
-assert.strictEqual(canAccessAdminSettings(['SUPERVISOR'], true), false);
+assert.strictEqual(canAccessAdminSettings(['SUPERVISOR'], true), true);
 assert.strictEqual(canAccessAdminSettings(['ADMIN'], false), false);
 assert.strictEqual(normalizeMainEmployeeStatus('Active'), 'Active');
 assert.strictEqual(normalizeMainEmployeeStatus('active'), 'Active');
