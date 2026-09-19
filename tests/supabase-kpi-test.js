@@ -2,29 +2,68 @@ const assert = require('assert');
 const kpiClient = require('../js/supabase-kpi-client.js');
 
 async function runTests() {
-  console.log('=== TESTING KPITRACKER SUPABASE API CLIENT CONTAINMENT & FALLBACK ===\n');
+  console.log('=== TESTING KPITRACKER AUTHENTICATED SUPABASE API CLIENT ===\n');
 
-  // 1. Daily Record Upsert with JSONB should throw containment error
-  console.log('[1/7] Testing Daily Record Upsert throws containment error...');
-  await assert.rejects(
-    async () => { await kpiClient.saveDailyRecord({ branch: 'AKRA' }); },
-    /Supabase KPI client deactivated/
-  );
-  console.log('  -> saveDailyRecord correctly deactivated with fallback notice');
+  // 1. Daily compatibility save must use the authenticated daily section API.
+  console.log('[1/7] Testing Daily compatibility save uses section RPC actions...');
+  const originalFetch = global.fetch;
+  const dailyCalls = [];
+  const sectionRevisions = { operations: 0, tasks: 0, endOfShift: 0, vendorBills: 0 };
+  global.fetch = async (url, init) => {
+    const request = JSON.parse(init.body);
+    dailyCalls.push(request);
+    if (request.action === 'getDailyData') {
+      return { ok: true, json: async () => ({ status: 'success', records: [{ date: '2026-08-23', sectionRevisions }], nextCursor: null }) };
+    }
+    if (request.action === 'saveSection') {
+      sectionRevisions[request.section] += 1;
+      return { ok: true, json: async () => ({ status: 'success', record: { date: request.date, sectionRevisions: { ...sectionRevisions } } }) };
+    }
+    if (request.action === 'saveWorkload') return { ok: true, json: async () => ({ status: 'success', workload: [] }) };
+    return { ok: true, json: async () => ({ status: 'success' }) };
+  };
+  const dailyResult = await kpiClient.saveDailyRecord({
+    branch: 'AKRA', date: '2026-08-23',
+    volume: { transfer: 1, pickup: 2, upcountry: 3, inmarket: 4, outmarket: 5 },
+    customerNotes: 'daily compatibility', tasks: [{ taskName: 'ตรวจงาน', status: 'เสร็จแล้ว', assignee: 'A' }],
+    endOfShift: { summary: 'ปิดงาน', issues: '', actions: '', followUps: '', vendorBills: { totalToday: 2, entryStatus: 'completed', pendingAccumulated: 0, pendingNote: '' } },
+    workload: [{ employeeUid: 'AKRA12123', employee: 'A', capacity: 10, outbound: 10, inbound: 0, transfer: 0, shared: 0, primaryCore: 'คลัง W1', supportDuties: [] }]
+  }, 'signed-main-token');
+  assert.strictEqual(dailyResult.status, 'success');
+  assert.deepStrictEqual(dailyCalls.map(call => call.action), ['getDailyData', 'saveSection', 'saveSection', 'saveSection', 'saveSection', 'saveWorkload']);
+  assert.deepStrictEqual(dailyCalls.slice(1, 5).map(call => call.section), ['operations', 'tasks', 'endOfShift', 'vendorBills']);
+  assert.strictEqual(dailyCalls.at(-1).employeeUid, 'AKRA12123');
+  console.log('  -> saveDailyRecord routed operations/tasks/endOfShift/vendorBills through kpi-api');
 
-  // 2. Weekly Records should throw containment error
-  console.log('\n[2/7] Testing Weekly Records query throws containment error...');
+  // A legacy errors payload must never be silently dropped while the active
+  // Incident catalog mapping is unresolved.
   await assert.rejects(
-    async () => { await kpiClient.getWeeklyRecords('AKRA', '2026-08-17', '2026-08-23'); },
-    /Supabase KPI client deactivated/
+    () => kpiClient.saveDailyRecord({
+      branch: 'AKRA', date: '2026-08-23', errors: [{ emp: 'A', type: 'legacy', note: 'old shape' }]
+    }, 'signed-main-token'),
+    /legacy_errors_not_supported/,
+    'legacy errors must fail closed instead of being silently omitted'
   );
-  console.log('  -> getWeeklyRecords correctly deactivated with fallback notice');
+  console.log('  -> legacy errors fail closed before any partial daily write');
+
+  // 2. Weekly Records must read the same paginated daily projection.
+  console.log('\n[2/7] Testing Weekly Records query uses authenticated daily read...');
+  global.fetch = async (url, init) => {
+    const request = JSON.parse(init.body);
+    assert.strictEqual(request.action, 'getDailyData');
+    assert.strictEqual(request.startDate, '2026-08-17');
+    assert.strictEqual(request.endDate, '2026-08-23');
+    assert.strictEqual(request.includeActivity, true);
+    return { ok: true, json: async () => ({ status: 'success', records: [{ date: '2026-08-23' }], nextCursor: null }) };
+  };
+  const weekly = await kpiClient.getWeeklyRecords('signed-main-token', 'AKRA', '2026-08-17', '2026-08-23');
+  assert.deepStrictEqual(weekly, [{ date: '2026-08-23' }]);
+  console.log('  -> getWeeklyRecords uses getDailyData pagination without a legacy provider');
 
   await assert.rejects(() => kpiClient.fetchBranchData('', 'AKRA'), /authenticated/);
 
   // 4. Employee roster/config must use the authenticated Edge boundary.
   console.log('\n[4/7] Testing authenticated getConfig Edge request...');
-  const originalFetch = global.fetch;
   let capturedRequest;
   global.fetch = async (url, init) => {
     capturedRequest = { url, init };
@@ -44,6 +83,9 @@ async function runTests() {
   assert.strictEqual(result.employees[0].uid, 'AKRA12123');
   assert.strictEqual(result.employees[0].name, 'TRAINEE (SORN)');
   assert.ok(capturedRequest.url.endsWith('/functions/v1/kpi-api'));
+  assert.deepStrictEqual(JSON.parse(capturedRequest.init.body), { action: 'getConfig', token: 'signed-main-token' });
+  const employees = await kpiClient.getEmployees('signed-main-token');
+  assert.deepStrictEqual(employees, result.employees);
   assert.deepStrictEqual(JSON.parse(capturedRequest.init.body), { action: 'getConfig', token: 'signed-main-token' });
   await kpiClient.getAdminStatus('signed-main-token');
   assert.deepStrictEqual(JSON.parse(capturedRequest.init.body), { action: 'getAdminStatus', token: 'signed-main-token' });

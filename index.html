@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <script src="js/akra-shell-bridge.js?v=20260919.01"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KPI Tracker - Multi Branch</title>
@@ -131,6 +132,11 @@
     </style>
 </head>
 <body class="text-gray-800 pb-20">
+    <style>body:not(.kpi-session-ready) > :not(#kpi-session-status):not(script):not(style) { display: none !important; } #kpi-session-status[hidden] { display: none !important; }</style>
+    <section id="kpi-session-status" role="status" class="p-6 text-center">
+        <p id="kpi-session-message">กำลังตรวจสอบเซสชันกับ Main…</p>
+        <button type="button" class="mt-4 rounded-lg border px-4 py-2" onclick="window.AkraModule.home('https://akra-web.github.io/Main/')">กลับ Main</button>
+    </section>
     <a href="#app-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
 
     <!-- ================= VIEW: SYSTEM LOADING ================= -->
@@ -212,6 +218,7 @@
 
         <!-- ================= VIEW 1: WORKLOAD (สัดส่วนเวลา) ================= -->
         <div id="view-workload" class="ops-view space-y-4 max-w-5xl mx-auto">
+            <p id="workload-access-status" role="status" class="hidden rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"></p>
             <!-- Title & Date Row -->
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -2898,7 +2905,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260916.04</span>
+                <span id="drawer-version-text">KPI Suite v20260919.02</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -3299,13 +3306,13 @@
             #incident-team-heading { font-size:13px; }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260916.04"></script>
-    <script src="js/incident-impact.js?v=20260916.04"></script>
+    <script src="js/supabase-kpi-client.js?v=20260919.02"></script>
+    <script src="js/workload-permissions.js?v=20260919.02"></script>
+    <script src="js/incident-impact.js?v=20260919.02"></script>
     <script>
         // ================= CONFIGURATION =================
-        const LOG_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7YjDhemClLgvtVoxvC6DM1ppV-UQGjodg1sCf777J03QBTsz1nOjko8Yn7_XP41k/exec";
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260916.04";
+        const CURRENT_VERSION = "20260919.02";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -3321,17 +3328,7 @@
 
         function forceCleanCacheAndReload() {
             if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
-                try {
-                    sessionStorage.clear();
-                    const keysToRemove = [];
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const k = localStorage.key(i);
-                        if (k && (k.startsWith('kpi') || k.includes('sso') || k.includes('version'))) {
-                            keysToRemove.push(k);
-                        }
-                    }
-                    keysToRemove.forEach(k => localStorage.removeItem(k));
-                } catch (e) {}
+                clearKpiReadCaches();
                 const url = new URL(window.location.href);
                 url.searchParams.set('update', Date.now());
                 window.location.replace(url.toString());
@@ -3481,14 +3478,54 @@
 
         // ================= SAFE STORAGE WRAPPERS =================
         // ป้องกันแอปพลิเคชันค้าง/พังจาก SecurityError เมื่อเบราว์เซอร์บนคอมพิวเตอร์บล็อกคุกกี้/พื้นที่เก็บข้อมูลบุคคลที่สาม
+        let kpiVerifiedSession = null;
+        let kpiAuthAttempt = 0;
+        let kpiSessionEventsBound = false;
+        let kpiConfigRequest = 0;
+        const KPI_SESSION_KEY = 'akra_kpi_session';
+
+        function kpiIdentityId() {
+            const id = String(kpiVerifiedSession?.user?.identityId || '').toLowerCase();
+            return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id) ? id : '';
+        }
+
+        function kpiStorageKey(key) {
+            const id = kpiIdentityId();
+            if (!id) return null;
+            let name = String(key);
+            const userName = String(kpiVerifiedSession.user.id || '').toLowerCase();
+            for (const prefix of ['kpiDraft_','kpiEditRevisions_']) {
+                if (name.startsWith(prefix + userName + '_')) name = prefix + name.slice((prefix + userName + '_').length);
+            }
+            const prefix = `kpi_state:identity:${id}:`;
+            if (/^(kpiDraft_|kpiEditRevisions_|kpiExecPeriod$|kpiExecDateStart$|kpiExecDateEnd$|active_branch$)/.test(name)) return prefix + 'owned:' + name;
+            const version = Number(kpiVerifiedSession.user.sessionVersion), revision = String(kpiVerifiedSession.user.authorizationRevision || '');
+            return Number.isInteger(version) && version > 0 && revision ? prefix + `cache:${version}:${encodeURIComponent(revision)}:` + name : null;
+        }
+
+        function clearKpiReadCaches() {
+            const id = kpiIdentityId();
+            if (!id) return;
+            const prefix = `kpi_state:identity:${id}:cache:`;
+            try {
+                const keys = [];
+                for (let i=0;i<localStorage.length;i++) { const key=localStorage.key(i); if(key?.startsWith(prefix)) keys.push(key); }
+                keys.forEach(key=>localStorage.removeItem(key));
+            } catch (_) { /* Do not clear drafts or other applications when storage is unavailable. */ }
+            for (const key of Object.keys(safeStorage._data)) if (key.startsWith(prefix)) delete safeStorage._data[key];
+        }
+
         const safeStorage = {
             getItem(key) {
+                key = kpiStorageKey(key); if (!key) return null;
                 try { return localStorage.getItem(key); } catch (e) { return this._data[key] || null; }
             },
             setItem(key, val) {
+                key = kpiStorageKey(key); if (!key) return false;
                 try { localStorage.setItem(key, val); } catch (e) { this._data[key] = String(val); }
             },
             removeItem(key) {
+                key = kpiStorageKey(key); if (!key) return;
                 try { localStorage.removeItem(key); } catch (e) { delete this._data[key]; }
             },
             _data: {}
@@ -3496,12 +3533,15 @@
 
         const safeSessionStorage = {
             getItem(key) {
+                key = kpiStorageKey(key); if (!key) return null;
                 try { return sessionStorage.getItem(key); } catch (e) { return this._data[key] || null; }
             },
             setItem(key, val) {
+                key = kpiStorageKey(key); if (!key) return false;
                 try { sessionStorage.setItem(key, val); } catch (e) { this._data[key] = String(val); }
             },
             removeItem(key) {
+                key = kpiStorageKey(key); if (!key) return;
                 try { sessionStorage.removeItem(key); } catch (e) { delete this._data[key]; }
             },
             _data: {}
@@ -3712,7 +3752,7 @@
 
                 // ผูกปุ่มกลับสู่ระบบหลัก
                 document.getElementById('modal-btn-portal').onclick = () => {
-                    window.location.href = PORTAL_URL;
+                    window.AkraModule.home(PORTAL_URL);
                 };
             }
 
@@ -3836,24 +3876,78 @@
         let currentUser = null;
         let displayUserName = "";
         let currentRoles = [];
-        let currentBranch = safeSessionStorage.getItem('active_branch') || "";
+        let currentBranch = "";
         let viewOffsetWeek = 0;
         let dashboardSelectedDate = 'ALL';
         let IS_ADMIN = false;
         let _kpiPerms = [];
+        let _kpiAuthorization = null;
         let _dailyDataLoading = false;
         let _dailyDataLoadError = '';
         let _kpiAuthRedirecting = false;
-        let sessionToken = safeStorage.getItem('akra_sso_token') || null;
+        let sessionToken = null;
         let KPI_MAIN_VIEWER = null;
         let KPI_WORKLOAD_STATUS = { date: '', hour: 0, recordedEmployees: [] };
         let adminStatusRequest = null;
         let adminStatusRefreshTimer = null;
+
+        function getKpiPageToken() {
+            return kpiVerifiedSession ? (window.AkraModule?.embedded ? window.AkraModule.getToken() : sessionToken) : null;
+        }
+        function isCurrentKpiSession(owner, token) {
+            return Boolean(owner && owner === kpiVerifiedSession && token && token === getKpiPageToken());
+        }
+        function rawKpiSession() {
+            try { return localStorage.getItem(KPI_SESSION_KEY); } catch (_) { return null; }
+        }
+        function invalidateKpiSession(message) {
+            ++kpiAuthAttempt;
+            ++kpiConfigRequest;
+            kpiVerifiedSession = null;
+            sessionToken = null;
+            currentUser = null;
+            displayUserName = '';
+            currentRoles = [];
+            currentBranch = '';
+            IS_ADMIN = false;
+            _kpiPerms = [];
+            _kpiAuthorization = null;
+            KPI_MAIN_VIEWER = null;
+            KPI_WORKLOAD_STATUS = {date:'',hour:0,recordedEmployees:[]};
+            GLOBAL_CONFIG_LIST = [];
+            if (adminStatusRefreshTimer) clearInterval(adminStatusRefreshTimer);
+            adminStatusRefreshTimer = null;
+            adminStatusRequest = null;
+            clearTimeout(_draftTimer);
+            _draftTimer = null;
+            sectionEditRevisions.clear();
+            localActionsDraft = [];
+            ALL_ACTIONS = [];
+            ScopedRefresher.inFlight = {};
+            ++liveRequisitionRequest;
+            clearTimeout(liveRequisitionRefreshTimer);
+            liveRequisitionRefreshTimer = null;
+            liveRequisitionsList = [];
+            document.querySelectorAll('dialog[open]').forEach(dialog => dialog.close());
+            document.body.classList.remove('kpi-session-ready');
+            const status = document.getElementById('kpi-session-status'); if (status) status.hidden = false;
+            const text = document.getElementById('kpi-session-message'); if (text) text.textContent = message;
+        }
+        function bindKpiSessionEvents() {
+            if (kpiSessionEventsBound) return;
+            kpiSessionEventsBound = true;
+            window.addEventListener('storage', event => {
+                if (window.AkraModule?.embedded || (event.key !== null && event.key !== KPI_SESSION_KEY)) return;
+                if (event.key !== null && event.oldValue === event.newValue) return;
+                invalidateKpiSession('บัญชีหรือเซสชันเปลี่ยนแล้ว กรุณาเปิด KPI จาก Main ใหม่');
+            });
+        }
+        window.getKpiSessionOwner = () => kpiVerifiedSession;
+        window.getKpiSessionToken = getKpiPageToken;
+        window.onKpiSessionRejected = error => handleKpiAuthFailure(error);
         function can(perm) {
             if (!sessionToken) return false;
-            if (IS_ADMIN) return true;
-            if (_kpiPerms.length > 0) return _kpiPerms.includes(perm);
-            return IS_ADMIN;
+            return _kpiPerms.includes(perm);
         }
 
         function handleKpiAuthFailure(error) {
@@ -3862,12 +3956,10 @@
             if (!isAuthFailure) return false;
             if (_kpiAuthRedirecting) return true;
             _kpiAuthRedirecting = true;
-            sessionToken = null;
-            ['akra_sso_token', 'akra_sso_user_data', 'akra_session_token', 'akra_user_data']
-                .forEach(key => safeStorage.removeItem(key));
+            invalidateKpiSession('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่');
             document.getElementById('app-content')?.classList.add('hidden');
             showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', true);
-            setTimeout(() => window.location.replace(PORTAL_URL), 0);
+            setTimeout(() => window.AkraModule.authRequired(PORTAL_URL), 0);
             return true;
         }
 
@@ -4558,7 +4650,11 @@
         }
 
         // ================= UI / MODAL FUNCTIONS =================
+        let _customModalRevision = 0;
         function showModal(title, message, type = 'alert', onConfirm = null) {
+            const revision = ++_customModalRevision;
+            let closing = false;
+            if (!['alert','error','confirm'].includes(type)) type = 'alert';
             const modal = document.getElementById('custom-modal');
             const iconEl = document.getElementById('custom-modal-icon');
             const titleEl = document.getElementById('custom-modal-title');
@@ -4569,24 +4665,27 @@
             textEl.textContent = message == null ? '' : String(message);
 
             const closeModal = () => {
+                if (closing || revision !== _customModalRevision) return false;
+                closing = true;
                 document.getElementById('custom-modal-content').classList.replace('scale-100', 'scale-95');
-                setTimeout(() => modal.classList.add('hidden'), 200);
+                setTimeout(() => { if (revision === _customModalRevision) modal.classList.add('hidden'); }, 200);
                 releaseFocusFromModal('custom-modal');
+                return true;
             };
 
             _prevFocusElement = document.activeElement;
             modal.classList.remove('hidden');
-            setTimeout(() => document.getElementById('custom-modal-content').classList.replace('scale-95', 'scale-100'), 10);
+            setTimeout(() => { if (revision === _customModalRevision && !closing) document.getElementById('custom-modal-content').classList.replace('scale-95', 'scale-100'); }, 10);
             trapFocusInModal('custom-modal');
 
             if (type === 'alert') {
                 iconEl.innerHTML = '<i class="fa-solid fa-circle-exclamation text-4xl text-orange-500"></i>';
                 actionsEl.innerHTML = `<button id="modal-btn-ok" class="w-full bg-blue-600 text-white font-bold py-2.5 rounded-xl active:bg-blue-700 transition-colors shadow-sm">ตกลง</button>`;
-                document.getElementById('modal-btn-ok').onclick = () => { closeModal(); if(onConfirm) onConfirm(); };
+                document.getElementById('modal-btn-ok').onclick = () => { if(closeModal() && onConfirm) onConfirm(); };
             } else if (type === 'error') {
                 iconEl.innerHTML = '<i class="fa-solid fa-circle-xmark text-4xl text-red-500"></i>';
                 actionsEl.innerHTML = `<button id="modal-btn-ok" class="w-full bg-red-600 text-white font-bold py-2.5 rounded-xl active:bg-red-700 transition-colors shadow-sm">รับทราบ</button>`;
-                document.getElementById('modal-btn-ok').onclick = () => { closeModal(); if(onConfirm) onConfirm(); };
+                document.getElementById('modal-btn-ok').onclick = () => { if(closeModal() && onConfirm) onConfirm(); };
             } else if (type === 'confirm') {
                 iconEl.innerHTML = '<i class="fa-solid fa-circle-question text-4xl text-blue-500"></i>';
                 actionsEl.innerHTML = `
@@ -4594,7 +4693,7 @@
                     <button id="modal-btn-confirm" class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded-xl active:bg-blue-700 transition-colors shadow-sm">ยืนยัน</button>
                 `;
                 document.getElementById('modal-btn-cancel').onclick = closeModal;
-                document.getElementById('modal-btn-confirm').onclick = () => { closeModal(); if(onConfirm) onConfirm(); };
+                document.getElementById('modal-btn-confirm').onclick = () => { if(closeModal() && onConfirm) onConfirm(); };
             }
         }
 
@@ -4637,8 +4736,22 @@
             return (Array.isArray(roles) ? roles : []).some(role => ['ADMIN', 'SUPERVISOR'].includes(String(role).trim().toUpperCase()));
         }
 
-        function canAccessAdminSettings(roles, hasAuthenticatedToken) {
-            return Boolean(hasAuthenticatedToken) && hasKpiAdminRole(roles);
+        function canAccessAdminSettings(roles, hasAuthenticatedToken, authorization = null) {
+            if (!hasAuthenticatedToken || !hasKpiAdminRole(roles)) return false;
+            const explicit = Number(authorization?.tokenVersion) === 2
+                || Object.prototype.hasOwnProperty.call(authorization?.perms || {}, 'app-kpi');
+            return !explicit || (Array.isArray(authorization?.perms?.['app-kpi'])
+                && authorization.perms['app-kpi'].includes('adminDashboard'));
+        }
+
+        function canRecordOwnWorkload() {
+            return window.AkraKpiWorkloadPermissions?.canRecordSelf(currentRoles,sessionToken,_kpiAuthorization) === true;
+        }
+
+        function requireOwnWorkloadPermission() {
+            if (canRecordOwnWorkload()) return true;
+            showModal('ไม่มีสิทธิ์บันทึกเวลา','สิทธิ์บันทึกเวลาของตนเองถูกปิดหรือยังตรวจสอบไม่ได้ กรุณากลับเข้า Main หรือติดต่อผู้ดูแลระบบ','warning');
+            return false;
         }
 
         function getKpiBangkokClock(now = new Date()) {
@@ -7360,6 +7473,7 @@
         }
 
         function confirmQuickWorkloadSave() {
+            if (!requireOwnWorkloadPermission()) return;
             const s = QUICK_WORKLOAD_STATE;
             const dutyName = s.primaryCore || 'หน้าที่หลัก';
             const supportSummary = (s.hasSupport && s.supportHours > 0) ? `\n(ช่วยงาน ${s.supportName} ${s.supportHours.toFixed(1)} ชม.)` : '';
@@ -7371,6 +7485,7 @@
         }
 
         async function submitQuickWorkload() {
+            if (!requireOwnWorkloadPermission()) return;
             const s = QUICK_WORKLOAD_STATE;
             const btn = document.getElementById('btn-save-quick-workload');
             const targetEmp = (typeof displayUserName !== 'undefined' && displayUserName) ? displayUserName : (currentUser || 'พนักงาน');
@@ -7421,20 +7536,9 @@
             }
 
             try {
-                if (sessionToken && window.AkraSupabaseKPI?.saveWorkload) {
-                    const res = await AkraSupabaseKPI.saveWorkload(sessionToken, currentUid, dateStr, payload.workload);
-                    if (res && res.status === 'success') {
-                        showToast(`✅ บันทึกเวลา ${s.totalHours} ชม. สำเร็จเรียบร้อย!`);
-                        setTimeout(() => {
-                            closeQuickWorkloadModal();
-                            if (window.liff && typeof liff.isInClient === 'function' && liff.isInClient()) {
-                                liff.closeWindow();
-                            }
-                        }, 800);
-                        if (typeof loadAllData === 'function') loadAllData(true);
-                        return;
-                    }
-                }
+                if (!sessionToken || !window.AkraSupabaseKPI?.saveWorkload) throw new Error('ระบบบันทึก Workload ยังไม่พร้อม กรุณาโหลดหน้าใหม่');
+                const res = await AkraSupabaseKPI.saveWorkload(sessionToken, currentUid, dateStr, payload.workload);
+                if (!res || res.status !== 'success') throw new Error('เซิร์ฟเวอร์ยังไม่ยืนยันการบันทึก กรุณาลองใหม่');
                 showToast(`✅ บันทึกเวลา ${s.totalHours} ชม. เรียบร้อย!`);
                 setTimeout(() => {
                     closeQuickWorkloadModal();
@@ -7442,6 +7546,7 @@
                         liff.closeWindow();
                     }
                 }, 800);
+                if (typeof loadAllData === 'function') loadAllData(true);
             } catch (err) {
                 console.error('submitQuickWorkload error:', err);
                 showModal('บันทึกไม่สำเร็จ', err.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
@@ -7449,6 +7554,7 @@
                 if (btn) {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span id="btn-save-qw-text">[ยืนยันวันนี้]</span>';
+                    btn.disabled = !canRecordOwnWorkload();
                 }
             }
         }
@@ -9341,10 +9447,9 @@
         }
 
         async function loadConfig() {
-            if (!sessionToken) {
-                processConfigList(GLOBAL_CONFIG_LIST);
-                return;
-            }
+            const owner = kpiVerifiedSession, token = getKpiPageToken(), request = ++kpiConfigRequest;
+            const current = () => isCurrentKpiSession(owner, token) && request === kpiConfigRequest;
+            if (!current()) return false;
 
             // 1. Stale Cache Hydration (0ms Instant Boot)
             let loadedFromCache = false;
@@ -9368,6 +9473,7 @@
             }
 
             const applyFreshConfig = (configResult) => {
+                if (!current()) return false;
                 if (configResult && Array.isArray(configResult.employees) && configResult.employees.length > 0) {
                     processConfigList(configResult.employees);
                     KPI_MAIN_VIEWER = configResult.viewer || null;
@@ -9399,7 +9505,7 @@
                                 populateAdminEmpFilter();
                             }
                         })
-                        .catch(err => console.warn('[KPI SWR] Background revalidation error:', err));
+                        .catch(err => { if (current()) { handleKpiAuthFailure(err); console.warn('[KPI SWR] Background revalidation error:', err); } });
                 }
             } else {
                 let loaded = false;
@@ -9408,15 +9514,19 @@
                         const configResult = await AkraSupabaseKPI.getConfig(sessionToken);
                         loaded = applyFreshConfig(configResult);
                     } catch (supaErr) {
+                        if (!current()) return false;
+                        handleKpiAuthFailure(supaErr);
                         console.warn('[Supabase KPI] authenticated loadConfig failed:', supaErr);
                     }
                 }
 
+                if (!current()) return false;
                 if (!loaded) {
                     throw new Error('ไม่สามารถโหลดรายชื่อพนักงานจาก Main ผ่าน Supabase ได้');
                 }
             }
 
+            if (!current()) return false;
             const deptFilter = document.getElementById('dash-dept-filter');
             if (deptFilter) {
                 deptFilter.innerHTML = '<option value="ALL">ดูรวมทุกแผนก</option>';
@@ -9431,11 +9541,13 @@
         async function refreshAdminStatus() {
             if (!IS_ADMIN || !sessionToken || !window.AkraSupabaseKPI?.getAdminStatus) return false;
             if (adminStatusRequest) return adminStatusRequest;
+            const owner = kpiVerifiedSession, token = getKpiPageToken();
             const summary = document.getElementById('admin-workload-summary');
             if (summary) summary.textContent = 'กำลังอัปเดตสถานะพนักงานและ Workload วันนี้…';
             adminStatusRequest = (async () => {
                 try {
                     const result = await AkraSupabaseKPI.getAdminStatus(sessionToken);
+                    if (!isCurrentKpiSession(owner, token)) return false;
                     processConfigList(result.employees);
                     KPI_MAIN_VIEWER = result.viewer || KPI_MAIN_VIEWER;
                     KPI_WORKLOAD_STATUS = result.workload || { date: '', hour: 0, recordedEmployees: [] };
@@ -9446,6 +9558,7 @@
                     renderAdminPanel();
                     return true;
                 } catch (error) {
+                    if (!isCurrentKpiSession(owner, token)) return false;
                     console.warn('[Supabase KPI] admin status refresh failed:', error);
                     const privilegeLost = ['permission_denied', 'invalid_or_expired_token', 'mandatory_password_change_required'].includes(error?.message);
                     if (privilegeLost) {
@@ -9456,9 +9569,7 @@
                         _kpiPerms = [];
                         processConfigList(GLOBAL_CONFIG_LIST.filter(employee => employee.status === 'Active'));
                         if (error?.message !== 'permission_denied') {
-                            sessionToken = null;
-                            safeStorage.removeItem('akra_sso_token');
-                            safeStorage.removeItem('akra_sso_user_data');
+                            handleKpiAuthFailure(error);
                         }
                         startAdminStatusRefresh();
                         updateDrawerUserInfo();
@@ -9468,7 +9579,7 @@
                     showToast('อัปเดตสถานะพนักงานไม่สำเร็จ', true);
                     return false;
                 } finally {
-                    adminStatusRequest = null;
+                    if (isCurrentKpiSession(owner, token)) adminStatusRequest = null;
                 }
             })();
             return adminStatusRequest;
@@ -9487,6 +9598,7 @@
         }
 
         async function initSystem() {
+            let owner = null, token = null;
             // Safety: ensure loading spinner is dismissed after at most 1500ms
             const dismissTimer = setTimeout(() => {
                 const loader = document.getElementById('system-loading');
@@ -9503,15 +9615,20 @@
 
                 // 1. ตรวจสอบ SSO token ก่อน เพื่อนำ sessionToken ไปใช้เรียก loadConfig()
                 const ssoResult = await resolveSsoAuth();
+                if (ssoResult.superseded) return;
+                if (!ssoResult.userData || ssoResult.expired) { await checkAuth(ssoResult); return; }
+                owner = kpiVerifiedSession;
+                token = getKpiPageToken();
 
                 // 2. โหลดรายชื่อและ Role จาก Main ผ่าน Supabase Edge boundary
                 await loadConfig();
+                if (!isCurrentKpiSession(owner, token)) return;
 
                 // 3. ประเมินสิทธิ์และเตรียม UI
                 await checkAuth(ssoResult);
             } catch (err) {
                 console.error("InitSystem error:", err);
-                showModal("โหลดข้อมูลพนักงานไม่สำเร็จ", err?.message || "ไม่สามารถเชื่อมต่อ Supabase ได้", "error");
+                if (isCurrentKpiSession(owner, token)) invalidateKpiSession('โหลดข้อมูลพนักงานไม่สำเร็จ กรุณาเปิด KPI จาก Main ใหม่');
             } finally {
                 clearTimeout(dismissTimer);
                 const loader = document.getElementById('system-loading');
@@ -9522,106 +9639,56 @@
         // ตรวจ SSO token จาก URL (?sso=) หรือ Storage
         async function resolveSsoAuth() {
             const result = { attempted: false, userData: null, expired: false };
+            const attempt = ++kpiAuthAttempt, savedRaw = rawKpiSession();
+            sessionToken = null;
+            kpiVerifiedSession = null;
+            bindKpiSessionEvents();
             try {
                 const urlParams = new URLSearchParams(window.location.search);
-                let ssoToken = urlParams.get('sso');
-                if (ssoToken) {
-                    ssoToken = ssoToken.trim().replace(/ /g, '+');
-                } else {
-                    ssoToken = safeStorage.getItem('akra_sso_token') || safeStorage.getItem('akra_session_token');
+                const embedded = window.AkraModule?.embedded;
+                let saved = null; try { saved = JSON.parse(savedRaw || 'null'); } catch (_) {}
+                let ssoToken = embedded ? window.AkraModule.getToken() : urlParams.get('sso') || saved?.token;
+                if (!embedded && !ssoToken) {
+                    // Read-only compatibility with Main's prior token location; never trust cached roles.
+                    try { ssoToken = localStorage.getItem('akra_sso_token') || localStorage.getItem('akra_session_token'); } catch (_) {}
+                }
+                if (urlParams.has('sso')) {
+                    try { window.history.replaceState({}, document.title, window.location.pathname + window.location.hash); } catch (_) {}
                 }
                 if (!ssoToken) return result;
                 result.attempted = true;
-
-                // 1. Instant JWT SSO (<1ms) - Render UI & cached session immediately
-                const decodedUser = decodeJwtPayload(ssoToken);
-                if (decodedUser) {
-                    const currentTime = new Date().getTime();
-                    const expMs = decodedUser.exp ? (decodedUser.exp > 1e11 ? decodedUser.exp : decodedUser.exp * 1000) : 0;
-                    if (expMs && expMs <= currentTime) {
-                        console.warn("SSO token is locally expired, clearing session");
-                        safeStorage.removeItem('akra_sso_token');
-                        safeStorage.removeItem('akra_sso_user_data');
-                        safeStorage.removeItem('akra_session_token');
-                        safeStorage.removeItem('akra_user_data');
-                        sessionToken = null;
-                        result.userData = null;
-                        result.expired = true;
-                        return result;
-                    }
-
-                    const normalizedUid = String(decodedUser.id || decodedUser.name || '').toLowerCase();
-                    const ssoRoles = Array.isArray(decodedUser.roles) ? [...decodedUser.roles] : [];
-                    if ((ssoRoles.includes('ADMIN') || ssoRoles.includes('admin')) && !ssoRoles.includes('Admin')) {
-                        ssoRoles.push('Admin');
-                    }
-
-                    result.userData = {
-                        username: normalizedUid,
-                        name: decodedUser.name || normalizedUid,
-                        roles: ssoRoles,
-                        perms: decodedUser.perms || {}
-                    };
-                    sessionToken = ssoToken;
-                    safeStorage.setItem('akra_sso_token', ssoToken);
-                    safeStorage.setItem('akra_sso_user_data', JSON.stringify(result.userData));
+                const user = embedded ? await window.AkraModule.verifySession('app-kpi') : await window.AkraModule.verifySession('app-kpi', ssoToken);
+                if (attempt !== kpiAuthAttempt || (!embedded && rawKpiSession() !== savedRaw)) {
+                    result.superseded = true;
+                    return result;
                 }
-            } catch(e) { console.error("SSO auth check failed", e); }
+                kpiVerifiedSession = {user:{...user},token:ssoToken};
+                if (!kpiIdentityId()) throw new Error('missing_verified_identity');
+                sessionToken = ssoToken;
+                window.AkraModule?.watchSession?.({appId:'app-kpi', user, token:ssoToken,
+                    invalidated:() => invalidateKpiSession('เซสชัน Main เปลี่ยนแล้ว กรุณาเปิด KPI จาก Main ใหม่'),
+                    refreshed:token => { sessionToken = token; if (kpiVerifiedSession) kpiVerifiedSession.token = token; }
+                });
+                currentBranch = safeSessionStorage.getItem('active_branch') || '';
+                result.userData = {...user,username:String(user.id).toLowerCase()};
+                if (!embedded) {
+                    try { localStorage.setItem(KPI_SESSION_KEY,JSON.stringify(kpiVerifiedSession)); } catch (_) { /* Verified memory session only. */ }
+                }
+            } catch (_) {
+                if (attempt === kpiAuthAttempt) { sessionToken = null; kpiVerifiedSession = null; }
+                result.expired = true;
+            }
             return result;
         }
 
         async function checkAuth(preSso = null) {
-            let userData = null;
-
-            // 1. ดึงจาก URL Query Parameters ก่อน (เช่น ?sso=JWT_TOKEN หรือ ?uid=250013)
             const sso = preSso || await resolveSsoAuth();
-            userData = sso.userData;
-
-            if (sso.expired) {
-                userData = null;
-                safeStorage.removeItem('akra_sso_user_data');
-            }
-
-            if (!userData && !sso.attempted) {
-                try {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const paramUid = urlParams.get('uid') || urlParams.get('username') || urlParams.get('user');
-
-                    if (paramUid) {
-                        const normalizedUid = String(paramUid).toLowerCase();
-                        const foundEmp = GLOBAL_CONFIG_LIST.find(e => String(e.uid).toLowerCase() === normalizedUid);
-                        const empName = foundEmp ? foundEmp.name : paramUid;
-                        // URL query parameter login without verified SSO token is strictly unauthenticated for normal frontline use
-                        const empRoles = [];
-                        userData = {
-                            username: normalizedUid,
-                            name: empName,
-                            roles: empRoles
-                        };
-                        safeStorage.setItem('akra_sso_user_data', JSON.stringify(userData));
-                    }
-                } catch(e) { console.error("URL Params auth check failed", e); }
-            }
-
-            // 2. ดึงจาก Storage หากไม่มีใน URL
-            if (!userData) {
-                const savedData = safeStorage.getItem('akra_sso_user_data') || safeStorage.getItem('akra_user_data');
-                if (savedData) {
-                    try {
-                        const parsed = JSON.parse(savedData);
-                        if (parsed && typeof parsed === 'object') {
-                            userData = {
-                                username: String(parsed.username || parsed.id || parsed.name || '').toLowerCase(),
-                                name: parsed.name || parsed.username || parsed.id || '',
-                                roles: Array.isArray(parsed.roles) ? parsed.roles : [],
-                                perms: parsed.perms || {}
-                            };
-                            if (!sessionToken) {
-                                sessionToken = safeStorage.getItem('akra_sso_token') || safeStorage.getItem('akra_session_token') || null;
-                            }
-                        }
-                    } catch(e) { console.error(e); }
-                }
+            const userData = sso.userData;
+            if (sso.superseded) return;
+            if (!userData || sso.expired || !kpiIdentityId() || !getKpiPageToken()) {
+                invalidateKpiSession('กรุณาเปิด KPI จาก Main เพื่อยืนยันเซสชันและสิทธิ์');
+                if (window.AkraModule?.embedded) window.AkraModule.authRequired(PORTAL_URL);
+                return;
             }
 
             // ซ่อนตัวโหลดที่นี่ เมื่อระบบตรวจสิทธิ์เสร็จสิ้นแล้ว
@@ -9630,6 +9697,7 @@
 
             IS_ADMIN = false;
             _kpiPerms = [];
+            _kpiAuthorization = null;
             ['drawer-admin-heading', 'drawer-admin-dash-btn', 'drawer-admin-btn'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
@@ -9661,11 +9729,14 @@
             const recordDate = document.getElementById('record-date');
             if(recordDate) recordDate.value = todayStr;
 
-            IS_ADMIN = canAccessAdminSettings(currentRoles, sessionToken);
-            startAdminStatusRefresh();
-            const _ssoData = JSON.parse(safeStorage.getItem('akra_sso_user_data') || '{}');
+            const _ssoData = userData;
+            _kpiAuthorization = _ssoData;
+            window.AkraKpiWorkloadPermissions?.apply(document,canRecordOwnWorkload());
             _kpiPerms = Boolean(sessionToken) ? ((_ssoData.perms && _ssoData.perms["app-kpi"]) || []) : [];
-            if (_kpiPerms.length === 0 && IS_ADMIN) _kpiPerms = ["adminDashboard"];
+            IS_ADMIN = canAccessAdminSettings(currentRoles, sessionToken, _ssoData);
+            if (IS_ADMIN && !Object.prototype.hasOwnProperty.call(_ssoData.perms || {}, 'app-kpi')
+                && Number(_ssoData.tokenVersion) !== 2) _kpiPerms = ["adminDashboard"];
+            startAdminStatusRefresh();
 
             if(can("adminDashboard") || IS_ADMIN) {
                 document.getElementById('drawer-admin-heading')?.classList.remove('hidden');
@@ -9683,6 +9754,8 @@
 
             applyRolePermissions();
             refreshActions();
+            document.body.classList.add('kpi-session-ready');
+            document.getElementById('kpi-session-status').hidden = true;
         }
 
         function syncAppRecordDate(val) {
@@ -9723,7 +9796,7 @@
 
             if (permissions.length === 0) {
                 showModal("ไม่มีสิทธิ์เข้าใช้งาน", `คุณไม่มีสิทธิ์เข้าใช้งานระบบ KPI Tracker หรือรหัสไม่ถูกต้อง (User ID: ${currentUser})`, "error", () => {
-                    window.location.href = PORTAL_URL;
+                    window.AkraModule.home(PORTAL_URL);
                 });
                 return;
             }
@@ -9966,8 +10039,7 @@
 
         function sendAppLog(action, details) {
             if (!currentUser) return;
-            const payload = { user: currentUser, action: action, app: CURRENT_APP_NAME, details: details };
-            fetch(LOG_APP_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(err => console.error(err));
+            // Audit logging must use the trusted KPI Edge boundary; never post user data to legacy GAS.
         }
 
         const ScopedRefresher = {
@@ -13356,8 +13428,10 @@
 
         function saveRecordDraftDebounced() {
             if (_restoringDraft || !currentBranch) return;
+            const owner = kpiVerifiedSession, branch = currentBranch;
             clearTimeout(_draftTimer);
             _draftTimer = setTimeout(() => {
+                if (!owner || owner !== kpiVerifiedSession || branch !== currentBranch) return;
                 _draftTimer = null;
                 saveRecordDraft();
             }, 400);
@@ -13725,11 +13799,12 @@
         }
 
         async function saveWorkloadCard() {
+            if (!requireOwnWorkloadPermission()) return;
             if (await AppVersionGuard.blockIfStale()) return;
             const date = document.getElementById('record-date').value;
             if (!date) return showToast("กรุณาเลือกวันที่บันทึก", true);
 
-            const isUserAdmin = canAccessAdminSettings(currentRoles, sessionToken);
+            const isUserAdmin = IS_ADMIN;
             const isSupervisor = isUserAdmin || (Array.isArray(currentRoles) ? currentRoles : []).some(r => String(r).toUpperCase() === 'SUPERVISOR');
             const clock = getKpiBangkokClock();
 
@@ -13771,6 +13846,7 @@
         }
 
         async function executeSaveWorkload(workload, date) {
+            if (!requireOwnWorkloadPermission()) return;
             const btn = document.getElementById('btn-save-workload');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
             btn.disabled = true;
@@ -13804,11 +13880,12 @@
                 showModal("บันทึกไม่สำเร็จ", e.message || "เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้", "error");
             } finally {
                 btn.innerHTML = '<i class="fa-solid fa-circle-check text-base"></i> <span id="btn-save-workload-text">[ ยืนยันข้อมูลวันนี้ ]</span>';
-                btn.disabled = false;
+                btn.disabled = !canRecordOwnWorkload();
             }
         }
 
         async function clearWorkloadCard() {
+            if (!requireOwnWorkloadPermission()) return;
             if (await AppVersionGuard.blockIfStale()) return;
             const dateInput = document.getElementById('record-date');
             const date = dateInput ? dateInput.value : '';
@@ -13854,7 +13931,7 @@
             } finally {
                 if (btn) {
                     btn.innerHTML = '<i class="fa-solid fa-trash-can"></i><span>ล้างข้อมูล</span>';
-                    btn.disabled = false;
+                    btn.disabled = !canRecordOwnWorkload();
                 }
             }
         }
@@ -14767,36 +14844,9 @@
                         safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(localData));
                         dailyReportSaved = true;
 
-                        // Non-blocking background sync to Google Apps Script / Sheet
-                        if (LOG_APP_SCRIPT_URL) {
-                            fetch(LOG_APP_SCRIPT_URL, {
-                                method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(payload)
-                            }).catch(err => console.warn('[GAS Sync] Background sync failed:', err));
-                        }
                     }
                 } catch (supaErr) {
-                    console.warn('[Supabase KPI] Direct save failed, falling back to GAS:', supaErr);
-                }
-            }
-
-            // 2. Fallback to Google Apps Script if Supabase write failed or unavailable
-            if (!dailyReportSaved && LOG_APP_SCRIPT_URL) {
-                try {
-                    await fetch(LOG_APP_SCRIPT_URL, {
-                        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    let localData = JSON.parse(safeStorage.getItem('kpiData_' + currentBranch) || '[]');
-                    localData = localData.filter(d => d.date !== date);
-                    localData.push(payload);
-                    safeStorage.setItem('kpiData_' + currentBranch, JSON.stringify(localData));
-
-                    dailyReportSaved = true;
-                } catch(error) {
-                    console.warn("⚠️ แจ้งเตือน: ไม่สามารถอัปโหลดข้อมูลไปยังเซิร์ฟเวอร์ได้ บันทึกข้อมูลไว้ในเครื่อง (ออฟไลน์)", error);
-                    showToast("บันทึกโหมดออฟไลน์ (เชื่อมต่อเซิร์ฟเวอร์ไม่ได้)", false);
+                    console.warn('[Supabase KPI] Direct save failed; no legacy fallback is permitted:', supaErr);
                 }
             }
 
@@ -14831,6 +14881,7 @@
                         btn.disabled = false;
                     }
                 } else {
+                    showToast('ยังไม่สามารถบันทึกรายงาน Daily ผ่าน Supabase ได้ ข้อมูลยังไม่ถูกบันทึก', true);
                     btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2 text-xl"></i> บันทึกข้อมูลส่งเข้าระบบ';
                     btn.disabled = false;
                 }

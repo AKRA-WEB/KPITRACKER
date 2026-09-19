@@ -1,8 +1,8 @@
 /**
  * ============================================================================
  * AKRA KPITRACKER SUPABASE API CLIENT
- * Status: authenticated KPI roster, Workload, and Incident paths use kpi-api.
- * Remaining daily-record sections and actions stay on their contained paths.
+ * Status: all KPI roster, daily sections, Workload, Incident, and action paths
+ * use the authenticated kpi-api boundary. No legacy provider fallback exists.
  * ============================================================================
  */
 
@@ -19,8 +19,36 @@
         KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneHJyc2t6dGJwZWppcnJkcGJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMjQ1ODAsImV4cCI6MjEwMjcwMDU4MH0.IQWpcgqCCVVLwRJso1eamXHuCH4tKeWohd2oCUCVavw'
     };
 
-    async function fetchKpiAction(action, token, payload = {}) {
-        if (!token) throw new Error('KPI config requires an authenticated Main session.');
+    function changedSession() {
+        return Object.assign(new Error('session_changed'), {reason:'session_changed'});
+    }
+
+    function requestContext(token) {
+        if (typeof window === 'undefined') return {token,owner:null};
+        const owner = window.getKpiSessionOwner?.(), current = window.getKpiSessionToken?.();
+        if (!owner || !current) throw changedSession();
+        if (token && token !== current && token !== owner.token) throw changedSession();
+        return {owner,token:current};
+    }
+
+    function assertRequestContext(context) {
+        if (typeof window !== 'undefined' && (window.getKpiSessionOwner?.() !== context.owner || window.getKpiSessionToken?.() !== context.token)) throw changedSession();
+    }
+
+    async function fetchKpiAction(action, token, payload = {}, expectedContext = null) {
+        const context = expectedContext || requestContext(token);
+        const bridge = typeof window !== 'undefined' && window.AkraModule?.embedded ? window.AkraModule : null;
+        const operation = async () => {
+            const result = await transportRequest(action, payload, context);
+            if (bridge && !action.startsWith('get')) bridge.markSaved?.();
+            return result;
+        };
+        return bridge && !action.startsWith('get') ? bridge.runMutation(operation) : operation();
+    }
+
+    async function transportRequest(action, payload, context) {
+        assertRequestContext(context);
+        if (!context.token) throw new Error('KPI config requires an authenticated Main session.');
         const url = `${SUPABASE_CONFIG.URL}/functions/v1/kpi-api`;
         const response = await fetch(url, {
             method: 'POST',
@@ -28,13 +56,16 @@
                 'apikey': SUPABASE_CONFIG.KEY,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ action, token, ...payload })
+            body: JSON.stringify({ ...payload, action, token:context.token })
         });
+        assertRequestContext(context);
         const data = await response.json().catch(() => ({}));
+        assertRequestContext(context);
         if (!response.ok || data.status !== 'success') {
             const error = new Error(data.reason === 'record_conflict' ? 'ข้อมูลถูกแก้ไขจากที่อื่น กรุณาโหลดข้อมูลล่าสุดและตรวจทานก่อนบันทึกใหม่' : (data.reason || ('Supabase fetch failed: ' + response.statusText)));
             error.reason = data.reason;
             error.status = response.status;
+            if (response.status === 401 && typeof window !== 'undefined') window.onKpiSessionRejected?.(error);
             throw error;
         }
         return data;
@@ -47,11 +78,13 @@
     }
 
     async function readPages(action, token, payload, field) {
+        const context = requestContext(token);
         const records = [];
         let cursor = null;
         const seen = new Set();
         do {
-            const data = await fetchKpiAction(action, token, { ...payload, cursor, limit: 500 });
+            assertRequestContext(context);
+            const data = await fetchKpiAction(action, token, { ...payload, cursor, limit: 500 }, context);
             if (!Array.isArray(data[field])) throw new Error('invalid_kpi_response');
             records.push(...data[field]);
             cursor = data.nextCursor || null;
@@ -61,8 +94,77 @@
         return records;
     }
 
+    function dailySectionPayload(payload, section, revisions) {
+        const base = {
+            action: 'saveSection',
+            branch: payload.branch,
+            date: payload.date,
+            section,
+            expectedRevision: Number.isSafeInteger(revisions[section]) ? revisions[section] : 0
+        };
+        if (section === 'operations') {
+            return { ...base, volume: payload.volume || {}, customerNotes: payload.customerNotes || '' };
+        }
+        if (section === 'tasks') return { ...base, tasks: Array.isArray(payload.tasks) ? payload.tasks : [] };
+        if (section === 'endOfShift') {
+            const source = payload.endOfShift && typeof payload.endOfShift === 'object' ? payload.endOfShift : {};
+            return { ...base, endOfShift: {
+                summary: String(source.summary || ''), issues: String(source.issues || ''),
+                actions: String(source.actions || ''), followUps: String(source.followUps || '')
+            } };
+        }
+        if (section === 'vendorBills') {
+            const vendorBills = payload.endOfShift?.vendorBills;
+            return { ...base, vendorBills };
+        }
+        throw new Error('invalid_daily_section');
+    }
+
+    async function saveDailyRecord(payload, token) {
+        if (!payload || typeof payload !== 'object') throw new Error('invalid_daily_record');
+        if (Object.prototype.hasOwnProperty.call(payload, 'errors')) {
+            throw new Error('legacy_errors_not_supported');
+        }
+        const branch = String(payload.branch || '').trim().toUpperCase();
+        const date = String(payload.date || '').trim();
+        if (!['AKRA', 'TRD'].includes(branch) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('invalid_daily_record');
+        const context = requestContext(token || payload.token);
+        const existing = await fetchKpiAction('getDailyData', context.token, {
+            branch, startDate: date, endDate: date, includeActivity: false, limit: 500
+        }, context);
+        const row = Array.isArray(existing.records) ? existing.records[0] : null;
+        const revisions = { ...(row?.sectionRevisions || {}) };
+        const saved = [];
+        const saveSection = async section => {
+            const result = await fetchKpiAction('saveSection', context.token, dailySectionPayload({ ...payload, branch, date }, section, revisions), context);
+            if (!result?.record) throw new Error('invalid_daily_record_response');
+            saved.push(result.record);
+            revisions[section] = Number(result.record.sectionRevisions?.[section]);
+            if (!Number.isSafeInteger(revisions[section])) throw new Error('invalid_daily_record_response');
+        };
+
+        await saveSection('operations');
+        await saveSection('tasks');
+        await saveSection('endOfShift');
+        if (branch === 'AKRA' && payload.endOfShift?.vendorBills) await saveSection('vendorBills');
+        const workloadResults = [];
+        if (Array.isArray(payload.workload) && payload.workload.length > 0) {
+            if (branch !== 'AKRA') throw new Error('invalid_daily_workload_branch');
+            for (const workload of payload.workload) {
+                const employeeUid = String(workload?.employeeUid || '').trim();
+                if (!employeeUid) throw new Error('invalid_daily_workload');
+                const result = await fetchKpiAction('saveWorkload', context.token, {
+                    employeeUid, date, workload
+                }, context);
+                if (result?.status !== 'success' || !Array.isArray(result.workload)) throw new Error('invalid_daily_workload_response');
+                workloadResults.push(result);
+            }
+        }
+        return { status: 'success', record: saved[saved.length - 1], records: saved, workload: workloadResults };
+    }
+
     return {
-        saveDailyRecord: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
+        saveDailyRecord,
         fetchBranchData: async (token, branch, months = 3) => {
             const endDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
             const start = new Date(endDate + 'T00:00:00Z');
@@ -71,8 +173,16 @@
             return readPages('getDailyData', token, { branch, startDate: months === null ? '1970-01-01' : start.toISOString().slice(0, 10), endDate, includeActivity: months === null }, 'records');
         },
         saveSection: (token, request) => fetchKpiAction('saveSection', token, request),
-        getWeeklyRecords: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
-        getEmployees: async () => { throw new Error('Supabase KPI client deactivated. Falling back to GAS.'); },
+        getWeeklyRecords: async (token, branch, startDate, endDate) => {
+            const start = String(startDate || '').trim();
+            const end = String(endDate || '').trim();
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) throw new Error('invalid_daily_range');
+            return readPages('getDailyData', token, { branch, startDate: start, endDate: end, includeActivity: true }, 'records');
+        },
+        getEmployees: async token => {
+            const data = await fetchConfigAction('getConfig', token);
+            return data.employees;
+        },
         getConfig: token => fetchConfigAction('getConfig', token),
         getAdminStatus: token => fetchConfigAction('getAdminStatus', token),
         saveSystemConfig: async (token, configKey, configValue) => {
