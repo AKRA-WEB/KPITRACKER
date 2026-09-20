@@ -254,7 +254,7 @@ let clientRequest = null;
 async function testKpiClientAuthContract() {
     global.fetch = async (url, options) => {
         clientRequest = { url, options, body: JSON.parse(options.body) };
-        return { ok: true, json: async () => ({ status: 'success', feedStatus: 'ok', date: '2026-09-09', requisitions: [] }) };
+        return { ok: true, json: async () => ({ status: 'success', feedStatus: 'ok', date: '2026-09-09', requisitions: [], operationalEvents: [] }) };
     };
     await kpiClient.getLiveRequisitions('session-token-1', '2026-09-09');
     assert.ok(clientRequest.url.endsWith('/functions/v1/kpi-api'), 'Live Bill client must call kpi-api');

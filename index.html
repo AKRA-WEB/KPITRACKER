@@ -227,7 +227,7 @@
                         <i class="fa-solid fa-layer-group text-blue-600"></i>
                         Workload รวม
                     </h2>
-                    <p class="text-xs text-slate-500 mt-1">รวมกิจกรรมจากระบบที่เชื่อมต่อ • ไม่ต้องบันทึก Workload ซ้ำ</p>
+                    <p class="text-xs text-slate-500 mt-1">รวมกิจกรรมจาก Event ที่เชื่อมต่อ • ไม่ต้องบันทึก Workload ซ้ำ</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                     <input type="date" id="record-date" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
@@ -243,14 +243,14 @@
                 <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
                     <div class="flex flex-wrap items-center gap-2">
                         <span class="text-[10px] font-bold uppercase tracking-wide text-slate-400">ตัวกรอง</span>
-                        <select class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-700 outline-none" aria-label="แหล่งข้อมูล Workload"><option>ทั้งหมด (ทุกแหล่งข้อมูล)</option><option selected>LINE Requisition</option><option>ระบบแอปพลิเคชัน</option></select>
+                        <select class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-700 outline-none" aria-label="แหล่งข้อมูล Workload"><option>ทั้งหมด (ทุกแหล่งข้อมูล)</option><option selected>TRD Requisition</option><option>Operational Events</option></select>
                         <select class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-700 outline-none" aria-label="ทีมปฏิบัติการ"><option selected>AKRA ทั้งหมด</option><option>คลัง W1</option><option>รับสินค้าเข้า (GR)</option></select>
                         <div class="flex min-w-[180px] flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-400"><i class="fa-solid fa-magnifying-glass"></i><span>ค้นหากิจกรรม, ผู้ปฏิบัติงาน, รายการ...</span></div>
                     </div>
                     <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-[10px]">
                         <span class="font-bold text-slate-400">หมวดหมู่:</span>
                         <span id="wl-dashboard-filter-all" class="rounded-full bg-blue-600 px-3 py-1 font-bold text-white">ทั้งหมด <b class="font-num">0</b></span>
-                        <span id="wl-dashboard-filter-line" class="rounded-full bg-emerald-50 px-3 py-1 font-bold text-emerald-700">เบิกสินค้า LINE <b class="font-num">0</b></span>
+                        <span id="wl-dashboard-filter-line" class="rounded-full bg-emerald-50 px-3 py-1 font-bold text-emerald-700">บิลเบิกจาก TRD <b class="font-num">0</b></span>
                         <span class="ml-auto text-slate-400"><i class="fa-solid fa-link mr-1 text-amber-500"></i><span id="wl-dashboard-coverage-note">รอการผูกบัญชีเมื่อจำเป็น</span></span>
                         <span class="hidden" id="wl-dashboard-people">0</span><span class="hidden" id="wl-dashboard-sources">LINE</span><span class="hidden" id="wl-dashboard-coverage">0%</span>
                     </div>
@@ -258,16 +258,16 @@
 
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
                     <article class="rounded-2xl border-t-4 border-blue-500 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
-                        <p class="text-[11px] font-bold text-slate-500">ภาระงานทั้งหมด</p><p class="mt-3 text-3xl font-black font-num text-blue-600"><span id="wl-dashboard-total">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">LINE ที่เชื่อมต่อแล้ว</p>
+                        <p class="text-[11px] font-bold text-slate-500">ภาระงานทั้งหมด</p><p class="mt-3 text-3xl font-black font-num text-blue-600"><span id="wl-dashboard-total">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">Event ที่เชื่อมต่อแล้ว</p>
                     </article>
                     <article class="rounded-2xl border-t-4 border-violet-500 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
-                        <p class="text-[11px] font-bold text-slate-500">คลัง W1 เบิกจ่าย</p><p class="mt-3 text-3xl font-black font-num text-violet-600"><span id="wl-dashboard-line">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">จัดเตรียมและเบิกจ่าย</p>
+                        <p class="text-[11px] font-bold text-slate-500">บิลเบิกจาก TRD</p><p class="mt-3 text-3xl font-black font-num text-violet-600"><span id="wl-dashboard-line">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">รวมบิลด่วน บิลจัด และบิลหน้าร้าน</p>
                     </article>
                     <article class="rounded-2xl border-t-4 border-emerald-500 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
-                        <p class="text-[11px] font-bold text-slate-500">รับสินค้าเข้า GR</p><p class="mt-3 text-3xl font-black font-num text-emerald-600"><span id="wl-dashboard-gr">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">ยังไม่เชื่อม event</p>
+                        <p class="text-[11px] font-bold text-slate-500">รับสินค้าเข้า GR</p><p class="mt-3 text-3xl font-black font-num text-emerald-600"><span id="wl-dashboard-gr">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">รับจาก Event จริง</p>
                     </article>
                     <article class="rounded-2xl border-t-4 border-amber-500 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
-                        <p class="text-[11px] font-bold text-slate-500">ย้ายสต๊อก MOVE</p><p class="mt-3 text-3xl font-black font-num text-amber-600"><span id="wl-dashboard-move">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">W5 ↔ TRD</p>
+                        <p class="text-[11px] font-bold text-slate-500">ย้ายสต๊อก MOVE</p><p class="mt-3 text-3xl font-black font-num text-amber-600"><span id="wl-dashboard-move">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">W5 → AKRA · AKRA → TRD</p>
                     </article>
                     <article class="rounded-2xl border-t-4 border-slate-400 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
                         <p class="text-[11px] font-bold text-slate-500">จัดส่งและอื่น ๆ</p><p class="mt-3 text-3xl font-black font-num text-slate-600"><span id="wl-dashboard-outbound">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">OUTBOUND / Support</p>
@@ -332,11 +332,16 @@
                         <div class="mt-4 space-y-2">
                             <div class="flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
                                 <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-emerald-600 shadow-sm"><i class="fa-brands fa-line"></i></span>
-                                <div class="min-w-0"><p class="text-xs font-bold text-slate-800">เบิกสินค้า (LINE)</p><p class="text-[10px] text-slate-500">ผู้เบิกและผู้รับงานจากข้อความที่เชื่อมบัญชีแล้ว</p></div>
+                                <div class="min-w-0"><p class="text-xs font-bold text-slate-800">บิลเบิกจาก TRD</p><p class="text-[10px] text-slate-500">รวมบิลด่วน บิลจัด และบิลหน้าร้านเป็นงานเดียวกัน</p></div>
                             </div>
                             <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                                 <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm"><i class="fa-solid fa-database"></i></span>
                                 <div class="min-w-0"><p class="text-xs font-bold text-slate-800">ระบบต้นทางอื่น</p><p class="text-[10px] text-slate-500">จะแสดงเมื่อมีการเชื่อม event ของระบบนั้น</p></div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[10px] font-bold text-slate-600">
+                                <span class="rounded-lg border border-emerald-100 bg-emerald-50 px-2.5 py-2">รับสินค้าเข้า (GR)</span>
+                                <span class="rounded-lg border border-amber-100 bg-amber-50 px-2.5 py-2">ย้ายสต๊อก W5 → AKRA</span>
+                                <span class="rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-2">ย้ายสต๊อก AKRA → TRD</span>
                             </div>
                         </div>
                     </article>
@@ -3034,7 +3039,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260920.02</span>
+                <span id="drawer-version-text">KPI Suite v20260920.03</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -3435,13 +3440,13 @@
             #incident-team-heading { font-size:13px; }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260920.02"></script>
-    <script src="js/workload-permissions.js?v=20260920.02"></script>
-    <script src="js/incident-impact.js?v=20260920.02"></script>
+    <script src="js/supabase-kpi-client.js?v=20260920.03"></script>
+    <script src="js/workload-permissions.js?v=20260920.03"></script>
+    <script src="js/incident-impact.js?v=20260920.03"></script>
     <script>
         // ================= CONFIGURATION =================
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260920.02";
+        const CURRENT_VERSION = "20260920.03";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -4057,6 +4062,7 @@
             clearTimeout(liveRequisitionRefreshTimer);
             liveRequisitionRefreshTimer = null;
             liveRequisitionsList = [];
+            liveOperationalEventsList = [];
             document.querySelectorAll('dialog[open]').forEach(dialog => dialog.close());
             document.body.classList.remove('kpi-session-ready');
             const status = document.getElementById('kpi-session-status'); if (status) status.hidden = false;
@@ -6079,47 +6085,82 @@
             const dashboardCategoryListEl = document.getElementById('wl-dashboard-category-list');
             if (!countEl && !identityEl && !listEl && !dashboardTotalEl && !dashboardActivityEl) return;
 
-            const rows = Array.isArray(liveRequisitionsList) ? liveRequisitionsList.filter(row => row && typeof row === 'object') : [];
-            const needsIdentityReview = rows.filter(row => (
+            const requisitionRows = (Array.isArray(liveRequisitionsList) ? liveRequisitionsList : [])
+                .filter(row => row && typeof row === 'object')
+                .map(row => ({
+                    ...row,
+                    sourceSystem: 'LINE',
+                    sourceLabel: 'LINE',
+                    eventType: 'TRD_REQUISITION',
+                    workloadCategory: 'TRD_REQUISITION',
+                    workloadCategoryLabel: 'TRD Requisition'
+                }));
+            const operationalRows = (typeof liveOperationalEventsList !== 'undefined' && Array.isArray(liveOperationalEventsList) ? liveOperationalEventsList : [])
+                .filter(row => row && typeof row === 'object')
+                .map(row => ({
+                    ...row,
+                    workloadCategory: row.category || 'MOVE',
+                    workloadCategoryLabel: row.categoryLabel || row.category || 'Operational Event'
+                }));
+            const rows = [...requisitionRows, ...operationalRows].sort((left, right) => {
+                const leftTime = Date.parse(left.occurredAt || '') || 0;
+                const rightTime = Date.parse(right.occurredAt || '') || 0;
+                return leftTime - rightTime;
+            });
+            const needsIdentityReview = requisitionRows.filter(row => (
                 row.requesterIdentityStatus !== 'linked' ||
                 (row.assigneeLabel && row.assigneeIdentityStatus !== 'linked')
             )).length;
-            const linkedRows = rows.filter(row => row.requesterIdentityStatus === 'linked' || row.assigneeIdentityStatus === 'linked').length;
+            const linkedRows = requisitionRows.filter(row => row.requesterIdentityStatus === 'linked' || row.assigneeIdentityStatus === 'linked').length
+                + operationalRows.filter(row => row.actorName && row.actorName !== 'ไม่ระบุ').length;
             const safe = value => typeof esc === 'function' ? esc(value == null ? '' : value) : String(value == null ? '' : value);
             const identityBadge = '<span class="inline-flex items-center gap-1 rounded-md bg-amber-400/15 border border-amber-300/25 px-1.5 py-0.5 text-[10px] font-bold text-amber-100"><i class="fa-solid fa-link-slash text-[9px]"></i>ยังไม่ผูกบัญชี</span>';
             const identityBadgeLight = '<span class="inline-flex items-center gap-1 rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-700"><i class="fa-solid fa-link-slash text-[9px]"></i>ยังไม่ผูกบัญชี</span>';
 
             const personNames = new Map();
             rows.forEach(row => {
-                const name = row.assigneeEmployeeName || row.assigneeLabel || row.requesterEmployeeName || row.requester;
+                const name = row.eventType === 'TRD_REQUISITION'
+                    ? (row.assigneeEmployeeName || row.assigneeLabel || row.requesterEmployeeName || row.requester)
+                    : row.actorName;
                 const key = String(name || '').trim();
                 if (key) personNames.set(key, (personNames.get(key) || 0) + 1);
             });
             const categoryCounts = new Map();
+            const categoryDetails = new Map();
             rows.forEach(row => {
-                const category = String(row.categoryLabel || row.billType || 'เบิกสินค้า').trim() || 'เบิกสินค้า';
+                const category = String(row.workloadCategoryLabel || row.categoryLabel || row.billType || 'Operational Event').trim() || 'Operational Event';
                 categoryCounts.set(category, (categoryCounts.get(category) || 0) + 1);
+                if (row.eventType === 'TRD_REQUISITION') {
+                    const sourceType = String(row.categoryLabel || row.billType || '').trim();
+                    if (sourceType && sourceType !== category) {
+                        if (!categoryDetails.has(category)) categoryDetails.set(category, new Set());
+                        categoryDetails.get(category).add(sourceType);
+                    }
+                }
             });
-            const eventKind = row => `${row.sourceLabel || ''} ${row.source || ''} ${row.categoryLabel || ''} ${row.billType || ''}`.toLowerCase();
-            const grCount = rows.filter(row => /gr|inbound|รับสินค้า/.test(eventKind(row))).length;
-            const moveCount = rows.filter(row => /move|w5|trd|ย้าย/.test(eventKind(row))).length;
-            const outboundCount = rows.filter(row => /outbound|support|จัดส่ง/.test(eventKind(row))).length;
-            const lineCount = Math.max(0, rows.length - grCount - moveCount - outboundCount);
+            const eventKind = row => `${row.sourceLabel || ''} ${row.source || ''} ${row.category || ''} ${row.categoryLabel || ''} ${row.billType || ''}`.toLowerCase();
+            const grCount = operationalRows.filter(row => row.category === 'INBOUND' || /gr|inbound|รับสินค้า/.test(eventKind(row))).length;
+            const moveCount = operationalRows.filter(row => row.category === 'MOVE' || /move|w5|trd|ย้าย/.test(eventKind(row))).length;
+            const outboundCount = operationalRows.filter(row => row.category === 'OUTBOUND' || /outbound|support|จัดส่ง/.test(eventKind(row))).length;
+            const lineCount = requisitionRows.length;
             const coverage = rows.length ? Math.round((linkedRows / rows.length) * 100) : 0;
+            const sourceLabels = [...new Set(rows.map(row => row.sourceLabel || row.source || (row.eventType === 'TRD_REQUISITION' ? 'LINE' : 'Event')).filter(Boolean))];
 
-            if (countEl) countEl.textContent = `${rows.length} งานจาก LINE`;
+            if (countEl) countEl.textContent = operationalRows.length ? `${rows.length} งานรวม` : `${rows.length} งานจาก LINE`;
             if (identityEl) identityEl.textContent = `${needsIdentityReview} รายการรอจับคู่`;
             if (dashboardTotalEl) dashboardTotalEl.textContent = String(rows.length);
             if (dashboardPeopleEl) dashboardPeopleEl.textContent = String(personNames.size);
-            if (dashboardSourcesEl) dashboardSourcesEl.textContent = rows.length ? 'LINE' : '—';
+            if (dashboardSourcesEl) dashboardSourcesEl.textContent = rows.length ? sourceLabels.join(' · ') : '—';
             if (dashboardCoverageEl) dashboardCoverageEl.textContent = `${coverage}%`;
-            if (dashboardCoverageNoteEl) dashboardCoverageNoteEl.textContent = rows.length ? `${needsIdentityReview} รายการรอจับคู่บัญชี` : 'ยังไม่มีรายการให้ตรวจสอบ';
+            if (dashboardCoverageNoteEl) dashboardCoverageNoteEl.textContent = rows.length
+                ? `${operationalRows.length ? 'เชื่อม Event แล้ว · ' : ''}${needsIdentityReview} รายการรอจับคู่บัญชี`
+                : 'ยังไม่มีรายการให้ตรวจสอบ';
             if (dashboardLineEl) dashboardLineEl.textContent = String(lineCount);
             if (dashboardGrEl) dashboardGrEl.textContent = String(grCount);
             if (dashboardMoveEl) dashboardMoveEl.textContent = String(moveCount);
             if (dashboardOutboundEl) dashboardOutboundEl.textContent = String(outboundCount);
             if (dashboardFilterAllEl) dashboardFilterAllEl.innerHTML = `ทั้งหมด <b class="font-num">${rows.length}</b>`;
-            if (dashboardFilterLineEl) dashboardFilterLineEl.innerHTML = `เบิกสินค้า LINE <b class="font-num">${lineCount}</b>`;
+            if (dashboardFilterLineEl) dashboardFilterLineEl.innerHTML = `บิลเบิกจาก TRD <b class="font-num">${lineCount}</b>`;
             if (dashboardDistributionEl) {
                 const values = [lineCount, moveCount, grCount, outboundCount];
                 dashboardDistributionEl.innerHTML = values.map((value, index) => {
@@ -6129,7 +6170,7 @@
                 }).join('');
             }
             if (dashboardDistributionLabelEl) dashboardDistributionLabelEl.textContent = rows.length
-                ? `LINE: ${Math.round((lineCount / rows.length) * 100)}% · MOVE: ${Math.round((moveCount / rows.length) * 100)}% · GR: ${Math.round((grCount / rows.length) * 100)}% · อื่น ๆ: ${Math.round((outboundCount / rows.length) * 100)}%`
+                ? `TRD: ${Math.round((lineCount / rows.length) * 100)}% · MOVE: ${Math.round((moveCount / rows.length) * 100)}% · GR: ${Math.round((grCount / rows.length) * 100)}% · อื่น ๆ: ${Math.round((outboundCount / rows.length) * 100)}%`
                 : 'ยังไม่มีข้อมูล';
             if (dashboardPeopleBadgeEl) dashboardPeopleBadgeEl.textContent = `${personNames.size} คน`;
 
@@ -6158,7 +6199,8 @@
                     const categoryColors = ['bg-violet-500', 'bg-amber-500', 'bg-emerald-500', 'bg-blue-500'];
                     dashboardCategoryListEl.innerHTML = [...categoryCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([category, count], index) => {
                         const percent = rows.length ? Math.round((count / rows.length) * 100) : 0;
-                        return `<div class="space-y-1.5"><div class="flex items-center justify-between gap-2 text-[11px]"><span class="flex min-w-0 items-center gap-2 font-bold text-slate-700"><span class="h-2.5 w-2.5 shrink-0 rounded-full ${categoryColors[index % categoryColors.length]}"></span><span class="truncate">${safe(category)}</span></span><b class="shrink-0 font-num text-slate-900">${count} งาน · ${percent}%</b></div><div class="h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${categoryColors[index % categoryColors.length]}" style="width:${percent}%"></div></div></div>`;
+                        const details = categoryDetails.has(category) ? [...categoryDetails.get(category)].slice(0, 3).join(' · ') : '';
+                        return `<div class="space-y-1.5"><div class="flex items-center justify-between gap-2 text-[11px]"><span class="flex min-w-0 items-center gap-2 font-bold text-slate-700"><span class="h-2.5 w-2.5 shrink-0 rounded-full ${categoryColors[index % categoryColors.length]}"></span><span class="truncate">${safe(category)}${details ? ` <span class="font-normal text-slate-400">(${safe(details)})</span>` : ''}</span></span><b class="shrink-0 font-num text-slate-900">${count} งาน · ${percent}%</b></div><div class="h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${categoryColors[index % categoryColors.length]}" style="width:${percent}%"></div></div></div>`;
                     }).join('');
                 }
             }
@@ -6169,24 +6211,35 @@
             } else {
                 const visibleRows = rows.slice(-6).reverse();
                 listEl.innerHTML = visibleRows.map(row => {
-                const requester = row.requesterIdentityStatus === 'linked' && row.requesterEmployeeName
-                    ? `<span>ผู้ขอเบิกระบบ: ${safe(row.requesterEmployeeName)}</span>`
-                    : `<span>ผู้ขอเบิก LINE: <b class="text-white">${safe(row.requester || 'ไม่ระบุชื่อ')}</b></span> ${identityBadge}`;
-                const assignee = row.assigneeIdentityStatus === 'linked' && row.assigneeEmployeeName
-                    ? `<span>ผู้รับงานตาม Mention: ${safe(row.assigneeEmployeeName)}</span>`
-                    : row.assigneeLabel
-                        ? `<span>ผู้รับงานตาม Mention: <b class="text-white">${safe(row.assigneeLabel)}</b></span> ${identityBadge}`
-                        : '<span class="text-slate-400">ผู้รับงาน: ไม่ได้ระบุจากข้อความ</span>';
+                const isOperational = row.eventType !== 'TRD_REQUISITION';
+                const operator = isOperational
+                    ? safe(row.actorName || 'ไม่ระบุชื่อ')
+                    : safe(row.assigneeEmployeeName || row.assigneeLabel || row.requesterEmployeeName || row.requester || 'ไม่ระบุชื่อ');
+                const requester = isOperational
+                    ? `<span>ผู้ปฏิบัติงานจาก Event: <b class="text-white">${operator}</b></span>`
+                    : row.requesterIdentityStatus === 'linked' && row.requesterEmployeeName
+                        ? `<span>ผู้ขอเบิกระบบ: ${safe(row.requesterEmployeeName)}</span>`
+                        : `<span>ผู้ขอเบิก LINE: <b class="text-white">${safe(row.requester || 'ไม่ระบุชื่อ')}</b></span> ${identityBadge}`;
+                const assignee = isOperational
+                    ? `<span>แหล่งข้อมูล: ${safe(row.sourceLabel || row.sourceSystem || 'ระบบ')}</span>`
+                    : row.assigneeIdentityStatus === 'linked' && row.assigneeEmployeeName
+                        ? `<span>ผู้รับงานตาม Mention: ${safe(row.assigneeEmployeeName)}</span>`
+                        : row.assigneeLabel
+                            ? `<span>ผู้รับงานตาม Mention: <b class="text-white">${safe(row.assigneeLabel)}</b></span> ${identityBadge}`
+                            : '<span class="text-slate-400">ผู้รับงาน: ไม่ได้ระบุจากข้อความ</span>';
+                const details = isOperational
+                    ? row.details || `${row.itemCount || 0} รายการ · ${row.totalUnits || 0} หน่วย`
+                    : row.itemsSummary || 'ไม่ระบุรายการสินค้า';
                 return `
                     <article class="rounded-xl bg-white/5 border border-white/10 p-3 space-y-2">
                         <div class="flex items-start justify-between gap-2">
                             <div class="min-w-0">
-                                <p class="text-[11px] font-bold text-slate-200 truncate">${safe(row.categoryLabel || row.billType || 'กิจกรรมเบิกสินค้า')}</p>
-                                <p class="text-[10px] text-slate-500 mt-0.5"><span class="font-num">${safe(row.billNo || '—')}</span> • <span class="font-num">${safe(row.time || 'ไม่ระบุเวลา')}</span></p>
+                                <p class="text-[11px] font-bold text-slate-200 truncate">${safe(row.title || row.workloadCategoryLabel || row.categoryLabel || row.billType || 'กิจกรรม Workload')}</p>
+                                <p class="text-[10px] text-slate-500 mt-0.5"><span class="font-num">${safe(row.billNo || row.sourceRef || '—')}</span> • <span class="font-num">${safe(row.time || 'ไม่ระบุเวลา')}</span></p>
                             </div>
-                            <span class="shrink-0 rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold text-slate-300">${safe(row.status || 'รับรายการ')}</span>
+                            <span class="shrink-0 rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold text-slate-300">${safe(row.status || (isOperational ? 'บันทึกจาก Event' : 'รับรายการ'))}</span>
                         </div>
-                        <p class="text-[11px] text-slate-300 leading-relaxed">${safe(row.itemsSummary || 'ไม่ระบุรายการสินค้า')}</p>
+                        <p class="text-[11px] text-slate-300 leading-relaxed">${safe(details)}</p>
                         <div class="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">${requester}${assignee}</div>
                     </article>
                 `;
@@ -6199,15 +6252,23 @@
                 } else {
                     const visibleRows = rows.slice(-6).reverse();
                     dashboardActivityEl.innerHTML = visibleRows.map(row => {
+                        const isOperational = row.eventType !== 'TRD_REQUISITION';
                         const source = safe(row.sourceLabel || row.source || 'LINE');
-                        const category = safe(row.categoryLabel || row.billType || 'เบิกสินค้า');
-                        const operator = row.assigneeIdentityStatus === 'linked' && row.assigneeEmployeeName
-                            ? safe(row.assigneeEmployeeName)
-                            : safe(row.assigneeLabel || row.requesterEmployeeName || row.requester || 'ไม่ระบุชื่อ');
-                        const identityState = row.assigneeIdentityStatus === 'linked' || row.requesterIdentityStatus === 'linked'
+                        const category = safe(row.title || row.workloadCategoryLabel || row.categoryLabel || row.billType || 'กิจกรรม Workload');
+                        const operator = isOperational
+                            ? safe(row.actorName || 'ไม่ระบุชื่อ')
+                            : row.assigneeIdentityStatus === 'linked' && row.assigneeEmployeeName
+                                ? safe(row.assigneeEmployeeName)
+                                : safe(row.assigneeLabel || row.requesterEmployeeName || row.requester || 'ไม่ระบุชื่อ');
+                        const identityState = isOperational
+                            ? '<span class="text-emerald-600"><i class="fa-solid fa-bolt"></i> จาก Event จริง</span>'
+                            : row.assigneeIdentityStatus === 'linked' || row.requesterIdentityStatus === 'linked'
                             ? '<span class="text-emerald-600"><i class="fa-solid fa-link"></i> ผูกบัญชีแล้ว</span>'
                             : identityBadgeLight;
-                        return `<article class="flex gap-3 px-4 py-4"><div class="flex w-12 shrink-0 flex-col items-center"><span class="text-xs font-black font-num text-slate-700">${safe(row.time || '—')}</span><span class="mt-1 h-full w-px bg-slate-200"></span></div><div class="min-w-0 flex-1"><div class="flex flex-wrap items-center justify-between gap-2"><h4 class="truncate text-xs font-black text-slate-900">${category} <span class="font-normal text-slate-400">→ ${operator}</span></h4><span class="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">${safe(row.status || 'รับรายการ')}</span></div><p class="mt-1 text-[11px] leading-relaxed text-slate-500">${safe(row.itemsSummary || row.billNo || 'ไม่ระบุรายละเอียด')}</p><div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400"><span><i class="fa-brands fa-line mr-1 text-emerald-500"></i>${source}</span><span><i class="fa-solid fa-user mr-1"></i>${operator}</span>${identityState}</div></div></article>`;
+                        const details = isOperational
+                            ? row.details || `${row.itemCount || 0} รายการ · ${row.totalUnits || 0} หน่วย`
+                            : row.itemsSummary || row.billNo || 'ไม่ระบุรายละเอียด';
+                        return `<article class="flex gap-3 px-4 py-4"><div class="flex w-12 shrink-0 flex-col items-center"><span class="text-xs font-black font-num text-slate-700">${safe(row.time || '—')}</span><span class="mt-1 h-full w-px bg-slate-200"></span></div><div class="min-w-0 flex-1"><div class="flex flex-wrap items-center justify-between gap-2"><h4 class="truncate text-xs font-black text-slate-900">${category} <span class="font-normal text-slate-400">→ ${operator}</span></h4><span class="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">${safe(row.status || (isOperational ? 'บันทึกจาก Event' : 'รับรายการ'))}</span></div><p class="mt-1 text-[11px] leading-relaxed text-slate-500">${safe(details)}</p><div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400"><span><i class="${isOperational ? 'fa-solid fa-bolt' : 'fa-brands fa-line'} mr-1 text-emerald-500"></i>${source}</span><span><i class="fa-solid fa-user mr-1"></i>${operator}</span>${identityState}</div></div></article>`;
                     }).join('');
                 }
             }
@@ -9368,6 +9429,7 @@
 
         // ================= VIEW 3: LIVE REQUISITIONS CONTROLLERS =================
         let liveRequisitionsList = [];
+        let liveOperationalEventsList = [];
         let liveRequisitionRequest = 0;
         let liveBillCurrentFilter = 'all';
         let liveRequisitionRefreshTimer = null;
@@ -9480,10 +9542,12 @@
             const workloadDateEl = document.getElementById('record-date');
             const d = targetDate || (billDateEl && billDateEl.value) || (workloadDateEl && workloadDateEl.value) || (typeof _lastRecordDate !== 'undefined' && _lastRecordDate) || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().split('T')[0]);
             const request = ++liveRequisitionRequest;
-            const hasExisting = Array.isArray(liveRequisitionsList) && liveRequisitionsList.length > 0;
+            const hasExisting = (Array.isArray(liveRequisitionsList) && liveRequisitionsList.length > 0)
+                || (Array.isArray(liveOperationalEventsList) && liveOperationalEventsList.length > 0);
             const isSilent = silent && hasExisting;
             if (!isSilent) {
                 liveRequisitionsList = [];
+                liveOperationalEventsList = [];
                 renderLiveRequisitions('loading');
             }
             try {
@@ -9500,6 +9564,7 @@
                 if (!res || !res.success || !Array.isArray(res.requisitions) || (res.date && res.date !== d)) throw new Error('Invalid requisition response');
                 if (request !== liveRequisitionRequest) return;
                 liveRequisitionsList = res.requisitions;
+                liveOperationalEventsList = Array.isArray(res.operationalEvents) ? res.operationalEvents : [];
                 liveRequisitionsLoadedDate = d;
                 renderLiveRequisitions();
                 return res;

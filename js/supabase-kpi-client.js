@@ -313,7 +313,7 @@
             if (!token) throw new Error('KPI Live Bill requires an authenticated Main session.');
             const d = targetDate || new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date());
             const data = await fetchKpiAction('getLiveRequisitions', token, { date: d });
-            if (!data || !Array.isArray(data.requisitions) || data.date !== d || data.feedStatus !== 'ok') {
+            if (!data || !Array.isArray(data.requisitions) || !Array.isArray(data.operationalEvents) || data.date !== d || data.feedStatus !== 'ok') {
                 throw new Error('invalid_live_requisition_response');
             }
             return data;
