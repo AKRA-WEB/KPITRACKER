@@ -53,7 +53,7 @@ assert.equal(nodes.get('wl-dashboard-line').textContent, '1');
 assert.equal(nodes.get('wl-dashboard-gr').textContent, '1');
 assert.equal(nodes.get('wl-dashboard-move').textContent, '2');
 assert.equal(nodes.get('wl-dashboard-receive').textContent, '1');
-assert.equal(nodes.get('wl-unified-activity-count').textContent, '4 งานรวม');
+assert.equal(nodes.get('wl-unified-activity-count').textContent, '5 งานรวม');
 assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /ย้ายสต๊อก W5/);
 assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /ย้ายสต๊อก AKRA/);
 assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /รับสินค้าเข้า/);

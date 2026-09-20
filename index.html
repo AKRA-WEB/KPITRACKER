@@ -256,7 +256,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
                     <article class="rounded-2xl border-t-4 border-blue-500 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
                         <p class="text-[11px] font-bold text-slate-500">ภาระงานทั้งหมด</p><p class="mt-3 text-3xl font-black font-num text-blue-600"><span id="wl-dashboard-total">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">Event ที่เชื่อมต่อแล้ว</p>
                     </article>
@@ -268,6 +268,9 @@
                     </article>
                     <article class="rounded-2xl border-t-4 border-amber-500 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
                         <p class="text-[11px] font-bold text-slate-500">ย้ายสต๊อก MOVE</p><p class="mt-3 text-3xl font-black font-num text-amber-600"><span id="wl-dashboard-move">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">W5 → AKRA · AKRA → TRD</p>
+                    </article>
+                    <article class="rounded-2xl border-t-4 border-cyan-500 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
+                        <p class="text-[11px] font-bold text-slate-500">ยืนยันรับ TRD</p><p class="mt-3 text-3xl font-black font-num text-cyan-600"><span id="wl-dashboard-receive">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">รับจาก AKRA · ครบ/ไม่ครบ</p>
                     </article>
                     <article class="rounded-2xl border-t-4 border-slate-400 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
                         <p class="text-[11px] font-bold text-slate-500">จัดส่งและอื่น ๆ</p><p class="mt-3 text-3xl font-black font-num text-slate-600"><span id="wl-dashboard-outbound">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">OUTBOUND / Support</p>
@@ -338,10 +341,11 @@
                                 <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm"><i class="fa-solid fa-database"></i></span>
                                 <div class="min-w-0"><p class="text-xs font-bold text-slate-800">ระบบต้นทางอื่น</p><p class="text-[10px] text-slate-500">จะแสดงเมื่อมีการเชื่อม event ของระบบนั้น</p></div>
                             </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[10px] font-bold text-slate-600">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-1 text-[10px] font-bold text-slate-600">
                                 <span class="rounded-lg border border-emerald-100 bg-emerald-50 px-2.5 py-2">รับสินค้าเข้า (GR)</span>
                                 <span class="rounded-lg border border-amber-100 bg-amber-50 px-2.5 py-2">ย้ายสต๊อก W5 → AKRA</span>
                                 <span class="rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-2">ย้ายสต๊อก AKRA → TRD</span>
+                                <span class="rounded-lg border border-cyan-100 bg-cyan-50 px-2.5 py-2">ยืนยันรับสินค้า TRD</span>
                             </div>
                         </div>
                     </article>
@@ -3039,7 +3043,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260920.03</span>
+                <span id="drawer-version-text">KPI Suite v20260920.04</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -3440,13 +3444,13 @@
             #incident-team-heading { font-size:13px; }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260920.03"></script>
-    <script src="js/workload-permissions.js?v=20260920.03"></script>
-    <script src="js/incident-impact.js?v=20260920.03"></script>
+    <script src="js/supabase-kpi-client.js?v=20260920.04"></script>
+    <script src="js/workload-permissions.js?v=20260920.04"></script>
+    <script src="js/incident-impact.js?v=20260920.04"></script>
     <script>
         // ================= CONFIGURATION =================
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260920.03";
+        const CURRENT_VERSION = "20260920.04";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -6074,6 +6078,7 @@
             const dashboardLineEl = document.getElementById('wl-dashboard-line');
             const dashboardGrEl = document.getElementById('wl-dashboard-gr');
             const dashboardMoveEl = document.getElementById('wl-dashboard-move');
+            const dashboardReceiveEl = document.getElementById('wl-dashboard-receive');
             const dashboardOutboundEl = document.getElementById('wl-dashboard-outbound');
             const dashboardFilterAllEl = document.getElementById('wl-dashboard-filter-all');
             const dashboardFilterLineEl = document.getElementById('wl-dashboard-filter-line');
@@ -6139,8 +6144,12 @@
                 }
             });
             const eventKind = row => `${row.sourceLabel || ''} ${row.source || ''} ${row.category || ''} ${row.categoryLabel || ''} ${row.billType || ''}`.toLowerCase();
-            const grCount = operationalRows.filter(row => row.category === 'INBOUND' || /gr|inbound|รับสินค้า/.test(eventKind(row))).length;
-            const moveCount = operationalRows.filter(row => row.category === 'MOVE' || /move|w5|trd|ย้าย/.test(eventKind(row))).length;
+            const isGrEvent = row => row.eventType === 'GR_COMPLETED' || row.sourceSystem === 'GR' || row.category === 'INBOUND';
+            const isReceiveEvent = row => row.eventType === 'TRD_RECEIPT_CONFIRMED' || row.category === 'RECEIVE';
+            const isMoveEvent = row => row.eventType === 'W5_TO_AKRA' || row.eventType === 'AKRA_TO_TRD' || row.category === 'MOVE';
+            const grCount = operationalRows.filter(row => isGrEvent(row) && !isReceiveEvent(row)).length;
+            const moveCount = operationalRows.filter(row => isMoveEvent(row) && !isReceiveEvent(row)).length;
+            const receiveCount = operationalRows.filter(row => isReceiveEvent(row)).length;
             const outboundCount = operationalRows.filter(row => row.category === 'OUTBOUND' || /outbound|support|จัดส่ง/.test(eventKind(row))).length;
             const lineCount = requisitionRows.length;
             const coverage = rows.length ? Math.round((linkedRows / rows.length) * 100) : 0;
@@ -6158,19 +6167,20 @@
             if (dashboardLineEl) dashboardLineEl.textContent = String(lineCount);
             if (dashboardGrEl) dashboardGrEl.textContent = String(grCount);
             if (dashboardMoveEl) dashboardMoveEl.textContent = String(moveCount);
+            if (dashboardReceiveEl) dashboardReceiveEl.textContent = String(receiveCount);
             if (dashboardOutboundEl) dashboardOutboundEl.textContent = String(outboundCount);
             if (dashboardFilterAllEl) dashboardFilterAllEl.innerHTML = `ทั้งหมด <b class="font-num">${rows.length}</b>`;
             if (dashboardFilterLineEl) dashboardFilterLineEl.innerHTML = `บิลเบิกจาก TRD <b class="font-num">${lineCount}</b>`;
             if (dashboardDistributionEl) {
-                const values = [lineCount, moveCount, grCount, outboundCount];
+                const values = [lineCount, moveCount, grCount, receiveCount, outboundCount];
                 dashboardDistributionEl.innerHTML = values.map((value, index) => {
-                    const colors = ['bg-violet-500', 'bg-amber-500', 'bg-emerald-500', 'bg-slate-400'];
+                    const colors = ['bg-violet-500', 'bg-amber-500', 'bg-emerald-500', 'bg-cyan-500', 'bg-slate-400'];
                     const width = rows.length ? Math.round((value / rows.length) * 100) : 0;
                     return `<span class="h-full ${colors[index]}" style="width:${width}%"></span>`;
                 }).join('');
             }
             if (dashboardDistributionLabelEl) dashboardDistributionLabelEl.textContent = rows.length
-                ? `TRD: ${Math.round((lineCount / rows.length) * 100)}% · MOVE: ${Math.round((moveCount / rows.length) * 100)}% · GR: ${Math.round((grCount / rows.length) * 100)}% · อื่น ๆ: ${Math.round((outboundCount / rows.length) * 100)}%`
+                ? `TRD: ${Math.round((lineCount / rows.length) * 100)}% · MOVE: ${Math.round((moveCount / rows.length) * 100)}% · GR: ${Math.round((grCount / rows.length) * 100)}% · รับ TRD: ${Math.round((receiveCount / rows.length) * 100)}% · อื่น ๆ: ${Math.round((outboundCount / rows.length) * 100)}%`
                 : 'ยังไม่มีข้อมูล';
             if (dashboardPeopleBadgeEl) dashboardPeopleBadgeEl.textContent = `${personNames.size} คน`;
 
