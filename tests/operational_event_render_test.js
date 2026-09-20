@@ -23,7 +23,7 @@ const ids = [
   'wl-unified-activity-count', 'wl-unified-identity-count', 'wl-unified-activity-list',
   'wl-dashboard-total', 'wl-dashboard-people', 'wl-dashboard-sources', 'wl-dashboard-coverage',
   'wl-dashboard-coverage-note', 'wl-dashboard-line', 'wl-dashboard-gr', 'wl-dashboard-move',
-  'wl-dashboard-outbound', 'wl-dashboard-filter-all', 'wl-dashboard-filter-line',
+  'wl-dashboard-receive', 'wl-dashboard-outbound', 'wl-dashboard-filter-all', 'wl-dashboard-filter-line',
   'wl-dashboard-distribution', 'wl-dashboard-distribution-label', 'wl-dashboard-people-badge',
   'wl-dashboard-activity-list', 'wl-dashboard-people-list', 'wl-dashboard-category-list'
 ];
@@ -38,7 +38,8 @@ const sandbox = {
   liveOperationalEventsList: [
     { eventType: 'GR_COMPLETED', category: 'INBOUND', categoryLabel: 'รับสินค้าเข้า (GR)', sourceLabel: 'GR', title: 'รับสินค้าเข้า (GR) → สอน', actorName: 'สอน', time: '08:10', occurredAt: '2026-09-20T01:10:00Z', itemCount: 1, totalUnits: 4 },
     { eventType: 'W5_TO_AKRA', category: 'MOVE', categoryLabel: 'ย้ายสต๊อก W5 → AKRA', sourceLabel: 'AKRA W5', title: 'ย้ายสต๊อก W5 → AKRA', actorName: 'ปีเตอร์', time: '08:20', occurredAt: '2026-09-20T01:20:00Z', itemCount: 1, totalUnits: 2 },
-    { eventType: 'AKRA_TO_TRD', category: 'MOVE', categoryLabel: 'ย้ายสต๊อก AKRA → TRD', sourceLabel: 'TRDAKRA', title: 'ย้ายสต๊อก AKRA → TRD', actorName: 'คลัง AKRA', time: '08:30', occurredAt: '2026-09-20T01:30:00Z', itemCount: 1, totalUnits: 3 }
+    { eventType: 'AKRA_TO_TRD', category: 'MOVE', categoryLabel: 'ย้ายสต๊อก AKRA → TRD', sourceLabel: 'TRDAKRA', title: 'ย้ายสต๊อก AKRA → TRD', actorName: 'คลัง AKRA', time: '08:30', occurredAt: '2026-09-20T01:30:00Z', itemCount: 1, totalUnits: 3 },
+    { eventType: 'TRD_RECEIPT_CONFIRMED', category: 'RECEIVE', categoryLabel: 'รับสินค้า TRD', sourceLabel: 'TRDAKRA', title: 'ยืนยันรับสินค้า TRD', actorName: 'คลัง TRD', time: '08:45', occurredAt: '2026-09-20T01:45:00Z', itemCount: 1, totalUnits: 3 }
   ],
   esc: value => String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])),
   console
@@ -47,14 +48,16 @@ vm.createContext(sandbox);
 vm.runInContext(renderSource, sandbox);
 sandbox.renderUnifiedWorkloadActivity();
 
-assert.equal(nodes.get('wl-dashboard-total').textContent, '4');
+assert.equal(nodes.get('wl-dashboard-total').textContent, '5');
 assert.equal(nodes.get('wl-dashboard-line').textContent, '1');
 assert.equal(nodes.get('wl-dashboard-gr').textContent, '1');
 assert.equal(nodes.get('wl-dashboard-move').textContent, '2');
+assert.equal(nodes.get('wl-dashboard-receive').textContent, '1');
 assert.equal(nodes.get('wl-unified-activity-count').textContent, '4 งานรวม');
 assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /ย้ายสต๊อก W5/);
 assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /ย้ายสต๊อก AKRA/);
 assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /รับสินค้าเข้า/);
+assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /ยืนยันรับสินค้า TRD/);
 assert.match(nodes.get('wl-dashboard-category-list').innerHTML, /TRD Requisition/);
 assert.match(nodes.get('wl-dashboard-category-list').innerHTML, /บิลด่วน/);
 
