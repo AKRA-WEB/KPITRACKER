@@ -22,12 +22,24 @@ function extractFunction(source, name) {
 
 assert.match(html, /id="wl-unified-activity-card"/, 'Workload must contain a unified activity card');
 assert.match(html, /id="wl-unified-activity-list"/, 'Workload must contain an activity list');
+assert.match(html, /id="wl-unified-dashboard"/, 'Workload must contain the unified dashboard');
+assert.match(html, /Workload รวม/, 'Workload must be presented as a unified read-only view');
+assert.match(html, /<div class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4" aria-hidden="true">/, 'Legacy manual workload editor must stay out of the user path');
 
 const renderFn = extractFunction(html, 'renderUnifiedWorkloadActivity');
 const nodes = new Map([
   ['wl-unified-activity-count', { textContent: '' }],
   ['wl-unified-identity-count', { textContent: '' }],
-  ['wl-unified-activity-list', { innerHTML: '' }]
+  ['wl-unified-activity-list', { innerHTML: '' }],
+  ['wl-dashboard-total', { textContent: '' }],
+  ['wl-dashboard-people', { textContent: '' }],
+  ['wl-dashboard-sources', { textContent: '' }],
+  ['wl-dashboard-coverage', { textContent: '' }],
+  ['wl-dashboard-coverage-note', { textContent: '' }],
+  ['wl-dashboard-people-badge', { textContent: '' }],
+  ['wl-dashboard-activity-list', { innerHTML: '' }],
+  ['wl-dashboard-people-list', { innerHTML: '' }],
+  ['wl-dashboard-category-list', { innerHTML: '' }]
 ]);
 const sandbox = {
   document: { getElementById: id => nodes.get(id) || null },
@@ -65,6 +77,13 @@ sandbox.renderUnifiedWorkloadActivity();
 
 assert.equal(nodes.get('wl-unified-activity-count').textContent, '2 งานจาก LINE');
 assert.equal(nodes.get('wl-unified-identity-count').textContent, '1 รายการรอจับคู่');
+assert.equal(nodes.get('wl-dashboard-total').textContent, '2');
+assert.equal(nodes.get('wl-dashboard-people').textContent, '2');
+assert.equal(nodes.get('wl-dashboard-sources').textContent, 'LINE');
+assert.equal(nodes.get('wl-dashboard-coverage').textContent, '50%');
+assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /ปีเตอร์/);
+assert.match(nodes.get('wl-dashboard-people-list').innerHTML, /ปีเตอร์/);
+assert.match(nodes.get('wl-dashboard-category-list').innerHTML, /บิลด่วน/);
 assert.match(nodes.get('wl-unified-activity-list').innerHTML, /ผู้ขอเบิกระบบ: กาวิช/);
 assert.match(nodes.get('wl-unified-activity-list').innerHTML, /ผู้รับงานตาม Mention: ปีเตอร์/);
 assert.match(nodes.get('wl-unified-activity-list').innerHTML, /ยังไม่ผูกบัญชี/);

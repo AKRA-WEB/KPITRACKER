@@ -216,33 +216,135 @@
     <!-- Main Content Area -->
     <main id="app-content" class="p-3 sm:p-4 max-w-md md:max-w-6xl mx-auto hidden md:p-6 pb-24 md:pb-10" tabindex="-1">
 
-        <!-- ================= VIEW 1: WORKLOAD (สัดส่วนเวลา) ================= -->
+        <!-- ================= VIEW 1: WORKLOAD (Unified Workload) ================= -->
         <div id="view-workload" class="ops-view space-y-4 max-w-5xl mx-auto">
             <p id="workload-access-status" role="status" class="hidden rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"></p>
             <!-- Title & Date Row -->
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h2 class="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
-                        <i class="fa-solid fa-business-time text-blue-600"></i>
-                        สัดส่วนเวลาทำงานประจำวัน (Workload Capacity Allocation)
+                    <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">KPI / WORKLOAD รวม</p>
+                    <h2 class="mt-1 text-xl md:text-2xl font-black text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-blue-600"></i>
+                        Workload รวม
                     </h2>
-                    <p class="text-xs text-slate-500">บันทึกง่ายภายใน 10 วินาที • ติดตามสัดส่วนภาระงาน (Outbound / Inbound / Transfer / Support) ข้ามแผนก</p>
+                    <p class="text-xs text-slate-500 mt-1">รวมกิจกรรมจากระบบที่เชื่อมต่อ • ไม่ต้องบันทึก Workload ซ้ำ</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <select id="wl-capacity-select" onchange="changeWorkloadCapacity(Number(this.value))" class="p-2 bg-blue-50 border border-blue-200 rounded-xl text-xs font-bold text-blue-900 outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="10">🟢 เต็มวัน 10 ชม. (มาตรฐาน)</option>
-                        <option value="5">🌓 ครึ่งวัน 5 ชม.</option>
-                        <option value="11">🟠 OT 1 ชม. (11 ชม.)</option>
-                        <option value="12">🟠 OT 2 ชม. (12 ชม.)</option>
-                        <option value="13">🟠 OT 3 ชม. (13 ชม.)</option>
-                        <option value="0">⚪ วันหยุด / ลา (0 ชม.)</option>
-                    </select>
                     <input type="date" id="record-date" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+                    <span class="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-bold text-emerald-700">
+                        <i class="fa-solid fa-eye"></i>
+                        อ่านอย่างเดียว
+                    </span>
                 </div>
             </div>
 
+            <!-- Unified Workload Dashboard: read-only operational evidence -->
+            <section id="wl-unified-dashboard" class="space-y-4">
+                <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wide text-slate-400">ตัวกรอง</span>
+                        <select class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-700 outline-none" aria-label="แหล่งข้อมูล Workload"><option>ทั้งหมด (ทุกแหล่งข้อมูล)</option><option selected>LINE Requisition</option><option>ระบบแอปพลิเคชัน</option></select>
+                        <select class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-700 outline-none" aria-label="ทีมปฏิบัติการ"><option selected>AKRA ทั้งหมด</option><option>คลัง W1</option><option>รับสินค้าเข้า (GR)</option></select>
+                        <div class="flex min-w-[180px] flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-400"><i class="fa-solid fa-magnifying-glass"></i><span>ค้นหากิจกรรม, ผู้ปฏิบัติงาน, รายการ...</span></div>
+                    </div>
+                    <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-[10px]">
+                        <span class="font-bold text-slate-400">หมวดหมู่:</span>
+                        <span id="wl-dashboard-filter-all" class="rounded-full bg-blue-600 px-3 py-1 font-bold text-white">ทั้งหมด <b class="font-num">0</b></span>
+                        <span id="wl-dashboard-filter-line" class="rounded-full bg-emerald-50 px-3 py-1 font-bold text-emerald-700">เบิกสินค้า LINE <b class="font-num">0</b></span>
+                        <span class="ml-auto text-slate-400"><i class="fa-solid fa-link mr-1 text-amber-500"></i><span id="wl-dashboard-coverage-note">รอการผูกบัญชีเมื่อจำเป็น</span></span>
+                        <span class="hidden" id="wl-dashboard-people">0</span><span class="hidden" id="wl-dashboard-sources">LINE</span><span class="hidden" id="wl-dashboard-coverage">0%</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <article class="rounded-2xl border-t-4 border-blue-500 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
+                        <p class="text-[11px] font-bold text-slate-500">ภาระงานทั้งหมด</p><p class="mt-3 text-3xl font-black font-num text-blue-600"><span id="wl-dashboard-total">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">LINE ที่เชื่อมต่อแล้ว</p>
+                    </article>
+                    <article class="rounded-2xl border-t-4 border-violet-500 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
+                        <p class="text-[11px] font-bold text-slate-500">คลัง W1 เบิกจ่าย</p><p class="mt-3 text-3xl font-black font-num text-violet-600"><span id="wl-dashboard-line">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">จัดเตรียมและเบิกจ่าย</p>
+                    </article>
+                    <article class="rounded-2xl border-t-4 border-emerald-500 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
+                        <p class="text-[11px] font-bold text-slate-500">รับสินค้าเข้า GR</p><p class="mt-3 text-3xl font-black font-num text-emerald-600"><span id="wl-dashboard-gr">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">ยังไม่เชื่อม event</p>
+                    </article>
+                    <article class="rounded-2xl border-t-4 border-amber-500 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
+                        <p class="text-[11px] font-bold text-slate-500">ย้ายสต๊อก MOVE</p><p class="mt-3 text-3xl font-black font-num text-amber-600"><span id="wl-dashboard-move">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">W5 ↔ TRD</p>
+                    </article>
+                    <article class="rounded-2xl border-t-4 border-slate-400 border-x border-b border-slate-200 bg-white p-4 shadow-sm">
+                        <p class="text-[11px] font-bold text-slate-500">จัดส่งและอื่น ๆ</p><p class="mt-3 text-3xl font-black font-num text-slate-600"><span id="wl-dashboard-outbound">0</span> <span class="text-xs text-slate-500">งาน</span></p><p class="mt-1 text-[10px] text-slate-400">OUTBOUND / Support</p>
+                    </article>
+                </div>
+
+                <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="สัดส่วนกราฟแท่งภาระงาน">
+                    <div class="flex items-center justify-between gap-3 text-[11px]"><span class="font-bold text-slate-600">สัดส่วนสถิติการกระจายงาน (Workload Proportions)</span><span id="wl-dashboard-distribution-label" class="font-bold text-slate-500">ยังไม่มีข้อมูล</span></div>
+                    <div id="wl-dashboard-distribution" class="mt-3 flex h-2.5 overflow-hidden rounded-full bg-slate-100"><span class="h-full bg-violet-500" style="width:0%"></span><span class="h-full bg-amber-500" style="width:0%"></span><span class="h-full bg-emerald-500" style="width:0%"></span><span class="h-full bg-slate-400" style="width:0%"></span></div>
+                </section>
+
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+                    <article class="xl:col-span-7 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                        <div class="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-4">
+                            <div>
+                                <h3 class="text-sm font-black text-slate-900">กิจกรรม Workload รวม</h3>
+                                <p class="mt-1 text-[11px] text-slate-500">ลำดับกิจกรรมล่าสุดจากแหล่งข้อมูลที่เชื่อมต่อ</p>
+                            </div>
+                            <span class="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold text-blue-700">LIVE ACTIVITY</span>
+                        </div>
+                        <div id="wl-dashboard-activity-list" class="divide-y divide-slate-100" aria-live="polite">
+                            <div class="p-6 text-center text-xs text-slate-400">ยังไม่มีข้อมูลกิจกรรมจาก LINE</div>
+                        </div>
+                        <div class="border-t border-slate-100 px-4 py-3 text-[10px] text-slate-400">รายละเอียดเอกสารยังอยู่ที่แท็บต้นทาง เพื่อไม่ทำข้อมูลซ้ำ</div>
+                    </article>
+
+                    <aside class="xl:col-span-5 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                        <div class="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-4">
+                            <div>
+                                <h3 class="text-sm font-black text-slate-900">Workload รายบุคคล</h3>
+                                <p class="mt-1 text-[11px] text-slate-500">รวมผู้ปฏิบัติงานจากกิจกรรมจริง</p>
+                            </div>
+                            <span id="wl-dashboard-people-badge" class="rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-bold text-violet-700">0 คน</span>
+                        </div>
+                        <div id="wl-dashboard-people-list" class="space-y-2 p-4">
+                            <div class="rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-400">ยังไม่มีข้อมูลผู้ปฏิบัติงาน</div>
+                        </div>
+                    </aside>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h3 class="text-sm font-black text-slate-900">สัดส่วน Workload ตามประเภทงาน</h3>
+                                <p class="mt-1 text-[11px] text-slate-500">จัดกลุ่มจากประเภทกิจกรรมที่ระบบอ่านได้</p>
+                            </div>
+                            <i class="fa-solid fa-chart-pie text-violet-500"></i>
+                        </div>
+                        <div id="wl-dashboard-category-list" class="mt-4 space-y-3">
+                            <div class="rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-400">ยังไม่มีข้อมูลประเภทงาน</div>
+                        </div>
+                    </article>
+                    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h3 class="text-sm font-black text-slate-900">รายละเอียดอยู่ที่แท็บต้นทาง</h3>
+                                <p class="mt-1 text-[11px] text-slate-500">Workload รวมไม่ทำซ้ำเอกสาร</p>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-blue-500"></i>
+                        </div>
+                        <div class="mt-4 space-y-2">
+                            <div class="flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+                                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-emerald-600 shadow-sm"><i class="fa-brands fa-line"></i></span>
+                                <div class="min-w-0"><p class="text-xs font-bold text-slate-800">เบิกสินค้า (LINE)</p><p class="text-[10px] text-slate-500">ผู้เบิกและผู้รับงานจากข้อความที่เชื่อมบัญชีแล้ว</p></div>
+                            </div>
+                            <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm"><i class="fa-solid fa-database"></i></span>
+                                <div class="min-w-0"><p class="text-xs font-bold text-slate-800">ระบบต้นทางอื่น</p><p class="text-[10px] text-slate-500">จะแสดงเมื่อมีการเชื่อม event ของระบบนั้น</p></div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
             <!-- Responsive Layout Grid: Streamlined Daily Workload Card (Col 1) + Analytics & Team (Col 2) -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4" aria-hidden="true">
                 
                 <!-- Col 1: Streamlined Daily Workload Card (lg:col-span-7) -->
                 <div class="lg:col-span-7 space-y-3.5">
@@ -2932,7 +3034,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260920.01</span>
+                <span id="drawer-version-text">KPI Suite v20260920.02</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -3333,13 +3435,13 @@
             #incident-team-heading { font-size:13px; }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260920.01"></script>
-    <script src="js/workload-permissions.js?v=20260920.01"></script>
-    <script src="js/incident-impact.js?v=20260920.01"></script>
+    <script src="js/supabase-kpi-client.js?v=20260920.02"></script>
+    <script src="js/workload-permissions.js?v=20260920.02"></script>
+    <script src="js/incident-impact.js?v=20260920.02"></script>
     <script>
         // ================= CONFIGURATION =================
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260920.01";
+        const CURRENT_VERSION = "20260920.02";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -5958,26 +6060,115 @@
             const countEl = document.getElementById('wl-unified-activity-count');
             const identityEl = document.getElementById('wl-unified-identity-count');
             const listEl = document.getElementById('wl-unified-activity-list');
-            if (!countEl && !identityEl && !listEl) return;
+            const dashboardTotalEl = document.getElementById('wl-dashboard-total');
+            const dashboardPeopleEl = document.getElementById('wl-dashboard-people');
+            const dashboardSourcesEl = document.getElementById('wl-dashboard-sources');
+            const dashboardCoverageEl = document.getElementById('wl-dashboard-coverage');
+            const dashboardCoverageNoteEl = document.getElementById('wl-dashboard-coverage-note');
+            const dashboardLineEl = document.getElementById('wl-dashboard-line');
+            const dashboardGrEl = document.getElementById('wl-dashboard-gr');
+            const dashboardMoveEl = document.getElementById('wl-dashboard-move');
+            const dashboardOutboundEl = document.getElementById('wl-dashboard-outbound');
+            const dashboardFilterAllEl = document.getElementById('wl-dashboard-filter-all');
+            const dashboardFilterLineEl = document.getElementById('wl-dashboard-filter-line');
+            const dashboardDistributionEl = document.getElementById('wl-dashboard-distribution');
+            const dashboardDistributionLabelEl = document.getElementById('wl-dashboard-distribution-label');
+            const dashboardPeopleBadgeEl = document.getElementById('wl-dashboard-people-badge');
+            const dashboardActivityEl = document.getElementById('wl-dashboard-activity-list');
+            const dashboardPeopleListEl = document.getElementById('wl-dashboard-people-list');
+            const dashboardCategoryListEl = document.getElementById('wl-dashboard-category-list');
+            if (!countEl && !identityEl && !listEl && !dashboardTotalEl && !dashboardActivityEl) return;
 
             const rows = Array.isArray(liveRequisitionsList) ? liveRequisitionsList.filter(row => row && typeof row === 'object') : [];
             const needsIdentityReview = rows.filter(row => (
                 row.requesterIdentityStatus !== 'linked' ||
                 (row.assigneeLabel && row.assigneeIdentityStatus !== 'linked')
             )).length;
+            const linkedRows = rows.filter(row => row.requesterIdentityStatus === 'linked' || row.assigneeIdentityStatus === 'linked').length;
             const safe = value => typeof esc === 'function' ? esc(value == null ? '' : value) : String(value == null ? '' : value);
             const identityBadge = '<span class="inline-flex items-center gap-1 rounded-md bg-amber-400/15 border border-amber-300/25 px-1.5 py-0.5 text-[10px] font-bold text-amber-100"><i class="fa-solid fa-link-slash text-[9px]"></i>ยังไม่ผูกบัญชี</span>';
+            const identityBadgeLight = '<span class="inline-flex items-center gap-1 rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-700"><i class="fa-solid fa-link-slash text-[9px]"></i>ยังไม่ผูกบัญชี</span>';
+
+            const personNames = new Map();
+            rows.forEach(row => {
+                const name = row.assigneeEmployeeName || row.assigneeLabel || row.requesterEmployeeName || row.requester;
+                const key = String(name || '').trim();
+                if (key) personNames.set(key, (personNames.get(key) || 0) + 1);
+            });
+            const categoryCounts = new Map();
+            rows.forEach(row => {
+                const category = String(row.categoryLabel || row.billType || 'เบิกสินค้า').trim() || 'เบิกสินค้า';
+                categoryCounts.set(category, (categoryCounts.get(category) || 0) + 1);
+            });
+            const eventKind = row => `${row.sourceLabel || ''} ${row.source || ''} ${row.categoryLabel || ''} ${row.billType || ''}`.toLowerCase();
+            const grCount = rows.filter(row => /gr|inbound|รับสินค้า/.test(eventKind(row))).length;
+            const moveCount = rows.filter(row => /move|w5|trd|ย้าย/.test(eventKind(row))).length;
+            const outboundCount = rows.filter(row => /outbound|support|จัดส่ง/.test(eventKind(row))).length;
+            const lineCount = Math.max(0, rows.length - grCount - moveCount - outboundCount);
+            const coverage = rows.length ? Math.round((linkedRows / rows.length) * 100) : 0;
 
             if (countEl) countEl.textContent = `${rows.length} งานจาก LINE`;
             if (identityEl) identityEl.textContent = `${needsIdentityReview} รายการรอจับคู่`;
+            if (dashboardTotalEl) dashboardTotalEl.textContent = String(rows.length);
+            if (dashboardPeopleEl) dashboardPeopleEl.textContent = String(personNames.size);
+            if (dashboardSourcesEl) dashboardSourcesEl.textContent = rows.length ? 'LINE' : '—';
+            if (dashboardCoverageEl) dashboardCoverageEl.textContent = `${coverage}%`;
+            if (dashboardCoverageNoteEl) dashboardCoverageNoteEl.textContent = rows.length ? `${needsIdentityReview} รายการรอจับคู่บัญชี` : 'ยังไม่มีรายการให้ตรวจสอบ';
+            if (dashboardLineEl) dashboardLineEl.textContent = String(lineCount);
+            if (dashboardGrEl) dashboardGrEl.textContent = String(grCount);
+            if (dashboardMoveEl) dashboardMoveEl.textContent = String(moveCount);
+            if (dashboardOutboundEl) dashboardOutboundEl.textContent = String(outboundCount);
+            if (dashboardFilterAllEl) dashboardFilterAllEl.innerHTML = `ทั้งหมด <b class="font-num">${rows.length}</b>`;
+            if (dashboardFilterLineEl) dashboardFilterLineEl.innerHTML = `เบิกสินค้า LINE <b class="font-num">${lineCount}</b>`;
+            if (dashboardDistributionEl) {
+                const values = [lineCount, moveCount, grCount, outboundCount];
+                dashboardDistributionEl.innerHTML = values.map((value, index) => {
+                    const colors = ['bg-violet-500', 'bg-amber-500', 'bg-emerald-500', 'bg-slate-400'];
+                    const width = rows.length ? Math.round((value / rows.length) * 100) : 0;
+                    return `<span class="h-full ${colors[index]}" style="width:${width}%"></span>`;
+                }).join('');
+            }
+            if (dashboardDistributionLabelEl) dashboardDistributionLabelEl.textContent = rows.length
+                ? `LINE: ${Math.round((lineCount / rows.length) * 100)}% · MOVE: ${Math.round((moveCount / rows.length) * 100)}% · GR: ${Math.round((grCount / rows.length) * 100)}% · อื่น ๆ: ${Math.round((outboundCount / rows.length) * 100)}%`
+                : 'ยังไม่มีข้อมูล';
+            if (dashboardPeopleBadgeEl) dashboardPeopleBadgeEl.textContent = `${personNames.size} คน`;
+
+            if (dashboardPeopleListEl) {
+                if (!personNames.size) {
+                    dashboardPeopleListEl.innerHTML = '<div class="rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-400">ยังไม่มีข้อมูลผู้ปฏิบัติงาน</div>';
+                } else {
+                    const people = [...personNames.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+                    const avatarClasses = ['bg-violet-100 text-violet-700', 'bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700', 'bg-amber-100 text-amber-700', 'bg-rose-100 text-rose-700'];
+                    dashboardPeopleListEl.innerHTML = people.map(([name, count], index) => `
+                        <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-3">
+                            <div class="flex min-w-0 items-center gap-3">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-black ${avatarClasses[index % avatarClasses.length]}">${safe(name).slice(0, 2)}</span>
+                                <div class="min-w-0"><p class="truncate text-xs font-bold text-slate-800">${safe(name)}</p><p class="text-[10px] text-slate-400">ผู้ปฏิบัติงานจากกิจกรรม</p></div>
+                            </div>
+                            <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-black text-slate-700">${count} งาน</span>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            if (dashboardCategoryListEl) {
+                if (!categoryCounts.size) {
+                    dashboardCategoryListEl.innerHTML = '<div class="rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-400">ยังไม่มีข้อมูลประเภทงาน</div>';
+                } else {
+                    const categoryColors = ['bg-violet-500', 'bg-amber-500', 'bg-emerald-500', 'bg-blue-500'];
+                    dashboardCategoryListEl.innerHTML = [...categoryCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([category, count], index) => {
+                        const percent = rows.length ? Math.round((count / rows.length) * 100) : 0;
+                        return `<div class="space-y-1.5"><div class="flex items-center justify-between gap-2 text-[11px]"><span class="flex min-w-0 items-center gap-2 font-bold text-slate-700"><span class="h-2.5 w-2.5 shrink-0 rounded-full ${categoryColors[index % categoryColors.length]}"></span><span class="truncate">${safe(category)}</span></span><b class="shrink-0 font-num text-slate-900">${count} งาน · ${percent}%</b></div><div class="h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${categoryColors[index % categoryColors.length]}" style="width:${percent}%"></div></div></div>`;
+                    }).join('');
+                }
+            }
+
             if (!listEl) return;
             if (!rows.length) {
                 listEl.innerHTML = '<div class="rounded-xl border border-dashed border-white/15 p-3 text-center text-[11px] text-slate-400">ยังไม่มีข้อมูลกิจกรรมจาก LINE</div>';
-                return;
-            }
-
-            const visibleRows = rows.slice(-6).reverse();
-            listEl.innerHTML = visibleRows.map(row => {
+            } else {
+                const visibleRows = rows.slice(-6).reverse();
+                listEl.innerHTML = visibleRows.map(row => {
                 const requester = row.requesterIdentityStatus === 'linked' && row.requesterEmployeeName
                     ? `<span>ผู้ขอเบิกระบบ: ${safe(row.requesterEmployeeName)}</span>`
                     : `<span>ผู้ขอเบิก LINE: <b class="text-white">${safe(row.requester || 'ไม่ระบุชื่อ')}</b></span> ${identityBadge}`;
@@ -5999,7 +6190,27 @@
                         <div class="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">${requester}${assignee}</div>
                     </article>
                 `;
-            }).join('');
+                }).join('');
+            }
+
+            if (dashboardActivityEl) {
+                if (!rows.length) {
+                    dashboardActivityEl.innerHTML = '<div class="p-6 text-center text-xs text-slate-400">ยังไม่มีข้อมูลกิจกรรมจาก LINE</div>';
+                } else {
+                    const visibleRows = rows.slice(-6).reverse();
+                    dashboardActivityEl.innerHTML = visibleRows.map(row => {
+                        const source = safe(row.sourceLabel || row.source || 'LINE');
+                        const category = safe(row.categoryLabel || row.billType || 'เบิกสินค้า');
+                        const operator = row.assigneeIdentityStatus === 'linked' && row.assigneeEmployeeName
+                            ? safe(row.assigneeEmployeeName)
+                            : safe(row.assigneeLabel || row.requesterEmployeeName || row.requester || 'ไม่ระบุชื่อ');
+                        const identityState = row.assigneeIdentityStatus === 'linked' || row.requesterIdentityStatus === 'linked'
+                            ? '<span class="text-emerald-600"><i class="fa-solid fa-link"></i> ผูกบัญชีแล้ว</span>'
+                            : identityBadgeLight;
+                        return `<article class="flex gap-3 px-4 py-4"><div class="flex w-12 shrink-0 flex-col items-center"><span class="text-xs font-black font-num text-slate-700">${safe(row.time || '—')}</span><span class="mt-1 h-full w-px bg-slate-200"></span></div><div class="min-w-0 flex-1"><div class="flex flex-wrap items-center justify-between gap-2"><h4 class="truncate text-xs font-black text-slate-900">${category} <span class="font-normal text-slate-400">→ ${operator}</span></h4><span class="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">${safe(row.status || 'รับรายการ')}</span></div><p class="mt-1 text-[11px] leading-relaxed text-slate-500">${safe(row.itemsSummary || row.billNo || 'ไม่ระบุรายละเอียด')}</p><div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400"><span><i class="fa-brands fa-line mr-1 text-emerald-500"></i>${source}</span><span><i class="fa-solid fa-user mr-1"></i>${operator}</span>${identityState}</div></div></article>`;
+                    }).join('');
+                }
+            }
         }
 
         function removeSupport(id) {
