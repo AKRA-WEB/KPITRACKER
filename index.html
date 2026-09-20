@@ -408,6 +408,33 @@
                         </div>
                     </section>
 
+                    <!-- Unified workload activity: read-only evidence from operational events -->
+                    <section id="wl-unified-activity-card" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 shadow-sm space-y-3 text-white">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-xs font-black flex items-center gap-1.5">
+                                    <i class="fa-solid fa-wave-square text-cyan-300"></i>
+                                    Workload รวมจากกิจกรรมจริง
+                                </p>
+                                <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">คำขอเบิกจาก LINE เป็นหนึ่งในแหล่งข้อมูล • รายละเอียดบิลอยู่ที่แท็บ Live Bill Sync</p>
+                            </div>
+                            <span class="shrink-0 px-2 py-1 rounded-lg bg-cyan-400/10 border border-cyan-300/20 text-[10px] font-bold text-cyan-200">อ่านอย่างเดียว</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="rounded-xl bg-white/5 border border-white/10 p-2.5">
+                                <p class="text-[10px] text-slate-400">กิจกรรมวันนี้</p>
+                                <p id="wl-unified-activity-count" class="text-lg font-black font-num mt-0.5">0 งานจาก LINE</p>
+                            </div>
+                            <div class="rounded-xl bg-amber-400/10 border border-amber-300/20 p-2.5">
+                                <p class="text-[10px] text-amber-200/80">ต้องตรวจชื่อ</p>
+                                <p id="wl-unified-identity-count" class="text-lg font-black font-num mt-0.5 text-amber-100">0 รายการรอจับคู่</p>
+                            </div>
+                        </div>
+                        <div id="wl-unified-activity-list" class="space-y-2" aria-live="polite">
+                            <div class="rounded-xl border border-dashed border-white/15 p-3 text-center text-[11px] text-slate-400">ยังไม่มีข้อมูลกิจกรรมจาก LINE</div>
+                        </div>
+                    </section>
+
                     <!-- PC Team Capacity Preview -->
                     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
                         <div class="flex items-center justify-between">
@@ -2905,7 +2932,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260919.02</span>
+                <span id="drawer-version-text">KPI Suite v20260920.01</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -3306,13 +3333,13 @@
             #incident-team-heading { font-size:13px; }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260919.02"></script>
-    <script src="js/workload-permissions.js?v=20260919.02"></script>
-    <script src="js/incident-impact.js?v=20260919.02"></script>
+    <script src="js/supabase-kpi-client.js?v=20260920.01"></script>
+    <script src="js/workload-permissions.js?v=20260920.01"></script>
+    <script src="js/incident-impact.js?v=20260920.01"></script>
     <script>
         // ================= CONFIGURATION =================
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260919.02";
+        const CURRENT_VERSION = "20260920.01";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -5925,6 +5952,54 @@
 
             renderMainWorkloadCard();
             renderTeamWorkloadPreview();
+        }
+
+        function renderUnifiedWorkloadActivity() {
+            const countEl = document.getElementById('wl-unified-activity-count');
+            const identityEl = document.getElementById('wl-unified-identity-count');
+            const listEl = document.getElementById('wl-unified-activity-list');
+            if (!countEl && !identityEl && !listEl) return;
+
+            const rows = Array.isArray(liveRequisitionsList) ? liveRequisitionsList.filter(row => row && typeof row === 'object') : [];
+            const needsIdentityReview = rows.filter(row => (
+                row.requesterIdentityStatus !== 'linked' ||
+                (row.assigneeLabel && row.assigneeIdentityStatus !== 'linked')
+            )).length;
+            const safe = value => typeof esc === 'function' ? esc(value == null ? '' : value) : String(value == null ? '' : value);
+            const identityBadge = '<span class="inline-flex items-center gap-1 rounded-md bg-amber-400/15 border border-amber-300/25 px-1.5 py-0.5 text-[10px] font-bold text-amber-100"><i class="fa-solid fa-link-slash text-[9px]"></i>ยังไม่ผูกบัญชี</span>';
+
+            if (countEl) countEl.textContent = `${rows.length} งานจาก LINE`;
+            if (identityEl) identityEl.textContent = `${needsIdentityReview} รายการรอจับคู่`;
+            if (!listEl) return;
+            if (!rows.length) {
+                listEl.innerHTML = '<div class="rounded-xl border border-dashed border-white/15 p-3 text-center text-[11px] text-slate-400">ยังไม่มีข้อมูลกิจกรรมจาก LINE</div>';
+                return;
+            }
+
+            const visibleRows = rows.slice(-6).reverse();
+            listEl.innerHTML = visibleRows.map(row => {
+                const requester = row.requesterIdentityStatus === 'linked' && row.requesterEmployeeName
+                    ? `<span>ผู้ขอเบิกระบบ: ${safe(row.requesterEmployeeName)}</span>`
+                    : `<span>ผู้ขอเบิก LINE: <b class="text-white">${safe(row.requester || 'ไม่ระบุชื่อ')}</b></span> ${identityBadge}`;
+                const assignee = row.assigneeIdentityStatus === 'linked' && row.assigneeEmployeeName
+                    ? `<span>ผู้รับงานตาม Mention: ${safe(row.assigneeEmployeeName)}</span>`
+                    : row.assigneeLabel
+                        ? `<span>ผู้รับงานตาม Mention: <b class="text-white">${safe(row.assigneeLabel)}</b></span> ${identityBadge}`
+                        : '<span class="text-slate-400">ผู้รับงาน: ไม่ได้ระบุจากข้อความ</span>';
+                return `
+                    <article class="rounded-xl bg-white/5 border border-white/10 p-3 space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="text-[11px] font-bold text-slate-200 truncate">${safe(row.categoryLabel || row.billType || 'กิจกรรมเบิกสินค้า')}</p>
+                                <p class="text-[10px] text-slate-500 mt-0.5"><span class="font-num">${safe(row.billNo || '—')}</span> • <span class="font-num">${safe(row.time || 'ไม่ระบุเวลา')}</span></p>
+                            </div>
+                            <span class="shrink-0 rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold text-slate-300">${safe(row.status || 'รับรายการ')}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-300 leading-relaxed">${safe(row.itemsSummary || 'ไม่ระบุรายการสินค้า')}</p>
+                        <div class="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">${requester}${assignee}</div>
+                    </article>
+                `;
+            }).join('');
         }
 
         function removeSupport(id) {
@@ -9087,6 +9162,7 @@
         let liveRequisitionRefreshTimer = null;
         let liveRequisitionRefreshDelay = 10000;
         let liveRequisitionRefreshBound = false;
+        let liveRequisitionsLoadedDate = '';
 
         function classifyRequisition(req) {
             if (!req || typeof req !== 'object') {
@@ -9190,7 +9266,8 @@
 
         async function fetchLiveRequisitions(targetDate = null, silent = false) {
             const billDateEl = document.getElementById('record-date-billcount');
-            const d = targetDate || (billDateEl && billDateEl.value) || (typeof _lastRecordDate !== 'undefined' && _lastRecordDate) || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().split('T')[0]);
+            const workloadDateEl = document.getElementById('record-date');
+            const d = targetDate || (billDateEl && billDateEl.value) || (workloadDateEl && workloadDateEl.value) || (typeof _lastRecordDate !== 'undefined' && _lastRecordDate) || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().split('T')[0]);
             const request = ++liveRequisitionRequest;
             const hasExisting = Array.isArray(liveRequisitionsList) && liveRequisitionsList.length > 0;
             const isSilent = silent && hasExisting;
@@ -9212,6 +9289,7 @@
                 if (!res || !res.success || !Array.isArray(res.requisitions) || (res.date && res.date !== d)) throw new Error('Invalid requisition response');
                 if (request !== liveRequisitionRequest) return;
                 liveRequisitionsList = res.requisitions;
+                liveRequisitionsLoadedDate = d;
                 renderLiveRequisitions();
                 return res;
             } catch (e) {
@@ -9224,6 +9302,20 @@
                     if (stateEl) stateEl.innerText = 'อัปเดตเบื้องหลังไม่สำเร็จ (แสดงข้อมูลล่าสุด)';
                 }
             }
+        }
+
+        function ensureWorkloadActivityLoaded() {
+            const workloadView = document.getElementById('view-workload');
+            if (!workloadView || workloadView.classList.contains('hidden')) return;
+            const dateEl = document.getElementById('record-date');
+            const date = (dateEl && dateEl.value) || (typeof _lastRecordDate !== 'undefined' && _lastRecordDate) || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().split('T')[0]);
+            if (liveRequisitionsLoadedDate === date) {
+                renderUnifiedWorkloadActivity();
+                return;
+            }
+            if (typeof renderUnifiedWorkloadActivity === 'function') renderUnifiedWorkloadActivity();
+            if (typeof sessionToken === 'undefined' || !sessionToken) return;
+            fetchLiveRequisitions(date, true);
         }
 
         function liveBillIsVisible() {
@@ -9267,6 +9359,8 @@
             const regularCountEl = document.getElementById('live-regular-count');
             const stateEl = document.getElementById('live-bill-read-state');
             const filterBadge = document.getElementById('live-bill-filtered-badge');
+
+            if (typeof renderUnifiedWorkloadActivity === 'function') renderUnifiedWorkloadActivity();
 
             if (state !== 'ready') {
                 const message = state === 'loading' ? 'กำลังโหลดรายการเบิก…' : 'โหลดรายการไม่สำเร็จ กรุณากดรีเฟรชอีกครั้ง';
@@ -9770,6 +9864,10 @@
             hydrateSelectedDayRecord(val);
             hydrateIncidentPreview(val);
             updateDailyDashboard();
+            if (typeof liveRequisitionsLoadedDate !== 'undefined' && liveRequisitionsLoadedDate !== val) {
+                liveRequisitionsLoadedDate = '';
+                if (typeof ensureWorkloadActivityLoaded === 'function') ensureWorkloadActivityLoaded();
+            }
         }
 
         function applyRolePermissions() {
@@ -12768,6 +12866,8 @@
                 renderErrTeamHp();
             } else if (tab === 'workload') {
                 renderWorkload();
+                renderUnifiedWorkloadActivity();
+                ensureWorkloadActivityLoaded();
             } else if (tab === 'billcount') {
                 startLiveRequisitionRefresh();
                 renderLiveRequisitions();
