@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <script src="js/akra-shell-bridge.js?v=20260919.01"></script>
+    <script src="js/akra-shell-bridge.js?v=20260921.01&bridge=20260921.01"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KPI Tracker - Multi Branch</title>
@@ -243,9 +243,9 @@
                 <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
                     <div class="flex flex-wrap items-center gap-2">
                         <span class="text-[10px] font-bold uppercase tracking-wide text-slate-400">ตัวกรอง</span>
-                        <select class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-700 outline-none" aria-label="แหล่งข้อมูล Workload"><option>ทั้งหมด (ทุกแหล่งข้อมูล)</option><option selected>TRD Requisition</option><option>Operational Events</option></select>
-                        <select class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-700 outline-none" aria-label="ทีมปฏิบัติการ"><option selected>AKRA ทั้งหมด</option><option>คลัง W1</option><option>รับสินค้าเข้า (GR)</option></select>
-                        <div class="flex min-w-[180px] flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-400"><i class="fa-solid fa-magnifying-glass"></i><span>ค้นหากิจกรรม, ผู้ปฏิบัติงาน, รายการ...</span></div>
+                        <select id="wl-filter-source" onchange="renderUnifiedWorkloadActivity()" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-700 outline-none" aria-label="แหล่งข้อมูล Workload"><option value="">ทั้งหมด (ทุกแหล่งข้อมูล)</option><option value="TRD Requisition">TRD Requisition (บิลเบิก LINE)</option><option value="Operational Events">Operational Events (กิจกรรมระบบ)</option></select>
+                        <select id="wl-filter-team" onchange="renderUnifiedWorkloadActivity()" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-700 outline-none" aria-label="ทีมปฏิบัติการ"><option value="">AKRA ทั้งหมด</option><option value="คลัง W1">คลัง W1 (จัดเบิกสินค้า)</option><option value="รับสินค้าเข้า">รับสินค้าเข้า (GR)</option><option value="ย้ายสต๊อก">ย้ายสต๊อก (MOVE W5/TRD)</option><option value="รับสินค้า TRD">รับสินค้า TRD</option></select>
+                        <div class="flex min-w-[180px] flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-400"><i class="fa-solid fa-magnifying-glass"></i><input id="wl-filter-search" oninput="debouncedRenderUnifiedWorkloadActivity()" type="text" placeholder="ค้นหากิจกรรม, ผู้ปฏิบัติงาน, รายการ..." class="w-full bg-transparent outline-none text-slate-700 font-bold placeholder:font-normal placeholder:text-slate-400"></div>
                     </div>
                     <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-[10px]">
                         <span class="font-bold text-slate-400">หมวดหมู่:</span>
@@ -291,7 +291,7 @@
                             </div>
                             <span class="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold text-blue-700">LIVE ACTIVITY</span>
                         </div>
-                        <div id="wl-dashboard-activity-list" class="divide-y divide-slate-100" aria-live="polite">
+                        <div id="wl-dashboard-activity-list" class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto" aria-live="polite">
                             <div class="p-6 text-center text-xs text-slate-400">ยังไม่มีข้อมูลกิจกรรมจาก LINE</div>
                         </div>
                         <div class="border-t border-slate-100 px-4 py-3 text-[10px] text-slate-400">รายละเอียดเอกสารยังอยู่ที่แท็บต้นทาง เพื่อไม่ทำข้อมูลซ้ำ</div>
@@ -541,7 +541,7 @@
                                 <p id="wl-unified-identity-count" class="text-lg font-black font-num mt-0.5 text-amber-100">0 รายการรอจับคู่</p>
                             </div>
                         </div>
-                        <div id="wl-unified-activity-list" class="space-y-2" aria-live="polite">
+                        <div id="wl-unified-activity-list" class="space-y-2 max-h-[500px] overflow-y-auto" aria-live="polite">
                             <div class="rounded-xl border border-dashed border-white/15 p-3 text-center text-[11px] text-slate-400">ยังไม่มีข้อมูลกิจกรรมจาก LINE</div>
                         </div>
                     </section>
@@ -3043,7 +3043,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260920.05</span>
+                <span id="drawer-version-text">KPI Suite v20260921.01</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -3444,13 +3444,13 @@
             #incident-team-heading { font-size:13px; }
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260920.05"></script>
-    <script src="js/workload-permissions.js?v=20260920.05"></script>
-    <script src="js/incident-impact.js?v=20260920.05"></script>
+    <script src="js/supabase-kpi-client.js?v=20260921.01"></script>
+    <script src="js/workload-permissions.js?v=20260921.01"></script>
+    <script src="js/incident-impact.js?v=20260921.01"></script>
     <script>
         // ================= CONFIGURATION =================
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260920.05";
+        const CURRENT_VERSION = "20260921.01";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -6066,6 +6066,12 @@
             renderTeamWorkloadPreview();
         }
 
+        let _unifiedWorkloadDebounceTimeout = null;
+        function debouncedRenderUnifiedWorkloadActivity() {
+            if (_unifiedWorkloadDebounceTimeout) clearTimeout(_unifiedWorkloadDebounceTimeout);
+            _unifiedWorkloadDebounceTimeout = setTimeout(renderUnifiedWorkloadActivity, 300);
+        }
+
         function renderUnifiedWorkloadActivity() {
             const countEl = document.getElementById('wl-unified-activity-count');
             const identityEl = document.getElementById('wl-unified-identity-count');
@@ -6107,28 +6113,54 @@
                     workloadCategory: row.category || 'MOVE',
                     workloadCategoryLabel: row.categoryLabel || row.category || 'Operational Event'
                 }));
-            const rows = [...requisitionRows, ...operationalRows].sort((left, right) => {
+            let rows = [...requisitionRows, ...operationalRows].sort((left, right) => {
                 const leftTime = Date.parse(left.occurredAt || '') || 0;
                 const rightTime = Date.parse(right.occurredAt || '') || 0;
                 return leftTime - rightTime;
             });
-            const needsIdentityReview = requisitionRows.filter(row => (
+            const sourceFilter = document.getElementById('wl-filter-source')?.value || '';
+            const teamFilter = document.getElementById('wl-filter-team')?.value || '';
+            const searchFilter = (document.getElementById('wl-filter-search')?.value || '').toLowerCase();
+            
+            if (sourceFilter) {
+                if (sourceFilter === 'TRD Requisition') rows = rows.filter(r => r.eventType === 'TRD_REQUISITION');
+                if (sourceFilter === 'Operational Events') rows = rows.filter(r => r.eventType !== 'TRD_REQUISITION');
+            }
+            if (teamFilter) {
+                if (teamFilter === 'คลัง W1') rows = rows.filter(r => r.eventType === 'TRD_REQUISITION' || /w1|เบิก/i.test(`${r.sourceLabel || ''} ${r.workloadCategoryLabel || ''} ${r.title || ''}`));
+                if (teamFilter === 'รับสินค้าเข้า') rows = rows.filter(r => r.eventType === 'GR_COMPLETED' || r.category === 'INBOUND' || /gr|รับสินค้า/i.test(`${r.title || ''} ${r.workloadCategoryLabel || ''}`));
+                if (teamFilter === 'ย้ายสต๊อก') rows = rows.filter(r => r.eventType === 'W5_TO_AKRA' || r.eventType === 'AKRA_TO_TRD' || r.category === 'MOVE' || /move|ย้าย/i.test(`${r.title || ''} ${r.workloadCategoryLabel || ''}`));
+                if (teamFilter === 'รับสินค้า TRD') rows = rows.filter(r => r.eventType === 'TRD_RECEIPT_CONFIRMED' || r.category === 'RECEIVE' || /trd_receipt|รับ.*trd/i.test(`${r.eventType || ''} ${r.title || ''}`));
+            }
+            if (searchFilter) {
+                rows = rows.filter(r => {
+                    const txt = `${r.title || ''} ${r.workloadCategoryLabel || ''} ${r.categoryLabel || ''} ${r.billType || ''} ${r.actorName || ''} ${r.assigneeEmployeeName || ''} ${r.assigneeLabel || ''} ${r.requesterEmployeeName || ''} ${r.requester || ''} ${r.billNo || ''} ${r.sourceRef || ''} ${r.details || ''} ${r.itemsSummary || ''} ${r.sourceLabel || ''}`.toLowerCase();
+                    return txt.includes(searchFilter);
+                });
+            }
+
+            const needsIdentityReview = rows.filter(row => row.eventType === 'TRD_REQUISITION' && (
                 row.requesterIdentityStatus !== 'linked' ||
                 (row.assigneeLabel && row.assigneeIdentityStatus !== 'linked')
             )).length;
-            const linkedRows = requisitionRows.filter(row => row.requesterIdentityStatus === 'linked' || row.assigneeIdentityStatus === 'linked').length
-                + operationalRows.filter(row => row.actorName && row.actorName !== 'ไม่ระบุ').length;
+            const linkedRows = rows.filter(row => row.eventType === 'TRD_REQUISITION' && (row.requesterIdentityStatus === 'linked' || row.assigneeIdentityStatus === 'linked')).length
+                + rows.filter(row => row.eventType !== 'TRD_REQUISITION' && row.actorName && row.actorName !== 'ไม่ระบุ').length;
             const safe = value => typeof esc === 'function' ? esc(value == null ? '' : value) : String(value == null ? '' : value);
             const identityBadge = '<span class="inline-flex items-center gap-1 rounded-md bg-amber-400/15 border border-amber-300/25 px-1.5 py-0.5 text-[10px] font-bold text-amber-100"><i class="fa-solid fa-link-slash text-[9px]"></i>ยังไม่ผูกบัญชี</span>';
             const identityBadgeLight = '<span class="inline-flex items-center gap-1 rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-700"><i class="fa-solid fa-link-slash text-[9px]"></i>ยังไม่ผูกบัญชี</span>';
 
             const personNames = new Map();
+            const personJobs = new Map();
             rows.forEach(row => {
                 const name = row.eventType === 'TRD_REQUISITION'
                     ? (row.assigneeEmployeeName || row.assigneeLabel || row.requesterEmployeeName || row.requester)
                     : row.actorName;
                 const key = String(name || '').trim();
-                if (key) personNames.set(key, (personNames.get(key) || 0) + 1);
+                if (key) {
+                    personNames.set(key, (personNames.get(key) || 0) + 1);
+                    if (!personJobs.has(key)) personJobs.set(key, []);
+                    personJobs.get(key).push(row);
+                }
             });
             const categoryCounts = new Map();
             const categoryDetails = new Map();
@@ -6147,11 +6179,11 @@
             const isGrEvent = row => row.eventType === 'GR_COMPLETED' || row.sourceSystem === 'GR' || row.category === 'INBOUND';
             const isReceiveEvent = row => row.eventType === 'TRD_RECEIPT_CONFIRMED' || row.category === 'RECEIVE';
             const isMoveEvent = row => row.eventType === 'W5_TO_AKRA' || row.eventType === 'AKRA_TO_TRD' || row.category === 'MOVE';
-            const grCount = operationalRows.filter(row => isGrEvent(row) && !isReceiveEvent(row)).length;
-            const moveCount = operationalRows.filter(row => isMoveEvent(row) && !isReceiveEvent(row)).length;
-            const receiveCount = operationalRows.filter(row => isReceiveEvent(row)).length;
-            const outboundCount = operationalRows.filter(row => row.category === 'OUTBOUND' || /outbound|support|จัดส่ง/.test(eventKind(row))).length;
-            const lineCount = requisitionRows.length;
+            const grCount = rows.filter(row => isGrEvent(row) && !isReceiveEvent(row)).length;
+            const moveCount = rows.filter(row => isMoveEvent(row) && !isReceiveEvent(row)).length;
+            const receiveCount = rows.filter(row => isReceiveEvent(row)).length;
+            const outboundCount = rows.filter(row => row.category === 'OUTBOUND' || /outbound|support|จัดส่ง/.test(eventKind(row))).length;
+            const lineCount = rows.filter(row => row.eventType === 'TRD_REQUISITION').length;
             const coverage = rows.length ? Math.round((linkedRows / rows.length) * 100) : 0;
             const sourceLabels = [...new Set(rows.map(row => row.sourceLabel || row.source || (row.eventType === 'TRD_REQUISITION' ? 'LINE' : 'Event')).filter(Boolean))];
 
@@ -6190,15 +6222,29 @@
                 } else {
                     const people = [...personNames.entries()].sort((a, b) => b[1] - a[1]);
                     const avatarClasses = ['bg-violet-100 text-violet-700', 'bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700', 'bg-amber-100 text-amber-700', 'bg-rose-100 text-rose-700'];
-                    dashboardPeopleListEl.innerHTML = people.map(([name, count], index) => `
-                        <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-3">
-                            <div class="flex min-w-0 items-center gap-3">
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-black ${avatarClasses[index % avatarClasses.length]}">${safe(name).slice(0, 2)}</span>
-                                <div class="min-w-0"><p class="truncate text-xs font-bold text-slate-800">${safe(name)}</p><p class="text-[10px] text-slate-400">ผู้ปฏิบัติงานจากกิจกรรม</p></div>
+                    dashboardPeopleListEl.innerHTML = people.map(([name, count], index) => {
+                        const jobs = personJobs.get(name) || [];
+                        const jobsHtml = jobs.map(row => {
+                            const isOp = row.eventType !== 'TRD_REQUISITION';
+                            const dt = isOp ? (row.details || `${row.itemCount || 0} รายการ`) : (row.itemsSummary || 'ไม่ระบุรายการ');
+                            return `<div class="mt-2 text-left p-2 rounded-lg bg-white text-[10px] text-slate-600 border border-slate-100 shadow-sm"><span class="font-bold text-slate-800">${safe(row.billNo || row.sourceRef || '—')}</span>: ${safe(row.title || row.workloadCategoryLabel || 'กิจกรรม')} <span class="text-slate-400">(${safe(row.time || 'ไม่ระบุเวลา')})</span><div class="truncate mt-0.5 text-[9px] text-slate-400">${safe(dt)}</div><div class="mt-0.5"><span class="px-1.5 py-0.5 rounded-sm bg-slate-100 font-bold">${safe(row.status || 'บันทึก')}</span></div></div>`;
+                        }).join('');
+                        return `<details class="group rounded-xl border border-slate-100 bg-white">
+                            <summary class="flex cursor-pointer items-center justify-between gap-3 p-3 list-none hover:bg-slate-50 transition-colors rounded-xl">
+                                <div class="flex min-w-0 items-center gap-3">
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-black ${avatarClasses[index % avatarClasses.length]}">${safe(name).slice(0, 2)}</span>
+                                    <div class="min-w-0"><p class="truncate text-xs font-bold text-slate-800">${safe(name)}</p><p class="text-[10px] text-slate-400">ผู้ปฏิบัติงานจากกิจกรรม</p></div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-black text-slate-700">${count} งาน</span>
+                                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-open:rotate-180 transition-transform"></i>
+                                </div>
+                            </summary>
+                            <div class="p-3 pt-0 border-t border-slate-100/50 bg-slate-50/50 space-y-2 rounded-b-xl">
+                                ${jobsHtml}
                             </div>
-                            <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-black text-slate-700">${count} งาน</span>
-                        </div>
-                    `).join('');
+                        </details>`;
+                    }).join('');
                 }
             }
 
@@ -6219,7 +6265,7 @@
             if (!rows.length) {
                 listEl.innerHTML = '<div class="rounded-xl border border-dashed border-white/15 p-3 text-center text-[11px] text-slate-400">ยังไม่มีข้อมูลกิจกรรมจาก LINE</div>';
             } else {
-                const visibleRows = rows.slice(-6).reverse();
+                const visibleRows = [...rows].reverse();
                 listEl.innerHTML = visibleRows.map(row => {
                 const isOperational = row.eventType !== 'TRD_REQUISITION';
                 const operator = isOperational
@@ -6260,7 +6306,7 @@
                 if (!rows.length) {
                     dashboardActivityEl.innerHTML = '<div class="p-6 text-center text-xs text-slate-400">ยังไม่มีข้อมูลกิจกรรมจาก LINE</div>';
                 } else {
-                    const visibleRows = rows.slice(-6).reverse();
+                    const visibleRows = [...rows].reverse();
                     dashboardActivityEl.innerHTML = visibleRows.map(row => {
                         const isOperational = row.eventType !== 'TRD_REQUISITION';
                         const source = safe(row.sourceLabel || row.source || 'LINE');
