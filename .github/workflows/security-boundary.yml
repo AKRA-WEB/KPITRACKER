@@ -1,0 +1,24 @@
+name: KPI security boundary
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  client-auth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --check js/supabase-kpi-client.js
+      - run: node tests/supabase-kpi-test.js
+      - run: node tests/daily_sections_actions_test.js
+      - run: node tests/case_marker_leakage_and_metadata_v2_test.js
+      - run: node tests/live_bill_sync_ui_test.js
