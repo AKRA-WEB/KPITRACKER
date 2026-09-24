@@ -10,6 +10,7 @@ async function runTests() {
   const dailyCalls = [];
   const sectionRevisions = { operations: 0, tasks: 0, endOfShift: 0, vendorBills: 0 };
   global.fetch = async (url, init) => {
+    assert.match(init.headers.apikey, /^sb_publishable_/, 'KPI Edge calls must use the rotatable publishable key');
     const request = JSON.parse(init.body);
     dailyCalls.push(request);
     if (request.action === 'getDailyData') {

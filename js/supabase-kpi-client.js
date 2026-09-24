@@ -16,7 +16,7 @@
 
     const SUPABASE_CONFIG = {
         URL: 'https://hgxrrskztbpejirrdpbq.supabase.co',
-        KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneHJyc2t6dGJwZWppcnJkcGJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMjQ1ODAsImV4cCI6MjEwMjcwMDU4MH0.IQWpcgqCCVVLwRJso1eamXHuCH4tKeWohd2oCUCVavw'
+        KEY: 'sb_publishable_4S8-xqjuqKlQG15dhdxxNA_gSUHEPMo'
     };
 
     function changedSession() {
