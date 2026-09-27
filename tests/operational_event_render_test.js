@@ -25,6 +25,7 @@ const ids = [
   'wl-dashboard-coverage-note', 'wl-dashboard-line', 'wl-dashboard-gr', 'wl-dashboard-move',
   'wl-dashboard-receive', 'wl-dashboard-outbound', 'wl-dashboard-filter-all', 'wl-dashboard-filter-line',
   'wl-dashboard-distribution', 'wl-dashboard-distribution-label', 'wl-dashboard-people-badge',
+  'wl-dashboard-assigned-badge', 'wl-dashboard-assigned-list',
   'wl-dashboard-activity-list', 'wl-dashboard-people-list', 'wl-dashboard-category-list'
 ];
 const nodes = new Map(ids.map(id => [id, { textContent: '', innerHTML: '' }]));
@@ -33,15 +34,15 @@ const sandbox = {
   liveRequisitionsList: [{
     billNo: '#1', requester: 'หน้าร้าน TRD', requesterEmployeeName: 'หน้าร้าน', requesterIdentityStatus: 'linked',
     assigneeEmployeeName: 'ปีเตอร์', assigneeIdentityStatus: 'linked', categoryLabel: '1. บิลด่วน / เบิกด่วน',
-    itemsSummary: 'แป้ง 2 ลัง', time: '09:10', status: 'รับรายการ'
+    itemsSummary: 'แป้ง 2 ลัง', workloadEligible: true, time: '09:10', status: 'รับรายการ'
   }],
   liveOperationalEventsList: [
-    { eventType: 'W5_TO_AKRA', category: 'MOVE', categoryLabel: 'ย้ายสต๊อก W5 → AKRA', sourceLabel: 'AKRA W5', title: 'ย้ายสต๊อก W5 → AKRA', actorName: 'ปีเตอร์', time: '08:20', occurredAt: '2026-09-20T01:20:00Z', itemCount: 1, totalUnits: 2 },
-    { eventType: 'AKRA_TO_TRD', category: 'MOVE', categoryLabel: 'ย้ายสต๊อก AKRA → TRD', sourceLabel: 'TRDAKRA', title: 'ย้ายสต๊อก AKRA → TRD', actorName: 'คลัง AKRA', time: '08:30', occurredAt: '2026-09-20T01:30:00Z', itemCount: 1, totalUnits: 3 },
-    { eventType: 'TRD_RECEIPT_CONFIRMED', category: 'RECEIVE', categoryLabel: 'รับสินค้า TRD', sourceLabel: 'TRDAKRA', title: 'ยืนยันรับสินค้า TRD', actorName: 'คลัง TRD', time: '08:45', occurredAt: '2026-09-20T01:45:00Z', itemCount: 1, totalUnits: 3 },
-    { eventType: 'W5_TO_AKRA', category: 'MOVE', categoryLabel: 'ย้ายสต๊อก W5 → AKRA', sourceLabel: 'AKRA W5', title: 'ย้ายสต๊อก W5 → AKRA', actorName: 'เอี้ยง', time: '08:50', occurredAt: '2026-09-20T01:50:00Z', itemCount: 1, totalUnits: 1 },
-    { eventType: 'W5_TO_AKRA', category: 'MOVE', categoryLabel: 'ย้ายสต๊อก W5 → AKRA', sourceLabel: 'AKRA W5', title: 'ย้ายสต๊อก W5 → AKRA', actorName: 'หมูหยอง', time: '08:55', occurredAt: '2026-09-20T01:55:00Z', itemCount: 1, totalUnits: 1 },
-    { eventType: 'GR_COMPLETED', category: 'INBOUND', categoryLabel: 'รับสินค้าเข้า (GR)', sourceLabel: 'GR', title: 'รับสินค้าเข้า (GR) → สอน', actorName: 'สอน', time: '09:00', occurredAt: '2026-09-20T02:00:00Z', itemCount: 1, totalUnits: 4 }
+    { eventType: 'W5_TO_AKRA', category: 'MOVE', categoryLabel: 'ย้ายสต๊อก W5 → AKRA', sourceLabel: 'AKRA W5', title: 'ย้ายสต๊อก W5 → AKRA', actorEmployeeUid: 'peter', actorName: 'ปีเตอร์', time: '08:20', occurredAt: '2026-09-20T01:20:00Z', itemCount: 1, totalUnits: 2 },
+    { eventType: 'AKRA_TO_TRD', category: 'MOVE', categoryLabel: 'ย้ายสต๊อก AKRA → TRD', sourceLabel: 'TRDAKRA', title: 'ย้ายสต๊อก AKRA → TRD', actorEmployeeUid: 'akra', actorName: 'คลัง AKRA', time: '08:30', occurredAt: '2026-09-20T01:30:00Z', itemCount: 1, totalUnits: 3 },
+    { eventType: 'TRD_RECEIPT_CONFIRMED', category: 'RECEIVE', categoryLabel: 'รับสินค้า TRD', sourceLabel: 'TRDAKRA', title: 'ยืนยันรับสินค้า TRD', actorEmployeeUid: 'trd', actorName: 'คลัง TRD', time: '08:45', occurredAt: '2026-09-20T01:45:00Z', itemCount: 1, totalUnits: 3 },
+    { eventType: 'W5_TO_AKRA', category: 'MOVE', categoryLabel: 'ย้ายสต๊อก W5 → AKRA', sourceLabel: 'AKRA W5', title: 'ย้ายสต๊อก W5 → AKRA', actorEmployeeUid: 'eyang', actorName: 'เอี้ยง', time: '08:50', occurredAt: '2026-09-20T01:50:00Z', itemCount: 1, totalUnits: 1 },
+    { eventType: 'W5_TO_AKRA', category: 'MOVE', categoryLabel: 'ย้ายสต๊อก W5 → AKRA', sourceLabel: 'AKRA W5', title: 'ย้ายสต๊อก W5 → AKRA', actorEmployeeUid: 'mooyong', actorName: 'หมูหยอง', time: '08:55', occurredAt: '2026-09-20T01:55:00Z', itemCount: 1, totalUnits: 1 },
+    { eventType: 'GR_COMPLETED', category: 'INBOUND', categoryLabel: 'รับสินค้าเข้า (GR)', sourceLabel: 'GR', title: 'รับสินค้าเข้า (GR) → สอน', actorEmployeeUid: 'son', actorName: 'สอน', time: '09:00', occurredAt: '2026-09-20T02:00:00Z', itemCount: 1, totalUnits: 4 }
   ],
   esc: value => String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])),
   console

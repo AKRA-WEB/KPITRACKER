@@ -24,6 +24,7 @@ assert.match(html, /id="wl-unified-activity-card"/, 'Workload must contain a uni
 assert.match(html, /id="wl-unified-activity-list"/, 'Workload must contain an activity list');
 assert.match(html, /id="wl-unified-dashboard"/, 'Workload must contain the unified dashboard');
 assert.match(html, /Workload รวม/, 'Workload must be presented as a unified read-only view');
+assert.match(html, /ไม่ใช่จำนวนงานที่ทำเสร็จ/, 'assigned requisitions must not be presented as completed work');
 assert.match(html, /<div class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4" aria-hidden="true">/, 'Legacy manual workload editor must stay out of the user path');
 
 const renderFn = extractFunction(html, 'renderUnifiedWorkloadActivity');
@@ -52,6 +53,7 @@ const sandbox = {
     requesterEmployeeUid: 'gawit',
     requesterEmployeeName: 'กาวิช',
     requesterIdentityStatus: 'linked',
+    sourceLabel: 'LINE Requisitions',
     workloadEligible: true,
     assigneeLabel: '@TER',
     assigneeEmployeeUid: '260029',
@@ -66,6 +68,7 @@ const sandbox = {
     time: '11:04 น.',
     requester: 'Unknown LINE',
     requesterIdentityStatus: 'unlinked',
+    sourceLabel: 'LINE Requisitions',
     workloadEligible: true,
     categoryLabel: '1. บิลด่วน / เบิกด่วน',
     itemsSummary: 'นม 1 ลัง',
@@ -78,6 +81,13 @@ const sandbox = {
     workloadEligible: false,
     categoryLabel: 'บิลคุยเล่น',
     itemsSummary: 'เงินทอน 5 ใบ',
+    status: '⏳ รอจัดสินค้า'
+  }, {
+    billNo: '#legacy',
+    requester: 'Legacy row without policy metadata',
+    requesterIdentityStatus: 'unlinked',
+    categoryLabel: 'ข้อมูลย้อนหลังที่ยังไม่ทบทวน',
+    itemsSummary: 'สินค้า 99 ลัง',
     status: '⏳ รอจัดสินค้า'
   }],
   liveOperationalEventsList: [
@@ -95,16 +105,15 @@ assert.equal(nodes.get('wl-unified-activity-count').textContent, '4 งานร
 assert.equal(nodes.get('wl-unified-identity-count').textContent, '1 รายการรอจับคู่');
 assert.equal(nodes.get('wl-dashboard-total').textContent, '4');
 assert.equal(nodes.get('wl-dashboard-people').textContent, '2');
-assert.equal(nodes.get('wl-dashboard-sources').textContent, 'LINE · Event');
-assert.equal(nodes.get('wl-dashboard-coverage').textContent, '50%');
+assert.equal(nodes.get('wl-dashboard-sources').textContent, 'LINE Requisitions · Event');
+assert.equal(nodes.get('wl-dashboard-coverage').textContent, '75%');
 assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /ปีเตอร์/);
 assert.equal((nodes.get('wl-dashboard-people-list').innerHTML.match(/<details/g) || []).length, 2, 'distinct employee UIDs must not merge when names match');
 assert.doesNotMatch(nodes.get('wl-dashboard-people-list').innerHTML, /กาวิช|Unknown LINE|Cashier chat/);
 assert.equal(nodes.get('wl-dashboard-assigned-badge').textContent, '1 คำขอ');
 assert.match(nodes.get('wl-dashboard-assigned-list').innerHTML, /ปีเตอร์/);
-assert.match(nodes.get('wl-dashboard-assigned-list').innerHTML, /ไม่ใช่จำนวนงานที่ทำเสร็จ/);
 assert.match(nodes.get('wl-dashboard-category-list').innerHTML, /บิลด่วน/);
-assert.doesNotMatch(nodes.get('wl-dashboard-category-list').innerHTML, /คุยเล่น|Cashier/);
+assert.doesNotMatch(nodes.get('wl-dashboard-category-list').innerHTML, /คุยเล่น|Cashier|ย้อนหลัง/);
 assert.match(nodes.get('wl-unified-activity-list').innerHTML, /ผู้ขอเบิกระบบ: กาวิช/);
 assert.match(nodes.get('wl-unified-activity-list').innerHTML, /ผู้รับงานตาม Mention: ปีเตอร์/);
 assert.match(nodes.get('wl-unified-activity-list').innerHTML, /ยังไม่ผูกบัญชี/);
