@@ -57,12 +57,30 @@ assert.equal(nodes.get('wl-dashboard-gr').textContent, '1');
 assert.equal(nodes.get('wl-dashboard-move').textContent, '4');
 assert.equal(nodes.get('wl-dashboard-receive').textContent, '1');
 assert.equal(nodes.get('wl-unified-activity-count').textContent, '7 งานรวม');
-assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /ย้ายสต๊อก W5/);
-assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /ย้ายสต๊อก AKRA/);
-assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /รับสินค้าเข้า/);
-assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /ยืนยันรับสินค้า TRD/);
+assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /ย้ายสินค้า W5/);
+assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /จัดสินค้าสต๊อค/);
+assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /รับลงสินค้า/);
+assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /รับสินค้าสต๊อค/);
 assert.match(nodes.get('wl-dashboard-people-list').innerHTML, /สอน/, 'all counted operators, including the sixth person, must be visible');
-assert.match(nodes.get('wl-dashboard-category-list').innerHTML, /TRD Requisition/);
+assert.match(nodes.get('wl-dashboard-category-list').innerHTML, /เบิกสินค้าสต๊อค TRD/);
 assert.match(nodes.get('wl-dashboard-category-list').innerHTML, /บิลด่วน/);
 
 console.log('PASS: unified Workload merges TRD requisitions with GR, W5 and TRD operational events');
+
+const receipt = sandbox.liveOperationalEventsList.find(row => row.eventType === 'TRD_RECEIPT_CONFIRMED');
+receipt.sourceRef = 'trd-receipt-1790486787345-fixture';
+receipt.details = 'รับจริง 178.0000 หน่วย · ไม่ครบ 2 รายการ';
+sandbox.renderUnifiedWorkloadActivity();
+for (const id of ['wl-dashboard-people-list', 'wl-dashboard-activity-list', 'wl-unified-activity-list']) {
+  assert.doesNotMatch(nodes.get(id).innerHTML, /trd-receipt-1790486787345-fixture|178\.0000|—<\/span>:/);
+  assert.match(nodes.get(id).innerHTML, /รับจริง 178 หน่วย · ไม่ครบ 2 รายการ/);
+}
+assert.equal(nodes.get('wl-dashboard-total').textContent, '7', 'presentation changes must not change activity totals');
+receipt.details = 'รับจริง 0.1250 หน่วย · สินค้ารหัส 25.5000';
+sandbox.renderUnifiedWorkloadActivity();
+assert.match(nodes.get('wl-dashboard-people-list').innerHTML, /0\.125 หน่วย · สินค้ารหัส 25\.5000/, 'fractional quantities and product identifiers remain accurate');
+nodes.set('wl-filter-search', { value: 'รับสินค้าสต๊อค' });
+sandbox.renderUnifiedWorkloadActivity();
+assert.equal(nodes.get('wl-dashboard-total').textContent, '1', 'the visible activity name is searchable');
+assert.equal(nodes.get('wl-dashboard-receive').textContent, '1');
+console.log('PASS: short activity names, hidden internal IDs, precise quantities and label search');
