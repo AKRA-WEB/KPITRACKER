@@ -37,6 +37,8 @@ const nodes = new Map([
   ['wl-dashboard-coverage', { textContent: '' }],
   ['wl-dashboard-coverage-note', { textContent: '' }],
   ['wl-dashboard-people-badge', { textContent: '' }],
+  ['wl-dashboard-assigned-badge', { textContent: '' }],
+  ['wl-dashboard-assigned-list', { innerHTML: '' }],
   ['wl-dashboard-activity-list', { innerHTML: '' }],
   ['wl-dashboard-people-list', { innerHTML: '' }],
   ['wl-dashboard-category-list', { innerHTML: '' }]
@@ -50,6 +52,7 @@ const sandbox = {
     requesterEmployeeUid: 'gawit',
     requesterEmployeeName: 'กาวิช',
     requesterIdentityStatus: 'linked',
+    workloadEligible: true,
     assigneeLabel: '@TER',
     assigneeEmployeeUid: '260029',
     assigneeEmployeeName: 'ปีเตอร์',
@@ -63,11 +66,24 @@ const sandbox = {
     time: '11:04 น.',
     requester: 'Unknown LINE',
     requesterIdentityStatus: 'unlinked',
+    workloadEligible: true,
     categoryLabel: '1. บิลด่วน / เบิกด่วน',
     itemsSummary: 'นม 1 ลัง',
     totalUnits: 1,
     status: '⏳ รอจัดสินค้า'
+  }, {
+    billNo: '#excluded',
+    requester: 'TRDD - Cashier chat',
+    requesterIdentityStatus: 'unlinked',
+    workloadEligible: false,
+    categoryLabel: 'บิลคุยเล่น',
+    itemsSummary: 'เงินทอน 5 ใบ',
+    status: '⏳ รอจัดสินค้า'
   }],
+  liveOperationalEventsList: [
+    { eventType: 'GR_COMPLETED', category: 'INBOUND', actorEmployeeUid: 'staff-1', actorName: 'ปีเตอร์', details: 'รับสินค้า A', time: '12:00' },
+    { eventType: 'W5_TO_AKRA', category: 'MOVE', actorEmployeeUid: 'staff-2', actorName: 'ปีเตอร์', details: 'ย้ายสินค้า B', time: '12:05' }
+  ],
   esc: value => String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])),
   console
 };
@@ -75,15 +91,20 @@ vm.createContext(sandbox);
 vm.runInContext(renderFn, sandbox);
 sandbox.renderUnifiedWorkloadActivity();
 
-assert.equal(nodes.get('wl-unified-activity-count').textContent, '2 งานจาก LINE');
+assert.equal(nodes.get('wl-unified-activity-count').textContent, '4 งานรวม');
 assert.equal(nodes.get('wl-unified-identity-count').textContent, '1 รายการรอจับคู่');
-assert.equal(nodes.get('wl-dashboard-total').textContent, '2');
+assert.equal(nodes.get('wl-dashboard-total').textContent, '4');
 assert.equal(nodes.get('wl-dashboard-people').textContent, '2');
-assert.equal(nodes.get('wl-dashboard-sources').textContent, 'LINE');
+assert.equal(nodes.get('wl-dashboard-sources').textContent, 'LINE · Event');
 assert.equal(nodes.get('wl-dashboard-coverage').textContent, '50%');
 assert.match(nodes.get('wl-dashboard-activity-list').innerHTML, /ปีเตอร์/);
-assert.match(nodes.get('wl-dashboard-people-list').innerHTML, /ปีเตอร์/);
+assert.equal((nodes.get('wl-dashboard-people-list').innerHTML.match(/<details/g) || []).length, 2, 'distinct employee UIDs must not merge when names match');
+assert.doesNotMatch(nodes.get('wl-dashboard-people-list').innerHTML, /กาวิช|Unknown LINE|Cashier chat/);
+assert.equal(nodes.get('wl-dashboard-assigned-badge').textContent, '1 คำขอ');
+assert.match(nodes.get('wl-dashboard-assigned-list').innerHTML, /ปีเตอร์/);
+assert.match(nodes.get('wl-dashboard-assigned-list').innerHTML, /ไม่ใช่จำนวนงานที่ทำเสร็จ/);
 assert.match(nodes.get('wl-dashboard-category-list').innerHTML, /บิลด่วน/);
+assert.doesNotMatch(nodes.get('wl-dashboard-category-list').innerHTML, /คุยเล่น|Cashier/);
 assert.match(nodes.get('wl-unified-activity-list').innerHTML, /ผู้ขอเบิกระบบ: กาวิช/);
 assert.match(nodes.get('wl-unified-activity-list').innerHTML, /ผู้รับงานตาม Mention: ปีเตอร์/);
 assert.match(nodes.get('wl-unified-activity-list').innerHTML, /ยังไม่ผูกบัญชี/);
