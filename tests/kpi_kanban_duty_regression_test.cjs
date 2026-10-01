@@ -73,6 +73,28 @@ test('duty writes use API targetType and failed saves keep original allocation',
   assert.ok(ui.notices.some(msg=>/ไม่สำเร็จ/.test(msg)));
   assert.doesNotMatch(ui.element('kb-duty-content').innerHTML,/เกินขีดจำกัด/);
 });
+test('duty click consumes authoritative save response without rereading, preserves skills and blocks duplicates', async () => {
+  let reads=0,finish;const calls=[];
+  const matrix={catalog:[{id:'inbound',name:'Receiving',weight:2,isActive:true,revision:1}],assignments:[],employees:[{employeeUid:'u1',name:'One'}],capacities:[],employeeRevisions:{u1:0},drivingCapabilities:[{employeeUid:'u1',capabilities:{motorcycle:'capable'}}]};
+  const ui=setup({getDutyMatrix:async()=>{reads++;return structuredClone(matrix);},setDutyAssignment:async(token,payload)=>{calls.push(payload);return new Promise(resolve=>{finish=resolve;});}});
+  await ui.window.KpiDutyMatrix.loadDutyMatrix();
+  const attrs={};const cell={dataset:{dutyBranch:'TRD',dutyPerson:'u1',dutyId:'inbound'},innerHTML:'+',disabled:false,setAttribute:(key,value)=>{attrs[key]=value;},removeAttribute:key=>{delete attrs[key];}};
+  const scroller={dataset:{dutyScroll:'TRD'},scrollLeft:260};
+  ui.element('kb-duty-content').querySelectorAll=selector=>selector==='[data-duty-cell]'?[cell]:selector==='[data-duty-scroll]'?[scroller]:[];
+  const pending=ui.window.KpiDutyMatrix.cycleAssignment('u1','inbound');
+  assert.equal(cell.disabled,true);assert.equal(attrs['aria-busy'],'true');assert.match(cell.innerHTML,/กำลังบันทึก/);
+  await ui.window.KpiDutyMatrix.cycleAssignment('u1','inbound');assert.equal(calls.length,1);
+  finish({...matrix,drivingCapabilities:undefined,assignments:[{employeeUid:'u1',dutyId:'inbound',assignmentType:'primary'}],employeeRevisions:{u1:1}});
+  await pending;
+  assert.equal(cell.disabled,false);assert.equal(attrs['aria-busy'],undefined);assert.equal(scroller.scrollLeft,260);
+  assert.equal(reads,1,'successful mutation response eliminates additional reads');
+  assert.match(ui.element('kb-duty-content').innerHTML,/งานหลัก/);
+  assert.match(ui.element('kb-duty-content').innerHTML,/ทักษะขับขี่/);
+  const next=ui.window.KpiDutyMatrix.cycleAssignment('u1','inbound');
+  assert.equal(calls[1].expectedRevision,1);assert.equal(calls[1].targetType,'secondary');
+  finish({...matrix,assignments:[{employeeUid:'u1',dutyId:'inbound',assignmentType:'secondary'}],employeeRevisions:{u1:2}});await next;
+});
+
 test('checklist/comments persist through API with current revision and survive refresh', async () => {
   let task={actionId:'REAL-1',title:'Persisted',ownerUid:'u1',owner:'One',status:'Open',revision:5,dueDate:'2026-10-02',checklist:[{id:'item',text:'Check',done:false}],comments:[]};
   const calls=[];

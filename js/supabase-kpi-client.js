@@ -47,10 +47,21 @@
     }
 
     async function transportRequest(action, payload, context) {
+        if(!['getDutyMatrix','setDutyAssignment','saveDutyCatalog','setDutyCapacity','setDrivingCapabilities'].includes(action))return performTransportRequest(action,payload,context);
+        const controller=new AbortController();let timer;
+        const deadline=new Promise((resolve,reject)=>{timer=setTimeout(()=>{
+            reject(Object.assign(new Error('request_timeout'),{reason:'request_timeout'}));controller.abort();
+        },30000);});
+        try{return await Promise.race([performTransportRequest(action,payload,context,controller.signal),deadline]);}
+        finally{clearTimeout(timer);}
+    }
+
+    async function performTransportRequest(action, payload, context, signal) {
         assertRequestContext(context);
         if (!context.token) throw new Error('KPI config requires an authenticated Main session.');
         const url = `${SUPABASE_CONFIG.URL}/functions/v1/kpi-api`;
         const response = await fetch(url, {
+            ...(signal ? {signal} : {}),
             method: 'POST',
             headers: {
                 'apikey': SUPABASE_CONFIG.KEY,

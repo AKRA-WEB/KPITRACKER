@@ -56,12 +56,37 @@
         state.driving=Object.fromEntries((res.drivingCapabilities||[]).map(row=>[row.employeeUid,row]));
     }
     async function write(method,payload,grant='manageDutyAllocations'){
-        const c=context();if(state.busy)return false;
+        const c=context(),homeBranch=baseContext().branch;if(state.busy)return false;
         if(!c.token||!c.can(grant)){notify('ไม่มีสิทธิ์จัดการตารางงาน');return false;}
         state.busy=true;
-        try{await window.AkraSupabaseKPI[method](c.token,{branch:c.branch,...payload});await loadDutyMatrix();return true;}
-        catch(err){notify('บันทึกไม่สำเร็จ กรุณารีเฟรชข้อมูลก่อนลองอีกครั้ง');await loadDutyMatrix();return false;}
-        finally{state.busy=false;}
+        if(method==='setDutyAssignment')setAssignmentSaving(c.branch,payload,true);
+        try{
+            const result=await window.AkraSupabaseKPI[method](c.token,{branch:c.branch,...payload});
+            if(c.token!==baseContext().token||homeBranch!==baseContext().branch)return false;
+            if(method==='setDutyAssignment'&&state.matrices?.[c.branch]&&Array.isArray(result?.catalog)&&Array.isArray(result?.assignments)&&result.employeeRevisions){
+                state.loadTicket=(state.loadTicket||0)+1;
+                const existing=state.matrices[c.branch];
+                state.matrices[c.branch]={...existing,...result,drivingCapabilities:result.drivingCapabilities??existing.drivingCapabilities};
+                renderDuties();
+            }else await loadDutyMatrix();
+            return true;
+        }
+        catch(err){
+            notify(err.reason==='request_timeout'?'รอระบบนานเกินไป สถานะอาจบันทึกแล้ว กรุณารีเฟรชก่อนลองใหม่':'บันทึกไม่สำเร็จ กรุณารีเฟรชข้อมูลก่อนลองอีกครั้ง');
+            if(err.reason==='record_conflict')await loadDutyMatrix();
+            return false;
+        }
+        finally{state.busy=false;if(method==='setDutyAssignment')setAssignmentSaving(c.branch,payload,false);}
+    }
+    function setAssignmentSaving(branch,payload,saving){
+        const content=document.getElementById('kb-duty-content');
+        for(const button of content?.querySelectorAll('[data-duty-cell]')||[]){
+            button.disabled=saving;
+            const selected=button.dataset.dutyBranch===branch&&button.dataset.dutyPerson===payload.employeeUid&&button.dataset.dutyId===payload.dutyId;
+            if(!selected)continue;
+            if(saving){button.dataset.savedHtml=button.innerHTML;button.setAttribute('aria-busy','true');button.innerHTML='<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span class="sr-only">กำลังบันทึกหน้าที่</span>';}
+            else{button.removeAttribute('aria-busy');if(button.dataset.savedHtml!==undefined){button.innerHTML=button.dataset.savedHtml;delete button.dataset.savedHtml;}}
+        }
     }
     function catalogPayload(d){return {dutyId:d.id,name:d.name,weight:d.weight,targetHeadcount:d.target,isActive:d.active,expectedRevision:d.revision??0};}
 
@@ -119,6 +144,7 @@
 
     function renderDuties(){
         const content=document.getElementById('kb-duty-content'),summary=document.getElementById('kb-duty-summary');if(!content)return;
+        const scrollPositions=new Map([...content.querySelectorAll('[data-duty-scroll]')].map(el=>[el.dataset.dutyScroll,el.scrollLeft]));
         const previous=state.activeBranch;let html='',summaries='';
         for(const branch of scopedBranches()){
             if(!state.matrices?.[branch])continue;
@@ -128,6 +154,7 @@
             summaries+=`<span class="font-bold text-slate-700">${branch}: ${getPeople().length} คน · ${activeDuties().filter(d=>d.target!=null&&coverage(d)<d.target).length} หน้าที่ขาดคน</span>`;
         }
         content.innerHTML=html;if(summary)summary.innerHTML=`<div class="flex flex-wrap gap-4 text-xs">${summaries}</div>`;
+        for(const el of content.querySelectorAll('[data-duty-scroll]'))el.scrollLeft=scrollPositions.get(el.dataset.dutyScroll)||0;
         state.activeBranch=previous;if(state.matrices?.[previous])applyMatrix(state.matrices[previous]);
     }
     function renderSingleMatrix() {
@@ -170,7 +197,7 @@
         container.innerHTML = `
             <!-- Desktop Matrix Table -->
             <div class="hidden md:block bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm mb-4">
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto" data-duty-scroll="${esc(context().branch)}">
                     <table class="w-full text-xs text-center border-collapse">
                         <thead>
                             <tr class="bg-slate-50/80 text-slate-600 border-b border-slate-200">
@@ -221,6 +248,7 @@
                                             return `
                                                 <td class="p-2 border-l border-slate-100">
                                                     <button type="button"
+                                                            data-duty-cell data-duty-branch="${esc(context().branch)}" data-duty-person="${esc(p.id)}" data-duty-id="${esc(d.id)}"
                                                             onclick="window.KpiDutyMatrix.cycleAssignment(${jsArg(p.id)}, ${jsArg(d.id)})"
                                                             class="w-12 h-9 rounded-lg font-bold text-xs transition-all flex items-center justify-center mx-auto ${
                                                                 role === 'primary'
