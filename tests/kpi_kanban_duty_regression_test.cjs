@@ -41,10 +41,27 @@ test('flat API responses and canonical owner render; empty board never fabricate
   await ui.window.KpiKanbanBoard.loadKanbanBoard();
   assert.match(ui.element('kb-board-content').innerHTML,/Real persisted task/);
   assert.match(ui.element('kb-board-content').innerHTML,/Owner One/);
-  assert.doesNotMatch(ui.element('kb-board-content').innerHTML,/ปัญหาแจ้งเข้า/);
+  assert.match(ui.element('kb-board-content').innerHTML,/ปัญหาแจ้งเข้า/);
+  assert.match(ui.element('kb-board-content').innerHTML,/ยังไม่เชื่อมข้อมูล/);
+  assert.doesNotMatch(ui.element('kb-board-content').innerHTML,/รับงานนี้/);
   tasks=[]; await ui.window.KpiKanbanBoard.loadKanbanBoard();
   assert.doesNotMatch(ui.element('kb-board-content').innerHTML,/KB-021|ISS-DEMO|จัดป้ายตำแหน่ง/);
 });
+test('issue lane is visible before integration without records or claim controls; ready data renders', async () => {
+  let ready=false,claims=0;
+  const ui=setup({getKanbanBoard:async()=>({tasks:[],issueIntegrationReady:ready,incomingIssues:[{id:'IS-1',title:'Reported issue fixture',description:'Details',area:'Warehouse',reporter:'Reporter',priority:'high'}]}),claimIssueTask:async()=>{claims++;}});
+  await ui.window.KpiKanbanBoard.loadKanbanBoard();
+  let html=ui.element('kb-board-content').innerHTML;
+  assert.match(html,/ปัญหาแจ้งเข้า/);assert.match(html,/ยังไม่เชื่อมข้อมูล/);
+  assert.doesNotMatch(html,/Reported issue fixture|รับงานนี้|ไม่มีปัญหารอรับงาน/);
+  ui.window.KpiKanbanBoard.openClaimIssueModal('TRD::IS-1');
+  assert.equal(claims,0);assert.equal(ui.element('kpi-task-drawer').innerHTML,'');
+  ready=true;await ui.window.KpiKanbanBoard.loadKanbanBoard();
+  html=ui.element('kb-board-content').innerHTML;
+  assert.match(html,/Reported issue fixture/);assert.match(html,/รับงานนี้/);
+  assert.doesNotMatch(html,/ยังไม่เชื่อมข้อมูล/);
+});
+
 test('duty writes use API targetType and failed saves keep original allocation', async () => {
   const calls=[];
   const matrix={status:'success',catalog:[{id:'inbound',name:'Receiving',weight:2,targetHeadcount:null,isActive:true,revision:3}],assignments:[],capacities:[],employees:[{employeeUid:'u1',name:'Owner One'}]};

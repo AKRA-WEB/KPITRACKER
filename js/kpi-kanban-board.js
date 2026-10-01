@@ -200,8 +200,8 @@
 
     function renderKanbanView(filtered) {
         return `
-            <div class="kanban-grid grid grid-cols-1 ${state.issueReady?'md:grid-cols-5':'md:grid-cols-4'} gap-3.5 items-start overflow-x-auto pb-4">
-                ${state.issueReady?renderIntakeLane():''}
+            <div class="kanban-grid grid grid-cols-1 md:grid-cols-5 gap-3.5 items-start overflow-x-auto pb-4">
+                ${renderIntakeLane()}
                 ${STATUSES.map(s => renderColumn(s, filtered.filter(t => t.status === s.id))).join('')}
             </div>
         `;
@@ -209,7 +209,7 @@
 
     function renderIntakeLane() {
         const q = state.search.trim().toLowerCase();
-        const issues = state.incomingIssues.filter(i => {
+        const issues = (state.issueReady ? state.incomingIssues : []).filter(i => {
             if (q && !`${i.title} ${i.description}`.toLowerCase().includes(q)) return false;
             if (state.categoryFilter && i.category !== state.categoryFilter) return false;
             return true;
@@ -223,7 +223,7 @@
                     <div class="flex items-center gap-2 font-bold text-xs text-purple-900">
                         <span class="w-2.5 h-2.5 rounded-full bg-purple-600 inline-block"></span>
                         <span>ปัญหาแจ้งเข้า</span>
-                        <span class="px-2 py-0.5 rounded-full bg-purple-200 text-purple-800 text-[11px] font-bold font-num">${pending.length}</span>
+                        <span class="px-2 py-0.5 rounded-full bg-purple-200 text-purple-800 text-[11px] font-bold font-num">${state.issueReady ? pending.length : '—'}</span>
                     </div>
                     <i class="fa-solid fa-inbox text-purple-600 text-sm"></i>
                 </div>
@@ -246,7 +246,9 @@
                                 <span>รับงานนี้</span>
                             </button>
                         </article>
-                    `).join('') || '<div class="text-center py-8 text-purple-400 text-xs">ไม่มีปัญหารอรับงาน</div>'}
+                    `).join('') || (state.issueReady
+                        ? '<div class="text-center py-8 text-purple-700 text-xs">ไม่มีปัญหารอรับงาน</div>'
+                        : '<div class="py-8 px-2 text-center text-purple-900 text-xs"><i class="fa-solid fa-plug text-xl mb-3" aria-hidden="true"></i><strong class="block mb-2">ยังไม่เชื่อมข้อมูล</strong><p class="text-purple-800 leading-relaxed">เมื่อเชื่อมระบบแล้ว ปัญหาที่แจ้งเข้ามาจะแสดงที่นี่ และทีมสามารถเลือกรับไปทำต่อในบอร์ดงานได้</p></div>')}
                 </div>
                 ${claimed.length ? `
                     <div class="mt-3 pt-2.5 border-t border-purple-200">
@@ -857,6 +859,7 @@
     }
 
     function openClaimIssueModal(issueId) {
+        if (!state.issueReady) { notify('ยังไม่ได้เชื่อมข้อมูลปัญหาต้นทาง'); return; }
         const issue = state.incomingIssues.find(i => i.id === issueId);
         if (!issue) { notify('ยังไม่ได้เชื่อมข้อมูลปัญหาต้นทาง'); return; }
         if (issue.taskId) {
