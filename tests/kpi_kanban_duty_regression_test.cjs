@@ -100,6 +100,20 @@ test('pending checklist text save blocks duplicates and failed save preserves co
   ui.window.KpiKanbanBoard.openTask(task.actionId);assert.match(ui.element('kpi-task-drawer').innerHTML,/Confirmed/);assert.doesNotMatch(ui.element('kpi-task-drawer').innerHTML,/Draft/);
 });
 
+test('combined owner filter deduplicates UID while keeping both branches and same-name distinct users',async()=>{
+  const ui=setup({getKanbanBoard:async(token,branch)=>({tasks:[{actionId:'ADMIN-'+branch,title:'Admin task '+branch,branch,ownerUid:'admin',status:'Open'},{actionId:'STAFF-'+branch,title:'Staff task '+branch,branch,ownerUid:'staff-'+branch,status:'Open'}],employees:[{employeeUid:'admin',name:'Shared admin'},{employeeUid:'staff-'+branch,name:'Same name'}]})});
+  ui.window.getKpiTaskContext=()=>({token:'fixture',branch:'AKRA',userUid:'admin',roles:['ADMIN'],allowedBranches:['AKRA','TRD'],employees:[],can:()=>true});
+  const handlers={};ui.element('kb-filter-owner').addEventListener=(event,fn)=>handlers[event]=fn;
+  ui.window.KpiKanbanBoard.initEventListeners();await ui.window.KpiKanbanBoard.setBranchScope('ALL');
+  const options=ui.element('kb-filter-owner').innerHTML;
+  assert.equal((options.match(/value="admin"/g)||[]).length,1);assert.equal((options.match(/>Same name</g)||[]).length,2);
+  handlers.change({target:{value:'admin'}});
+  const board=ui.element('kb-board-content').innerHTML;assert.match(board,/Admin task AKRA/);assert.match(board,/Admin task TRD/);assert.doesNotMatch(board,/Staff task/);
+  await ui.window.KpiKanbanBoard.loadKanbanBoard();assert.equal(ui.element('kb-filter-owner').value,'admin');
+  ui.window.KpiKanbanBoard.openTask('TRD::ADMIN-TRD');const drawer=ui.element('kpi-task-drawer').innerHTML;
+  assert.match(drawer,/value="admin"/);assert.match(drawer,/value="staff-TRD"/);assert.doesNotMatch(drawer,/value="staff-AKRA"/);
+});
+
 test('duty writes use API targetType and failed saves keep original allocation', async () => {
   const calls=[];
   const matrix={status:'success',catalog:[{id:'inbound',name:'Receiving',weight:2,targetHeadcount:null,isActive:true,revision:3}],assignments:[],capacities:[],employees:[{employeeUid:'u1',name:'Owner One'}]};

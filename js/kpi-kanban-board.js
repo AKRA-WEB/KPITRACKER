@@ -152,11 +152,16 @@
         if (!select) return;
         const currentUid = String(context().userUid || '').toLowerCase();
         let html = '<option value="">ทุกคน</option>';
+        const seen = new Set();
         getEmployees().forEach(e => {
+            const uid = String(e.uid).trim().toLowerCase();
+            if (seen.has(uid)) return;
+            seen.add(uid);
             const isMe = String(e.uid || '').toLowerCase() === currentUid || String(e.name || '').toLowerCase() === currentUid;
             html += `<option value="${esc(e.uid)}">${esc(e.name)}${isMe ? ' (ฉัน)' : ''}</option>`;
         });
         select.innerHTML = html;
+        select.value = state.ownerFilter;
     }
 
     function filteredTasks() {
