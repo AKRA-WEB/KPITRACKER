@@ -102,6 +102,7 @@
         if(!state.employees.some(e=>e.employeeUid===personId)||!activeDuties().some(d=>d.id===dutyId))return;
         if(state.draftSession&&(state.draftSession.token!==baseContext().token||state.draftSession.branch!==baseContext().branch)){notify('เซสชันเปลี่ยน กรุณารีเฟรชข้อมูล');return;}
         state.draftSession??={token:baseContext().token,branch:baseContext().branch};
+        state.loadTicket=(state.loadTicket||0)+1;
         const roles=state.assignments[personId]??={};
         if(targetType==='primary')for(const key of Object.keys(roles))if(roles[key]==='primary')roles[key]='secondary';
         if(targetType==='none')delete roles[dutyId];else roles[dutyId]=targetType;

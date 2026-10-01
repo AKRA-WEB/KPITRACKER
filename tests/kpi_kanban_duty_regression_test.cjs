@@ -252,3 +252,12 @@ test('driving failed save retains old skills and view-only editor hides save',as
  ui.window.getKpiTaskContext=()=>({token:'fixture',branch:'TRD',can:()=>false});ui.window.KpiDutyMatrix.openPerson('u1');
  assert.doesNotMatch(ui.element('kpi-task-drawer').innerHTML,/บันทึกทักษะขับขี่<\/button>/);assert.match(ui.element('kpi-task-drawer').innerHTML,/disabled/);
 });
+
+
+test('late refresh cannot overwrite newly selected local draft',async()=>{
+ let finish,reads=0;const matrix={catalog:[{id:'d',name:'Duty',weight:1,isActive:true}],assignments:[],employees:[{employeeUid:'u1',name:'One'}],employeeRevisions:{u1:0}};
+ const ui=setup({getDutyMatrix:async()=>++reads===1?matrix:new Promise(r=>finish=r)});
+ await ui.window.KpiDutyMatrix.loadDutyMatrix();const refresh=ui.window.KpiDutyMatrix.loadDutyMatrix();
+ await ui.window.KpiDutyMatrix.cycleAssignment('u1','d');finish(matrix);await refresh;
+ assert.equal(ui.window.KpiDutyMatrix.hasDrafts(),true);ui.window.KpiDutyMatrix.discardDrafts();assert.equal(ui.window.KpiDutyMatrix.hasDrafts(),false);
+});
