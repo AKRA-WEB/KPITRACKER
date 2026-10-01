@@ -113,7 +113,7 @@ console.log('\n[4/4] Checking version parity between index.html and version.json
 const versionJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../version.json'), 'utf8'));
 assert(versionJson.version, 'version.json must have a version string');
 assert(htmlContent.includes(`const CURRENT_VERSION = "${versionJson.version}";`));
-assert(htmlContent.includes(`id="drawer-version-text">KPI Suite v${versionJson.version}</span>`));
+assert(htmlContent.includes(`id="drawer-version-text">BM Work v${versionJson.version}</span>`));
 assert(htmlContent.includes(`supabase-kpi-client.js?v=${versionJson.version}`));
 console.log(`  -> Passed: Version parity verified at ${versionJson.version}.`);
 

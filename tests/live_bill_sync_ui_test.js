@@ -27,7 +27,7 @@ const versionMatch = html.match(/const CURRENT_VERSION = ["']([^"']+)["'];/);
 assert.ok(versionMatch, 'CURRENT_VERSION must be defined');
 assert.strictEqual(versionMatch[1], versionJson.version, 'CURRENT_VERSION must match version.json');
 assert.match(versionJson.version, /^\d{8}\.\d{2}$/, 'version.json must use the application release format');
-assert.ok(html.includes(`KPI Suite v${versionJson.version}`), 'Drawer version text must match version.json');
+assert.ok(html.includes(`BM Work v${versionJson.version}`), 'Drawer brand and version text must match BM Work and version.json');
 assert.ok(html.includes(`js/supabase-kpi-client.js?v=${versionJson.version}`), 'supabase-kpi-client asset param must match version');
 assert.ok(html.includes(`js/incident-impact.js?v=${versionJson.version}`), 'incident-impact asset param must match version');
 console.log(`✓ Version parity verified: ${versionJson.version}`);
