@@ -309,6 +309,52 @@
         },
         getActions: (token, branch) => readPages('getActions', token, { branch }, 'actions'),
         saveAction: (token, actionItem) => fetchKpiAction('saveAction', token, { actionItem, expectedRevision: actionItem.revision ?? (actionItem.lastUpdated ? null : 0) }),
+        getKanbanBoard: async (token, branch, options = {}) => {
+            const context=requestContext(token),tasks=[],seen=new Set();let cursor=null,first;
+            do {
+                const data=await fetchKpiAction('getKanbanBoard',token,{...options,branch,cursor},context);
+                if(data.status!=='success'||!Array.isArray(data.tasks))throw new Error('invalid_kanban_board_response');
+                if(!first)first=data;tasks.push(...data.tasks);cursor=data.nextCursor||null;
+                if(cursor){if(seen.has(cursor))throw new Error('repeated_kanban_cursor');seen.add(cursor);}
+            }while(cursor);
+            return {...first,tasks,nextCursor:null};
+        },
+        saveKanbanTask: async (token, taskItem, expectedRevision = null) => {
+            const rev = expectedRevision ?? taskItem.revision ?? (taskItem.lastUpdated ? null : 0);
+            const data = await fetchKpiAction('saveKanbanTask', token, { taskItem, expectedRevision: rev });
+            if (data.status !== 'success') throw new Error('invalid_save_kanban_response');
+            return data;
+        },
+        claimIssueTask: async (token, claimPayload) => {
+            const data = await fetchKpiAction('claimIssueTask', token, claimPayload);
+            if (!data || (data.status !== 'success' && data.status !== 'already_claimed')) throw new Error('invalid_claim_issue_response');
+            return data;
+        },
+        getDutyMatrix: async (token, branch) => {
+            const data = await fetchKpiAction('getDutyMatrix', token, { branch });
+            if (data.status !== 'success') throw new Error('invalid_duty_matrix_response');
+            return data;
+        },
+        setDutyAssignment: async (token, payload) => {
+            const data = await fetchKpiAction('setDutyAssignment', token, payload);
+            if (data.status !== 'success') throw new Error('invalid_set_duty_response');
+            return data;
+        },
+        saveDutyCatalog: async (token, payload) => {
+            const data = await fetchKpiAction('saveDutyCatalog', token, payload);
+            if (data.status !== 'success') throw new Error('invalid_save_duty_catalog_response');
+            return data;
+        },
+        setDrivingCapabilities: async (token, payload) => {
+            const data = await fetchKpiAction('setDrivingCapabilities', token, payload);
+            if (data.status !== 'success') throw new Error('invalid_driving_capabilities_response');
+            return data;
+        },
+        setDutyCapacity: async (token, payload) => {
+            const data = await fetchKpiAction('setDutyCapacity', token, payload);
+            if (data.status !== 'success') throw new Error('invalid_set_duty_capacity_response');
+            return data;
+        },
         getLiveRequisitions: async (token, targetDate) => {
             if (!token) throw new Error('KPI Live Bill requires an authenticated Main session.');
             const d = targetDate || new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date());

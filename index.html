@@ -186,8 +186,11 @@
                 <button type="button" onclick="switchTab('error')" id="dtab-error" class="desktop-tab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
                     <i class="fa-solid fa-clipboard-check text-red-400"></i><span>Incident QC</span>
                 </button>
-                <button type="button" onclick="switchTab('audit')" id="dtab-audit" class="desktop-tab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
-                    <i class="fa-solid fa-clipboard-list text-teal-400"></i><span>5S Audit</span>
+                <button type="button" onclick="switchTab('kanban')" id="dtab-kanban" class="desktop-tab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-table-columns text-teal-400"></i><span>บอร์ดงาน (Kanban)</span>
+                </button>
+                <button type="button" onclick="switchTab('duties')" id="dtab-duties" class="desktop-tab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-users-gear text-indigo-400"></i><span>ตารางงาน</span>
                 </button>
                 <button type="button" onclick="switchTab('billcount')" id="dtab-billcount" class="desktop-tab px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
                     <i class="fa-solid fa-file-invoice text-indigo-400"></i><span>Live Bill Sync</span>
@@ -866,180 +869,151 @@
             </div>
         </div>
 
-        <!-- ================= VIEW: 5S WAREHOUSE WALK AUDIT (ตรวจประเมิน 5S) ================= -->
-        <div id="view-audit" class="ops-view hidden space-y-4 max-w-5xl mx-auto">
-            <!-- Title & Date Row -->
+        <!-- ================= VIEW: KANBAN TASK BOARD (บอร์ดงาน) ================= -->
+        <div id="view-kanban" class="ops-view hidden space-y-4 max-w-6xl mx-auto">
+            <!-- Header Row -->
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h2 class="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
-                        <i class="fa-solid fa-clipboard-list text-teal-600"></i>
-                        ตรวจประเมิน 5S คลัง &amp; หน้าร้าน (Monday 5S Warehouse Walk)
+                        <i class="fa-solid fa-table-columns text-blue-600"></i>
+                        <span>บอร์ดงาน (Kanban Tasks)</span>
                     </h2>
-                    <p class="text-xs text-slate-500">ประเมินพื้นที่และอุปกรณ์เป็นคะแนนรวม (เต็ม 100) • ไม่หักคะแนน HP รายบุคคล • ติดตาม Action Items</p>
+                    <p class="text-xs text-slate-500">เห็นเจ้าของงาน ขั้นตอน และสิ่งที่ต้องเดินหน้าต่อ</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="text-xs bg-teal-100 text-teal-800 font-bold px-3 py-1.5 rounded-xl">Area Quality Audit</span>
-                    <input type="date" id="record-date-audit" onchange="load5SAuditData(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-teal-500">
+                    <button type="button" onclick="window.KpiKanbanBoard.openNewTaskModal('open')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>เพิ่มงาน</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- Scorecard & Finding Form Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                <!-- Col 1: 5S Audit Scorecard -->
-                <div class="space-y-3.5">
-                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                            <h3 class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                                <i class="fa-solid fa-star text-amber-500"></i>
-                                แบบฟอร์มประเมิน 6 มิติ (คะแนนรวม 100 คะแนน)
-                            </h3>
-                            <span id="audit-score-badge" class="text-xs font-black px-3 py-1 rounded-full bg-teal-600 text-white shadow-sm font-num">
-                                100 / 100
-                            </span>
-                        </div>
-
-                        <!-- 6 Core 5S Dimensions -->
-                        <div class="space-y-2.5 text-xs">
-                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
-                                <div>
-                                    <p class="font-bold text-slate-800">1. ความปลอดภัย &amp; ทางเดิน (Safety)</p>
-                                    <p class="text-[10px] text-slate-500">ทางเดินโล่ง ไม่มีสิ่งกีดขวาง ถังดับเพลิงพร้อมใช้</p>
-                                </div>
-                                <div class="flex items-center gap-1.5 shrink-0">
-                                    <input type="number" id="audit-s1" min="0" max="25" value="25" onchange="calc5STotalScore()" class="w-14 p-1.5 text-center font-bold font-num bg-white border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">
-                                    <span class="text-[10px] text-slate-400 font-medium">/ 25</span>
-                                </div>
-                            </div>
-
-                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
-                                <div>
-                                    <p class="font-bold text-slate-800">2. ความสะอาด &amp; ขยะ (Cleanliness)</p>
-                                    <p class="text-[10px] text-slate-500">พื้นสะอาด ไม่มีเศษกล่อง/พลาสติก/เทปกาวตกค้าง</p>
-                                </div>
-                                <div class="flex items-center gap-1.5 shrink-0">
-                                    <input type="number" id="audit-s2" min="0" max="20" value="20" onchange="calc5STotalScore()" class="w-14 p-1.5 text-center font-bold font-num bg-white border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">
-                                    <span class="text-[10px] text-slate-400 font-medium">/ 20</span>
-                                </div>
-                            </div>
-
-                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
-                                <div>
-                                    <p class="font-bold text-slate-800">3. การจัดเก็บ &amp; ความเป็นระเบียบ (Storage)</p>
-                                    <p class="text-[10px] text-slate-500">วางของบนชั้น/พาเลทเรียบร้อย ซ้อนไม่เอียง</p>
-                                </div>
-                                <div class="flex items-center gap-1.5 shrink-0">
-                                    <input type="number" id="audit-s3" min="0" max="20" value="20" onchange="calc5STotalScore()" class="w-14 p-1.5 text-center font-bold font-num bg-white border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">
-                                    <span class="text-[10px] text-slate-400 font-medium">/ 20</span>
-                                </div>
-                            </div>
-
-                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
-                                <div>
-                                    <p class="font-bold text-slate-800">4. ป้ายบ่งชี้ &amp; Location (Labeling)</p>
-                                    <p class="text-[10px] text-slate-500">ป้ายชื่อสินค้า/รหัสชัดเจน ตรงช่องจัดเก็บ</p>
-                                </div>
-                                <div class="flex items-center gap-1.5 shrink-0">
-                                    <input type="number" id="audit-s4" min="0" max="15" value="15" onchange="calc5STotalScore()" class="w-14 p-1.5 text-center font-bold font-num bg-white border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">
-                                    <span class="text-[10px] text-slate-400 font-medium">/ 15</span>
-                                </div>
-                            </div>
-
-                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
-                                <div>
-                                    <p class="font-bold text-slate-800">5. FIFO / FEFO การหมุนเวียน (Stock Rotation)</p>
-                                    <p class="text-[10px] text-slate-500">สินค้าเข้าก่อน/หมดอายุก่อนอยู่ด้านหน้า</p>
-                                </div>
-                                <div class="flex items-center gap-1.5 shrink-0">
-                                    <input type="number" id="audit-s5" min="0" max="10" value="10" onchange="calc5STotalScore()" class="w-14 p-1.5 text-center font-bold font-num bg-white border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">
-                                    <span class="text-[10px] text-slate-400 font-medium">/ 10</span>
-                                </div>
-                            </div>
-
-                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
-                                <div>
-                                    <p class="font-bold text-slate-800">6. สภาพอุปกรณ์ส่วนกลาง (Equipment &amp; Tools)</p>
-                                    <p class="text-[10px] text-slate-500">แฮนด์ลิฟท์/รถเข็น/เทปตัด/บันได อยู่ในสภาพดี</p>
-                                </div>
-                                <div class="flex items-center gap-1.5 shrink-0">
-                                    <input type="number" id="audit-s6" min="0" max="10" value="10" onchange="calc5STotalScore()" class="w-14 p-1.5 text-center font-bold font-num bg-white border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">
-                                    <span class="text-[10px] text-slate-400 font-medium">/ 10</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- General Audit Notes -->
-                        <div>
-                            <label class="text-xs font-bold text-slate-700 block mb-1">ข้อเสนอแนะภาพรวม:</label>
-                            <input type="text" id="audit-general-notes" placeholder="เช่น ตรวจคลัง W1 และ W2 ช่วงเช้า สะอาดเรียบร้อยดี" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-teal-500">
-                        </div>
-
-                        <button type="button" onclick="save5SAuditScorecard()" id="btn-save-audit" class="w-full py-3 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all active:scale-95">
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
-                            <span>บันทึกผลการตรวจ 5S วันนี้</span>
+            <!-- Toolbar & Filters -->
+            <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2.5">
+                    <!-- Segmented View Buttons -->
+                    <div class="inline-flex p-1 bg-slate-100 rounded-xl text-xs font-bold gap-1" role="tablist">
+                        <button type="button" data-view="board" onclick="window.KpiKanbanBoard.setView('board')" class="kb-view-btn px-3 py-1.5 rounded-lg bg-white text-blue-700 shadow-sm transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-table-columns"></i>
+                            <span>บอร์ด</span>
                         </button>
-                    </section>
-
-                    <!-- Add Finding Action Item Box -->
-                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
-                        <h3 class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-camera text-blue-600"></i>
-                            เพิ่มจุดที่ต้องแก้ไข (5S Action Item Finding)
-                        </h3>
-                        <div class="grid grid-cols-2 gap-2 text-xs">
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-700 block mb-1">จุดที่พบ / โซน:</label>
-                                <input type="text" id="audit-finding-area" placeholder="เช่น W1 แร็ค A3" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-700 block mb-1">ผู้รับผิดชอบแก้ไข:</label>
-                                <input type="text" id="audit-finding-resp" placeholder="เช่น หมูหยอง / ทีมกะเช้า" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-700 block mb-1">รายละเอียดสิ่งที่ต้องแก้ไข:</label>
-                            <input type="text" id="audit-finding-text" placeholder="เช่น พบเศษเทปกาวและขวดน้ำวางบนชั้นวางสินค้า" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div class="grid grid-cols-2 gap-2 text-xs">
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-700 block mb-1">หมวดหมู่:</label>
-                                <select id="audit-finding-cat" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg font-semibold text-xs outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="cleanliness">ความสะอาด (Cleanliness)</option>
-                                    <option value="safety">ความปลอดภัย (Safety)</option>
-                                    <option value="storage">การจัดเก็บ (Storage)</option>
-                                    <option value="label">ป้ายบ่งชี้ (Label)</option>
-                                    <option value="equipment">อุปกรณ์ (Equipment)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-[11px] font-bold text-slate-700 block mb-1">กำหนดเสร็จ (Due):</label>
-                                <input type="text" id="audit-finding-due" placeholder="เช่น 12:00 น. / วันนี้" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                        </div>
-                        <button type="button" onclick="add5SFindingItem()" class="w-full py-2.5 px-3 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-98">
-                            <i class="fa-solid fa-plus-circle text-blue-600"></i>
-                            <span>เพิ่มรายการสิ่งที่ต้องปรับปรุง</span>
+                        <button type="button" data-view="list" onclick="window.KpiKanbanBoard.setView('list')" class="kb-view-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-list"></i>
+                            <span>รายการ</span>
                         </button>
-                    </section>
+                        <button type="button" data-view="mine" onclick="window.KpiKanbanBoard.setView('mine')" class="kb-view-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-user"></i>
+                            <span>งานของฉัน</span>
+                        </button>
+                    </div>
+                    <span id="kb-summary" class="text-xs text-slate-500 font-medium"></span>
                 </div>
 
-                <!-- Col 2: Findings List & History -->
-                <div class="space-y-3.5">
-                    <section class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-2xl border border-slate-700 shadow-md space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-slate-200 flex items-center gap-2">
-                                <i class="fa-solid fa-list-check text-teal-400"></i>
-                                รายการสิ่งที่ต้องปรับปรุง (Action Items)
-                            </span>
-                            <span id="audit-findings-badge" class="text-[10px] bg-teal-950 text-teal-300 border border-teal-500/30 px-2 py-0.5 rounded font-bold">0 รายการ</span>
-                        </div>
-                        <div id="audit-findings-list" class="space-y-2 text-xs max-h-[35rem] overflow-y-auto pr-1">
-                            <div class="text-slate-400 text-center py-6 text-xs">ยังไม่มีรายการสิ่งที่ต้องปรับปรุงในวันนี้</div>
-                        </div>
-                    </section>
+                <!-- Filter Controls -->
+                <div class="flex flex-wrap items-center gap-2 pt-1">
+                    <div class="relative flex-1 min-w-[200px]">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="kb-search" placeholder="ค้นหาชื่องาน รายละเอียด หรือรหัส..." class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <label class="flex items-center gap-2 text-xs font-bold text-slate-600">สาขา<select id="kb-branch-scope" aria-label="สาขาบอร์ดงาน" onchange="window.KpiKanbanBoard.setBranchScope(this.value)" class="p-2 border border-slate-200 rounded-xl bg-white"></select></label>
+                <select id="kb-filter-owner" class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                        <option value="">ทุกคน</option>
+                    </select>
+                    <select id="kb-filter-category" class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                        <option value="">ทุกหมวดงาน</option>
+                        <option>คลังสินค้า</option>
+                        <option>งานปรับปรุง</option>
+                        <option>เอกสาร/ระบบ</option>
+                        <option>หน้าร้าน TRD</option>
+                    </select>
+                    <button type="button" id="kb-overdue-toggle" onclick="window.KpiKanbanBoard.toggleOverdue()" class="px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 flex items-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-clock text-amber-500"></i>
+                        <span>เกินกำหนด (<span id="kb-overdue-count" class="font-num">0</span>)</span>
+                    </button>
+                    <button type="button" onclick="window.KpiKanbanBoard.loadKanbanBoard()" class="px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 flex items-center gap-1.5 transition-all" title="รีเฟรชข้อมูล">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
                 </div>
-
             </div>
+
+            <!-- Kanban Board or List View Container -->
+            <div id="kb-board-content"></div>
+        </div>
+
+        <!-- ================= VIEW: CURRENT DUTY MATRIX (ตารางงาน) ================= -->
+        <div id="view-duties" class="ops-view hidden space-y-4 max-w-6xl mx-auto">
+            <!-- Header Row -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-users-gear text-indigo-600"></i>
+                        <span>ตารางงาน (Current Duty Matrix)</span>
+                    </h2>
+                    <p class="text-xs text-slate-500">แบ่งหน้าที่ปัจจุบัน ให้ทีมช่วยกันรับงานได้พอดี</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="window.KpiDutyMatrix.chooseCatalogBranch()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors">
+                        <i class="fa-solid fa-sliders text-indigo-600"></i>
+                        <span>จัดการหน้าที่</span>
+                    </button>
+                    <button type="button" onclick="window.KpiDutyMatrix.loadDutyMatrix()" class="px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 flex items-center gap-1.5 transition-all" title="รีเฟรชข้อมูล">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Allocation Summary -->
+            <div id="kb-duty-summary" class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm"></div>
+
+            <!-- Duty Toolbar & Instructions -->
+            <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2.5">
+                    <label class="flex items-center gap-2 text-xs font-bold text-slate-600">สาขา<select id="kb-duty-branch-scope" aria-label="สาขาตารางงาน" onchange="window.KpiDutyMatrix.setBranchScope(this.value)" class="p-2 border border-slate-200 rounded-xl bg-white"></select></label>
+                <div class="relative flex-1 min-w-[200px]">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="kb-duty-person-search" placeholder="ค้นหาชื่อพนักงาน..." class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <label class="text-xs font-bold text-slate-600">คนที่ขับได้
+                        <select id="kb-duty-driving-filter" aria-label="กรองทักษะขับขี่" onchange="window.KpiDutyMatrix.setDrivingFilter(this.value)" class="ml-1 p-2 border border-slate-200 rounded-xl bg-white">
+                            <option value="">รถทุกประเภท</option><option value="motorcycle">มอเตอร์ไซค์</option><option value="cargo34">รถเครื่องขนสินค้า 3 ล้อ / 4 ล้อ</option><option value="car_pickup">รถยนต์ / รถกระบะ</option>
+                        </select>
+                    </label>
+                    <div class="inline-flex p-1 bg-slate-100 rounded-xl text-xs font-bold gap-1" role="tablist">
+                        <button type="button" data-people="all" onclick="window.KpiDutyMatrix.setFilter('all')" class="kb-duty-filter-btn px-3 py-1.5 rounded-lg bg-white text-blue-700 shadow-sm transition-all">
+                            ทุกคน
+                        </button>
+                        <button type="button" data-people="over" onclick="window.KpiDutyMatrix.setFilter('over')" class="kb-duty-filter-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+                            ภาระงานสูง
+                        </button>
+                        <button type="button" data-people="free" onclick="window.KpiDutyMatrix.setFilter('free')" class="kb-duty-filter-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+                            ยังไม่มีหน้าที่
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-100 pt-2 flex-wrap gap-2">
+                    <div class="flex items-center gap-2">
+                        <strong class="text-slate-700">จิ้มช่องเพื่อแบ่งหน้าที่:</strong>
+                        <span class="text-slate-400">ว่าง → งานหลัก → งานเสริม → ว่าง</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-bold text-[11px]">
+                            หลัก = งานหลัก (1 หน้าที่ต่อคน)
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[11px]">
+                            เสริม = งานเสริม
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Duty Matrix Content Container -->
+            <div id="kb-duty-content"></div>
+
+            <p class="text-[11px] text-slate-400 flex items-center gap-1.5 pt-1">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>น้ำหนักและขีดจำกัดเป็นค่าช่วยแบ่งหน้าที่ในทีมให้สมดุล ไม่ใช่ชั่วโมงการทำงานหรือคะแนนผลงานรายบุคคล</span>
+            </p>
         </div>
 
         <!-- ================= VIEW 3: BILL COUNT & LIVE SYNC (สรุปบิลเบิกย้าย) ================= -->
@@ -3021,9 +2995,14 @@
                     <span>โปรไฟล์ของฉัน (My Passport)</span>
                 </button>
 
-                <button id="drawer-audit-btn" onclick="drawerNavigate('audit')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-teal-300 hover:text-white hover:bg-slate-800 transition-all text-left">
-                    <i class="fa-solid fa-clipboard-list text-teal-400 w-4 text-center text-sm"></i>
-                    <span>ตรวจ 5S คลัง &amp; หน้าร้าน (5S Walk)</span>
+                <button id="drawer-kanban-btn" onclick="drawerNavigate('kanban')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-teal-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-table-columns text-teal-400 w-4 text-center text-sm"></i>
+                    <span>บอร์ดงาน (Kanban Board)</span>
+                </button>
+
+                <button id="drawer-duties-btn" onclick="drawerNavigate('duties')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-indigo-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                    <i class="fa-solid fa-users-gear text-indigo-400 w-4 text-center text-sm"></i>
+                    <span>ตารางงาน (Duty Matrix)</span>
                 </button>
 
                 <div id="drawer-admin-heading" class="hidden pt-3 px-3 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">สำหรับผู้ดูแลระบบ</div>
@@ -3043,7 +3022,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20260924.01</span>
+                <span id="drawer-version-text">KPI Suite v20261001.09</span>
                 <span>AKRA System</span>
             </div>
         </div>
@@ -3193,7 +3172,6 @@
         .ops-view > .grid > div > .bg-white,
         #view-dashboard .bg-white,
         #view-my-profile .bg-white,
-        #view-audit .bg-white,
         #view-billcount .bg-white {
             border-color: var(--kpi-border) !important;
             border-radius: 14px !important;
@@ -3443,14 +3421,35 @@
             #view-error h2 { font-size:16px; }
             #incident-team-heading { font-size:13px; }
         }
+        /* KPI Kanban & Duty Matrix Custom Styles */
+        #kb-board-content .kanban-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(215px, 1fr));
+            gap: 0.875rem;
+            align-items: start;
+        }
+        @media (max-width: 1024px) {
+            #kb-board-content .kanban-grid {
+                grid-template-columns: repeat(5, 270px);
+            }
+        }
+        .task-card.dragging {
+            opacity: 0.5;
+        }
+        .column.drop-target {
+            outline: 2px dashed #2563eb;
+            outline-offset: 2px;
+        }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20260924.01"></script>
+    <script src="js/supabase-kpi-client.js?v=20261001.09"></script>
     <script src="js/workload-permissions.js?v=20260921.01"></script>
-    <script src="js/incident-impact.js?v=20260924.01"></script>
+    <script src="js/incident-impact.js?v=20261001.09"></script>
+    <script src="js/kpi-kanban-board.js?v=20261001.09"></script>
+    <script src="js/kpi-duty-matrix.js?v=20261001.09"></script>
     <script>
         // ================= CONFIGURATION =================
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20260924.01";
+        const CURRENT_VERSION = "20261001.09";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -4024,6 +4023,8 @@
         let _dailyDataLoadError = '';
         let _kpiAuthRedirecting = false;
         let sessionToken = null;
+        window.getKpiTaskContext = () => ({token:getKpiPageToken(),branch:currentBranch,userUid:currentUser,name:displayUserName,
+            employees:GLOBAL_CONFIG_LIST,roles:currentRoles,allowedBranches:getBranchesFromMainRoles(currentRoles),can:perm=>can(perm)});
         let KPI_MAIN_VIEWER = null;
         let KPI_WORKLOAD_STATUS = { date: '', hour: 0, recordedEmployees: [] };
         let adminStatusRequest = null;
@@ -5411,71 +5412,9 @@
             return total;
         }
 
-        async function save5SAuditScorecard() {
-            const date = document.getElementById('record-date-audit')?.value || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().slice(0, 10));
-            const notes = document.getElementById('audit-general-notes')?.value || '';
-            const totalScore = calc5STotalScore();
-            const sectionScores = {
-                safety: currentAuditScorecard.s1,
-                cleanliness: currentAuditScorecard.s2,
-                storage: currentAuditScorecard.s3,
-                label: currentAuditScorecard.s4,
-                fifo: currentAuditScorecard.s5,
-                equipment: currentAuditScorecard.s6
-            };
-            if (!sessionToken || !window.AkraSupabaseKPI?.saveAuditRecord) {
-                return showToast('บันทึกสำเร็จ (โหมดสาธิต)');
-            }
-            const btn = document.getElementById('btn-save-audit');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>กำลังบันทึก...</span>';
-            }
-            try {
-                await AkraSupabaseKPI.saveAuditRecord(sessionToken, currentBranch, date, 'Monday 5S', totalScore, sectionScores, notes, currentAuditScorecard.findings);
-                showToast('บันทึกผลการตรวจ 5S ประจำสัปดาห์สำเร็จ!');
-            } catch (err) {
-                console.error('save5SAuditScorecard failed:', err);
-                showModal('บันทึกไม่สำเร็จ', err?.message || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i><span>บันทึกผลการตรวจ 5S วันนี้</span>';
-                }
-            }
-        }
+        async function save5SAuditScorecard() { showToast("ประวัติ 5S เปิดดูได้อย่างเดียว กรุณาสร้างงานในบอร์ดงาน"); }
 
-        function add5SFindingItem() {
-            const area = (document.getElementById('audit-finding-area')?.value || '').trim();
-            const text = (document.getElementById('audit-finding-text')?.value || '').trim();
-            const resp = (document.getElementById('audit-finding-resp')?.value || '').trim();
-            const cat = (document.getElementById('audit-finding-cat')?.value || 'cleanliness').trim();
-            const due = (document.getElementById('audit-finding-due')?.value || '').trim();
-
-            if (!text) {
-                return showToast('กรุณาระบุสิ่งที่ต้องแก้ไข', true);
-            }
-            const newFinding = {
-                id: 'finding-' + Date.now(),
-                area: area || 'พื้นที่ทั่วไป',
-                finding_text: text,
-                category: cat,
-                responsible_person: resp || 'ทีมประจำพื้นที่',
-                due_time: due || 'วันนี้',
-                status: 'Open'
-            };
-            if (!currentAuditScorecard.findings) currentAuditScorecard.findings = [];
-            currentAuditScorecard.findings.unshift(newFinding);
-
-            // clear inputs
-            if (document.getElementById('audit-finding-area')) document.getElementById('audit-finding-area').value = '';
-            if (document.getElementById('audit-finding-text')) document.getElementById('audit-finding-text').value = '';
-            if (document.getElementById('audit-finding-resp')) document.getElementById('audit-finding-resp').value = '';
-            if (document.getElementById('audit-finding-due')) document.getElementById('audit-finding-due').value = '';
-
-            render5SFindingsList();
-            showToast('เพิ่ม Action Item เรียบร้อย');
-        }
+        function add5SFindingItem() { showToast("ประวัติ 5S เปิดดูได้อย่างเดียว กรุณาสร้างงานในบอร์ดงาน"); }
 
         function render5SFindingsList() {
             const container = document.getElementById('audit-findings-list');
@@ -5502,28 +5441,14 @@
                         <p class="text-slate-200 font-medium text-xs">${esc(f.finding_text || f.findingText || '')}</p>
                         <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800">
                             <span>ผู้รับผิดชอบ: <b class="text-slate-300">${esc(f.responsible_person || f.responsiblePerson || '-')}</b> (กำหนด: ${esc(f.due_time || f.dueTime || '-')})</span>
-                            ${!isResolved ? `<button type="button" onclick="resolve5SFinding('${esc(f.id)}')" class="px-2 py-1 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-lg transition-all active:scale-95"><i class="fa-solid fa-check mr-1"></i>แก้แล้ว</button>` : ''}
+
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        async function resolve5SFinding(findingId) {
-            const target = (currentAuditScorecard.findings || []).find(f => f.id === findingId);
-            if (target) {
-                target.status = 'Resolved';
-                render5SFindingsList();
-            }
-            if (sessionToken && window.AkraSupabaseKPI?.updateAuditFinding) {
-                try {
-                    await AkraSupabaseKPI.updateAuditFinding(sessionToken, findingId, 'Resolved', '', 'แก้ไขเรียบร้อย');
-                } catch (e) {
-                    console.warn('updateAuditFinding error:', e);
-                }
-            }
-            showToast('อัปเดตสถานะเป็นแก้ไขแล้ว!');
-        }
+        async function resolve5SFinding() { showToast("ประวัติ 5S เปิดดูได้อย่างเดียว กรุณาสร้างงานในบอร์ดงาน"); }
 
         async function load5SAuditData(date) {
             const targetDate = date || (document.getElementById('record-date-audit')?.value) || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().slice(0, 10));
@@ -13117,15 +13042,15 @@
             if (tab === 'record') tab = (currentBranch === 'TRD' ? 'error' : 'workload');
             if (tab === 'errors') tab = 'error';
             if (tab === 'bills') tab = 'billcount';
-            if (tab === 'audits') tab = 'audit';
+            if (tab === 'audits' || tab === 'audit') tab = 'kanban';
             if (tab === 'admin' && !IS_ADMIN) {
                 showToast('เมนูตั้งค่าระบบและพนักงานใช้ได้เฉพาะ Admin หรือ Supervisor', true);
                 return false;
             }
 
-            const views = ['view-workload', 'view-error', 'view-audit', 'view-billcount', 'view-dashboard', 'view-my-profile', 'view-admin-dash', 'view-admin', 'view-record'];
-            const mobileTabs = ['tab-workload', 'tab-error', 'tab-audit', 'tab-billcount', 'tab-dashboard', 'tab-my-profile', 'tab-record'];
-            const desktopTabs = ['dtab-workload', 'dtab-error', 'dtab-audit', 'dtab-billcount', 'dtab-dashboard', 'dtab-my-profile'];
+            const views = ['view-workload', 'view-error', 'view-kanban', 'view-duties', 'view-billcount', 'view-dashboard', 'view-my-profile', 'view-admin-dash', 'view-admin', 'view-record'];
+            const mobileTabs = ['tab-workload', 'tab-error', 'tab-billcount', 'tab-dashboard', 'tab-my-profile', 'tab-record'];
+            const desktopTabs = ['dtab-workload', 'dtab-error', 'dtab-kanban', 'dtab-duties', 'dtab-billcount', 'dtab-dashboard', 'dtab-my-profile'];
 
             views.forEach(v => {
                 const el = document.getElementById(v);
@@ -13167,7 +13092,8 @@
             const badgeTitles = {
                 'workload': 'Workload',
                 'error': 'Incident QC',
-                'audit': '5S Audit',
+                'kanban': 'Kanban Tasks',
+                'duties': 'Duty Matrix',
                 'billcount': 'Live Sync',
                 'dashboard': 'Dashboard',
                 'my-profile': 'โปรไฟล์ฉัน',
@@ -13181,13 +13107,21 @@
 
             window.scrollTo({ top: 0, behavior: 'instant' });
 
-            if (tab === 'dashboard') {
+            if (tab === 'kanban') {
+                if (window.KpiKanbanBoard) {
+                    window.KpiKanbanBoard.initEventListeners();
+                    window.KpiKanbanBoard.loadKanbanBoard();
+                }
+            } else if (tab === 'duties') {
+                if (window.KpiDutyMatrix) {
+                    window.KpiDutyMatrix.initEventListeners();
+                    window.KpiDutyMatrix.loadDutyMatrix();
+                }
+            } else if (tab === 'dashboard') {
                 loadDashboardData();
                 updateDailyDashboard();
             } else if (tab === 'my-profile') {
                 if (typeof loadMyProfileData === 'function') loadMyProfileData();
-            } else if (tab === 'audit') {
-                if (typeof load5SAuditData === 'function') load5SAuditData();
             } else if (tab === 'error') {
                 renderErrSeverity();
                 renderErrEmpChips();
@@ -15319,5 +15253,8 @@
                 }
             }
     </script>
+    <!-- KPI Task & Duty Detail Drawer Container -->
+    <div id="kpi-task-drawer-backdrop" class="fixed inset-0 bg-slate-900/50 z-50 hidden transition-opacity" onclick="window.KpiKanbanBoard ? window.KpiKanbanBoard.closeDrawer() : (window.KpiDutyMatrix && window.KpiDutyMatrix.closeDrawer())"></div>
+    <aside id="kpi-task-drawer" class="fixed inset-y-0 right-0 w-full max-w-lg bg-white z-50 shadow-2xl p-6 overflow-y-auto hidden outline-none" role="dialog" aria-modal="true" tabindex="-1"></aside>
 </body>
 </html>
