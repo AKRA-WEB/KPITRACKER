@@ -416,7 +416,7 @@
         style.textContent = `
             @media (min-width: 768px) {
                 .gr-sidebar, #main-sidebar, #trd-module-nav, #desktop-primary-nav, .sidebar, .po-workflow-nav { display: none !important; }
-                #app-content { margin-left: 0 !important; margin-right: 0 !important; padding-left: 24px !important; padding-right: 24px !important; width: 100% !important; max-width: none !important; box-sizing: border-box; }
+                body #app-content { margin-left: 0 !important; margin-right: 0 !important; padding-left: 24px !important; padding-right: 24px !important; width: 100% !important; max-width: none !important; box-sizing: border-box; }
                 .gr-topbar, .gr-main, .trd-topbar, .app-header { margin-left: 0 !important; width: 100% !important; }
                 .gr-main { max-width: none !important; }
                 body.trdakra-shell #app-root { margin-left: 0 !important; width: 100% !important; }
