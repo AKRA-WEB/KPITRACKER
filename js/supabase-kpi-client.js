@@ -47,11 +47,11 @@
     }
 
     async function transportRequest(action, payload, context) {
-        if(!['getDutyMatrix','setDutyAssignment','saveDutyAssignments','saveDutyCatalog','setDutyCapacity','setDrivingCapabilities'].includes(action))return performTransportRequest(action,payload,context);
+        if(!['getTaskImages','uploadTaskImage','removeTaskImage','getDutyMatrix','setDutyAssignment','saveDutyAssignments','saveDutyCatalog','setDutyCapacity','setDrivingCapabilities'].includes(action))return performTransportRequest(action,payload,context);
         const controller=new AbortController();let timer;
         const deadline=new Promise((resolve,reject)=>{timer=setTimeout(()=>{
             reject(Object.assign(new Error('request_timeout'),{reason:'request_timeout'}));controller.abort();
-        },30000);});
+        },action==='uploadTaskImage'?60000:30000);});
         try{return await Promise.race([performTransportRequest(action,payload,context,controller.signal),deadline]);}
         finally{clearTimeout(timer);}
     }
@@ -350,6 +350,18 @@
             const data = await fetchKpiAction('setDutyAssignment', token, payload);
             if (data.status !== 'success') throw new Error('invalid_set_duty_response');
             return data;
+        },
+        getTaskImages:async(token,payload)=>{
+            const data=await fetchKpiAction('getTaskImages',token,payload);
+            if(data.status!=='success'||!Array.isArray(data.images))throw Error('invalid_task_images_response');return data;
+        },
+        uploadTaskImage:async(token,payload)=>{
+            const data=await fetchKpiAction('uploadTaskImage',token,payload);
+            if(data.status!=='success'||!data.task)throw Error('invalid_image_upload_response');return data;
+        },
+        removeTaskImage:async(token,payload)=>{
+            const data=await fetchKpiAction('removeTaskImage',token,payload);
+            if(data.status!=='success'||!data.task)throw Error('invalid_image_remove_response');return data;
         },
         saveDutyAssignments: async (token, payload) => {
             const data = await fetchKpiAction('saveDutyAssignments', token, payload);

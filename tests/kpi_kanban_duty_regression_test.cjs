@@ -14,7 +14,7 @@ function setup(api) {
   const window = { confirm:()=>true, AkraSupabaseKPI: api, getKpiTaskContext: () => ({token:'fixture',branch:'TRD',userUid:'u1',name:'Test',employees:[],can:()=>true}), showToast:msg=>notices.push(msg) };
   const context = vm.createContext({window,document,console,Intl,Date,Math,structuredClone,crypto:require('node:crypto').webcrypto,FormData:class {constructor(form){this.values=form.values;}get(key){return this.values[key]??null;}}});
   for (const file of ['kpi-kanban-board.js','kpi-duty-matrix.js']) vm.runInContext(fs.readFileSync(path.join(__dirname,'../js',file),'utf8'),context);
-  return {window,element,notices};
+  return {window,element,notices,document};
 }
 
 test('special characters in task and employee IDs remain literal handler arguments', async () => {
@@ -260,4 +260,24 @@ test('late refresh cannot overwrite newly selected local draft',async()=>{
  await ui.window.KpiDutyMatrix.loadDutyMatrix();const refresh=ui.window.KpiDutyMatrix.loadDutyMatrix();
  await ui.window.KpiDutyMatrix.cycleAssignment('u1','d');finish(matrix);await refresh;
  assert.equal(ui.window.KpiDutyMatrix.hasDrafts(),true);ui.window.KpiDutyMatrix.discardDrafts();assert.equal(ui.window.KpiDutyMatrix.hasDrafts(),false);
+});
+
+
+test('task images resize, preserve detail form, retry identical upload and refresh trusted revision',async()=>{
+ const task={actionId:'IMAGE-1',branch:'TRD',title:'Image task',ownerUid:'u1',status:'Open',revision:4,attachments:[],checklist:[],comments:[]};let fail=true;const calls=[];
+ const ui=setup({getKanbanBoard:async()=>({tasks:[task]}),uploadTaskImage:async(t,p)=>{calls.push(p);if(fail)throw Error('uncertain');task.revision=5;task.attachments=[{id:p.imageId,name:p.fileName,mimeType:'image/jpeg'}];return {task};},getTaskImages:async()=>({images:task.attachments.map(i=>({...i,url:'https://hgxrrskztbpejirrdpbq.supabase.co/storage/v1/object/sign/kpi-task-images/fixture?token=synthetic',expiresAt:Date.now()+300000}))})});
+ let canvas;ui.document.createElement=()=>canvas={width:0,height:0,getContext:()=>({fillRect(){},drawImage(){}}),toDataURL:()=>('data:image/jpeg;base64,'+'AAAA'.repeat(10))};ui.window.createImageBitmap=async()=>({width:3200,height:1200,close(){}});
+ await ui.window.KpiKanbanBoard.loadKanbanBoard();ui.window.KpiKanbanBoard.openTask('IMAGE-1');ui.element('kb-edit-task-form').pendingText='keep this draft';
+ await ui.window.KpiKanbanBoard.uploadImage({files:[{type:'image/png',size:1000,name:'Photo <literal>.png'}]});assert.equal(canvas.width,1600);assert.equal(canvas.height,600);assert.equal(calls.length,1);assert.match(ui.element('kb-task-images').innerHTML,/ลองบันทึกรูปเดิม/);
+ fail=false;await ui.window.KpiKanbanBoard.retryImage();assert.deepEqual(calls[1],calls[0]);assert.equal(calls[1].expectedRevision,4);assert.equal(ui.element('kb-edit-task-form').pendingText,'keep this draft');assert.match(ui.element('kb-task-images').innerHTML,/Photo &lt;literal&gt;/);
+ let deleted;ui.window.AkraSupabaseKPI.removeTaskImage=async(t,p)=>{deleted=p;task.attachments=[];task.revision=6;return {task};};await ui.window.KpiKanbanBoard.removeImage(task.attachments[0].id);assert.equal(deleted.expectedRevision,5);assert.equal(ui.element('kb-edit-task-form').pendingText,'keep this draft');
+ ui.window.getKpiTaskContext=()=>({token:'fixture',branch:'TRD',userUid:'other',can:()=>false});ui.window.KpiKanbanBoard.openTask('IMAGE-1');assert.doesNotMatch(ui.element('kb-task-images').innerHTML,/เพิ่มรูปภาพ/);
+ await ui.window.KpiKanbanBoard.uploadImage({files:[{type:'image/png',size:100}]});assert.equal(calls.length,2);
+});
+
+test('late image signing cannot paint another drawer or user session',async()=>{
+ let finish;const tasks=['A','B'].map(actionId=>({actionId,branch:'TRD',title:actionId,ownerUid:'u1',status:'Open',attachments:[{id:actionId,name:actionId+'.jpg'}]}));
+ const ui=setup({getKanbanBoard:async()=>({tasks}),getTaskImages:()=>new Promise(r=>finish=r)});await ui.window.KpiKanbanBoard.loadKanbanBoard();ui.window.KpiKanbanBoard.openTask('A');const finishA=finish;ui.window.KpiKanbanBoard.openTask('B');
+ finishA({images:[{id:'A',url:'https://evil.invalid/unsafe',expiresAt:Date.now()+300000}]});await new Promise(r=>setImmediate(r));assert.doesNotMatch(ui.element('kb-task-images').innerHTML,/evil/);assert.match(ui.element('kb-task-images').innerHTML,/B.jpg/);
+ ui.window.getKpiTaskContext=()=>({token:'changed',branch:'AKRA',can:()=>false});finish({images:[{id:'B',url:'https://hgxrrskztbpejirrdpbq.supabase.co/storage/v1/object/sign/kpi-task-images/private',expiresAt:Date.now()+300000}]});await new Promise(r=>setImmediate(r));assert.doesNotMatch(ui.element('kb-task-images').innerHTML,/src=/);
 });

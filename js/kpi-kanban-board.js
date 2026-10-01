@@ -59,6 +59,100 @@
         finally {state.saving=false;}
     }
 
+
+    function renderImages(task,images=[]){
+        const container=document.getElementById('kb-task-images');if(!container)return;
+        const retry=state.imageRetries?.[task.id];
+        container.innerHTML=`<div class="flex items-center justify-between gap-2 mb-2"><h3 class="text-xs font-bold text-slate-800">รูปภาพ (${task.attachments.length}/10)</h3>${canEdit(task)?`<label class="relative inline-flex items-center px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-xs font-bold cursor-pointer focus-within:ring-2 focus-within:ring-blue-500">เพิ่มรูปภาพ<input id="kb-image-input" aria-label="เพิ่มรูปภาพ" type="file" accept="image/jpeg,image/png,image/webp" ${state.saving||retry||task.attachments.length>=10?'disabled':''} onchange="window.KpiKanbanBoard.uploadImage(this)" class="absolute inset-0 opacity-0 w-full cursor-pointer"></label>`:''}</div><p class="text-[11px] text-slate-500 mb-3">JPG, PNG, WebP · สูงสุด 10 รูป · ย่อขนาดก่อนอัปโหลด</p><div id="kb-image-status" role="status" class="text-xs text-slate-700 mb-2">${state.saving?'กำลังบันทึกรูปภาพ...':''}</div>${retry?'<div class="mb-3 text-xs text-amber-800">ยังยืนยันการอัปโหลดไม่ได้ <button type="button" onclick="window.KpiKanbanBoard.retryImage()" class="underline font-bold px-2 py-2" '+(state.saving?'disabled':'')+'>ลองบันทึกรูปเดิมอีกครั้ง</button></div>':''}<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">${task.attachments.map(image=>{
+            const signed=images.find(row=>row.id===image.id);
+            return `<figure class="min-w-0"><button type="button" ${signed?'':'disabled'} aria-label="ดูรูป ${esc(image.name)}" onclick="window.KpiKanbanBoard.openImage(${jsArg(image.id)})" class="w-full h-28 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 focus-visible:ring-2 focus-visible:ring-blue-500">${signed?`<img src="${esc(signed.url)}" alt="${esc(image.name)}" class="w-full h-full object-cover" loading="lazy" referrerpolicy="no-referrer">`:'<span class="text-xs text-slate-600">กำลังโหลดรูป...</span>'}</button><figcaption class="mt-1 text-[11px] text-slate-700 truncate" title="${esc(image.name)}">${esc(image.name)}</figcaption>${canEdit(task)?`<button type="button" ${state.saving?'disabled':''} onclick="window.KpiKanbanBoard.removeImage(${jsArg(image.id)})" class="text-xs text-red-700 px-1 py-2 underline">ลบรูป</button>`:''}</figure>`;
+        }).join('')}</div>${!task.attachments.length?'<p class="text-xs text-slate-500 py-3">ยังไม่มีรูปภาพแนบในงานนี้</p>':''}`;
+    }
+    function imageStateCurrent(c,id,ticket){return state.activeTaskId===id&&context().token===c.token&&context().branch===c.branch&&state.imageTicket===ticket;}
+    async function loadImages(task){
+        const c=context(),ticket=state.imageTicket=(state.imageTicket||0)+1;state.imageUrls=[];renderImages(task);
+        if(!task.attachments.length)return;
+        try{
+            const result=await window.AkraSupabaseKPI.getTaskImages(c.token,{branch:task.branch,actionId:task.actionId});
+            if(!imageStateCurrent(c,task.id,ticket))return;
+            state.imageUrlContext={token:c.token,branch:c.branch};
+            state.imageUrls=result.images.filter(image=>/^https:\/\/hgxrrskztbpejirrdpbq\.supabase\.co\/storage\/v1\/object\/sign\/kpi-task-images\//.test(image.url)||(window.location?.hostname==='127.0.0.1'&&(String(image.url).startsWith(window.location.origin+'/fixture-images/')||/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image.url))));
+            renderImages(findTask(task.id)||task,state.imageUrls);
+        }catch(_err){if(imageStateCurrent(c,task.id,ticket)){const el=document.getElementById('kb-image-status');if(el)el.textContent='โหลดรูปไม่สำเร็จ กรุณาปิดแล้วเปิดงานอีกครั้ง';}}
+    }
+    function imageBusy(value){
+        if(value)state.imageShellContext={token:context().token,branch:context().branch,dirty:window.AkraModule?.getWorkState?.().dirty};
+        else if(state.imageShellContext?.dirty&&state.imageShellContext.token===context().token&&state.imageShellContext.branch===context().branch)window.AkraModule?.markDirty?.();
+        state.saving=value;
+        const drawer=document.getElementById('kpi-task-drawer');for(const control of drawer?.querySelectorAll('button[type="submit"],input[type="checkbox"]')||[])control.disabled=value||!canEdit(findTask(state.activeTaskId)||{owner:null});
+    }
+    async function compressedImage(file){
+        if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw Error('รองรับเฉพาะ JPG, PNG และ WebP');
+        if(file.size>15*1024*1024)throw Error('รูปต้นฉบับต้องไม่เกิน 15 MB');
+        const bitmap=await window.createImageBitmap(file);
+        try{
+            const factor=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
+            const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*factor));canvas.height=Math.max(1,Math.round(bitmap.height*factor));
+            const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+            const base64=canvas.toDataURL('image/jpeg',0.85).split(',')[1];if(!base64||base64.length>2796204)throw Error('รูปมีขนาดใหญ่เกินไป กรุณาเลือกรูปอื่น');return base64;
+        }finally{bitmap.close?.();}
+    }
+    async function saveImageRequest(task,c,payload){
+        try{
+            const res=await window.AkraSupabaseKPI.uploadTaskImage(c.token,payload);
+            if(context().token!==c.token||context().branch!==c.branch)return;
+            const next=normalizeTask({...res.task,branch:task.branch});const idx=state.tasks.findIndex(t=>t.id===task.id);if(idx>=0)state.tasks[idx]=next;
+            delete state.imageRetries?.[task.id];renderBoard();notify('เพิ่มรูปภาพแล้ว');if(state.activeTaskId===task.id)await loadImages(next);
+        }catch(err){
+            if(context().token!==c.token||context().branch!==c.branch)return;
+            if(['record_conflict','image_limit_reached','invalid_image','image_too_large','permission_denied','cannot_edit_other_tasks'].includes(err.reason)){delete state.imageRetries?.[task.id];notify('บันทึกรูปไม่ได้ ข้อมูลหรือสิทธิ์อาจเปลี่ยน กรุณาปิดแล้วเปิดงานใหม่');}
+            else{(state.imageRetries??={})[task.id]={token:c.token,branch:c.branch,payload};notify('ยังยืนยันการอัปโหลดไม่ได้ กดลองบันทึกรูปเดิมอีกครั้ง');}
+        }finally{
+            imageBusy(false);
+            if(context().token===c.token&&context().branch===c.branch&&state.activeTaskId===task.id)renderImages(findTask(task.id)||task,state.imageUrls||[]);
+        }
+    }
+    async function uploadImage(input){
+        const task=findTask(state.activeTaskId),c=context(),file=input.files?.[0];if(!task||!file||state.saving||!canEdit(task))return;
+        if(state.imageRetries?.[task.id]){notify('กรุณาลองบันทึกรูปเดิมให้เสร็จก่อน');return;}
+        imageBusy(true);renderImages(task,state.imageUrls||[]);
+        try{
+            const base64=await compressedImage(file);
+            if(context().token!==c.token||context().branch!==c.branch){imageBusy(false);return;}
+            await saveImageRequest(task,c,{branch:task.branch,actionId:task.actionId,imageId:crypto.randomUUID(),fileName:file.name.slice(0,180),mimeType:'image/jpeg',base64,expectedRevision:task.revision});
+        }catch(err){imageBusy(false);notify(/^(รองรับ|รูป)/.test(err.message)?err.message:'อ่านรูปไม่สำเร็จ กรุณาเลือกรูปอื่น');if(state.activeTaskId===task.id)renderImages(task,state.imageUrls||[]);}
+    }
+    async function retryImage(){
+        const task=findTask(state.activeTaskId),retry=state.imageRetries?.[task?.id],c=context();if(!task||!retry||state.saving||!canEdit(task))return;
+        if(retry.token!==c.token||retry.branch!==c.branch){delete state.imageRetries[task.id];notify('เซสชันเปลี่ยน กรุณาเลือกรูปใหม่');return;}
+        imageBusy(true);renderImages(task,state.imageUrls||[]);await saveImageRequest(task,c,retry.payload);
+    }
+    async function removeImage(id){
+        const task=findTask(state.activeTaskId),c=context();if(!task||state.saving||!canEdit(task))return;
+        if(!window.confirm('ต้องการลบรูปภาพนี้ออกจากงานหรือไม่?'))return;
+        imageBusy(true);renderImages(task,state.imageUrls||[]);
+        try{
+            const res=await window.AkraSupabaseKPI.removeTaskImage(c.token,{branch:task.branch,actionId:task.actionId,imageId:id,expectedRevision:task.revision});
+            if(context().token!==c.token||context().branch!==c.branch)return;
+            const next=normalizeTask({...res.task,branch:task.branch}),idx=state.tasks.findIndex(t=>t.id===task.id);if(idx>=0)state.tasks[idx]=next;
+            renderBoard();notify('ลบรูปภาพแล้ว');if(state.activeTaskId===task.id)await loadImages(next);
+        }catch(_err){if(context().token===c.token)notify('ลบรูปไม่สำเร็จ กรุณาปิดแล้วเปิดงานเพื่อตรวจข้อมูลล่าสุด');}
+        finally{imageBusy(false);if(context().token===c.token&&state.activeTaskId===task.id)renderImages(findTask(task.id)||task,state.imageUrls||[]);}
+    }
+    function closeImage(){const viewer=document.getElementById('kb-image-viewer');viewer?.classList.add('hidden');if(viewer)viewer.innerHTML='';state.imageFocus?.focus?.();}
+    function openImage(id){
+        const image=state.imageUrls?.find(row=>row.id===id),viewer=document.getElementById('kb-image-viewer');if(!image||!viewer||state.imageUrlContext?.token!==context().token||state.imageUrlContext?.branch!==context().branch)return;
+        if(Date.now()>=image.expiresAt){const task=findTask(state.activeTaskId);if(task)loadImages(task);notify('ลิงก์รูปหมดอายุ กดเปิดรูปอีกครั้งหลังโหลดเสร็จ');return;}
+        state.imageFocus=document.activeElement;
+        viewer.innerHTML=`<div class="relative w-full h-full flex items-center justify-center"><button type="button" aria-label="ปิดรูปภาพ" onclick="window.KpiKanbanBoard.closeImage()" class="absolute top-0 right-0 p-3 rounded-lg bg-white text-slate-900 font-bold">ปิด</button><img src="${esc(image.url)}" alt="${esc(image.name)}" class="max-w-full max-h-[85vh] object-contain" referrerpolicy="no-referrer"></div>`;
+        viewer.classList.remove('hidden');viewer.querySelector?.('button')?.focus();
+    }
+    document.addEventListener('keydown',event=>{
+        const viewer=document.getElementById('kb-image-viewer');if(!viewer||viewer.classList.contains('hidden'))return;
+        if(event.key==='Escape'){event.preventDefault();closeImage();}
+        if(event.key==='Tab'){event.preventDefault();viewer.querySelector?.('button')?.focus();}
+    });
+
     function normalizeTask(t) {
         const rawStatus = String(t.status || 'Open').toLowerCase();
         let status = 'open';
@@ -506,6 +600,7 @@
     }
 
     function closeDrawer() {
+        closeImage();state.imageTicket=(state.imageTicket||0)+1;state.imageUrls=[];
         const backdrop = document.getElementById('kpi-task-drawer-backdrop');
         const drawer = document.getElementById('kpi-task-drawer');
         if (backdrop) backdrop.classList.add('hidden');
@@ -604,6 +699,8 @@
                 </button>
             </form>
 
+            <section id="kb-task-images" class="mb-6 pt-4 border-t border-slate-200" aria-label="รูปภาพแนบงาน"></section>
+
             <!-- Checklist Section -->
             <section class="mb-6 pt-4 border-t border-slate-200">
                 <div class="flex items-center justify-between mb-2">
@@ -685,6 +782,7 @@
         `;
 
         showDrawer(html);
+        loadImages(t);
         if(!canEdit(t)) { const drawer=document.getElementById('kpi-task-drawer'); drawer?.querySelectorAll('input,select,textarea,button[type="submit"]').forEach(el=>el.disabled=true); }
     }
 
@@ -1049,6 +1147,11 @@
         updateCreationOwners,
         renderBoard,
         openTask,
+        uploadImage,
+        retryImage,
+        removeImage,
+        openImage,
+        closeImage,
         closeDrawer,
         openNewTaskModal,
         handleCreateTask,
