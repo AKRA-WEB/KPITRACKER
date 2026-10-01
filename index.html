@@ -2,10 +2,10 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <script src="js/akra-shell-bridge.js?v=20261001.19&bridge=20261001.19"></script>
+    <script src="js/akra-shell-bridge.js?v=20261001.20"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KPI Tracker - Multi Branch</title>
+    <title>BM Work | งานและทีม</title>
     <!-- Resource Preconnect & DNS Prefetch for Sub-second Boot -->
     <link rel="preconnect" href="https://hgxrrskztbpejirrdpbq.supabase.co" crossorigin>
     <link rel="dns-prefetch" href="https://hgxrrskztbpejirrdpbq.supabase.co">
@@ -134,8 +134,8 @@
 <body class="text-gray-800 pb-20">
     <style>body:not(.kpi-session-ready) > :not(#kpi-session-status):not(script):not(style) { display: none !important; } #kpi-session-status[hidden] { display: none !important; }</style>
     <section id="kpi-session-status" role="status" class="p-6 text-center">
-        <p id="kpi-session-message">กำลังตรวจสอบเซสชันกับ Main…</p>
-        <button type="button" class="mt-4 rounded-lg border px-4 py-2" onclick="window.AkraModule.home('https://akra-web.github.io/Main/')">กลับ Main</button>
+        <p id="kpi-session-message">กำลังตรวจสอบเซสชันกับ BUYMORETH…</p>
+        <button type="button" class="mt-4 rounded-lg border px-4 py-2" onclick="window.AkraModule.home('https://akra-web.github.io/Main/')">กลับหน้าหลัก</button>
     </section>
     <a href="#app-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
 
@@ -171,7 +171,7 @@
                     <i class="fa-solid fa-chart-simple"></i>
                 </div>
                 <div class="min-w-0">
-                    <h1 class="text-sm sm:text-base font-bold tracking-wide whitespace-nowrap">KPI Tracker <span class="text-slate-500 font-light">/</span> <span id="header-branch-name">AKRA</span></h1>
+                    <h1 class="text-sm sm:text-base font-bold tracking-wide whitespace-nowrap">BM Work <span class="text-slate-500 font-light">/</span> <span id="header-branch-name">AKRA</span></h1>
                     <div class="flex items-center gap-2 text-[10px] text-slate-400">
                         <span id="desktop-branch-label" class="hidden sm:inline font-semibold">AKRA WAREHOUSE</span>
                         <span id="header-section-badge" class="md:hidden text-blue-300 font-bold">Workload</span>
@@ -1556,7 +1556,7 @@
                 </div>
             </div>
 
-            <!-- LINE Account Status Card (Managed via Main Menu) -->
+            <!-- LINE Account Status Card (Managed via BUYMORETH) -->
             <div id="my-profile-line-card" class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm transition-all">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div class="flex items-center gap-3">
@@ -1570,13 +1570,13 @@
                                     <span id="my-profile-line-status-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">ยังไม่เชื่อมต่อ</span>
                                 </h3>
                             </div>
-                            <p id="my-profile-line-desc" class="text-xs text-slate-500 mt-0.5">จัดการการผูกบัญชี LINE ได้ที่เมนูหลัก (Main Menu)</p>
+                            <p id="my-profile-line-desc" class="text-xs text-slate-500 mt-0.5">จัดการการผูกบัญชี LINE ได้ที่เมนูหลัก (BUYMORETH)</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         <a href="../Main/index.html#line-account" class="py-2 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-xs border border-slate-200 shadow-sm flex items-center gap-1.5 transition-all">
                             <i class="fa-solid fa-arrow-up-right-from-square text-[11px] text-slate-500"></i>
-                            <span>จัดการใน Main Menu</span>
+                            <span>จัดการใน BUYMORETH</span>
                         </a>
                     </div>
                 </div>
@@ -2156,7 +2156,7 @@
                 </div>
             </section>
 
-            <!-- SUB-PANEL 1: EMPLOYEE STATUS (Main SSO) -->
+            <!-- SUB-PANEL 1: EMPLOYEE STATUS (BUYMORETH SSO) -->
             <div id="admin-panel-emp" class="space-y-4">
                 <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-slate-200">
                     <p id="admin-workload-summary" class="text-xs font-semibold" role="status" aria-live="polite">กำลังตรวจสอบ Workload วันนี้…</p>
@@ -2165,7 +2165,7 @@
                 <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200" aria-labelledby="employee-list-title">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-3">
                          <h3 id="employee-list-title" class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                             <i class="fa-solid fa-users text-purple-600"></i><span>รายชื่อผู้ใช้งานจาก Main ทั้งหมด</span>
+                             <i class="fa-solid fa-users text-purple-600"></i><span>รายชื่อผู้ใช้งานจาก BUYMORETH ทั้งหมด</span>
                          </h3>
                          <span id="admin-emp-count" class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold">0 คน</span>
                     </div>
@@ -3035,8 +3035,8 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">KPI Suite v20261001.19</span>
-                <span>AKRA System</span>
+                <span id="drawer-version-text">BM Work v20261001.20</span>
+                <span>BUYMORETH</span>
             </div>
         </div>
     </aside>
@@ -3331,7 +3331,7 @@
             .app-header { margin-left: 220px; }
             .app-header > div { width: calc(100% - 48px); min-height: 76px; }
             .app-header #desktop-primary-nav { position: fixed; left: 0; top: 0; bottom: 0; width: 220px; padding: 26px 12px; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 8px; overflow-y: auto; background: #0e1729; }
-            #desktop-primary-nav::before { content: 'KPI Tracker'; color: #f8fafc; font-size: 19px; font-weight: 700; padding: 0 12px 28px; }
+            #desktop-primary-nav::before { content: 'BM Work'; color: #f8fafc; font-size: 19px; font-weight: 700; padding: 0 12px 28px; }
             .app-header .desktop-tab { min-height: 46px; padding: 12px; gap: 12px; text-align: left; color: #cbd5e1; flex-shrink: 0; }
             .app-header .desktop-tab i { width: 18px; text-align: center; }
             .app-header .desktop-tab:hover { color: #fff; background: #1e293b; }
@@ -3454,15 +3454,15 @@
             outline-offset: 2px;
         }
     </style>
-    <script src="js/supabase-kpi-client.js?v=20261001.19"></script>
-    <script src="js/workload-permissions.js?v=20260921.01"></script>
-    <script src="js/incident-impact.js?v=20261001.19"></script>
-    <script src="js/kpi-kanban-board.js?v=20261001.19"></script>
-    <script src="js/kpi-duty-matrix.js?v=20261001.19"></script>
+    <script src="js/supabase-kpi-client.js?v=20261001.20"></script>
+    <script src="js/workload-permissions.js?v=20261001.20"></script>
+    <script src="js/incident-impact.js?v=20261001.20"></script>
+    <script src="js/kpi-kanban-board.js?v=20261001.20"></script>
+    <script src="js/kpi-duty-matrix.js?v=20261001.20"></script>
     <script>
         // ================= CONFIGURATION =================
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20261001.19";
+        const CURRENT_VERSION = "20261001.20";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -3865,7 +3865,7 @@
                 actionsEl.innerHTML = `
                     <div class="flex flex-col gap-2 w-full mt-2">
                         <button id="modal-btn-login" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold py-3 rounded-xl transition-all shadow-sm flex justify-center items-center"><i class="fa-solid fa-right-to-bracket mr-2"></i> เข้าสู่ระบบ</button>
-                        <button id="modal-btn-portal" class="w-full bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold py-2.5 rounded-xl transition-all border border-purple-100 shadow-sm text-xs"><i class="fa-solid fa-home mr-1"></i> เข้าสู่ระบบผ่านระบบหลัก (Main SSO)</button>
+                        <button id="modal-btn-portal" class="w-full bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold py-2.5 rounded-xl transition-all border border-purple-100 shadow-sm text-xs"><i class="fa-solid fa-home mr-1"></i> เข้าสู่ระบบผ่านระบบหลัก (BUYMORETH SSO)</button>
                     </div>
                 `;
 
@@ -4092,7 +4092,7 @@
             window.addEventListener('storage', event => {
                 if (window.AkraModule?.embedded || (event.key !== null && event.key !== KPI_SESSION_KEY)) return;
                 if (event.key !== null && event.oldValue === event.newValue) return;
-                invalidateKpiSession('บัญชีหรือเซสชันเปลี่ยนแล้ว กรุณาเปิด KPI จาก Main ใหม่');
+                invalidateKpiSession('บัญชีหรือเซสชันเปลี่ยนแล้ว กรุณาเปิด BM Work จาก BUYMORETH ใหม่');
             });
         }
         window.getKpiSessionOwner = () => kpiVerifiedSession;
@@ -4903,7 +4903,7 @@
 
         function requireOwnWorkloadPermission() {
             if (canRecordOwnWorkload()) return true;
-            showModal('ไม่มีสิทธิ์บันทึกเวลา','สิทธิ์บันทึกเวลาของตนเองถูกปิดหรือยังตรวจสอบไม่ได้ กรุณากลับเข้า Main หรือติดต่อผู้ดูแลระบบ','warning');
+            showModal('ไม่มีสิทธิ์บันทึกเวลา','สิทธิ์บันทึกเวลาของตนเองถูกปิดหรือยังตรวจสอบไม่ได้ กรุณากลับเข้า BUYMORETH หรือติดต่อผู้ดูแลระบบ','warning');
             return false;
         }
 
@@ -7364,7 +7364,7 @@
                     lineBadge.textContent = 'ยังไม่เชื่อมต่อ';
                 }
                 if (lineDesc) {
-                    lineDesc.textContent = 'จัดการการผูกบัญชี LINE ได้ที่เมนูหลัก (Main Menu)';
+                    lineDesc.textContent = 'จัดการการผูกบัญชี LINE ได้ที่เมนูหลัก (BUYMORETH)';
                 }
                 if (lineIconContainer) {
                     lineIconContainer.className = 'w-10 h-10 rounded-xl bg-[#06C755]/10 text-[#06C755] flex items-center justify-center text-xl shrink-0';
@@ -9924,7 +9924,7 @@
 
                 if (!current()) return false;
                 if (!loaded) {
-                    throw new Error('ไม่สามารถโหลดรายชื่อพนักงานจาก Main ผ่าน Supabase ได้');
+                    throw new Error('ไม่สามารถโหลดรายชื่อพนักงานจาก BUYMORETH ผ่าน Supabase ได้');
                 }
             }
 
@@ -10022,7 +10022,7 @@
                 owner = kpiVerifiedSession;
                 token = getKpiPageToken();
 
-                // 2. โหลดรายชื่อและ Role จาก Main ผ่าน Supabase Edge boundary
+                // 2. โหลดรายชื่อและ Role จาก BUYMORETH ผ่าน Supabase Edge boundary
                 await loadConfig();
                 if (!isCurrentKpiSession(owner, token)) return;
 
@@ -10030,7 +10030,7 @@
                 await checkAuth(ssoResult);
             } catch (err) {
                 console.error("InitSystem error:", err);
-                if (isCurrentKpiSession(owner, token)) invalidateKpiSession('โหลดข้อมูลพนักงานไม่สำเร็จ กรุณาเปิด KPI จาก Main ใหม่');
+                if (isCurrentKpiSession(owner, token)) invalidateKpiSession('โหลดข้อมูลพนักงานไม่สำเร็จ กรุณาเปิด BM Work จาก BUYMORETH ใหม่');
             } finally {
                 clearTimeout(dismissTimer);
                 const loader = document.getElementById('system-loading');
@@ -10068,7 +10068,7 @@
                 if (!kpiIdentityId()) throw new Error('missing_verified_identity');
                 sessionToken = ssoToken;
                 window.AkraModule?.watchSession?.({appId:'app-kpi', user, token:ssoToken,
-                    invalidated:() => invalidateKpiSession('เซสชัน Main เปลี่ยนแล้ว กรุณาเปิด KPI จาก Main ใหม่'),
+                    invalidated:() => invalidateKpiSession('เซสชัน BUYMORETH เปลี่ยนแล้ว กรุณาเปิด BM Work จาก BUYMORETH ใหม่'),
                     refreshed:token => { sessionToken = token; if (kpiVerifiedSession) kpiVerifiedSession.token = token; }
                 });
                 currentBranch = safeSessionStorage.getItem('active_branch') || '';
@@ -10088,7 +10088,7 @@
             const userData = sso.userData;
             if (sso.superseded) return;
             if (!userData || sso.expired || !kpiIdentityId() || !getKpiPageToken()) {
-                invalidateKpiSession('กรุณาเปิด KPI จาก Main เพื่อยืนยันเซสชันและสิทธิ์');
+                invalidateKpiSession('กรุณาเปิด BM Work จาก BUYMORETH เพื่อยืนยันเซสชันและสิทธิ์');
                 if (window.AkraModule?.embedded) window.AkraModule.authRequired(PORTAL_URL);
                 return;
             }
@@ -10201,7 +10201,7 @@
             });
 
             if (permissions.length === 0) {
-                showModal("ไม่มีสิทธิ์เข้าใช้งาน", `คุณไม่มีสิทธิ์เข้าใช้งานระบบ KPI Tracker หรือรหัสไม่ถูกต้อง (User ID: ${currentUser})`, "error", () => {
+                showModal("ไม่มีสิทธิ์เข้าใช้งาน", `คุณไม่มีสิทธิ์เข้าใช้งานระบบ BM Work หรือรหัสไม่ถูกต้อง (User ID: ${currentUser})`, "error", () => {
                     window.AkraModule.home(PORTAL_URL);
                 });
                 return;
@@ -12497,7 +12497,7 @@
                 } else if (e.reason === 'invalid_or_expired_token') {
                     _actionsLoadError = 'SSO token ถูกปฏิเสธหรือหมดอายุ (รหัสวินิจฉัย: invalid_or_expired_token)';
                 } else if (e.reason === 'verify_failed') {
-                    _actionsLoadError = 'ไม่สามารถตรวจสอบ SSO token กับ Main ได้ (รหัสวินิจฉัย: verify_failed)';
+                    _actionsLoadError = 'ไม่สามารถตรวจสอบ SSO token กับ BUYMORETH ได้ (รหัสวินิจฉัย: verify_failed)';
                 } else if (e.message === 'Action API schema mismatch') {
                     _actionsLoadError = 'ไม่สามารถโหลด Action Items ได้ เนื่องจาก API และหน้าเว็บ ใช้ schema คนละเวอร์ชัน';
                 } else {
@@ -13064,7 +13064,7 @@
                                     <button type="button" onclick="openEmployeeProfileModal('${esc(emp.uid)}', '${esc(emp.name)}')" class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-bold border border-blue-200 hover:bg-blue-100"><i class="fa-solid fa-id-card mr-1"></i>โปรไฟล์</button>
                                 </h4>
                                 <div class="mt-1.5 flex flex-wrap gap-1 text-[10px] text-gray-600">${rolesBadge}${branchesBadge}</div>
-                                <p class="mt-1.5 text-[11px] text-slate-600">สถานะจาก Main: <strong>${esc(mainStatus)}</strong></p>
+                                <p class="mt-1.5 text-[11px] text-slate-600">สถานะจาก BUYMORETH: <strong>${esc(mainStatus)}</strong></p>
                             </div>
                             <span class="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border px-2.5 py-1.5 text-xs font-bold ${statusStyles[workload.state]}">
                                 <i class="fa-solid ${statusIcons[workload.state]}" aria-hidden="true"></i>${esc(workload.label)}

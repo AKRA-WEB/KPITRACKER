@@ -17,7 +17,7 @@
         return Array.isArray(authorization.perms?.['app-kpi'])&&authorization.perms['app-kpi'].includes('recordWorkload');
     }
     function apply(document,allowed){
-        const message=allowed?'':'สิทธิ์บันทึกเวลาของตนเองถูกปิดใน Main กรุณาติดต่อผู้ดูแลระบบ';
+        const message=allowed?'':'สิทธิ์บันทึกเวลาของตนเองถูกปิดใน BUYMORETH กรุณาติดต่อผู้ดูแลระบบ';
         for(const id of ['btn-save-workload','btn-clear-workload','btn-save-quick-workload']){
             const button=document.getElementById(id);if(!button)continue;
             button.disabled=!allowed;button.setAttribute('aria-disabled',String(!allowed));button.title=message;
