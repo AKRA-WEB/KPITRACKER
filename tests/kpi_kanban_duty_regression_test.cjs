@@ -41,6 +41,7 @@ test('flat API responses and canonical owner render; empty board never fabricate
   await ui.window.KpiKanbanBoard.loadKanbanBoard();
   assert.match(ui.element('kb-board-content').innerHTML,/Real persisted task/);
   assert.match(ui.element('kb-board-content').innerHTML,/Owner One/);
+  assert.doesNotMatch(ui.element('kb-board-content').innerHTML,/ปัญหาแจ้งเข้า/);
   tasks=[]; await ui.window.KpiKanbanBoard.loadKanbanBoard();
   assert.doesNotMatch(ui.element('kb-board-content').innerHTML,/KB-021|ISS-DEMO|จัดป้ายตำแหน่ง/);
 });
