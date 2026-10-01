@@ -47,7 +47,7 @@
     }
 
     async function transportRequest(action, payload, context) {
-        if(!['getDutyMatrix','setDutyAssignment','saveDutyCatalog','setDutyCapacity','setDrivingCapabilities'].includes(action))return performTransportRequest(action,payload,context);
+        if(!['getDutyMatrix','setDutyAssignment','saveDutyAssignments','saveDutyCatalog','setDutyCapacity','setDrivingCapabilities'].includes(action))return performTransportRequest(action,payload,context);
         const controller=new AbortController();let timer;
         const deadline=new Promise((resolve,reject)=>{timer=setTimeout(()=>{
             reject(Object.assign(new Error('request_timeout'),{reason:'request_timeout'}));controller.abort();
@@ -349,6 +349,11 @@
         setDutyAssignment: async (token, payload) => {
             const data = await fetchKpiAction('setDutyAssignment', token, payload);
             if (data.status !== 'success') throw new Error('invalid_set_duty_response');
+            return data;
+        },
+        saveDutyAssignments: async (token, payload) => {
+            const data = await fetchKpiAction('saveDutyAssignments', token, payload);
+            if (data.status !== 'success' || !data.matrices) throw new Error('invalid_save_duty_batch_response');
             return data;
         },
         saveDutyCatalog: async (token, payload) => {

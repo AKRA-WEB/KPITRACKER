@@ -37,13 +37,85 @@
         isInitialized: false
     };
 
+    function draftChanges(){
+        const changes=[];
+        for(const [branch,matrix] of Object.entries(state.matrices||{})){
+            const confirmed=state.confirmed?.[branch];if(!confirmed)continue;
+            const before=new Map(confirmed.assignments.map(a=>[JSON.stringify([a.employeeUid,a.dutyId]),a]));
+            const after=new Map(matrix.assignments.map(a=>[JSON.stringify([a.employeeUid,a.dutyId]),a]));
+            for(const key of new Set([...before.keys(),...after.keys()])){
+                const old=before.get(key),next=after.get(key);
+                if((old?.assignmentType||'none')===(next?.assignmentType||'none'))continue;
+                const row=next||old;
+                changes.push({branch,employeeUid:row.employeeUid,dutyId:row.dutyId,targetType:next?.assignmentType||'none',expectedRevision:confirmed.employeeRevisions?.[row.employeeUid]??0});
+            }
+        }
+        return changes;
+    }
+    function hasDrafts(){return draftChanges().length>0;}
+    function syncDraftState(){
+        const pending=hasDrafts();
+        if(pending&&!state.draftMarked){state.shellWasDirty=window.AkraModule?.getWorkState?.().dirty;window.AkraModule?.markDirty?.();state.draftMarked=true;}
+        if(!pending&&state.draftMarked){if(!state.shellWasDirty)window.AkraModule?.markSaved?.();state.draftMarked=false;}
+    }
+    function renderDraftBar(){
+        const el=document.getElementById('kb-duty-draft-bar');if(!el)return;
+        const count=draftChanges().length;el.classList.toggle('hidden',!count);syncDraftState();
+        el.innerHTML=count?`<div class="flex flex-wrap items-center justify-between gap-3"><div role="status" class="text-sm font-bold text-amber-900">${state.conflict?'ข้อมูลเปลี่ยนแล้ว กรุณายกเลิกและโหลดล่าสุด':state.retryBatch?'ยังยืนยันผลบันทึกไม่ได้ กดบันทึกเพื่อตรวจคำขอเดิม':`ยังไม่ได้บันทึก · เปลี่ยนแล้ว ${count} ช่อง`}</div><div class="flex gap-2"><button type="button" ${state.busy?'disabled':''} onclick="window.KpiDutyMatrix.discardDrafts()" class="px-4 py-2 rounded-lg border bg-white text-sm disabled:opacity-50">ยกเลิก</button><button type="button" ${state.busy||state.conflict?'disabled':''} onclick="window.KpiDutyMatrix.saveDrafts()" class="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold disabled:opacity-50">${state.busy?'กำลังบันทึก...':'บันทึกทั้งหมด'}</button></div></div>`:'';
+    }
+    function discardDrafts(){
+        if(state.busy)return false;
+        const reconcile=state.conflict||state.retryBatch;
+        state.matrices=structuredClone(state.confirmed||{});state.retryBatch=null;state.conflict=false;state.draftSession=null;
+        renderDuties();if(reconcile)loadDutyMatrix();return true;
+    }
+    function confirmLeave(){
+        if(state.busy){notify('กำลังบันทึก กรุณารอสักครู่');return false;}
+        if(!hasDrafts())return true;
+        if(!window.confirm('มีหน้าที่ที่ยังไม่ได้บันทึก ต้องการยกเลิกการเปลี่ยนแปลงและออกจากหน้านี้หรือไม่?'))return false;
+        return discardDrafts();
+    }
+    async function saveDrafts(){
+        const c=baseContext();if(state.busy||state.conflict||!hasDrafts())return;
+        if(!c.token||!c.can('manageDutyAllocations')||state.draftSession?.token!==c.token||state.draftSession?.branch!==c.branch){notify('เซสชันหรือสิทธิ์เปลี่ยน กรุณารีเฟรชข้อมูล');return;}
+        if(draftChanges().length>200){notify('เลือกได้ไม่เกิน 200 ช่องต่อการบันทึก กรุณาลดรายการที่เปลี่ยนก่อน');return;}
+        const payload=state.retryBatch||{changes:draftChanges(),requestId:crypto.randomUUID()};
+        state.busy=true;renderDuties();
+        try{
+            const result=await window.AkraSupabaseKPI.saveDutyAssignments(c.token,payload);
+            if(c.token!==baseContext().token||c.branch!==baseContext().branch)return;
+            if(!result?.matrices||payload.changes.some(row=>!Array.isArray(result.matrices[row.branch]?.assignments)||!Array.isArray(result.matrices[row.branch]?.catalog)||!result.matrices[row.branch]?.employeeRevisions))throw Error('invalid_response');
+            state.loadTicket=(state.loadTicket||0)+1;
+            for(const [branch,matrix] of Object.entries(result.matrices))if(state.matrices[branch])state.matrices[branch]={...state.matrices[branch],...matrix};
+            state.confirmed=structuredClone(state.matrices);state.retryBatch=null;state.draftSession=null;notify('บันทึกหน้าที่ทั้งหมดแล้ว');
+        }catch(err){
+            if(err.reason==='record_conflict'){state.conflict=true;notify('มีคนอื่นแก้ข้อมูลแล้ว รายการของคุณยังไม่ได้บันทึก กรุณายกเลิกเพื่อโหลดข้อมูลล่าสุด');}
+            else{state.retryBatch=payload;notify('ยังยืนยันการบันทึกไม่ได้ รายการที่เลือกยังอยู่ กดบันทึกเพื่อตรวจคำขอเดิม หรือยกเลิกเพื่อโหลดล่าสุด');}
+        }finally{
+            if(c.token!==baseContext().token||c.branch!==baseContext().branch){state.matrices={};state.confirmed={};state.retryBatch=null;state.conflict=false;state.draftSession=null;state.loadTicket=(state.loadTicket||0)+1;}
+            state.busy=false;renderDuties();
+        }
+    }
+    function stageAssignment(personId,dutyId,targetType){
+        const c=context();if(state.busy||state.retryBatch||state.conflict)return;
+        if(!c.token||!c.can('manageDutyAllocations')){notify('ไม่มีสิทธิ์จัดการตารางงาน');return;}
+        if(!state.employees.some(e=>e.employeeUid===personId)||!activeDuties().some(d=>d.id===dutyId))return;
+        if(state.draftSession&&(state.draftSession.token!==baseContext().token||state.draftSession.branch!==baseContext().branch)){notify('เซสชันเปลี่ยน กรุณารีเฟรชข้อมูล');return;}
+        state.draftSession??={token:baseContext().token,branch:baseContext().branch};
+        const roles=state.assignments[personId]??={};
+        if(targetType==='primary')for(const key of Object.keys(roles))if(roles[key]==='primary')roles[key]='secondary';
+        if(targetType==='none')delete roles[dutyId];else roles[dutyId]=targetType;
+        state.matrices[c.branch].assignments=Object.entries(state.assignments).flatMap(([employeeUid,items])=>Object.entries(items).map(([dutyId,assignmentType])=>({employeeUid,dutyId,assignmentType})));
+        renderDuties();
+    }
+
     function baseContext(){return window.getKpiTaskContext?.()||{token:null,branch:'',employees:[],can:()=>false};}
     function context(){const c=baseContext();return {...c,branch:state.activeBranch||c.branch};}
     function branches(){const c=baseContext();const privileged=(c.roles||[]).some(role=>['ADMIN','SUPERVISOR'].includes(String(role).trim().toUpperCase()));return [...new Set((privileged?(c.allowedBranches||[c.branch]):[c.branch]).filter(b=>['AKRA','TRD'].includes(b)))];}
     function scope(){return branches().includes(state.branchScope)||state.branchScope==='ALL'&&branches().length>1?state.branchScope:baseContext().branch;}
     function scopedBranches(){return scope()==='ALL'?branches():[scope()];}
     function renderBranchScope(){const el=document.getElementById('kb-duty-branch-scope');if(el){el.innerHTML=branches().map(b=>`<option value="${b}">${b}</option>`).join('')+(branches().length>1?'<option value="ALL">ทั้งสองสาขา</option>':'');el.value=scope();}}
-    async function setBranchScope(value){if(state.busy)return;if(value!=='ALL'&&!branches().includes(value)||value==='ALL'&&branches().length<2)return;state.branchScope=value;state.activeBranch=null;closeDrawer();await loadDutyMatrix();}
+    async function setBranchScope(value){if(!confirmLeave()){renderBranchScope();return;}if(value!=='ALL'&&!branches().includes(value)||value==='ALL'&&branches().length<2)return;state.branchScope=value;state.activeBranch=null;closeDrawer();await loadDutyMatrix();}
     async function runBranch(branch,method,...args){if(state.busy||!branches().includes(branch)||!state.matrices?.[branch])return;state.activeBranch=branch;applyMatrix(state.matrices[branch]);return window.KpiDutyMatrix[method](...args);}
 
     function applyMatrix(res){
@@ -57,6 +129,7 @@
     }
     async function write(method,payload,grant='manageDutyAllocations'){
         const c=context(),homeBranch=baseContext().branch;if(state.busy)return false;
+        if(hasDrafts()){notify('กรุณาบันทึกหรือยกเลิกหน้าที่ที่เลือกไว้ก่อน');return false;}
         if(!c.token||!c.can(grant)){notify('ไม่มีสิทธิ์จัดการตารางงาน');return false;}
         state.busy=true;
         if(method==='setDutyAssignment')setAssignmentSaving(c.branch,payload,true);
@@ -124,6 +197,7 @@
     }
 
     async function loadDutyMatrix(){
+        if(hasDrafts()&&!confirmLeave())return;
         const c=baseContext(),ticket=(state.loadTicket||0)+1;state.loadTicket=ticket;
         const selected=scope();renderBranchScope();
         try{
@@ -131,7 +205,8 @@
             const rows=await Promise.all(scopedBranches().map(async branch=>({branch,res:await window.AkraSupabaseKPI.getDutyMatrix(c.token,branch)})));
             if(ticket!==state.loadTicket||c.token!==baseContext().token||c.branch!==baseContext().branch||selected!==scope())return;
             if(rows.some(({res})=>!Array.isArray(res.catalog)||!Array.isArray(res.assignments)))throw Error('invalid_response');
-            state.matrices=Object.fromEntries(rows.map(({branch,res})=>[branch,res]));
+            state.matrices=structuredClone(Object.fromEntries(rows.map(({branch,res})=>[branch,res])));
+            state.confirmed=structuredClone(state.matrices);state.retryBatch=null;state.conflict=false;state.draftSession=null;
             if(!state.matrices[state.activeBranch])state.activeBranch=rows[0]?.branch;
             renderDuties();
         }catch(err){if(ticket!==state.loadTicket)return;state.matrices={};state.duties=[];state.assignments={};state.employees=[];
@@ -144,6 +219,7 @@
 
     function renderDuties(){
         const content=document.getElementById('kb-duty-content'),summary=document.getElementById('kb-duty-summary');if(!content)return;
+        const focused=document.activeElement?.dataset?.dutyId?{...document.activeElement.dataset}:null;
         const scrollPositions=new Map([...content.querySelectorAll('[data-duty-scroll]')].map(el=>[el.dataset.dutyScroll,el.scrollLeft]));
         const previous=state.activeBranch;let html='',summaries='';
         for(const branch of scopedBranches()){
@@ -156,6 +232,13 @@
         content.innerHTML=html;if(summary)summary.innerHTML=`<div class="flex flex-wrap gap-4 text-xs">${summaries}</div>`;
         for(const el of content.querySelectorAll('[data-duty-scroll]'))el.scrollLeft=scrollPositions.get(el.dataset.dutyScroll)||0;
         state.activeBranch=previous;if(state.matrices?.[previous])applyMatrix(state.matrices[previous]);
+        renderDraftBar();
+        const changes=draftChanges();
+        for(const cell of content.querySelectorAll('[data-duty-cell]')){
+            if(changes.some(c=>c.branch===cell.dataset.dutyBranch&&c.employeeUid===cell.dataset.dutyPerson&&c.dutyId===cell.dataset.dutyId)){cell.classList.add('ring-2','ring-amber-400','ring-offset-1');cell.title+=' · ยังไม่ได้บันทึก';}
+            if(focused&&['dutyBranch','dutyPerson','dutyId'].every(key=>cell.dataset[key]===focused[key]))cell.focus({preventScroll:true});
+        }
+        if(state.busy||state.retryBatch||state.conflict)for(const cell of content.querySelectorAll('[data-duty-cell]'))cell.disabled=true;
     }
     function renderSingleMatrix() {
         const container = document.getElementById('kb-duty-content');
@@ -344,7 +427,7 @@
     async function cycleAssignment(personId,dutyId){
         const old=state.assignments[personId]?.[dutyId]||'none';
         const targetType=old==='secondary'?'primary':old==='primary'?'none':'secondary';
-        if(await write('setDutyAssignment',{employeeUid:personId,dutyId,targetType,expectedRevision:state.revisions[personId]??0,requestId:crypto.randomUUID()}))notify('อัปเดตหน้าที่แล้ว');
+        stageAssignment(personId,dutyId,targetType);
     }
 
     // Drawer System
@@ -432,7 +515,7 @@
     }
 
     async function handlePersonDutyChange(personId,dutyId,role){
-        if(await write('setDutyAssignment',{employeeUid:personId,dutyId,targetType:role||'none',expectedRevision:state.revisions[personId]??0,requestId:crypto.randomUUID()})){openPerson(personId);notify('อัปเดตหน้าที่แล้ว');}
+        stageAssignment(personId,dutyId,role||'none');openPerson(personId);
     }
 
     async function savePersonLimit(personId){
@@ -602,6 +685,10 @@
 
     // Public API
     window.KpiDutyMatrix = {
+        saveDrafts,
+        discardDrafts,
+        hasDrafts,
+        confirmLeave,
         loadDutyMatrix,
         renderDuties,
         cycleAssignment,
@@ -622,5 +709,6 @@
         runBranch,
         chooseCatalogBranch:()=>{if(state.busy)return;if(scope()==='ALL'){state.activeBranch=null;}openCatalog();}
     };
+    window.addEventListener?.('beforeunload',event=>{if(hasDrafts()||state.busy){event.preventDefault();event.returnValue='';}});
 
 })(window);

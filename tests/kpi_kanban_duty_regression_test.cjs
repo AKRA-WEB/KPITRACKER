@@ -11,7 +11,7 @@ function setup(api) {
   };
   const document = { getElementById: element, querySelectorAll: () => [], addEventListener(){}, body:{style:{}} };
   const notices = [];
-  const window = { AkraSupabaseKPI: api, getKpiTaskContext: () => ({token:'fixture',branch:'TRD',userUid:'u1',name:'Test',employees:[],can:()=>true}), showToast:msg=>notices.push(msg) };
+  const window = { confirm:()=>true, AkraSupabaseKPI: api, getKpiTaskContext: () => ({token:'fixture',branch:'TRD',userUid:'u1',name:'Test',employees:[],can:()=>true}), showToast:msg=>notices.push(msg) };
   const context = vm.createContext({window,document,console,Intl,Date,Math,structuredClone,crypto:require('node:crypto').webcrypto,FormData:class {constructor(form){this.values=form.values;}get(key){return this.values[key]??null;}}});
   for (const file of ['kpi-kanban-board.js','kpi-duty-matrix.js']) vm.runInContext(fs.readFileSync(path.join(__dirname,'../js',file),'utf8'),context);
   return {window,element,notices};
@@ -114,40 +114,45 @@ test('combined owner filter deduplicates UID while keeping both branches and sam
   assert.match(drawer,/value="admin"/);assert.match(drawer,/value="staff-TRD"/);assert.doesNotMatch(drawer,/value="staff-AKRA"/);
 });
 
-test('duty writes use API targetType and failed saves keep original allocation', async () => {
-  const calls=[];
-  const matrix={status:'success',catalog:[{id:'inbound',name:'Receiving',weight:2,targetHeadcount:null,isActive:true,revision:3}],assignments:[],capacities:[],employees:[{employeeUid:'u1',name:'Owner One'}]};
-  const ui=setup({getDutyMatrix:async()=>matrix,setDutyAssignment:async(token,payload)=>{calls.push(payload);throw Error('record_conflict');}});
-  await ui.window.KpiDutyMatrix.loadDutyMatrix();
-  assert.match(ui.element('kb-duty-content').innerHTML,/Owner One/);
-  await ui.window.KpiDutyMatrix.cycleAssignment('u1','inbound');
-  assert.equal(calls.length,1); assert.equal(calls[0].targetType,'secondary');
-  assert.ok(ui.notices.some(msg=>/ไม่สำเร็จ/.test(msg)));
-  assert.doesNotMatch(ui.element('kb-duty-content').innerHTML,/เกินขีดจำกัด/);
+test('duty clicks stage immediately, cycle locally and save one batch without rereading',async()=>{
+ let reads=0,finish;const calls=[];
+ const matrix={catalog:['a','b'].map(id=>({id,name:id,weight:2,isActive:true})),assignments:[],employees:[{employeeUid:'u1',name:'One'}],employeeRevisions:{u1:0},drivingCapabilities:[{employeeUid:'u1',capabilities:{motorcycle:'capable'}}]};
+ const ui=setup({getDutyMatrix:async()=>{reads++;return matrix;},saveDutyAssignments:async(t,p)=>{calls.push(p);return new Promise(r=>finish=r);}});
+ await ui.window.KpiDutyMatrix.loadDutyMatrix();
+ for(let i=0;i<3;i++)await ui.window.KpiDutyMatrix.cycleAssignment('u1','a');
+ assert.equal(ui.window.KpiDutyMatrix.hasDrafts(),false);assert.equal(calls.length,0);
+ await ui.window.KpiDutyMatrix.cycleAssignment('u1','a');await ui.window.KpiDutyMatrix.cycleAssignment('u1','b');
+ assert.equal(matrix.assignments.length,0);
+ const pending=ui.window.KpiDutyMatrix.saveDrafts();await ui.window.KpiDutyMatrix.saveDrafts();await ui.window.KpiDutyMatrix.cycleAssignment('u1','a');
+ assert.equal(calls.length,1);assert.equal(calls[0].changes.length,2);assert.ok(calls[0].changes.every(c=>c.targetType==='secondary'&&c.expectedRevision===0));
+ finish({matrices:{TRD:{...matrix,assignments:calls[0].changes.map(c=>({...c,assignmentType:c.targetType})),employeeRevisions:{u1:2}}}});await pending;
+ assert.equal(reads,1);assert.equal(ui.window.KpiDutyMatrix.hasDrafts(),false);
+ await ui.window.KpiDutyMatrix.cycleAssignment('u1','a');const next=ui.window.KpiDutyMatrix.saveDrafts();assert.equal(calls[1].changes[0].expectedRevision,2);assert.equal(calls[1].changes[0].targetType,'primary');
+ finish({matrices:{TRD:{...matrix,assignments:[{employeeUid:'u1',dutyId:'a',assignmentType:'primary'},{employeeUid:'u1',dutyId:'b',assignmentType:'secondary'}],employeeRevisions:{u1:3}}}});await next;
 });
-test('duty click consumes authoritative save response without rereading, preserves skills and blocks duplicates', async () => {
-  let reads=0,finish;const calls=[];
-  const matrix={catalog:[{id:'inbound',name:'Receiving',weight:2,isActive:true,revision:1}],assignments:[],employees:[{employeeUid:'u1',name:'One'}],capacities:[],employeeRevisions:{u1:0},drivingCapabilities:[{employeeUid:'u1',capabilities:{motorcycle:'capable'}}]};
-  const ui=setup({getDutyMatrix:async()=>{reads++;return structuredClone(matrix);},setDutyAssignment:async(token,payload)=>{calls.push(payload);return new Promise(resolve=>{finish=resolve;});}});
-  await ui.window.KpiDutyMatrix.loadDutyMatrix();
-  const attrs={};const cell={dataset:{dutyBranch:'TRD',dutyPerson:'u1',dutyId:'inbound'},innerHTML:'+',disabled:false,setAttribute:(key,value)=>{attrs[key]=value;},removeAttribute:key=>{delete attrs[key];}};
-  const scroller={dataset:{dutyScroll:'TRD'},scrollLeft:260};
-  ui.element('kb-duty-content').querySelectorAll=selector=>selector==='[data-duty-cell]'?[cell]:selector==='[data-duty-scroll]'?[scroller]:[];
-  const pending=ui.window.KpiDutyMatrix.cycleAssignment('u1','inbound');
-  assert.equal(cell.disabled,true);assert.equal(attrs['aria-busy'],'true');assert.match(cell.innerHTML,/กำลังบันทึก/);
-  await ui.window.KpiDutyMatrix.cycleAssignment('u1','inbound');assert.equal(calls.length,1);
-  finish({...matrix,drivingCapabilities:undefined,assignments:[{employeeUid:'u1',dutyId:'inbound',assignmentType:'secondary'}],employeeRevisions:{u1:1}});
-  await pending;
-  assert.equal(cell.disabled,false);assert.equal(attrs['aria-busy'],undefined);assert.equal(scroller.scrollLeft,260);
-  assert.equal(reads,1,'successful mutation response eliminates additional reads');
-  assert.match(ui.element('kb-duty-content').innerHTML,/งานเสริม/);
-  assert.match(ui.element('kb-duty-content').innerHTML,/ทักษะขับขี่/);
-  const next=ui.window.KpiDutyMatrix.cycleAssignment('u1','inbound');
-  assert.equal(calls[1].expectedRevision,1);assert.equal(calls[1].targetType,'primary');
-  finish({...matrix,assignments:[{employeeUid:'u1',dutyId:'inbound',assignmentType:'primary'}],employeeRevisions:{u1:2}});await next;
-  const third=ui.window.KpiDutyMatrix.cycleAssignment('u1','inbound');
-  assert.equal(calls[2].targetType,'none');assert.equal(calls[2].expectedRevision,2);
-  finish({...matrix,assignments:[],employeeRevisions:{u1:3}});await third;assert.equal(reads,1);
+
+test('failed batch retains drafts, retries same request and conflict blocks another save',async()=>{
+ const calls=[];let failure='request_timeout';
+ const matrix={catalog:[{id:'d',name:'Duty',weight:1,isActive:true}],assignments:[],employees:[{employeeUid:'u1',name:'One'}],employeeRevisions:{u1:0}};
+ const ui=setup({getDutyMatrix:async()=>matrix,saveDutyAssignments:async(t,p)=>{calls.push(p);throw Object.assign(Error(failure),{reason:failure});}});
+ await ui.window.KpiDutyMatrix.loadDutyMatrix();await ui.window.KpiDutyMatrix.cycleAssignment('u1','d');await ui.window.KpiDutyMatrix.saveDrafts();assert.equal(ui.window.KpiDutyMatrix.hasDrafts(),true);
+ await ui.window.KpiDutyMatrix.cycleAssignment('u1','d');failure='record_conflict';await ui.window.KpiDutyMatrix.saveDrafts();assert.deepEqual(calls[1],calls[0]);
+ await ui.window.KpiDutyMatrix.saveDrafts();assert.equal(calls.length,2);ui.window.KpiDutyMatrix.discardDrafts();await new Promise(r=>setImmediate(r));assert.equal(ui.window.KpiDutyMatrix.hasDrafts(),false);
+});
+
+test('primary draft demotes previous primary and declined navigation keeps drafts',async()=>{
+ let payload;const matrix={catalog:['a','b'].map(id=>({id,name:id,weight:1,isActive:true})),assignments:[{employeeUid:'u1',dutyId:'a',assignmentType:'primary'}],employees:[{employeeUid:'u1',name:'One'}],employeeRevisions:{u1:3}};
+ const ui=setup({getDutyMatrix:async()=>matrix,saveDutyAssignments:async(t,p)=>{payload=p;return {matrices:{TRD:{...matrix,assignments:p.changes.map(c=>({...c,assignmentType:c.targetType})),employeeRevisions:{u1:5}}}};}});
+ await ui.window.KpiDutyMatrix.loadDutyMatrix();await ui.window.KpiDutyMatrix.cycleAssignment('u1','b');await ui.window.KpiDutyMatrix.cycleAssignment('u1','b');
+ ui.window.confirm=()=>false;assert.equal(ui.window.KpiDutyMatrix.confirmLeave(),false);await ui.window.KpiDutyMatrix.loadDutyMatrix();assert.equal(ui.window.KpiDutyMatrix.hasDrafts(),true);
+ await ui.window.KpiDutyMatrix.saveDrafts();assert.equal(payload.changes.find(c=>c.dutyId==='a').targetType,'secondary');assert.equal(payload.changes.find(c=>c.dutyId==='b').targetType,'primary');
+ await ui.window.KpiDutyMatrix.cycleAssignment('u1','b');ui.window.KpiDutyMatrix.discardDrafts();assert.equal(ui.window.KpiDutyMatrix.hasDrafts(),false);
+});
+
+test('session change during save clears previous private matrix',async()=>{
+ let finish;const ui=setup({getDutyMatrix:async()=>({catalog:[{id:'d',name:'Duty',weight:1,isActive:true}],assignments:[],employees:[{employeeUid:'u1',name:'Private old user'}],employeeRevisions:{u1:0}}),saveDutyAssignments:()=>new Promise(r=>finish=r)});
+ await ui.window.KpiDutyMatrix.loadDutyMatrix();await ui.window.KpiDutyMatrix.cycleAssignment('u1','d');const pending=ui.window.KpiDutyMatrix.saveDrafts();
+ ui.window.getKpiTaskContext=()=>({token:'new',branch:'AKRA',can:()=>true});finish({matrices:{}});await pending;assert.equal(ui.window.KpiDutyMatrix.hasDrafts(),false);assert.doesNotMatch(ui.element('kb-duty-content').innerHTML,/Private old user/);
 });
 
 test('checklist/comments persist through API with current revision and survive refresh', async () => {
@@ -178,17 +183,12 @@ test('combined board keeps duplicate IDs and writes to the selected task branch'
   assert.equal(calls[0].branch,'TRD');assert.equal(calls[0].actionId,'SAME-ID');assert.equal(rows.AKRA.checklist[0].done,false);
 });
 
-test('combined duty tables keep coverage, person revisions and writes branch bound', async () => {
-  const calls=[];
-  const matrices=Object.fromEntries(['AKRA','TRD'].map(branch=>[branch,{catalog:[{id:'same-duty',name:branch+' Duty',weight:2,targetHeadcount:1,isActive:true}],assignments:branch==='AKRA'?[{employeeUid:'u1',dutyId:'same-duty',assignmentType:'primary'}]:[],employees:[{employeeUid:'u1',name:branch+' Person'}],capacities:[],employeeRevisions:{u1:branch==='AKRA'?8:3}}]));
-  const ui=setup({getDutyMatrix:async(token,branch)=>matrices[branch],setDutyAssignment:async(token,item)=>{calls.push(item);matrices[item.branch].assignments=[{employeeUid:item.employeeUid,dutyId:item.dutyId,assignmentType:item.targetType}];return {};} });
-  ui.window.getKpiTaskContext=()=>({token:'fixture',branch:'AKRA',roles:['ADMIN'],allowedBranches:['AKRA','TRD'],can:()=>true});
-  await ui.window.KpiDutyMatrix.setBranchScope('ALL');
-  assert.match(ui.element('kb-duty-content').innerHTML,/ตารางงานสาขา AKRA/);assert.match(ui.element('kb-duty-content').innerHTML,/ตารางงานสาขา TRD/);
-  assert.match(ui.element('kb-duty-summary').innerHTML,/AKRA: 1 คน · 0 หน้าที่ขาดคน/);assert.match(ui.element('kb-duty-summary').innerHTML,/TRD: 1 คน · 1 หน้าที่ขาดคน/);
-  await ui.window.KpiDutyMatrix.runBranch('TRD','cycleAssignment','u1','same-duty');
-  assert.equal(calls[0].branch,'TRD');assert.equal(calls[0].expectedRevision,3);assert.equal(calls[0].targetType,'secondary');
-  assert.equal(matrices.AKRA.employeeRevisions.u1,8);assert.equal(matrices.AKRA.assignments.length,1);
+test('combined duty drafts save once using branch-specific baseline revisions',async()=>{
+ const calls=[];const matrices=Object.fromEntries(['AKRA','TRD'].map(branch=>[branch,{catalog:[{id:'d',name:branch+' Duty',weight:2,targetHeadcount:1,isActive:true}],assignments:[],employees:[{employeeUid:'u1',name:branch+' Person'}],employeeRevisions:{u1:branch==='AKRA'?8:3}}]));
+ const ui=setup({getDutyMatrix:async(t,b)=>matrices[b],saveDutyAssignments:async(t,p)=>{calls.push(p);return {matrices:Object.fromEntries(p.changes.map(c=>[c.branch,{...matrices[c.branch],assignments:[{...c,assignmentType:c.targetType}],employeeRevisions:{u1:c.expectedRevision+1}}]))};}});
+ ui.window.getKpiTaskContext=()=>({token:'fixture',branch:'AKRA',roles:['ADMIN'],allowedBranches:['AKRA','TRD'],can:()=>true});await ui.window.KpiDutyMatrix.setBranchScope('ALL');
+ await ui.window.KpiDutyMatrix.runBranch('TRD','cycleAssignment','u1','d');await ui.window.KpiDutyMatrix.runBranch('AKRA','cycleAssignment','u1','d');assert.equal(calls.length,0);assert.equal(matrices.AKRA.assignments.length,0);
+ await ui.window.KpiDutyMatrix.saveDrafts();assert.equal(calls.length,1);assert.equal(calls[0].changes.find(c=>c.branch==='TRD').expectedRevision,3);assert.equal(calls[0].changes.find(c=>c.branch==='AKRA').expectedRevision,8);
 });
 
 test('single branch viewer cannot request ALL/foreign branch and failed combined reads show an error', async () => {

@@ -5,7 +5,7 @@ function fixture(fetch){
   vm.runInNewContext(source,{module,exports:module.exports,AbortController,fetch,window:{getKpiSessionOwner:()=>owner,getKpiSessionToken:()=>'fixture'},setTimeout:fn=>{timers.push(fn);return timers.length;},clearTimeout(){}});
   return {client:module.exports,timers};
 }
-for(const action of ['getDutyMatrix','setDutyAssignment'])for(const stalledBody of [false,true]) test(action+' bounds stalled '+(stalledBody?'response body':'fetch'),async()=>{
+for(const action of ['getDutyMatrix','setDutyAssignment','saveDutyAssignments'])for(const stalledBody of [false,true]) test(action+' bounds stalled '+(stalledBody?'response body':'fetch'),async()=>{
   let signal,finishBody;
   const f=fixture(async(url,options)=>{signal=options.signal;return stalledBody?{ok:true,json:()=>new Promise(resolve=>{finishBody=resolve;})}:new Promise(()=>{});});
   const pending=f.client[action]('fixture',action==='getDutyMatrix'?'AKRA':{branch:'AKRA',employeeUid:'u1',dutyId:'inbound',targetType:'primary',expectedRevision:0});
