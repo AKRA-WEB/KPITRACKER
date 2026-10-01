@@ -343,7 +343,7 @@
 
     async function cycleAssignment(personId,dutyId){
         const old=state.assignments[personId]?.[dutyId]||'none';
-        const targetType=old==='primary'?'secondary':old==='secondary'?'none':'primary';
+        const targetType=old==='secondary'?'primary':old==='primary'?'none':'secondary';
         if(await write('setDutyAssignment',{employeeUid:personId,dutyId,targetType,expectedRevision:state.revisions[personId]??0,requestId:crypto.randomUUID()}))notify('อัปเดตหน้าที่แล้ว');
     }
 

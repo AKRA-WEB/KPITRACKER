@@ -121,7 +121,7 @@ test('duty writes use API targetType and failed saves keep original allocation',
   await ui.window.KpiDutyMatrix.loadDutyMatrix();
   assert.match(ui.element('kb-duty-content').innerHTML,/Owner One/);
   await ui.window.KpiDutyMatrix.cycleAssignment('u1','inbound');
-  assert.equal(calls.length,1); assert.equal(calls[0].targetType,'primary');
+  assert.equal(calls.length,1); assert.equal(calls[0].targetType,'secondary');
   assert.ok(ui.notices.some(msg=>/ไม่สำเร็จ/.test(msg)));
   assert.doesNotMatch(ui.element('kb-duty-content').innerHTML,/เกินขีดจำกัด/);
 });
@@ -136,15 +136,18 @@ test('duty click consumes authoritative save response without rereading, preserv
   const pending=ui.window.KpiDutyMatrix.cycleAssignment('u1','inbound');
   assert.equal(cell.disabled,true);assert.equal(attrs['aria-busy'],'true');assert.match(cell.innerHTML,/กำลังบันทึก/);
   await ui.window.KpiDutyMatrix.cycleAssignment('u1','inbound');assert.equal(calls.length,1);
-  finish({...matrix,drivingCapabilities:undefined,assignments:[{employeeUid:'u1',dutyId:'inbound',assignmentType:'primary'}],employeeRevisions:{u1:1}});
+  finish({...matrix,drivingCapabilities:undefined,assignments:[{employeeUid:'u1',dutyId:'inbound',assignmentType:'secondary'}],employeeRevisions:{u1:1}});
   await pending;
   assert.equal(cell.disabled,false);assert.equal(attrs['aria-busy'],undefined);assert.equal(scroller.scrollLeft,260);
   assert.equal(reads,1,'successful mutation response eliminates additional reads');
-  assert.match(ui.element('kb-duty-content').innerHTML,/งานหลัก/);
+  assert.match(ui.element('kb-duty-content').innerHTML,/งานเสริม/);
   assert.match(ui.element('kb-duty-content').innerHTML,/ทักษะขับขี่/);
   const next=ui.window.KpiDutyMatrix.cycleAssignment('u1','inbound');
-  assert.equal(calls[1].expectedRevision,1);assert.equal(calls[1].targetType,'secondary');
-  finish({...matrix,assignments:[{employeeUid:'u1',dutyId:'inbound',assignmentType:'secondary'}],employeeRevisions:{u1:2}});await next;
+  assert.equal(calls[1].expectedRevision,1);assert.equal(calls[1].targetType,'primary');
+  finish({...matrix,assignments:[{employeeUid:'u1',dutyId:'inbound',assignmentType:'primary'}],employeeRevisions:{u1:2}});await next;
+  const third=ui.window.KpiDutyMatrix.cycleAssignment('u1','inbound');
+  assert.equal(calls[2].targetType,'none');assert.equal(calls[2].expectedRevision,2);
+  finish({...matrix,assignments:[],employeeRevisions:{u1:3}});await third;assert.equal(reads,1);
 });
 
 test('checklist/comments persist through API with current revision and survive refresh', async () => {
@@ -184,7 +187,7 @@ test('combined duty tables keep coverage, person revisions and writes branch bou
   assert.match(ui.element('kb-duty-content').innerHTML,/ตารางงานสาขา AKRA/);assert.match(ui.element('kb-duty-content').innerHTML,/ตารางงานสาขา TRD/);
   assert.match(ui.element('kb-duty-summary').innerHTML,/AKRA: 1 คน · 0 หน้าที่ขาดคน/);assert.match(ui.element('kb-duty-summary').innerHTML,/TRD: 1 คน · 1 หน้าที่ขาดคน/);
   await ui.window.KpiDutyMatrix.runBranch('TRD','cycleAssignment','u1','same-duty');
-  assert.equal(calls[0].branch,'TRD');assert.equal(calls[0].expectedRevision,3);assert.equal(calls[0].targetType,'primary');
+  assert.equal(calls[0].branch,'TRD');assert.equal(calls[0].expectedRevision,3);assert.equal(calls[0].targetType,'secondary');
   assert.equal(matrices.AKRA.employeeRevisions.u1,8);assert.equal(matrices.AKRA.assignments.length,1);
 });
 
