@@ -70,6 +70,36 @@ test('short task code is displayed while original UID remains the write identity
   await ui.window.KpiKanbanBoard.toggleChecklist(0,true);assert.equal(calls[0].actionId,'KB-original-uuid');
 });
 
+test('checklist text edits preserve completion, identity and siblings; blank/cancel/view-only do not write',async()=>{
+  let task={actionId:'EDIT-1',branch:'TRD',title:'Edit',ownerUid:'u1',status:'Open',revision:4,checklist:[{id:'c1',text:'Before',done:true,extra:'keep'},{id:'c2',text:'Sibling',done:false}],comments:[]};
+  const writes=[];const ui=setup({getKanbanBoard:async()=>({tasks:[task]}),saveKanbanTask:async(token,payload,revision)=>{writes.push({payload,revision});task={...task,...payload,revision:revision+1};return {task};}});
+  await ui.window.KpiKanbanBoard.loadKanbanBoard();ui.window.KpiKanbanBoard.openTask(task.actionId);
+  assert.match(ui.element('kpi-task-drawer').innerHTML,/แก้ไข Checklist ข้อ 1/);
+  const input={value:'Draft',focus(){}},button={textContent:'บันทึก'},controls=[input,button];
+  const form=ui.element('kb-checklist-edit-0');form.querySelector=selector=>selector.startsWith('input')?input:button;form.querySelectorAll=()=>controls;
+  ui.window.KpiKanbanBoard.editChecklistItem(0);assert.equal(input.value,'Before');
+  input.value='Discard';ui.window.KpiKanbanBoard.cancelChecklistEdit(0);assert.equal(writes.length,0);
+  const event={preventDefault(){},target:form};input.value='  ';await ui.window.KpiKanbanBoard.saveChecklistItem(event,0);assert.equal(writes.length,0);
+  input.value='  After <literal>  ';await ui.window.KpiKanbanBoard.saveChecklistItem(event,0);
+  assert.equal(writes[0].revision,4);assert.equal(writes[0].payload.actionId,'EDIT-1');assert.equal(writes[0].payload.branch,'TRD');
+  assert.deepEqual(JSON.parse(JSON.stringify(task.checklist)),[{id:'c1',text:'After <literal>',done:true,extra:'keep'},{id:'c2',text:'Sibling',done:false}]);
+  await ui.window.KpiKanbanBoard.loadKanbanBoard();ui.window.KpiKanbanBoard.openTask(task.actionId);assert.match(ui.element('kpi-task-drawer').innerHTML,/After &lt;literal&gt;/);
+  ui.window.getKpiTaskContext=()=>({token:'fixture',branch:'TRD',userUid:'other',employees:[],can:()=>false});
+  ui.window.KpiKanbanBoard.openTask(task.actionId);assert.doesNotMatch(ui.element('kpi-task-drawer').innerHTML,/แก้ไข Checklist ข้อ/);
+  await ui.window.KpiKanbanBoard.saveChecklistItem(event,0);assert.equal(writes.length,1);
+});
+
+test('pending checklist text save blocks duplicates and failed save preserves confirmed text',async()=>{
+  const task={actionId:'EDIT-FAIL',branch:'TRD',title:'Edit',ownerUid:'u1',status:'Open',revision:4,checklist:[{id:'c',text:'Confirmed',done:true}],comments:[]};
+  let rejectSave,count=0;const ui=setup({getKanbanBoard:async()=>({tasks:[task]}),saveKanbanTask:()=>{count++;return new Promise((resolve,reject)=>rejectSave=reject);}});
+  await ui.window.KpiKanbanBoard.loadKanbanBoard();ui.window.KpiKanbanBoard.openTask(task.actionId);
+  const input={value:'Draft'},button={textContent:'บันทึก'},controls=[input,button],event={preventDefault(){},target:{querySelector:s=>s.startsWith('input')?input:button,querySelectorAll:()=>controls}};
+  const pending=ui.window.KpiKanbanBoard.saveChecklistItem(event,0);assert.equal(button.textContent,'กำลังบันทึก...');assert.ok(controls.every(c=>c.disabled));
+  await ui.window.KpiKanbanBoard.saveChecklistItem(event,0);assert.equal(count,1);
+  rejectSave(Error('fixture_failure'));await pending;assert.ok(controls.every(c=>!c.disabled));
+  ui.window.KpiKanbanBoard.openTask(task.actionId);assert.match(ui.element('kpi-task-drawer').innerHTML,/Confirmed/);assert.doesNotMatch(ui.element('kpi-task-drawer').innerHTML,/Draft/);
+});
+
 test('duty writes use API targetType and failed saves keep original allocation', async () => {
   const calls=[];
   const matrix={status:'success',catalog:[{id:'inbound',name:'Receiving',weight:2,targetHeadcount:null,isActive:true,revision:3}],assignments:[],capacities:[],employees:[{employeeUid:'u1',name:'Owner One'}]};

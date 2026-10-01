@@ -610,10 +610,22 @@
                 </div>
                 <div class="space-y-1.5 mb-2.5">
                     ${t.checklist.map((c, idx) => `
-                        <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 text-xs cursor-pointer">
+                        <div>
+                        <div id="kb-checklist-view-${idx}" class="flex items-center gap-2">
+                        <label class="flex-1 min-w-0 flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 text-xs cursor-pointer">
                             <input type="checkbox" ${c.done ? 'checked' : ''} onchange="window.KpiKanbanBoard.toggleChecklist(${idx}, this.checked)" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4">
-                            <span class="${c.done ? 'line-through text-slate-400' : 'text-slate-700'}">${esc(c.text)}</span>
+                            <span class="break-words min-w-0 ${c.done ? 'line-through text-slate-400' : 'text-slate-700'}">${esc(c.text)}</span>
                         </label>
+                        ${canEdit(t) ? `<button type="button" aria-label="แก้ไข Checklist ข้อ ${idx+1}" onclick="window.KpiKanbanBoard.editChecklistItem(${idx})" class="min-h-8 px-2 text-xs text-blue-600 hover:bg-blue-50 rounded-lg shrink-0">แก้ไข</button>` : ''}
+                        </div>
+                        ${canEdit(t) ? `<form id="kb-checklist-edit-${idx}" class="hidden p-2 rounded-xl border border-blue-200 bg-blue-50" onsubmit="window.KpiKanbanBoard.saveChecklistItem(event,${idx})">
+                            <input type="text" name="item" aria-label="ข้อความ Checklist ข้อ ${idx+1}" value="${esc(c.text)}" required class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500">
+                            <div class="flex justify-end gap-2 mt-2">
+                                <button type="button" onclick="window.KpiKanbanBoard.cancelChecklistEdit(${idx})" class="px-3 py-2 text-xs text-slate-600 rounded-lg hover:bg-white">ยกเลิก</button>
+                                <button type="submit" class="px-3 py-2 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60">บันทึก</button>
+                            </div>
+                        </form>` : ''}
+                        </div>
                     `).join('') || '<p class="text-xs text-slate-400 py-1">ยังไม่มีขั้นตอนย่อย</p>'}
                 </div>
                 <form onsubmit="window.KpiKanbanBoard.addChecklistItem(event)" class="flex gap-2">
@@ -720,6 +732,39 @@
         const t=state.tasks.find(t=>t.id===state.activeTaskId);if(!t||!t.checklist[index])return;
         const checklist=t.checklist.map((c,i)=>i===index?{...c,done}:c);
         const saved=await persistTask({...t,checklist});if(saved)openTask(saved.id);
+    }
+
+    function editChecklistItem(index) {
+        const t=findTask(state.activeTaskId);if(state.saving||!t?.checklist[index]||!canEdit(t))return;
+        const form=document.getElementById(`kb-checklist-edit-${index}`);
+        const input=form?.querySelector('input[name="item"]');if(!input)return;
+        input.value=t.checklist[index].text;
+        document.getElementById(`kb-checklist-view-${index}`)?.classList.add('hidden');
+        form.classList.remove('hidden');input.focus();
+    }
+
+    function cancelChecklistEdit(index) {
+        if(state.saving)return;
+        document.getElementById(`kb-checklist-edit-${index}`)?.classList.add('hidden');
+        document.getElementById(`kb-checklist-view-${index}`)?.classList.remove('hidden');
+    }
+
+    async function saveChecklistItem(e,index) {
+        e.preventDefault();const t=findTask(state.activeTaskId);
+        if(state.saving||!t?.checklist[index]||!canEdit(t))return;
+        const text=e.target.querySelector('input[name="item"]')?.value.trim();
+        if(!text){notify('กรุณาระบุข้อความ Checklist');return;}
+        if(text===t.checklist[index].text){cancelChecklistEdit(index);return;}
+        const controls=e.target.querySelectorAll('input,button');
+        controls.forEach(el=>el.disabled=true);
+        const button=e.target.querySelector('button[type="submit"]');if(button)button.textContent='กำลังบันทึก...';
+        try {
+            const checklist=t.checklist.map((c,i)=>i===index?{...c,text}:c);
+            const saved=await persistTask({...t,checklist});
+            if(saved&&state.activeTaskId===t.id){openTask(saved.id);notify('แก้ไข Checklist แล้ว');}
+        } finally {
+            controls.forEach(el=>el.disabled=false);if(button)button.textContent='บันทึก';
+        }
     }
 
     async function addChecklistItem(e) {
@@ -1005,6 +1050,9 @@
         handleSaveTask,
         handleStatusFieldChange,
         toggleChecklist,
+        editChecklistItem,
+        cancelChecklistEdit,
+        saveChecklistItem,
         addChecklistItem,
         addComment,
         openClaimIssueModal,
