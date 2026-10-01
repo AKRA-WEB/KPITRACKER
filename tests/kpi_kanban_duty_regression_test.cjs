@@ -62,6 +62,14 @@ test('issue lane is visible before integration without records or claim controls
   assert.doesNotMatch(html,/ยังไม่เชื่อมข้อมูล/);
 });
 
+test('short task code is displayed while original UID remains the write identity', async()=>{
+  const calls=[];const task={actionId:'KB-original-uuid',taskCode:'KB-1020260001',branch:'TRD',title:'Coded task',ownerUid:'u1',status:'Open',revision:1,checklist:[{id:'c1',text:'Check',done:false}],comments:[]};
+  const ui=setup({getKanbanBoard:async()=>({tasks:[task]}),saveKanbanTask:async(token,payload)=>{calls.push(payload);return {task:{...task,...payload,revision:2}};}});
+  await ui.window.KpiKanbanBoard.loadKanbanBoard();assert.match(ui.element('kb-board-content').innerHTML,/>KB-1020260001</);
+  ui.window.KpiKanbanBoard.openTask(task.actionId);assert.match(ui.element('kpi-task-drawer').innerHTML,/KB-1020260001/);
+  await ui.window.KpiKanbanBoard.toggleChecklist(0,true);assert.equal(calls[0].actionId,'KB-original-uuid');
+});
+
 test('duty writes use API targetType and failed saves keep original allocation', async () => {
   const calls=[];
   const matrix={status:'success',catalog:[{id:'inbound',name:'Receiving',weight:2,targetHeadcount:null,isActive:true,revision:3}],assignments:[],capacities:[],employees:[{employeeUid:'u1',name:'Owner One'}]};

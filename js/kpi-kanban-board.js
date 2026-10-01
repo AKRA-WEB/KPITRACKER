@@ -71,6 +71,7 @@
             branch:t.branch||context().branch,
             dbId: t.id,
             actionId: t.actionId || t.action_id || t.id,
+            taskCode: t.taskCode || t.task_code || t.actionId || t.action_id || t.id,
             title: t.title || t.action_name || t.actionName || '',
             detail: t.detail || t.action_plan || t.actionPlan || '',
             owner: t.ownerUid || t.owner_uid || '',
@@ -162,7 +163,7 @@
         const q = state.search.trim().toLowerCase();
         const currentUid = String(context().userUid || '').toLowerCase();
         return state.tasks.filter(t => {
-            if (q && !`${t.title} ${t.detail} ${t.id}`.toLowerCase().includes(q)) return false;
+            if (q && !`${t.title} ${t.detail} ${t.taskCode} ${t.id}`.toLowerCase().includes(q)) return false;
             if (state.ownerFilter && t.owner !== state.ownerFilter && String(t.ownerName).toLowerCase() !== state.ownerFilter.toLowerCase()) return false;
             if (state.categoryFilter && t.category !== state.categoryFilter) return false;
             if (state.overdueOnly && !isOverdue(t)) return false;
@@ -322,7 +323,7 @@
                      data-task-id="${esc(t.id)}"
                      onclick="window.KpiKanbanBoard.openTask(${jsArg(t.id)})">
                 <div class="flex items-center justify-between gap-1 mb-1.5">
-                    <span title="${esc(t.actionId)}" class="text-[10px] font-bold text-slate-400 font-num min-w-0 truncate">${esc(t.actionId)}</span><span class="text-[10px] font-bold px-2 py-0.5 rounded bg-violet-50 text-violet-800 border border-violet-200 shrink-0">${esc(t.branch)}</span>
+                    <span title="${esc(t.taskCode)}" class="text-[10px] font-bold text-slate-400 font-num min-w-0 truncate">${esc(t.taskCode)}</span><span class="text-[10px] font-bold px-2 py-0.5 rounded bg-violet-50 text-violet-800 border border-violet-200 shrink-0">${esc(t.branch)}</span>
                     <span class="text-[10px] px-2 py-0.5 rounded font-bold ${t.priority === 'high' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}">
                         ${t.priority === 'high' ? 'สำคัญสูง' : 'ปกติ'}
                     </span>
@@ -406,7 +407,7 @@
                                             <button type="button" onclick="window.KpiKanbanBoard.openTask(${jsArg(t.id)})" class="font-bold text-slate-900 hover:text-blue-600 text-left">
                                                 ${esc(t.title)} <span class="text-[10px] text-violet-800">${esc(t.branch)}</span>
                                             </button>
-                                            <div class="text-[11px] text-slate-400">${esc(t.id)} · ${esc(t.area)} · ${esc(t.category)}</div>
+                                            <div class="text-[11px] text-slate-400">${esc(t.taskCode)} · ${esc(t.area)} · ${esc(t.category)}</div>
                                         </td>
                                         <td class="p-3.5 text-slate-700">${esc((t.ownerName || resolveEmployeeName(t.owner)))}</td>
                                         <td class="p-3.5">
@@ -524,7 +525,7 @@
 
         const html = `
             <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
-                <span class="text-xs font-bold text-slate-500 font-num">${esc(t.actionId)} · สาขา ${esc(t.branch)}</span>
+                <span class="text-xs font-bold text-slate-500 font-num">${esc(t.taskCode)} · สาขา ${esc(t.branch)}</span>
                 <button type="button" onclick="window.KpiKanbanBoard.closeDrawer()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500">
                     <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
@@ -855,7 +856,7 @@
         };
 
         const saved=await persistTask({...newTask,revision:0});
-        if(saved){closeDrawer();notify(`สร้างงาน ${saved.id} เรียบร้อยแล้ว`);}
+        if(saved){closeDrawer();notify(`สร้างงาน ${saved.taskCode} เรียบร้อยแล้ว`);}
     }
 
     function openClaimIssueModal(issueId) {
