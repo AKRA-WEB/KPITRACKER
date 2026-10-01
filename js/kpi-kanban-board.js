@@ -200,8 +200,8 @@
 
     function renderKanbanView(filtered) {
         return `
-            <div class="kanban-grid grid grid-cols-1 md:grid-cols-5 gap-3.5 items-start overflow-x-auto pb-4">
-                ${renderIntakeLane()}
+            <div class="kanban-grid grid grid-cols-1 ${state.issueReady?'md:grid-cols-5':'md:grid-cols-4'} gap-3.5 items-start overflow-x-auto pb-4">
+                ${state.issueReady?renderIntakeLane():''}
                 ${STATUSES.map(s => renderColumn(s, filtered.filter(t => t.status === s.id))).join('')}
             </div>
         `;
