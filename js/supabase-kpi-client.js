@@ -59,6 +59,11 @@
     async function performTransportRequest(action, payload, context, signal) {
         assertRequestContext(context);
         if (!context.token) throw new Error('KPI config requires an authenticated Main session.');
+        const perf = typeof window !== 'undefined' && window.AkraPerfDiagnostics?.enabled && window.AkraPerfDiagnostics.collecting()
+            && ['getConfig', 'getLiveRequisitions'].includes(action) ? window.AkraPerfDiagnostics : null;
+        const kind = action === 'getConfig' ? 'config' : 'activity';
+        perf?.count(kind + 'Requests', 1, true);
+        const apiSpan = perf?.start(kind + 'Api');
         const url = `${SUPABASE_CONFIG.URL}/functions/v1/kpi-api`;
         const response = await fetch(url, {
             ...(signal ? {signal} : {}),
@@ -69,8 +74,11 @@
             },
             body: JSON.stringify({ ...payload, action, token:context.token })
         });
+        perf?.end(apiSpan);
         assertRequestContext(context);
+        const responseSpan = perf?.start(kind + 'Response');
         const data = await response.json().catch(() => ({}));
+        perf?.end(responseSpan);
         assertRequestContext(context);
         if (!response.ok || data.status !== 'success') {
             const error = new Error(data.reason === 'record_conflict' ? 'ข้อมูลถูกแก้ไขจากที่อื่น กรุณาโหลดข้อมูลล่าสุดและตรวจทานก่อนบันทึกใหม่' : (data.reason || ('Supabase fetch failed: ' + response.statusText)));
@@ -79,6 +87,7 @@
             if (response.status === 401 && typeof window !== 'undefined') window.onKpiSessionRejected?.(error);
             throw error;
         }
+        perf?.response(kind, data);
         return data;
     }
 

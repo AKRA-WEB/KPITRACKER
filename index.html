@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <script src="js/akra-shell-bridge.js?v=20261002.03"></script>
+    <script src="js/akra-shell-bridge.js?v=20261002.04"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BM Work | งานและทีม</title>
@@ -3038,7 +3038,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">BM Work v20261002.03</span>
+                <span id="drawer-version-text">BM Work v20261002.04</span>
                 <span>BUYMORETH</span>
             </div>
         </div>
@@ -3458,18 +3458,140 @@
         }
     </style>
     <div id="kb-image-viewer" class="hidden fixed inset-0 z-[80] bg-slate-950/90 p-4" role="dialog" aria-modal="true" aria-label="ดูรูปภาพ" tabindex="-1"></div>
-    <script src="js/supabase-kpi-client.js?v=20261002.03"></script>
-    <script src="js/workload-permissions.js?v=20261002.03"></script>
-    <script src="js/incident-impact.js?v=20261002.03"></script>
-    <script src="js/kpi-kanban-board.js?v=20261002.03"></script>
-    <script src="js/kpi-duty-matrix.js?v=20261002.03"></script>
-    <script src="js/kpi-integration.js?v=20261002.03"></script>
+    <script src="js/supabase-kpi-client.js?v=20261002.04"></script>
+    <script src="js/workload-permissions.js?v=20261002.04"></script>
+    <script src="js/incident-impact.js?v=20261002.04"></script>
+    <script src="js/kpi-kanban-board.js?v=20261002.04"></script>
+    <script src="js/kpi-duty-matrix.js?v=20261002.04"></script>
+    <script src="js/kpi-integration.js?v=20261002.04"></script>
     <script>
         // ================= CONFIGURATION =================
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20261002.03";
+        const CURRENT_VERSION = "20261002.04";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
+
+        // Transient, opt-in aggregate diagnostics. Never store session or record data.
+        const KpiPerf = (() => {
+            const enabled = new URLSearchParams(window.location.search).get('akra_perf') === '1';
+            if (!enabled) return { enabled: false };
+            const navigationClock = typeof window.performance?.now === 'function';
+            const scriptStart = Date.now();
+            const now = () => navigationClock ? window.performance.now() : Date.now() - scriptStart;
+            const number = value => Number.isFinite(Number(value)) ? Math.round(Math.max(0, Number(value)) * 100) / 100 : 0;
+            const stages = new Set(['versionCheck', 'auth', 'authUi', 'configBoot', 'configHydration', 'configApi', 'configResponse', 'activityApi', 'activityResponse', 'activityGrouping', 'activityRender']);
+            const countNames = new Set(['configRequests', 'activityRequests', 'activityCacheHits', 'configRows', 'requisitionRows', 'eventRows', 'eligibleRows']);
+            const result = {
+                schema: 1, app: 'BM Work', version: CURRENT_VERSION,
+                endpoint: 'current-day-activity-fresh-settled', state: 'loading',
+                clock: navigationClock ? 'navigation' : 'script', paint: 'pending',
+                configCache: 'none', configFresh: 'pending', activityCache: 'none',
+                durationsMs: { scriptStartOffset: number(now()) },
+                counts: { configRequests: 0, activityRequests: 0, activityCacheHits: 0 },
+                bytes: { configJsonUtf8: 0, activityJsonUtf8: 0 }
+            };
+            let generation = 0, activityTicket = 0, startupSettled = false;
+            const configPending = () => result.configFresh === 'pending';
+            const publish = () => {
+                let node = document.getElementById('akra-perf-diagnostics');
+                if (!node) {
+                    node = document.createElement('pre');
+                    node.id = 'akra-perf-diagnostics';
+                    node.hidden = true;
+                    node.setAttribute('aria-hidden', 'true');
+                    document.body.appendChild(node);
+                }
+                node.textContent = JSON.stringify(result);
+            };
+            const start = name => stages.has(name) && result.state !== 'invalidated'
+                && (!startupSettled || (configPending() && ['configApi', 'configResponse'].includes(name)))
+                ? { name, at: now(), generation } : null;
+            const end = span => {
+                if (!span || !stages.has(span.name) || !Number.isFinite(span.at) || span.generation !== generation) return;
+                if (startupSettled && !(configPending() && ['configApi', 'configResponse'].includes(span.name))) return;
+                result.durationsMs[span.name] = number((result.durationsMs[span.name] || 0) + now() - span.at);
+                publish();
+            };
+            const count = (name, value, add = false) => {
+                if (!countNames.has(name) || result.state === 'invalidated') return;
+                if (startupSettled && !(configPending() && name === 'configRows')) return;
+                result.counts[name] = number((add ? result.counts[name] || 0 : 0) + value);
+                publish();
+            };
+            const cache = (kind, value) => {
+                if (result.state === 'invalidated' || startupSettled) return;
+                if (kind === 'config' && ['hit', 'miss'].includes(value)) result.configCache = value;
+                if (kind === 'activity' && ['memory', 'fresh'].includes(value)) result.activityCache = value;
+                publish();
+            };
+            const response = (kind, data) => {
+                if (!['config', 'activity'].includes(kind) || result.state === 'invalidated') return;
+                if (startupSettled && !(configPending() && kind === 'config')) return;
+                // Serialized UTF-8 JSON size, not wire/compressed transfer size.
+                result.bytes[kind + 'JsonUtf8'] = new TextEncoder().encode(JSON.stringify(data)).byteLength;
+                publish();
+            };
+            const freshConfig = rows => {
+                if (result.state === 'invalidated') return;
+                if (startupSettled && !configPending()) return;
+                count('configRows', rows);
+                result.configFresh = 'settled';
+                publish();
+            };
+            const configFailed = () => {
+                if (result.state === 'invalidated') return;
+                if (startupSettled && !configPending()) return;
+                result.configFresh = 'error';
+                publish();
+            };
+            const activityLoading = () => {
+                if (result.state === 'invalidated' || startupSettled) return;
+                ++activityTicket;
+                result.state = 'loading';
+                result.paint = 'pending';
+                delete result.durationsMs.navigationToReady;
+                delete result.durationsMs.scriptToReady;
+                publish();
+            };
+            const activityReady = (current, counts) => {
+                if (startupSettled || result.state === 'invalidated') return;
+                const ticket = activityTicket, ownerGeneration = generation;
+                const finish = () => {
+                    if (startupSettled || ticket !== activityTicket || ownerGeneration !== generation || result.state === 'invalidated' || !current()) return;
+                    startupSettled = true;
+                    result.activityCache = 'fresh';
+                    result.state = 'ready';
+                    result.paint = typeof window.requestAnimationFrame === 'function' ? 'double-raf' : 'dom-settled';
+                    Object.keys(counts).forEach(name => { if (countNames.has(name)) result.counts[name] = number(counts[name]); });
+                    result.durationsMs[navigationClock ? 'navigationToReady' : 'scriptToReady'] = number(now());
+                    publish();
+                };
+                if (typeof window.requestAnimationFrame === 'function') window.requestAnimationFrame(() => window.requestAnimationFrame(finish));
+                else finish();
+            };
+            const fail = () => {
+                if (result.state === 'invalidated' || startupSettled) return;
+                ++activityTicket;
+                result.state = 'error';
+                result.paint = 'pending';
+                delete result.durationsMs.navigationToReady;
+                delete result.durationsMs.scriptToReady;
+                publish();
+            };
+            const invalidate = () => {
+                ++generation;
+                result.state = 'invalidated';
+                result.paint = 'pending';
+                result.counts = {};
+                result.bytes = {};
+                result.durationsMs = {};
+                publish();
+            };
+            publish();
+            const collecting = () => !startupSettled && result.state !== 'invalidated';
+            return { enabled, collecting, start, end, count, cache, response, freshConfig, configFailed, activityLoading, activityReady, fail, invalidate };
+        })();
+        window.AkraPerfDiagnostics = KpiPerf;
 
         // Auto open Quick Workload Modal if requested via LIFF or URL query parameter
         setTimeout(() => {
@@ -4058,6 +4180,7 @@
             try { return localStorage.getItem(KPI_SESSION_KEY); } catch (_) { return null; }
         }
         function invalidateKpiSession(message) {
+            window.AkraPerfDiagnostics?.invalidate?.();
             ++kpiAuthAttempt;
             ++kpiConfigRequest;
             kpiVerifiedSession = null;
@@ -6038,6 +6161,8 @@
             const dashboardPeopleListEl = document.getElementById('wl-dashboard-people-list');
             const dashboardCategoryListEl = document.getElementById('wl-dashboard-category-list');
             if (!countEl && !identityEl && !listEl && !dashboardTotalEl && !dashboardActivityEl) return;
+            const perf = typeof window !== 'undefined' && window.AkraPerfDiagnostics?.enabled ? window.AkraPerfDiagnostics : null;
+            const groupingSpan = perf?.start('activityGrouping');
 
             const activityLabel = row => ({
                 TRD_REQUISITION: 'เบิกสินค้าสต๊อค TRD',
@@ -6159,6 +6284,9 @@
             const coverage = rows.length ? Math.round((linkedRows / rows.length) * 100) : 0;
             const sourceLabels = [...new Set(rows.map(row => row.sourceLabel || row.source || (row.eventType === 'TRD_REQUISITION' ? 'LINE' : 'Event')).filter(Boolean))];
 
+            perf?.end(groupingSpan);
+            const renderSpan = perf?.start('activityRender');
+            perf?.count('eligibleRows', rows.length);
             if (countEl) countEl.textContent = operationalRows.length ? `${rows.length} งานรวม` : `${rows.length} งานจาก LINE`;
             if (identityEl) identityEl.textContent = `${needsIdentityReview} รายการรอจับคู่`;
             if (dashboardTotalEl) dashboardTotalEl.textContent = String(rows.length);
@@ -6246,7 +6374,7 @@
                 }
             }
 
-            if (!listEl) return;
+            if (!listEl) { perf?.end(renderSpan); return; }
             if (!rows.length) {
                 listEl.innerHTML = '<div class="rounded-xl border border-dashed border-white/15 p-3 text-center text-[11px] text-slate-400">ยังไม่มีข้อมูลกิจกรรมจาก LINE</div>';
             } else {
@@ -6309,6 +6437,7 @@
                     }).join('');
                 }
             }
+            perf?.end(renderSpan);
         }
 
         function removeSupport(id) {
@@ -9587,6 +9716,9 @@
             const d = targetDate || (billDateEl && billDateEl.value) || (workloadDateEl && workloadDateEl.value) || (typeof _lastRecordDate !== 'undefined' && _lastRecordDate) || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().split('T')[0]);
             const request = ++liveRequisitionRequest;
             const readToken=sessionToken, readBranch=currentBranch;
+            const perf = typeof window !== 'undefined' && window.AkraPerfDiagnostics?.enabled ? window.AkraPerfDiagnostics : null;
+            const readOwner = typeof kpiVerifiedSession !== 'undefined' ? kpiVerifiedSession : null;
+            perf?.activityLoading();
             const hasExisting = (Array.isArray(liveRequisitionsList) && liveRequisitionsList.length > 0)
                 || (Array.isArray(liveOperationalEventsList) && liveOperationalEventsList.length > 0);
             const isSilent = silent && hasExisting;
@@ -9613,9 +9745,23 @@
                 liveRequisitionsLoadedDate = d;
                 window.KpiIntegration?.acceptActivity();
                 renderLiveRequisitions();
+                perf?.activityReady(() => {
+                    const view = document.getElementById('view-workload');
+                    const activity = document.getElementById('wl-dashboard-activity-list');
+                    const readState = document.getElementById('live-bill-read-state');
+                    const selectedDate = document.getElementById('record-date')?.value;
+                    return request === liveRequisitionRequest && isCurrentKpiSession(readOwner, readToken)
+                        && currentBranch === readBranch && d === getTodayBangkokDateStr()
+                        && (!selectedDate || selectedDate === d) && liveRequisitionsLoadedDate === d
+                        && document.body.classList.contains('kpi-session-ready') && !document.getElementById('app-content')?.classList.contains('hidden')
+                        && view && !view.classList.contains('hidden') && activity?.innerHTML
+                        && ['รายการเบิกตามวันที่เลือก', 'ไม่มีรายการเบิกในวันที่เลือก'].includes(readState?.innerText)
+                        && !['wl-filter-source', 'wl-filter-team', 'wl-filter-search'].some(id => document.getElementById(id)?.value);
+                }, { requisitionRows: res.requisitions.length, eventRows: liveOperationalEventsList.length });
                 return res;
             } catch (e) {
                 if (request !== liveRequisitionRequest || sessionToken!==readToken || currentBranch!==readBranch) return;
+                perf?.fail();
                 console.warn('fetchLiveRequisitions error:', e);
                 if (!isSilent) {
                     renderLiveRequisitions('error');
@@ -9632,6 +9778,10 @@
             const dateEl = document.getElementById('record-date');
             const date = (dateEl && dateEl.value) || (typeof _lastRecordDate !== 'undefined' && _lastRecordDate) || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().split('T')[0]);
             if (liveRequisitionsLoadedDate === date) {
+                if (typeof window !== 'undefined' && window.AkraPerfDiagnostics?.enabled) {
+                    window.AkraPerfDiagnostics.cache('activity', 'memory');
+                    window.AkraPerfDiagnostics.count('activityCacheHits', 1, true);
+                }
                 renderUnifiedWorkloadActivity();
                 return;
             }
@@ -9866,6 +10016,9 @@
             const owner = kpiVerifiedSession, token = getKpiPageToken(), request = ++kpiConfigRequest;
             const current = () => isCurrentKpiSession(owner, token) && request === kpiConfigRequest;
             if (!current()) return false;
+            const perf = window.AkraPerfDiagnostics?.enabled ? window.AkraPerfDiagnostics : null;
+            const configSpan = perf?.start('configBoot');
+            const hydrationSpan = perf?.start('configHydration');
 
             // 1. Stale Cache Hydration (0ms Instant Boot)
             let loadedFromCache = false;
@@ -9887,6 +10040,8 @@
             } catch (e) {
                 console.warn('[KPI SWR] Cache read failed:', e);
             }
+            perf?.end(hydrationSpan);
+            perf?.cache('config', loadedFromCache ? 'hit' : 'miss');
 
             const applyFreshConfig = (configResult) => {
                 if (!current()) return false;
@@ -9907,6 +10062,7 @@
                             timestamp: Date.now()
                         }));
                     } catch (_err) {}
+                    perf?.freshConfig(configResult.employees.length);
                     return true;
                 }
                 return false;
@@ -9921,7 +10077,7 @@
                                 populateAdminEmpFilter();
                             }
                         })
-                        .catch(err => { if (current()) { handleKpiAuthFailure(err); console.warn('[KPI SWR] Background revalidation error:', err); } });
+                        .catch(err => { if (current()) { perf?.configFailed(); handleKpiAuthFailure(err); console.warn('[KPI SWR] Background revalidation error:', err); } });
                 }
             } else {
                 let loaded = false;
@@ -9931,6 +10087,7 @@
                         loaded = applyFreshConfig(configResult);
                     } catch (supaErr) {
                         if (!current()) return false;
+                        perf?.configFailed();
                         handleKpiAuthFailure(supaErr);
                         console.warn('[Supabase KPI] authenticated loadConfig failed:', supaErr);
                     }
@@ -9952,6 +10109,7 @@
             }
 
             populateAdminEmpFilter();
+            perf?.end(configSpan);
         }
 
         async function refreshAdminStatus() {
@@ -10015,6 +10173,7 @@
 
         async function initSystem() {
             let owner = null, token = null;
+            const perf = window.AkraPerfDiagnostics?.enabled ? window.AkraPerfDiagnostics : null;
             // Safety: ensure loading spinner is dismissed after at most 1500ms
             const dismissTimer = setTimeout(() => {
                 const loader = document.getElementById('system-loading');
@@ -10022,7 +10181,9 @@
             }, 1500);
 
             try {
+                const versionSpan = perf?.start('versionCheck');
                 const isVersionOk = await checkAppVersion();
+                perf?.end(versionSpan);
                 if (!isVersionOk) return;
                 AppVersionGuard.start({ current: CURRENT_VERSION, readActions: [] });
 
@@ -10030,7 +10191,9 @@
                 if (handleLineBrowserRedirect()) return;
 
                 // 1. ตรวจสอบ SSO token ก่อน เพื่อนำ sessionToken ไปใช้เรียก loadConfig()
+                const authSpan = perf?.start('auth');
                 const ssoResult = await resolveSsoAuth();
+                perf?.end(authSpan);
                 if (ssoResult.superseded) return;
                 if (!ssoResult.userData || ssoResult.expired) { await checkAuth(ssoResult); return; }
                 owner = kpiVerifiedSession;
@@ -10041,7 +10204,9 @@
                 if (!isCurrentKpiSession(owner, token)) return;
 
                 // 3. ประเมินสิทธิ์และเตรียม UI
+                const authUiSpan = perf?.start('authUi');
                 await checkAuth(ssoResult);
+                perf?.end(authUiSpan);
             } catch (err) {
                 console.error("InitSystem error:", err);
                 if (isCurrentKpiSession(owner, token)) invalidateKpiSession('โหลดข้อมูลพนักงานไม่สำเร็จ กรุณาเปิด BM Work จาก BUYMORETH ใหม่');
