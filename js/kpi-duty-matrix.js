@@ -182,6 +182,61 @@
         return getPeople().filter(p => state.assignments[p.id]?.[duty.id]).length;
     }
 
+    function coverageRoles(duty) {
+        const people = getPeople();
+        return {
+            total: coverage(duty),
+            primary: people.filter(p => state.assignments[p.id]?.[duty.id] === 'primary').length,
+            secondary: people.filter(p => state.assignments[p.id]?.[duty.id] === 'secondary').length
+        };
+    }
+
+    function allocationAssessment() {
+        const duties = activeDuties(), people = getPeople();
+        const targetDuties = duties.filter(d => d.target != null);
+        const capacityPeople = people.filter(p => p.limit != null);
+        return {
+            duties, people, targetDuties, capacityPeople,
+            shortDuties: targetDuties.filter(d => coverage(d) < d.target),
+            overloadedPeople: capacityPeople.filter(p => load(p.id) > p.limit),
+            withoutPrimary: duties.filter(d => { const counts = coverageRoles(d); return counts.total > 0 && counts.primary === 0; })
+        };
+    }
+
+    function targetAssessmentText(a) {
+        if (!a.duties.length) return 'ยังไม่มีหน้าที่ให้ประเมิน';
+        if (!a.targetDuties.length) return 'ยังประเมินจำนวนคนไม่ได้ · ยังไม่ตั้งเป้าจำนวนคน';
+        return `${a.shortDuties.length} หน้าที่ขาดคน · ประเมิน ${a.targetDuties.length}/${a.duties.length} หน้าที่`;
+    }
+
+    function capacityAssessmentText(a) {
+        if (!a.people.length) return 'ยังไม่มีพนักงานให้ประเมิน';
+        if (!a.capacityPeople.length) return 'ยังประเมินภาระไม่ได้ · ยังไม่ตั้งขีดจำกัด';
+        return `${a.overloadedPeople.length} คนเกินขีดจำกัด · ประเมิน ${a.capacityPeople.length}/${a.people.length} คน`;
+    }
+
+    function renderDutyCoverage(duty) {
+        const counts = coverageRoles(duty), isShort = duty.target != null && counts.total < duty.target;
+        return `<div data-duty-coverage="${esc(duty.id)}" class="mt-1 space-y-1 text-[11px] font-normal">
+            <div class="font-bold font-num ${isShort ? 'text-amber-800' : 'text-slate-700'}">${counts.total} คน${duty.target != null ? ` / เป้า ${duty.target}` : ''}${isShort ? ` · ขาด ${duty.target - counts.total} คน` : ''}</div>
+            <div class="text-slate-600 font-num">หลัก ${counts.primary} · เสริม ${counts.secondary}</div>
+            ${duty.target == null ? '<div class="text-slate-600">ยังไม่ตั้งเป้าจำนวนคน</div>' : ''}
+            ${counts.total > 0 && counts.primary === 0 ? '<div class="text-amber-800 font-bold">ยังไม่มีผู้รับหลัก</div>' : ''}
+            ${counts.total === 0 ? '<div class="text-slate-600">ยังไม่มีผู้รับหน้าที่</div>' : ''}
+        </div>`;
+    }
+
+    function renderPersonWeight(person, weight, mobile = false) {
+        const configured = person.limit != null, isOver = configured && weight > person.limit;
+        const fill = configured ? (person.limit === 0 ? (weight > 0 ? 100 : 0) : Math.min(100, (weight / person.limit) * 100)) : 0;
+        return `<div data-person-weight="${esc(person.id)}">
+            <div class="text-xs font-bold font-num ${isOver ? 'text-red-700' : 'text-slate-800'}">${mobile ? 'น้ำหนัก ' : ''}${weight}${configured ? ` / ${person.limit}` : ''}</div>
+            ${configured ? `<div class="w-16 h-1.5 bg-slate-100 rounded-full my-1 overflow-hidden ${mobile ? 'ml-auto' : 'mx-auto'}"><div class="h-full rounded-full ${isOver ? 'bg-red-500' : 'bg-blue-500'}" style="width: ${fill}%"></div></div>` : ''}
+            <div class="text-[11px] ${isOver ? 'text-red-700 font-bold' : 'text-slate-600'}">${!configured ? 'ยังไม่ตั้งขีดจำกัด' : isOver ? 'เกินขีดจำกัด' : 'อยู่ในขีดจำกัด'}</div>
+            <div class="text-[11px] text-slate-600">${Object.keys(state.assignments[person.id] || {}).length} หน้าที่</div>
+        </div>`;
+    }
+
     function load(personId) {
         return activeDuties().reduce((sum, d) => sum + (state.assignments[personId]?.[d.id] ? d.weight : 0), 0);
     }
@@ -228,7 +283,8 @@
             state.activeBranch=branch;applyMatrix(state.matrices[branch]);renderSingleMatrix();
             const body=content.innerHTML.replace(/window\.KpiDutyMatrix\.(openPerson|cycleAssignment)\(/g,(_,method)=>`window.KpiDutyMatrix.runBranch(${jsArg(branch)},${jsArg(method)},`);
             html+=`<section class="mb-8" aria-label="ตารางงานสาขา ${branch}"><div class="flex items-center justify-between mb-3"><h3 class="text-lg font-bold text-slate-900">สาขา ${branch}</h3><button type="button" class="text-xs font-bold text-blue-700 p-2 border rounded-lg" onclick="window.KpiDutyMatrix.runBranch(${jsArg(branch)},'openCatalog')">จัดการหน้าที่ ${branch}</button></div><div class="mb-3 rounded-xl bg-slate-50 p-3">${summary?.innerHTML||''}</div>${body}</section>`;
-            summaries+=`<span class="font-bold text-slate-700">${branch}: ${getPeople().length} คน · ${activeDuties().filter(d=>d.target!=null&&coverage(d)<d.target).length} หน้าที่ขาดคน</span>`;
+            const assessment=allocationAssessment();
+            summaries+=`<div class="space-y-1 text-slate-700"><strong>${branch}: ${assessment.people.length} คน</strong><div>${targetAssessmentText(assessment)}</div><div>${capacityAssessmentText(assessment)}</div></div>`;
         }
         content.innerHTML=html;if(summary)summary.innerHTML=`<div class="flex flex-wrap gap-4 text-xs">${summaries}</div>`;
         for(const el of content.querySelectorAll('[data-duty-scroll]'))el.scrollLeft=scrollPositions.get(el.dataset.dutyScroll)||0;
@@ -248,8 +304,7 @@
         const active = activeDuties();
         const visible = selectedPeople();
         const allPeople = getPeople();
-        const shortDuties = active.filter(d => d.target != null && coverage(d) < d.target);
-        const overloadedPeople = allPeople.filter(p => p.limit != null && load(p.id) > p.limit);
+        const assessment = allocationAssessment();
         const freePeople = allPeople.filter(p => !Object.keys(state.assignments[p.id] || {}).length);
 
         // Allocation Summary
@@ -261,24 +316,28 @@
                         <i class="fa-solid fa-users text-slate-400"></i>
                         <strong>${allPeople.length}</strong> คนในทีม
                     </span>
-                    <span class="flex items-center gap-1.5 ${shortDuties.length ? 'text-amber-700 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200' : 'text-slate-500'}">
+                    <span class="flex items-center gap-1.5 ${assessment.shortDuties.length ? 'text-amber-800 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200' : 'text-slate-600'}">
                         <i class="fa-solid fa-triangle-exclamation"></i>
-                        <strong>${shortDuties.length}</strong> หน้าที่ขาดคน
+                        ${targetAssessmentText(assessment)}
                     </span>
-                    <span class="flex items-center gap-1.5 ${overloadedPeople.length ? 'text-red-700 bg-red-50 px-2 py-1 rounded-lg border border-red-200' : 'text-slate-500'}">
+                    <span class="flex items-center gap-1.5 ${assessment.overloadedPeople.length ? 'text-red-700 bg-red-50 px-2 py-1 rounded-lg border border-red-200' : 'text-slate-600'}">
                         <i class="fa-solid fa-circle-exclamation"></i>
-                        <strong>${overloadedPeople.length}</strong> คนภาระงานสูง
+                        ${capacityAssessmentText(assessment)}
                     </span>
                     <span class="flex items-center gap-1.5 text-slate-600">
                         <i class="fa-solid fa-user-plus text-slate-400"></i>
                         <strong>${freePeople.length}</strong> คนยังไม่มีหน้าที่
                     </span>
-                    <small class="text-slate-400 ml-auto hidden sm:inline">น้ำหนักช่วยจัดคน ไม่ใช่ชั่วโมงทำงานหรือคะแนน KPI</small>
+                    ${assessment.withoutPrimary.length ? `<span class="text-amber-800 font-bold">${assessment.withoutPrimary.length} หน้าที่มีผู้รับ แต่ยังไม่มีผู้รับหลัก</span>` : ''}
+                    <small class="text-slate-600 ml-auto">น้ำหนักช่วยจัดคน ไม่ใช่ชั่วโมงทำงานหรือคะแนน KPI</small>
                 </div>
+                ${active.length && assessment.targetDuties.length < active.length ? `<p class="text-xs text-slate-600 mt-2">ยังไม่ตั้งเป้าจำนวนคน ${active.length - assessment.targetDuties.length}/${active.length} หน้าที่ · ไม่นับรวมในผลประเมินขาดคน</p>` : ''}
+                ${allPeople.length && assessment.capacityPeople.length < allPeople.length ? `<p class="text-xs text-slate-600 mt-2">ยังไม่ตั้งขีดจำกัด ${allPeople.length - assessment.capacityPeople.length}/${allPeople.length} คน · ไม่นับรวมในผลประเมินภาระ</p>` : ''}
             `;
         }
 
         container.innerHTML = `
+            ${!active.length ? '<p class="mb-3 text-sm text-slate-600">ยังไม่มีหน้าที่ในสาขานี้</p>' : ''}
             <!-- Desktop Matrix Table -->
             <div class="hidden md:block bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm mb-4">
                 <div class="overflow-x-auto" data-duty-scroll="${esc(context().branch)}">
@@ -289,15 +348,11 @@
                                     พนักงาน <span class="text-slate-400 font-normal">(${visible.length} คน)</span>
                                 </th>
                                 ${active.map(d => {
-                                    const cov = coverage(d);
-                                    const isShort = d.target != null && cov < d.target;
                                     return `
                                         <th class="p-3 font-semibold min-w-[100px] border-l border-slate-100" title="${esc(d.description)}">
                                             <div class="text-slate-900 font-bold">${esc(d.name)}</div>
                                             <div class="text-[10px] text-slate-400 mt-0.5">น้ำหนัก ${d.weight}</div>
-                                            <span class="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full font-bold font-num ${isShort ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}">
-                                                ${cov}${d.target != null ? ` / ${d.target}` : ' คน'}${isShort ? ` · ขาด ${d.target - cov}` : ''}
-                                            </span>
+                                            ${renderDutyCoverage(d)}
                                         </th>
                                     `;
                                 }).join('')}
@@ -310,8 +365,6 @@
                         <tbody class="divide-y divide-slate-100">
                             ${visible.map(p => {
                                 const w = load(p.id);
-                                const isOver = p.limit != null && w > p.limit;
-                                const dutyCount = Object.keys(state.assignments[p.id] || {}).length;
                                 return `
                                     <tr class="hover:bg-slate-50/80 transition-colors">
                                         <td class="text-left p-3.5 pl-4">
@@ -348,19 +401,11 @@
                                             `;
                                         }).join('')}
                                         <td class="p-3.5 border-l border-slate-100">
-                                            <div class="text-xs font-bold font-num ${isOver ? 'text-red-600' : 'text-slate-800'}">
-                                                ${w}${p.limit != null ? ` / ${p.limit}` : ''}
-                                            </div>
-                                            <div class="w-16 h-1.5 bg-slate-100 rounded-full mx-auto my-1 overflow-hidden">
-                                                <div class="h-full rounded-full ${isOver ? 'bg-red-500' : 'bg-blue-500'}" style="width: ${p.limit ? Math.min(100, (w / p.limit) * 100) : 0}%"></div>
-                                            </div>
-                                            <div class="text-[10px] ${isOver ? 'text-red-500 font-bold' : 'text-slate-400'}">
-                                                ${isOver ? 'เกินขีดจำกัด' : `${dutyCount} หน้าที่`}
-                                            </div>
+                                            ${renderPersonWeight(p, w)}
                                         </td>
                                     </tr>
                                 `;
-                            }).join('') || `<tr><td colspan="${active.length + 2}" class="p-8 text-center text-slate-400">ไม่พบพนักงานตามตัวกรองนี้</td></tr>`}
+                            }).join('') || `<tr><td colspan="${active.length + 2}" class="p-8 text-center text-slate-600">${allPeople.length ? 'ไม่พบพนักงานตามตัวกรองนี้' : 'ยังไม่มีพนักงานในสาขานี้'}</td></tr>`}
                         </tbody>
                         <tfoot class="bg-slate-50 text-slate-500 border-t border-slate-200 font-bold text-xs">
                             <tr>
@@ -377,9 +422,9 @@
 
             <!-- Mobile People Cards -->
             <div class="md:hidden space-y-3">
+                ${active.length ? `<details class="bg-white p-4 rounded-xl border border-slate-200" aria-label="ความครอบคลุมหน้าที่ ${esc(context().branch)}"><summary class="text-sm font-bold text-slate-900 cursor-pointer">ความครอบคลุมหน้าที่ · ${active.length} หน้าที่</summary><ul class="divide-y divide-slate-100 mt-2">${active.map(d => `<li class="py-2"><strong class="text-xs text-slate-900">${esc(d.name)}</strong>${renderDutyCoverage(d)}</li>`).join('')}</ul></details>` : ''}
                 ${visible.map(p => {
                     const w = load(p.id);
-                    const isOver = p.limit != null && w > p.limit;
                     const pDuties = active.filter(d => state.assignments[p.id]?.[d.id]);
                     return `
                         <article class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm text-xs">
@@ -394,12 +439,7 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <span class="font-bold text-xs font-num ${isOver ? 'text-red-600' : 'text-slate-800'}">
-                                        น้ำหนัก ${w}${p.limit != null ? ` / ${p.limit}` : ''}
-                                    </span>
-                                    <div class="w-16 h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden ml-auto">
-                                        <div class="h-full rounded-full ${isOver ? 'bg-red-500' : 'bg-blue-500'}" style="width: ${p.limit ? Math.min(100, (w / p.limit) * 100) : 0}%"></div>
-                                    </div>
+                                    ${renderPersonWeight(p, w, true)}
                                 </div>
                             </div>
                             <div class="flex flex-wrap gap-1.5 mb-3">
@@ -420,7 +460,7 @@
                             </button>
                         </article>
                     `;
-                }).join('') || '<div class="p-8 text-center text-slate-400">ไม่พบพนักงานตามตัวกรองนี้</div>'}
+                }).join('') || `<div class="p-8 text-center text-slate-600">${allPeople.length ? 'ไม่พบพนักงานตามตัวกรองนี้' : 'ยังไม่มีพนักงานในสาขานี้'}</div>`}
             </div>
         `;
     }

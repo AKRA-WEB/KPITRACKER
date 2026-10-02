@@ -435,8 +435,8 @@
             if (!shell || !shell.tokenFor(window)) return false;
             if (!Object.values(WORKFLOW_NAV).some(items => items.some(item => item.selector === selector))) return false;
             const target = document.querySelector(selector);
-            if (!target) return false;
-            window.postMessage({channel:'akra-workflow',version:1,selector}, window.location.origin);
+            if (!target || target.disabled) return false;
+            target.click();
             return true;
         },
         watchSession: options => {

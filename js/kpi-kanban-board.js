@@ -29,6 +29,7 @@
         ownerFilter: '',
         categoryFilter: '',
         overdueOnly: false,
+        blockedOnly: false,
         activeTaskId: null,
         draggedTaskId: null,
         isInitialized: false
@@ -201,6 +202,18 @@
         return task.due < today;
     }
 
+    function hasNextStep(value) {
+        const text = String(value || '').trim();
+        return !!text && !['รอเริ่มดำเนินงาน', 'ดำเนินการตามแผน'].includes(text.replace(/\s+/g, ' '));
+    }
+
+    function needsNextStep(status) { return status === 'progress' || status === 'blocked'; }
+
+    function renderNextStep(task) {
+        if (task.status === 'done') return '';
+        return `<div class="mt-1.5 mb-2 text-[11px] ${hasNextStep(task.next) ? 'text-slate-700' : 'text-amber-800'}"><span class="font-medium">ขั้นถัดไป:</span> ${hasNextStep(task.next) ? esc(task.next) : 'ยังไม่ระบุขั้นถัดไป'}</div>`;
+    }
+
     function formatDate(dateStr) {
         if (!dateStr) return '—';
         try {
@@ -276,6 +289,7 @@
             if (state.ownerFilter && t.owner !== state.ownerFilter && String(t.ownerName).toLowerCase() !== state.ownerFilter.toLowerCase()) return false;
             if (state.categoryFilter && t.category !== state.categoryFilter) return false;
             if (state.overdueOnly && !isOverdue(t)) return false;
+            if (state.blockedOnly && t.status !== 'blocked') return false;
             if (state.view === 'mine') {
                 const isMe = String(t.owner).toLowerCase() === currentUid || String(t.ownerName).toLowerCase() === currentUid;
                 if (!isMe) return false;
@@ -299,6 +313,8 @@
 
         const overdueCountEl = document.getElementById('kb-overdue-count');
         if (overdueCountEl) overdueCountEl.textContent = overdueCount;
+        const blockedCountEl = document.getElementById('kb-blocked-count');
+        if (blockedCountEl) blockedCountEl.textContent = state.tasks.filter(t => t.status === 'blocked').length;
 
         if (state.view === 'list' || state.view === 'mine') {
             container.innerHTML = renderListView(filtered);
@@ -462,11 +478,7 @@
                         </div>
                         ${esc(t.note)}
                     </div>
-                ` : (t.next ? `
-                    <div class="mb-2 text-[11px] text-slate-600 border-t border-slate-100 pt-1.5">
-                        <span class="text-slate-400 text-[10px]">ขั้นถัดไป:</span> ${esc(t.next)}
-                    </div>
-                ` : '')}
+                ` : renderNextStep(t)}
                 <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-[11px]">
                     <div class="flex items-center gap-1.5">
                         <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[10px]">
@@ -517,6 +529,7 @@
                                                 ${esc(t.title)} <span class="text-[10px] text-violet-800">${esc(t.branch)}</span>
                                             </button>
                                             <div class="text-[11px] text-slate-400">${esc(t.taskCode)} · ${esc(t.area)} · ${esc(t.category)}</div>
+                                            ${renderNextStep(t)}
                                         </td>
                                         <td class="p-3.5 text-slate-700">${esc((t.ownerName || resolveEmployeeName(t.owner)))}</td>
                                         <td class="p-3.5">
@@ -574,6 +587,12 @@
 
                 const task = state.tasks.find(t => t.id === taskId);
                 if (!task || task.status === targetStatus) return;
+
+                if (needsNextStep(targetStatus) && !hasNextStep(task.next)) {
+                    openTask(taskId, targetStatus);
+                    notify('กรุณาระบุขั้นถัดไป เช่น สิ่งที่จะทำและวันติดตาม ก่อนย้ายงาน');
+                    return;
+                }
 
                 // Mandatory reasons check for blocked and done
                 if (targetStatus === 'blocked' && !task.blocked) {
@@ -683,8 +702,9 @@
                 </div>
 
                 <div>
-                    <label class="block text-[11px] font-bold text-slate-700 mb-1">ขั้นถัดไป</label>
-                    <input type="text" name="next" value="${esc(t.next)}" placeholder="สิ่งที่ต้องทำต่อจากนี้" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                    <label for="kb-next-input" class="block text-[11px] font-bold text-slate-700 mb-1">ขั้นถัดไป / วันติดตาม</label>
+                    <input type="text" id="kb-next-input" name="next" value="${esc(hasNextStep(t.next) ? t.next : '')}" ${needsNextStep(currentStatus) ? 'required' : ''} aria-describedby="kb-next-help" placeholder="เช่น โทรตามช่าง 3 ต.ค." class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                    <p id="kb-next-help" class="mt-1 text-[11px] text-slate-600">ระบุสิ่งที่จะทำและวันติดตาม · จำเป็นเมื่อกำลังทำหรือติดขัด · กำหนดเสร็จของงานยังอยู่ช่องเดิม</p>
                 </div>
 
                 <div id="kb-blocked-field" class="${currentStatus === 'blocked' ? '' : 'hidden'}">
@@ -801,6 +821,8 @@
         const resField = document.getElementById('kb-resolution-field');
         if (blockedField) blockedField.classList.toggle('hidden', newStatus !== 'blocked');
         if (resField) resField.classList.toggle('hidden', newStatus !== 'done');
+        const nextInput = document.getElementById('kb-next-input');
+        if (nextInput) nextInput.required = needsNextStep(newStatus);
     }
 
     async function handleSaveTask(e) {
@@ -820,6 +842,14 @@
         const nextStep = (formData.get('next') || '').trim();
         const blocked = (formData.get('blocked') || '').trim();
         const note = (formData.get('note') || '').trim();
+
+        if (needsNextStep(nextStatus) && !hasNextStep(nextStep)) {
+            if (errEl) {
+                errEl.textContent = 'กรุณาระบุขั้นถัดไป เช่น สิ่งที่จะทำและวันติดตาม ก่อนบันทึก';
+                errEl.classList.remove('hidden');
+            }
+            return;
+        }
 
         if (nextStatus === 'blocked' && !blocked) {
             if (errEl) {
@@ -958,9 +988,12 @@
                     <input type="text" name="area" placeholder="เช่น W1 / แร็ค A3" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block text-[11px] font-bold text-slate-700 mb-1">ขั้นถัดไป</label>
-                    <input type="text" name="next" placeholder="สิ่งที่ต้องเริ่มทำก่อน" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                    <label for="kb-create-next-input" class="block text-[11px] font-bold text-slate-700 mb-1">ขั้นถัดไป / วันติดตาม</label>
+                    <input type="text" id="kb-create-next-input" name="next" ${needsNextStep(initialStatus) ? 'required' : ''} aria-describedby="kb-create-next-help" placeholder="เช่น ตรวจรายการสินค้า 3 ต.ค." class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                    <p id="kb-create-next-help" class="mt-1 text-[11px] text-slate-600">ระบุสิ่งที่จะทำและวันติดตาม · จำเป็นเมื่อเริ่มงาน · กำหนดเสร็จของงานยังอยู่ช่องเดิม</p>
                 </div>
+
+                <div id="kb-create-form-error" role="alert" class="hidden text-xs text-red-700 font-bold p-2 bg-red-50 rounded-lg"></div>
 
                 <div class="flex gap-2 pt-2">
                     <button type="button" onclick="window.KpiKanbanBoard.closeDrawer()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50">
@@ -989,6 +1022,16 @@
         if(!getEmployees(branch).some(employee=>employee.uid===owner)){notify('กรุณาเลือกผู้รับผิดชอบในสาขานี้');return;}
         const ownerName = resolveEmployeeName(owner,branch);
         const status = formData.get('status') || 'open';
+        const nextStep = (formData.get('next') || '').trim();
+        const errEl = document.getElementById('kb-create-form-error');
+        if (errEl) errEl.classList.add('hidden');
+        if (needsNextStep(status) && !hasNextStep(nextStep)) {
+            if (errEl) {
+                errEl.textContent = 'กรุณาระบุขั้นถัดไป เช่น สิ่งที่จะทำและวันติดตาม ก่อนสร้างงาน';
+                errEl.classList.remove('hidden');
+            }
+            return;
+        }
 
         const newTask = {
             id,
@@ -1003,7 +1046,7 @@
             area: (formData.get('area') || 'คลัง '+branch).trim(),
             status,
             due: formData.get('due'),
-            next: (formData.get('next') || 'รอเริ่มดำเนินงาน').trim(),
+            next: nextStep,
             blocked: '',
             note: '',
             checklist: [],
@@ -1114,9 +1157,22 @@
         state.overdueOnly = !state.overdueOnly;
         const btn = document.getElementById('kb-overdue-toggle');
         if (btn) {
+            btn.setAttribute('aria-pressed', String(state.overdueOnly));
             btn.classList.toggle('bg-red-50', state.overdueOnly);
             btn.classList.toggle('border-red-300', state.overdueOnly);
             btn.classList.toggle('text-red-700', state.overdueOnly);
+        }
+        renderBoard();
+    }
+
+    function toggleBlocked() {
+        state.blockedOnly = !state.blockedOnly;
+        const btn = document.getElementById('kb-blocked-toggle');
+        if (btn) {
+            btn.setAttribute('aria-pressed', String(state.blockedOnly));
+            btn.classList.toggle('bg-amber-50', state.blockedOnly);
+            btn.classList.toggle('border-amber-400', state.blockedOnly);
+            btn.classList.toggle('text-amber-900', state.blockedOnly);
         }
         renderBoard();
     }
@@ -1178,6 +1234,7 @@
         handleClaimIssue,
         setView,
         toggleOverdue,
+        toggleBlocked,
         initEventListeners
     };
 
