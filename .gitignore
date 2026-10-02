@@ -5,3 +5,4 @@ output/
 .playwright-cli/
 
 .worktrees/
+node_modules/

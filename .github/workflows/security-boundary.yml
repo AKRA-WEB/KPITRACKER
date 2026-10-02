@@ -17,6 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node tests/static_tailwind_test.cjs
       - run: node --check js/supabase-kpi-client.js
       - run: node tests/supabase-kpi-test.js
       - run: node tests/daily_sections_actions_test.js

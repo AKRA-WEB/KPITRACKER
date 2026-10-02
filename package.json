@@ -1,0 +1,12 @@
+{
+  "name": "akra-kpi-static-styles",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss --config tailwind.config.cjs --input styles/tailwind.css --output css/tailwind.min.css --minify",
+    "test:css": "node tests/static_tailwind_test.cjs"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}
