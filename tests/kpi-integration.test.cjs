@@ -35,6 +35,16 @@ test('late activity responses cannot update a changed date or session',async()=>
 test('Dashboard canonical task routing and forced refresh reject stale reads',async()=>{
   const c={console,document:{addEventListener(){},querySelectorAll(){return[];},getElementById(){return {addEventListener(){}};}},addEventListener(){},setTimeout,clearTimeout,URL,URLSearchParams,location:{search:'',hostname:'localhost'},navigator:{},localStorage:{getItem(){return null;},setItem(){},removeItem(){}},sessionStorage:{getItem(){return null;}},alert(){}};c.window=c;vm.createContext(c);
   for(const [,src] of fs.readFileSync(path.join(__dirname,'../index.html'),'utf8').matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi))if(src.trim())new vm.Script(src).runInContext(c);
+  assert.equal(c.switchTab('dashboard'),false,'shell navigation waits for verified session and branch');
+  assert.equal(vm.runInContext('pendingKpiTab',c),'dashboard');
+  const actualSwitch=c.switchTab;let selected;
+  c.switchTab=tab=>selected=tab;
+  c.document.getElementById=()=>({classList:{add(){},remove(){},toggle(){}},value:'2026-10-02'});
+  for(const name of ['toggleVendorBillsPending','renderAkraRoster','addErrorEntryRow','loadTasksForSelectedDate','applyEndOfShiftPermissionsUI','restoreRecordDraft','hydrateIncidentPreview','updateDailyDashboard','loadSkillsData'])c[name]=()=>{};
+  c.isKpiCacheStale=()=>false;
+  vm.runInContext("currentBranch='AKRA';",c);c.initApp('AKRA',['AKRA']);
+  assert.equal(selected,'dashboard','verified branch initialization resumes the shell-selected route');
+  assert.equal(vm.runInContext('pendingKpiTab',c),null);c.switchTab=actualSwitch;
   let routed;c.KpiKanbanBoard={openFromDashboard:(...args)=>routed=args};c.openActionModalForEdit=id=>routed=[id,'legacy'];
   c.openDashboardTask('task','TRD',true);assert.deepEqual(routed,['task','TRD']);c.openDashboardTask('old','AKRA',false);assert.deepEqual(routed,['old','legacy']);
   c.document.getElementById=()=>null;
