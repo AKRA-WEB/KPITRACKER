@@ -17,6 +17,18 @@ function setup(api) {
   return {window,element,notices,document};
 }
 
+test('Dashboard opens a fresh branch-matched Kanban drawer and saving refreshes the shared action cache',async()=>{
+  let reads=0,changes=0;
+  const task={actionId:'DASH-1',branch:'TRD',title:'Latest canonical details',ownerUid:'u1',status:'In Progress',revision:7,checklist:[{id:'c',text:'Latest checklist',done:false}],comments:[]};
+  const ui=setup({getKanbanBoard:async(_token,branch)=>{reads++;assert.equal(branch,'TRD');return {tasks:[task]};},saveKanbanTask:async(_token,payload,revision)=>{assert.equal(revision,7);return {task:{...task,...payload,revision:8}};}});
+  ui.window.onKpiTaskChanged=()=>changes++;
+  await ui.window.KpiKanbanBoard.openFromDashboard('DASH-1','AKRA');assert.equal(reads,0);
+  await ui.window.KpiKanbanBoard.openFromDashboard('DASH-1','TRD');
+  assert.match(ui.element('kpi-task-drawer').innerHTML,/Latest canonical details/);assert.match(ui.element('kpi-task-drawer').innerHTML,/Latest checklist/);
+  await ui.window.KpiKanbanBoard.toggleChecklist(0,true);assert.equal(changes,1);
+  assert.equal(reads,1);
+});
+
 test('special characters in task and employee IDs remain literal handler arguments', async () => {
   const id = "legacy'); window.injected=true;//";
   const ui = setup({

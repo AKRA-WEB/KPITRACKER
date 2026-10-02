@@ -87,9 +87,11 @@ const sandbox = {
     console: { warn() {} },
     esc: value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;'),
     fetch: () => Promise.resolve({ ok: true, json: async () => ({ success: true, requisitions: [] }) }),
-    sessionToken: 'session-token-1'
+    sessionToken: 'session-token-1',
+    currentBranch: 'AKRA'
 };
 
+sandbox.window = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(controller, sandbox);
 

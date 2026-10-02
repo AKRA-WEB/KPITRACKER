@@ -54,7 +54,7 @@
             if (context().token!==c.token || context().branch!==c.branch) return null;
             const task=normalizeTask({...res.task,branch:candidate.branch||c.branch}); const i=state.tasks.findIndex(t=>t.id===task.id);
             if(i<0) state.tasks.unshift(task); else state.tasks[i]=task;
-            renderBoard(); return task;
+            renderBoard(); window.onKpiTaskChanged?.(task); return task;
         } catch(err) { notify('บันทึกไม่สำเร็จ กรุณารีเฟรชข้อมูลก่อนลองอีกครั้ง'); await loadKanbanBoard(); return null; }
         finally {state.saving=false;}
     }
@@ -102,7 +102,7 @@
             const res=await window.AkraSupabaseKPI.uploadTaskImage(c.token,payload);
             if(context().token!==c.token||context().branch!==c.branch)return;
             const next=normalizeTask({...res.task,branch:task.branch});const idx=state.tasks.findIndex(t=>t.id===task.id);if(idx>=0)state.tasks[idx]=next;
-            delete state.imageRetries?.[task.id];renderBoard();notify('เพิ่มรูปภาพแล้ว');if(state.activeTaskId===task.id)await loadImages(next);
+            delete state.imageRetries?.[task.id];renderBoard();window.onKpiTaskChanged?.(next);notify('เพิ่มรูปภาพแล้ว');if(state.activeTaskId===task.id)await loadImages(next);
         }catch(err){
             if(context().token!==c.token||context().branch!==c.branch)return;
             if(['record_conflict','image_limit_reached','invalid_image','image_too_large','permission_denied','cannot_edit_other_tasks'].includes(err.reason)){delete state.imageRetries?.[task.id];notify('บันทึกรูปไม่ได้ ข้อมูลหรือสิทธิ์อาจเปลี่ยน กรุณาปิดแล้วเปิดงานใหม่');}
@@ -135,7 +135,7 @@
             const res=await window.AkraSupabaseKPI.removeTaskImage(c.token,{branch:task.branch,actionId:task.actionId,imageId:id,expectedRevision:task.revision});
             if(context().token!==c.token||context().branch!==c.branch)return;
             const next=normalizeTask({...res.task,branch:task.branch}),idx=state.tasks.findIndex(t=>t.id===task.id);if(idx>=0)state.tasks[idx]=next;
-            renderBoard();notify('ลบรูปภาพแล้ว');if(state.activeTaskId===task.id)await loadImages(next);
+            renderBoard();window.onKpiTaskChanged?.(next);notify('ลบรูปภาพแล้ว');if(state.activeTaskId===task.id)await loadImages(next);
         }catch(_err){if(context().token===c.token)notify('ลบรูปไม่สำเร็จ กรุณาปิดแล้วเปิดงานเพื่อตรวจข้อมูลล่าสุด');}
         finally{imageBusy(false);if(context().token===c.token&&state.activeTaskId===task.id)renderImages(findTask(task.id)||task,state.imageUrls||[]);}
     }
@@ -239,6 +239,16 @@
             const content=document.getElementById('kb-board-content');
             if(content)content.innerHTML='<p role="alert" class="p-6 text-red-700 bg-red-50 rounded-xl">โหลดบอร์ดไม่สำเร็จ กรุณารีเฟรชข้อมูลหรือตรวจสอบสิทธิ์</p>';
         }
+    }
+
+    async function openFromDashboard(actionId,branch){
+        const c=context();if(!branches().includes(branch)||state.saving)return;
+        const ticket=state.dashboardOpenTicket=(state.dashboardOpenTicket||0)+1;
+        state.branchScope=branch;await loadKanbanBoard();
+        if(ticket!==state.dashboardOpenTicket||context().token!==c.token||context().branch!==c.branch)return;
+        const task=state.tasks.find(t=>t.actionId===actionId&&t.branch===branch);
+        if(!task){notify('ไม่พบงานหรือไม่มีสิทธิ์ดูงานนี้ กรุณารีเฟรช');return;}
+        openTask(task.id);
     }
 
     function populateOwnerSelect() {
@@ -1147,6 +1157,7 @@
         updateCreationOwners,
         renderBoard,
         openTask,
+        openFromDashboard,
         uploadImage,
         retryImage,
         removeImage,
