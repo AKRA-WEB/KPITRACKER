@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <script src="js/akra-shell-bridge.js?v=20261002.04"></script>
+    <script src="js/akra-shell-bridge.js?v=20261002.05"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BM Work | งานและทีม</title>
@@ -3038,7 +3038,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">BM Work v20261002.04</span>
+                <span id="drawer-version-text">BM Work v20261002.05</span>
                 <span>BUYMORETH</span>
             </div>
         </div>
@@ -3458,16 +3458,16 @@
         }
     </style>
     <div id="kb-image-viewer" class="hidden fixed inset-0 z-[80] bg-slate-950/90 p-4" role="dialog" aria-modal="true" aria-label="ดูรูปภาพ" tabindex="-1"></div>
-    <script src="js/supabase-kpi-client.js?v=20261002.04"></script>
-    <script src="js/workload-permissions.js?v=20261002.04"></script>
-    <script src="js/incident-impact.js?v=20261002.04"></script>
-    <script src="js/kpi-kanban-board.js?v=20261002.04"></script>
-    <script src="js/kpi-duty-matrix.js?v=20261002.04"></script>
-    <script src="js/kpi-integration.js?v=20261002.04"></script>
+    <script src="js/supabase-kpi-client.js?v=20261002.05"></script>
+    <script src="js/workload-permissions.js?v=20261002.05"></script>
+    <script src="js/incident-impact.js?v=20261002.05"></script>
+    <script src="js/kpi-kanban-board.js?v=20261002.05"></script>
+    <script src="js/kpi-duty-matrix.js?v=20261002.05"></script>
+    <script src="js/kpi-integration.js?v=20261002.05"></script>
     <script>
         // ================= CONFIGURATION =================
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20261002.04";
+        const CURRENT_VERSION = "20261002.05";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -4181,6 +4181,7 @@
         }
         function invalidateKpiSession(message) {
             window.AkraPerfDiagnostics?.invalidate?.();
+            if (typeof clearStartupActivityPrefetch === 'function') clearStartupActivityPrefetch();
             ++kpiAuthAttempt;
             ++kpiConfigRequest;
             kpiVerifiedSession = null;
@@ -9609,6 +9610,57 @@
         let liveRequisitionRefreshDelay = 10000;
         let liveRequisitionRefreshBound = false;
         let liveRequisitionsLoadedDate = '';
+        let startupActivityPrefetch = null;
+
+        function clearStartupActivityPrefetch(expected = null) {
+            if (!expected || startupActivityPrefetch === expected) startupActivityPrefetch = null;
+        }
+
+        function startStartupActivityPrefetch(sso, quickWorkloadEntry = false) {
+            clearStartupActivityPrefetch();
+            const user = sso?.userData, owner = kpiVerifiedSession, token = getKpiPageToken();
+            if (!user || quickWorkloadEntry || !isCurrentKpiSession(owner, token) || currentBranch !== 'AKRA'
+                || !getBranchesFromMainRoles(user.roles).includes('AKRA')
+                || !Array.isArray(user.perms?.['app-kpi']) || !user.perms['app-kpi'].includes('viewKpiData')
+                || (pendingKpiTab && pendingKpiTab !== 'workload')) return;
+            const url = new URLSearchParams(window.location.search);
+            if (url.get('action') === 'quick_workload' || window.location.hash.includes('quick_workload')) return;
+            if (typeof AkraSupabaseKPI === 'undefined' || typeof AkraSupabaseKPI.getLiveRequisitions !== 'function') return;
+            const entry = { owner, token, branch: currentBranch, date: getTodayBangkokDateStr(), usable: false, consumer: null };
+            startupActivityPrefetch = entry;
+            // Buffer the authorized fresh response only; config and normal branch setup still own rendering.
+            entry.promise = Promise.resolve().then(() => {
+                if (startupActivityPrefetch !== entry || !isCurrentKpiSession(owner, token)
+                    || currentBranch !== entry.branch || entry.date !== getTodayBangkokDateStr()) return {};
+                return AkraSupabaseKPI.getLiveRequisitions(token, entry.date);
+            }).then(result => ({ result }), error => ({ error }));
+            return entry;
+        }
+
+        function activateStartupActivityPrefetch() {
+            const entry = startupActivityPrefetch;
+            const roles = KPI_MAIN_VIEWER?.roles || entry?.owner.user.roles;
+            if (!entry || !isCurrentKpiSession(entry.owner, entry.token) || currentBranch !== entry.branch
+                || entry.date !== getTodayBangkokDateStr() || !getBranchesFromMainRoles(roles).includes('AKRA')
+                || !Array.isArray(entry.owner.user.perms?.['app-kpi']) || !entry.owner.user.perms['app-kpi'].includes('viewKpiData')
+                || (KPI_MAIN_VIEWER && KPI_MAIN_VIEWER.status !== 'Active')
+                || (pendingKpiTab && pendingKpiTab !== 'workload')) {
+                clearStartupActivityPrefetch();
+                return;
+            }
+            entry.usable = true;
+        }
+
+        function matchingStartupActivityPrefetch(date) {
+            const entry = startupActivityPrefetch;
+            if (!entry?.usable) return null;
+            const roles = KPI_MAIN_VIEWER?.roles || entry?.owner.user.roles;
+            return isCurrentKpiSession(entry.owner, entry.token)
+                && currentBranch === entry.branch && date === entry.date && entry.date === getTodayBangkokDateStr()
+                && Array.isArray(entry.owner.user.perms?.['app-kpi']) && entry.owner.user.perms['app-kpi'].includes('viewKpiData')
+                && getBranchesFromMainRoles(roles).includes('AKRA') && (!KPI_MAIN_VIEWER || KPI_MAIN_VIEWER.status === 'Active')
+                ? entry : null;
+        }
 
         function classifyRequisition(req) {
             if (!req || typeof req !== 'object') {
@@ -9714,6 +9766,11 @@
             const billDateEl = document.getElementById('record-date-billcount');
             const workloadDateEl = document.getElementById('record-date');
             const d = targetDate || (billDateEl && billDateEl.value) || (workloadDateEl && workloadDateEl.value) || (typeof _lastRecordDate !== 'undefined' && _lastRecordDate) || (typeof getTodayBangkokDateStr === 'function' ? getTodayBangkokDateStr() : new Date().toISOString().split('T')[0]);
+            const prefetch = matchingStartupActivityPrefetch(d);
+            if (prefetch?.consumer) return prefetch.consumer;
+            if (!prefetch && startupActivityPrefetch) clearStartupActivityPrefetch();
+            let finishPrefetch, prefetchResult;
+            if (prefetch) prefetch.consumer = new Promise(resolve => { finishPrefetch = resolve; });
             const request = ++liveRequisitionRequest;
             const readToken=sessionToken, readBranch=currentBranch;
             const perf = typeof window !== 'undefined' && window.AkraPerfDiagnostics?.enabled ? window.AkraPerfDiagnostics : null;
@@ -9731,7 +9788,12 @@
                 let res;
                 const authToken = typeof sessionToken !== 'undefined' ? sessionToken : null;
                 if (!authToken) throw new Error('authenticated_session_required');
-                if (typeof AkraSupabaseKPI !== 'undefined' && typeof AkraSupabaseKPI.getLiveRequisitions === 'function') {
+                if (prefetch) {
+                    const buffered = await prefetch.promise;
+                    if (buffered.error) throw buffered.error;
+                    if (matchingStartupActivityPrefetch(d) !== prefetch || (workloadDateEl?.value && workloadDateEl.value !== d)) return;
+                    res = buffered.result;
+                } else if (typeof AkraSupabaseKPI !== 'undefined' && typeof AkraSupabaseKPI.getLiveRequisitions === 'function') {
                     res = await AkraSupabaseKPI.getLiveRequisitions(authToken, d);
                 } else if (typeof window !== 'undefined' && window.AkraSupabaseKPI && typeof window.AkraSupabaseKPI.getLiveRequisitions === 'function') {
                     res = await window.AkraSupabaseKPI.getLiveRequisitions(authToken, d);
@@ -9758,6 +9820,7 @@
                         && ['รายการเบิกตามวันที่เลือก', 'ไม่มีรายการเบิกในวันที่เลือก'].includes(readState?.innerText)
                         && !['wl-filter-source', 'wl-filter-team', 'wl-filter-search'].some(id => document.getElementById(id)?.value);
                 }, { requisitionRows: res.requisitions.length, eventRows: liveOperationalEventsList.length });
+                prefetchResult = res;
                 return res;
             } catch (e) {
                 if (request !== liveRequisitionRequest || sessionToken!==readToken || currentBranch!==readBranch) return;
@@ -9768,6 +9831,11 @@
                 } else {
                     const stateEl = document.getElementById('live-bill-read-state');
                     if (stateEl) stateEl.innerText = 'อัปเดตเบื้องหลังไม่สำเร็จ (แสดงข้อมูลล่าสุด)';
+                }
+            } finally {
+                if (prefetch) {
+                    if (startupActivityPrefetch === prefetch) clearStartupActivityPrefetch();
+                    finishPrefetch(prefetchResult);
                 }
             }
         }
@@ -10172,7 +10240,9 @@
         }
 
         async function initSystem() {
-            let owner = null, token = null;
+            let owner = null, token = null, startupPrefetch = null;
+            const quickWorkloadEntry = new URLSearchParams(window.location.search).get('action') === 'quick_workload'
+                || window.location.hash.includes('quick_workload');
             const perf = window.AkraPerfDiagnostics?.enabled ? window.AkraPerfDiagnostics : null;
             // Safety: ensure loading spinner is dismissed after at most 1500ms
             const dismissTimer = setTimeout(() => {
@@ -10198,16 +10268,20 @@
                 if (!ssoResult.userData || ssoResult.expired) { await checkAuth(ssoResult); return; }
                 owner = kpiVerifiedSession;
                 token = getKpiPageToken();
+                startupPrefetch = startStartupActivityPrefetch(ssoResult, quickWorkloadEntry);
 
                 // 2. โหลดรายชื่อและ Role จาก BUYMORETH ผ่าน Supabase Edge boundary
                 await loadConfig();
-                if (!isCurrentKpiSession(owner, token)) return;
+                if (!isCurrentKpiSession(owner, token)) { if (startupPrefetch) clearStartupActivityPrefetch(startupPrefetch); return; }
+                activateStartupActivityPrefetch();
 
                 // 3. ประเมินสิทธิ์และเตรียม UI
                 const authUiSpan = perf?.start('authUi');
                 await checkAuth(ssoResult);
                 perf?.end(authUiSpan);
+                if (startupActivityPrefetch === startupPrefetch && !startupPrefetch?.consumer) clearStartupActivityPrefetch(startupPrefetch);
             } catch (err) {
+                if (startupPrefetch) clearStartupActivityPrefetch(startupPrefetch);
                 console.error("InitSystem error:", err);
                 if (isCurrentKpiSession(owner, token)) invalidateKpiSession('โหลดข้อมูลพนักงานไม่สำเร็จ กรุณาเปิด BM Work จาก BUYMORETH ใหม่');
             } finally {

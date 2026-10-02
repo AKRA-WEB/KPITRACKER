@@ -41,7 +41,7 @@ function rig(flag = '1', navigation = true) {
     class FixtureDate extends Date { static now() { return wallClock; } }
     const c = {
         URLSearchParams, TextEncoder, Date: FixtureDate,
-        location: { search: flag === null ? '?sso=private-token-sentinel' : '?akra_perf=' + flag + '&sso=private-token-sentinel' },
+        location: { search: flag === null ? '?sso=private-token-sentinel' : '?akra_perf=' + flag + '&sso=private-token-sentinel', hash: '' },
         performance: navigation ? { now: () => ++clock } : undefined,
         requestAnimationFrame: fn => frames.push(fn),
         document: { getElementById: id => nodes.get(id) || null, createElement: node,
@@ -49,7 +49,7 @@ function rig(flag = '1', navigation = true) {
         console: { warn() {}, error() {}, log() {} },
         localStorage: { getItem() { throw Error('diagnostics must not access localStorage'); }, setItem() { throw Error('no diagnostic storage'); } },
         safeStorage: { getItem: key => storage.get(key), setItem: (key, value) => { ++storeWrites; storage.set(key, value); } },
-        sessionToken: owner.token, kpiVerifiedSession: owner, currentBranch: 'AKRA', kpiConfigRequest: 0,
+        sessionToken: owner.token, kpiVerifiedSession: owner, currentBranch: 'AKRA', kpiConfigRequest: 0, pendingKpiTab: null,
         KPI_WORKLOAD_STATUS: {}, KPI_MAIN_VIEWER: null, KPI_SYSTEM_CONFIG: {}, TRD_DEPARTMENTS: {},
         getKpiSessionOwner: () => c.kpiVerifiedSession,
         getKpiSessionToken: () => c.sessionToken,
@@ -78,6 +78,7 @@ function rig(flag = '1', navigation = true) {
     run('const CURRENT_VERSION = ' + JSON.stringify(version) + ';' + section('        const KpiPerf = (() => {', '        // Auto open Quick Workload Modal'));
     run(adapter);
     run(section('        let liveRequisitionsList', '        function applyAkraWorkloadDraft'));
+    run(functionSource('getBranchesFromMainRoles'));
     run(functionSource('renderUnifiedWorkloadActivity'));
     run(functionSource('loadConfig'));
     run(functionSource('initSystem'));

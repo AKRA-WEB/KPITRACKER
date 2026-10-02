@@ -22,3 +22,4 @@ jobs:
       - run: node tests/daily_sections_actions_test.js
       - run: node tests/case_marker_leakage_and_metadata_v2_test.js
       - run: node tests/live_bill_sync_ui_test.js
+      - run: node tests/startup_activity_overlap_test.cjs

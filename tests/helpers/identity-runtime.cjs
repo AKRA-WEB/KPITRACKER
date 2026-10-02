@@ -19,6 +19,9 @@ function rig({verify=async()=>original}={}){
  run(section('        // ================= SAFE STORAGE WRAPPERS','        const KPI_CACHE_TTL'));
  run(section('        // ================= AUTH & STATE','        // ================= HELPER FUNCTIONS'));
  run('let _draftTimer=null,_restoringDraft=false,localActionsDraft=[],ALL_ACTIONS=[],liveRequisitionRequest=0,liveRequisitionRefreshTimer=null,liveRequisitionsList=[];const sectionEditRevisions=new Map(),ScopedRefresher={inFlight:{}};');
+ run('let startupActivityPrefetch=null,pendingKpiTab=null;');
+ run(section('        function clearStartupActivityPrefetch(', '        function classifyRequisition('));
+ run(section('        function getBranchesFromMainRoles(', '        function hasKpiAdminRole('));
  run(section('        async function resolveSsoAuth(','        async function checkAuth('));
  run('this.fixtureStorage=safeStorage;this.fixtureSessionStorage=safeSessionStorage;');
  const user=(u=original,t=token)=>{c.testOwner={user:{...u},token:t};c.testToken=t;run("kpiVerifiedSession=testOwner;sessionToken=testToken;currentUser=testOwner.user.id;");};
