@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <script src="js/akra-shell-bridge.js?v=20261002.07"></script>
+    <script src="js/akra-shell-bridge.js?v=20261003.01"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BM Work | งานและทีม</title>
@@ -129,7 +129,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="css/tailwind.min.css?v=20261002.07">
+    <link rel="stylesheet" href="css/tailwind.min.css?v=20261003.01">
 </head>
 <body class="text-gray-800 pb-20">
     <style>body:not(.kpi-session-ready) > :not(#kpi-session-status):not(script):not(style) { display: none !important; } #kpi-session-status[hidden] { display: none !important; }</style>
@@ -3042,7 +3042,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">BM Work v20261002.07</span>
+                <span id="drawer-version-text">BM Work v20261003.01</span>
                 <span>BUYMORETH</span>
             </div>
         </div>
@@ -3462,16 +3462,16 @@
         }
     </style>
     <div id="kb-image-viewer" class="hidden fixed inset-0 z-[80] bg-slate-950/90 p-4" role="dialog" aria-modal="true" aria-label="ดูรูปภาพ" tabindex="-1"></div>
-    <script src="js/supabase-kpi-client.js?v=20261002.07"></script>
-    <script src="js/workload-permissions.js?v=20261002.07"></script>
-    <script src="js/incident-impact.js?v=20261002.07"></script>
-    <script src="js/kpi-kanban-board.js?v=20261002.07"></script>
-    <script src="js/kpi-duty-matrix.js?v=20261002.07"></script>
-    <script src="js/kpi-integration.js?v=20261002.07"></script>
+    <script src="js/supabase-kpi-client.js?v=20261003.01"></script>
+    <script src="js/workload-permissions.js?v=20261003.01"></script>
+    <script src="js/incident-impact.js?v=20261003.01"></script>
+    <script src="js/kpi-kanban-board.js?v=20261003.01"></script>
+    <script src="js/kpi-duty-matrix.js?v=20261003.01"></script>
+    <script src="js/kpi-integration.js?v=20261003.01"></script>
     <script>
         // ================= CONFIGURATION =================
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20261002.07";
+        const CURRENT_VERSION = "20261003.01";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -5147,14 +5147,25 @@
 
                 const uidStr = String(uid).toLowerCase();
 
-                const roles = Array.isArray(user.roles) ? user.roles.map(r => String(r).toUpperCase()) : [];
-                const branches = roles.length
+                const roles = Array.isArray(user.roles) ? user.roles.map(r => String(r).trim().toUpperCase()) : [];
+                const accessBranches = roles.length
                     ? getBranchesFromMainRoles(roles)
-                    : String(user.branches || '').split(',').map(b => b.trim().toUpperCase()).filter(Boolean);
+                    : (Array.isArray(user.accessBranches) ? user.accessBranches
+                        : String(user.branches || '').split(',').map(b => b.trim().toUpperCase()).filter(Boolean));
+                // Team membership is a home branch, independent of Supervisor viewing access.
+                const explicitHomes = [];
+                if (roles.includes('AKRA') || roles.includes('WAREHOUSE')) explicitHomes.push('AKRA');
+                if (roles.includes('TRD') || roles.includes('CASHIER')) explicitHomes.push('TRD');
+                const projectedHomes = Array.isArray(user.rosterBranches)
+                    ? user.rosterBranches.map(branch => String(branch).trim().toUpperCase())
+                    : (roles.length ? explicitHomes : accessBranches);
+                const uniqueHomes = [...new Set(projectedHomes.filter(branch => ['AKRA', 'TRD'].includes(branch)))];
+                const branches = uniqueHomes.length === 1 ? uniqueHomes : [];
                 user.roles = roles;
+                user.accessBranches = accessBranches;
                 user.branches = branches.join(',');
 
-                USER_DB[uidStr] = branches;
+                USER_DB[uidStr] = accessBranches;
 
                 const isSystemAdmin = roles.includes('ADMIN')
                     || (roles.length === 0 && user.dept && user.dept.toLowerCase() === 'admin');
@@ -9068,12 +9079,9 @@
                     return BRANCH_CONFIG['TRD'].employees;
                 }
                 if (typeof GLOBAL_CONFIG_LIST !== 'undefined' && Array.isArray(GLOBAL_CONFIG_LIST)) {
-                    const trdConfig = GLOBAL_CONFIG_LIST
-                        .filter(c => (c.branches ? c.branches.includes('TRD') : (c.branch === 'TRD')) && c.dept !== 'Admin' && c.status !== 'Inactive')
-                        .map(c => c.name);
-                    if (trdConfig.length > 0) return trdConfig;
+                    return getBranchRosterEmployees('TRD').map(employee => employee.name);
                 }
-                return ['ท็อป', 'น้องใหม่', 'บรรเลง', 'บอย', 'มะปราง', 'ปิ่น'];
+                return [];
             }
             return getAkraOnDutyEmployees();
         }
@@ -9082,10 +9090,19 @@
             const container = document.getElementById('pc-err-emp-chips');
             const catcherContainer = document.getElementById('pc-err-catcher-chips');
             const emps = getBranchActiveRoster(currentBranch);
+            const preserveEditedPerson = window.KpiIncident?.enabled() && KpiIncident.state.editing && !KpiIncident.state.participantsChanged;
+            const detector = document.getElementById('impact-detector');
+            if (detector) {
+                const selected = detector.value || '';
+                const detectorOptions = [...emps];
+                if (selected && !detectorOptions.includes(selected)) detectorOptions.push(selected);
+                detector.innerHTML = '<option value="">ไม่ระบุ / ตรวจพบเอง</option>'
+                    + detectorOptions.map(name => `<option value="${esc(name)}">${esc(name)}</option>`).join('');
+                detector.value = selected;
+            }
 
             if (container) {
                 const options = ['ทุกคนในกะ', ...emps];
-                const preserveEditedPerson = window.KpiIncident?.enabled() && KpiIncident.state.editing && !KpiIncident.state.participantsChanged;
                 if ((!selectedErrWorker || !options.includes(selectedErrWorker)) && !preserveEditedPerson) {
                     selectedErrWorker = options[0] || 'ทุกคนในกะ';
                 }
@@ -9104,7 +9121,7 @@
 
             if (catcherContainer) {
                 const catcherOptions = ['(ไม่มี / ตรวจพบเอง)', ...emps];
-                if (!selectedErrCatcher || !catcherOptions.includes(selectedErrCatcher)) {
+                if ((!selectedErrCatcher || !catcherOptions.includes(selectedErrCatcher)) && !preserveEditedPerson) {
                     selectedErrCatcher = catcherOptions[0];
                 }
 
@@ -10147,6 +10164,7 @@
                         .then(fresh => {
                             if (applyFreshConfig(fresh)) {
                                 populateAdminEmpFilter();
+                                if (typeof currentBranch !== 'undefined' && currentBranch && typeof renderErrEmpChips === 'function') renderErrEmpChips();
                             }
                         })
                         .catch(err => { if (current()) { perf?.configFailed(); handleKpiAuthFailure(err); console.warn('[KPI SWR] Background revalidation error:', err); } });
