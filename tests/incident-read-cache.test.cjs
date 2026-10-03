@@ -42,7 +42,8 @@ function fixture({failWrites = false, stale = false} = {}) {
                 textContent: '', innerText: '', innerHTML: '', disabled: false,
                 parentElement: parent, hidden: false, style: {setProperty() {}},
                 classList: {
-                    add: name => classes.add(name), remove: name => classes.delete(name),
+                    add: (...names) => names.forEach(name => classes.add(name)),
+                    remove: (...names) => names.forEach(name => classes.delete(name)),
                     contains: name => classes.has(name),
                     toggle(name, force) {
                         if (force === undefined ? !classes.has(name) : force) classes.add(name);
@@ -94,6 +95,7 @@ function fixture({failWrites = false, stale = false} = {}) {
     };
     c.window = c;
     c.addEventListener = () => {};
+    c.scrollTo = () => {};
     vm.createContext(c);
     vm.runInContext(incidentScript, c);
     for (const source of scripts) new vm.Script(source).runInContext(c);
@@ -279,4 +281,51 @@ test('a delayed old session response cannot write a replacement identity cache',
     assert.equal(f.cache().length, 0);
     f.user();
     assert.equal(f.cache().length, 0);
+});
+
+function enterDashboard(f) {
+    // Keep actual selectBranch/initApp/switchTab and read consumers. These
+    // unrelated form, skills and Actions paths do not load Incident/Daily.
+    f.run('toggleVendorBillsPending=()=>{};renderAkraRoster=()=>{};addErrorEntryRow=()=>{};applyEndOfShiftPermissionsUI=()=>{};restoreRecordDraft=()=>{};loadSkillsData=()=>{};refreshActions=()=>{};');
+    f.run("pendingKpiTab='dashboard';selectBranch('TRD',['AKRA','TRD']);");
+}
+
+for (const stale of [false, true]) {
+    test(`new page with fresh timestamp and ${stale ? 'stale []' : 'missing'} payload obtains Incident on branch entry`, async () => {
+        const failWrites = key => key.endsWith('kpiData_TRD');
+        const beforeReload = fixture({failWrites, stale});
+        const previousRead = beforeReload.run("ScopedRefresher.refreshIncident('TRD')");
+        await tick(); beforeReload.resolve('incident'); await previousRead;
+        assert.equal(beforeReload.previewCount(), 1, 'The prior page reads its memory fallback');
+        assert.ok(beforeReload.local.data.has(beforeReload.key('kpiData_TRD_ts')));
+
+        // A new VM models reload: copy persisted storage only, never _data.
+        const reloaded = fixture({failWrites});
+        for (const [key, value] of beforeReload.local.data) reloaded.local.data.set(key, value);
+        assert.equal(reloaded.cache().length, 0, 'No fallback memory survives the reload');
+        assert.equal(reloaded.run("isKpiCacheStale('TRD')"), false, 'Persisted timestamp is still fresh');
+        enterDashboard(reloaded);
+        await tick();
+        assert.equal(reloaded.calls.filter(call => call.kind === 'incident').length, 1, 'A fresh shared timestamp cannot suppress Incident read on entry');
+        assert.equal(reloaded.calls.filter(call => call.kind === 'daily').length, 0, 'Fresh Daily cache retains its existing entry policy');
+        const pending = reloaded.run('ScopedRefresher.inFlight.TRD.incident.promise');
+        reloaded.resolve('incident'); await pending;
+        assert.equal(reloaded.previewCount(), 1);
+        assert.equal(reloaded.weeklyCount(), 1, 'Visible Dashboard updates without an explicit render or navigation');
+        assert.equal(reloaded.errors.length, 0);
+    });
+}
+
+test('cold branch entry retains one Daily and one Incident read', async () => {
+    const f = fixture();
+    enterDashboard(f);
+    await tick();
+    assert.equal(f.calls.filter(call => call.kind === 'daily').length, 1);
+    assert.equal(f.calls.filter(call => call.kind === 'incident').length, 1);
+    const pending = f.run('ScopedRefresher.inFlight.TRD.incident.promise');
+    f.resolve('daily'); await tick();
+    f.resolve('incident'); await pending; await tick();
+    assert.equal(f.previewCount(), 1);
+    assert.equal(f.weeklyCount(), 1);
+    assert.equal(f.errors.length, 0);
 });
