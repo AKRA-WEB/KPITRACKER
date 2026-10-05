@@ -206,9 +206,9 @@ async function verifyResponsivePrimaryNavigation(page) {
     assert.equal(await isVisible(mobileNav), true, 'Mobile must expose the bottom primary navigation');
 
     for (const [buttonId, viewId] of [
-        ['tab-workload', 'view-workload'],
         ['tab-error', 'view-error'],
-        ['tab-billcount', 'view-billcount'],
+        ['tab-kanban', 'view-kanban'],
+        ['tab-workload', 'view-workload'],
         ['tab-dashboard', 'view-dashboard']
     ]) {
         await page.locator(`#${buttonId}`).evaluate(button => button.click());
@@ -219,17 +219,18 @@ async function verifyResponsivePrimaryNavigation(page) {
         );
     }
 
-    const utilityTrigger = page.getByRole('button', { name: 'เปิดเครื่องมือเพิ่มเติม' });
-    assert.equal(await isVisible(utilityTrigger), true, 'Mobile must keep secondary utilities reachable');
+    const utilityTrigger = page.locator('#tab-menu');
+    assert.equal(await isVisible(utilityTrigger), true, 'Mobile must keep all destinations reachable through Menu');
     await utilityTrigger.click({ force: true });
 
     const utilityPanel = page.locator('#drawer-panel');
-    assert.equal(await utilityPanel.getAttribute('aria-label'), 'เครื่องมือเพิ่มเติม');
+    assert.equal(await page.getByRole('dialog', { name: 'เมนูทั้งหมด', exact: true }).count(), 1,
+        'The visible Menu dialog must derive its accessible name from its title');
     assert.equal(await isVisible(utilityPanel), true, 'The secondary utility panel must open');
-    const duplicatedPrimaryRoutes = utilityPanel.getByRole('button', {
-        name: /Workload|ความผิดพลาด|บิลเบิกย้าย|แดชบอร์ด/
-    });
-    assert.equal(await duplicatedPrimaryRoutes.count(), 0, 'Secondary utilities must not duplicate primary routes');
+    for (const route of ['error', 'kanban', 'workload', 'dashboard', 'billcount', 'duties', 'my-profile']) {
+        assert.equal(await utilityPanel.locator(`[data-kpi-route="${route}"]`).count(), 1,
+            `Menu must contain exactly one ${route} destination`);
+    }
 
     const closeButton = page.getByRole('button', { name: 'ปิดเมนู' });
     assert.equal(await closeButton.evaluate(element => element === document.activeElement), true, 'Opening utilities must focus the close button');
@@ -247,6 +248,7 @@ async function verifyResponsivePrimaryNavigation(page) {
             sessionToken = 'test-signed-session';
             currentUser = '250013';
             currentRoles = ['Admin'];
+            _kpiPerms = ['adminDashboard'];
             IS_ADMIN = canAccessAdminSettings(currentRoles, sessionToken);
             window.AkraSupabaseKPI = window.AkraSupabaseKPI || {};
             window.AkraSupabaseKPI.getAdminStatus = async () => ({

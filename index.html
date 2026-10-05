@@ -1,8 +1,8 @@
-﻿<!-- GitHub Repo: https://github.com/AKRA-WEB/KPITRACKER -->
+<!-- GitHub Repo: https://github.com/AKRA-WEB/KPITRACKER -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <script src="js/akra-shell-bridge.js?v=20261003.03"></script>
+    <script src="js/akra-shell-bridge.js?v=20261005.01"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BM Work | งานและทีม</title>
@@ -129,7 +129,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="css/tailwind.min.css?v=20261003.03">
+    <link rel="stylesheet" href="css/tailwind.min.css?v=20261005.01">
 </head>
 <body class="text-gray-800 pb-20">
     <style>body:not(.kpi-session-ready) > :not(#kpi-session-status):not(script):not(style) { display: none !important; } #kpi-session-status[hidden] { display: none !important; }</style>
@@ -209,7 +209,7 @@
                     <span class="hidden lg:inline">พร้อมใช้งาน</span>
                     <span id="showUserName" class="hidden xl:inline font-bold text-white">กำลังตรวจสอบ...</span>
                 </div>
-                <button onclick="openDrawer()" id="btn-open-drawer" title="เครื่องมือเพิ่มเติม" aria-label="เปิดเครื่องมือเพิ่มเติม" aria-controls="drawer-panel" aria-expanded="false" class="text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 w-10 h-10 rounded-xl text-sm font-semibold shadow transition-all border border-slate-700 flex items-center justify-center active:scale-95">
+                <button onclick="openDrawer(this)" id="btn-open-drawer" title="เครื่องมือเพิ่มเติม" aria-label="เปิดเครื่องมือเพิ่มเติม" aria-controls="drawer-panel" aria-expanded="false" class="text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 w-10 h-10 rounded-xl text-sm font-semibold shadow transition-all border border-slate-700 flex items-center justify-center active:scale-95">
                     <i class="fa-solid fa-ellipsis-vertical text-base"></i>
                 </button>
             </div>
@@ -2381,25 +2381,25 @@
     <!-- Bottom Navigation (Mobile: md:hidden) -->
     <nav id="bottom-nav" class="md:hidden app-nav fixed bottom-0 left-0 right-0 w-full border-t p-1.5 pb-safe z-40 bg-white/95 backdrop-blur-md shadow-lg" aria-label="เมนูหลักบนมือถือ">
         <div class="flex justify-around w-full max-w-md mx-auto">
+            <button onclick="switchTab('error')" id="tab-error" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-red-50 text-slate-500">
+                <i class="fa-solid fa-triangle-exclamation text-xl mb-1 mt-0.5"></i>
+                <span class="text-[10px] font-bold tracking-wide">Incident</span>
+            </button>
+            <button onclick="switchTab('kanban')" id="tab-kanban" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-blue-50 text-slate-500">
+                <i class="fa-solid fa-table-columns text-xl mb-1 mt-0.5"></i>
+                <span class="text-[10px] font-bold tracking-wide">บอร์ดงาน</span>
+            </button>
             <button onclick="switchTab('workload')" id="tab-workload" class="flex flex-col items-center p-2 flex-1 tab-active transition-colors rounded-xl mx-0.5 hover:bg-blue-50 bg-blue-50 text-blue-700">
                 <i class="fa-solid fa-business-time text-xl mb-1 mt-0.5"></i>
                 <span class="text-[10px] font-bold tracking-wide">Workload</span>
-            </button>
-            <button onclick="switchTab('error')" id="tab-error" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-red-50 text-slate-500">
-                <i class="fa-solid fa-triangle-exclamation text-xl mb-1 mt-0.5"></i>
-                <span class="text-[10px] font-bold tracking-wide">ความผิดพลาด</span>
-            </button>
-            <button onclick="switchTab('billcount')" id="tab-billcount" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-indigo-50 text-slate-500">
-                <i class="fa-solid fa-boxes-stacked text-xl mb-1 mt-0.5"></i>
-                <span class="text-[10px] font-bold tracking-wide">บิลเบิกย้าย</span>
             </button>
             <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-gray-50 text-slate-500">
                 <i class="fa-solid fa-chart-pie text-xl mb-1 mt-0.5"></i>
                 <span class="text-[10px] font-bold tracking-wide">แดชบอร์ด</span>
             </button>
-            <button onclick="switchTab('my-profile')" id="tab-my-profile" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-emerald-50 text-slate-500">
-                <i class="fa-solid fa-id-badge text-xl mb-1 mt-0.5 text-emerald-600"></i>
-                <span class="text-[10px] font-bold tracking-wide">โปรไฟล์ฉัน</span>
+            <button type="button" onclick="openDrawer(this)" id="tab-menu" aria-label="เปิดเมนูทั้งหมด" aria-controls="drawer-panel" aria-expanded="false" class="flex flex-col items-center p-2 flex-1 tab-inactive transition-colors rounded-xl mx-0.5 hover:bg-blue-50 text-slate-500">
+                <i class="fa-solid fa-bars text-xl mb-1 mt-0.5"></i>
+                <span class="text-[10px] font-bold tracking-wide">เมนู</span>
             </button>
         </div>
     </nav>
@@ -2957,9 +2957,9 @@
         </div>
     </div>
 
-    <!-- ================= SECONDARY UTILITY DRAWER ================= -->
+    <!-- ================= ALL MENUS / DESKTOP UTILITIES ================= -->
     <div id="drawer-backdrop" onclick="closeDrawer()" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[80] transition-opacity duration-300 opacity-0 pointer-events-none"></div>
-    <aside id="drawer-panel" aria-label="เครื่องมือเพิ่มเติม" aria-hidden="true" inert class="fixed top-0 right-0 bottom-0 w-80 max-w-[88vw] bg-slate-900 text-white z-[90] shadow-2xl border-l border-slate-800 flex flex-col justify-between overflow-y-auto transform translate-x-full transition-transform duration-300 ease-in-out">
+    <aside id="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1" aria-hidden="true" inert class="fixed top-0 right-0 bottom-0 w-80 max-w-[88vw] bg-slate-900 text-white z-[90] shadow-2xl border-l border-slate-800 flex flex-col justify-between overflow-y-auto transform translate-x-full transition-transform duration-300 ease-in-out">
         <div>
             <!-- Drawer Brand & Close -->
             <div class="p-5 border-b border-slate-800 flex items-center justify-between">
@@ -2968,7 +2968,7 @@
                         <i class="fa-solid fa-chart-line text-lg"></i>
                     </div>
                     <div>
-                        <div class="text-sm font-bold text-white tracking-wide">เครื่องมือเพิ่มเติม</div>
+                        <h2 id="drawer-title" class="text-sm font-bold text-white tracking-wide"><span class="kpi-desktop-only">เครื่องมือเพิ่มเติม</span><span class="kpi-mobile-only">เมนูทั้งหมด</span></h2>
                         <div class="text-[10px] text-slate-400 font-medium tracking-wider uppercase" id="drawer-branch-badge">AKRA WAREHOUSE</div>
                     </div>
                 </div>
@@ -2978,7 +2978,7 @@
             </div>
 
             <!-- User Info Card -->
-            <div class="p-4 mx-3 my-3 bg-slate-800/60 border border-slate-700/50 rounded-xl flex items-center gap-3">
+            <div id="drawer-user-card" class="p-4 mx-3 my-3 bg-slate-800/60 border border-slate-700/50 rounded-xl flex items-center gap-3">
                 <div class="w-9 h-9 rounded-lg bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-sm">
                     <i class="fa-solid fa-user-check text-blue-400"></i>
                 </div>
@@ -2991,8 +2991,26 @@
                 </div>
             </div>
 
-            <!-- Secondary utilities only: primary routes stay in desktop tabs/mobile bottom navigation -->
+            <!-- Mobile includes every existing route; desktop retains its utilities. -->
             <div class="px-3 py-2 space-y-1">
+                <h3 class="kpi-mobile-only kpi-drawer-heading">งานและทีม</h3>
+                <div class="kpi-drawer-grid">
+                    <button type="button" class="kpi-mobile-only kpi-drawer-route" data-kpi-route="error" onclick="drawerNavigate('error')"><i class="fa-solid fa-triangle-exclamation"></i><span>Incident</span></button>
+                    <button id="drawer-kanban-btn" type="button" data-kpi-route="kanban" onclick="drawerNavigate('kanban')" class="kpi-drawer-route w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-teal-300 hover:text-white hover:bg-slate-800 transition-all text-left"><i class="fa-solid fa-table-columns text-teal-400 w-4 text-center text-sm"></i><span>บอร์ดงาน</span></button>
+                    <button id="drawer-nav-workload" type="button" class="kpi-mobile-only kpi-drawer-route" data-kpi-route="workload" onclick="drawerNavigate('workload')"><i class="fa-solid fa-business-time"></i><span>Workload</span></button>
+                    <button id="drawer-duties-btn" type="button" data-kpi-route="duties" onclick="drawerNavigate('duties')" class="kpi-drawer-route w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-indigo-300 hover:text-white hover:bg-slate-800 transition-all text-left"><i class="fa-solid fa-users-gear text-indigo-400 w-4 text-center text-sm"></i><span>ตารางงาน</span></button>
+                </div>
+                <section class="kpi-mobile-only">
+                    <h3 class="kpi-drawer-heading">รายงาน</h3>
+                    <div class="kpi-drawer-grid">
+                        <button type="button" class="kpi-drawer-route" data-kpi-route="dashboard" onclick="drawerNavigate('dashboard')"><i class="fa-solid fa-chart-pie"></i><span>แดชบอร์ด</span></button>
+                        <button type="button" class="kpi-drawer-route" data-kpi-route="billcount" onclick="drawerNavigate('billcount')"><i class="fa-solid fa-boxes-stacked"></i><span>บิลเบิกย้าย</span></button>
+                    </div>
+                </section>
+                <h3 class="kpi-mobile-only kpi-drawer-heading">บัญชี</h3>
+                <button id="drawer-my-profile-btn" type="button" data-kpi-route="my-profile" onclick="drawerNavigate('my-profile')" class="kpi-drawer-route w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-emerald-300 hover:text-white hover:bg-slate-800 transition-all text-left"><i class="fa-solid fa-id-badge text-emerald-400 w-4 text-center text-sm"></i><span>โปรไฟล์ฉัน</span></button>
+                <details id="drawer-tools" open>
+                <summary class="kpi-mobile-only kpi-drawer-tools-heading"><i class="fa-solid fa-sliders" aria-hidden="true"></i><span>เครื่องมือและผู้ดูแล</span></summary>
                 <div class="px-3 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">ข้อมูลและอุปกรณ์</div>
 
                 <button onclick="syncDataFromSheet(); closeDrawer();" id="btn-sync" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all text-left">
@@ -3010,39 +3028,25 @@
                     <span>เปลี่ยนสาขา</span>
                 </button>
 
-                <button id="drawer-my-profile-btn" onclick="drawerNavigate('my-profile')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-emerald-300 hover:text-white hover:bg-slate-800 transition-all text-left">
-                    <i class="fa-solid fa-id-badge text-emerald-400 w-4 text-center text-sm"></i>
-                    <span>โปรไฟล์ของฉัน (My Passport)</span>
-                </button>
-
-                <button id="drawer-kanban-btn" onclick="drawerNavigate('kanban')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-teal-300 hover:text-white hover:bg-slate-800 transition-all text-left">
-                    <i class="fa-solid fa-table-columns text-teal-400 w-4 text-center text-sm"></i>
-                    <span>บอร์ดงาน (Kanban Board)</span>
-                </button>
-
-                <button id="drawer-duties-btn" onclick="drawerNavigate('duties')" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-indigo-300 hover:text-white hover:bg-slate-800 transition-all text-left">
-                    <i class="fa-solid fa-users-gear text-indigo-400 w-4 text-center text-sm"></i>
-                    <span>ตารางงาน (Duty Matrix)</span>
-                </button>
-
                 <div id="drawer-admin-heading" class="hidden pt-3 px-3 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">สำหรับผู้ดูแลระบบ</div>
 
-                <button id="drawer-admin-dash-btn" onclick="drawerNavigate('admin-dash')" class="drawer-nav-item hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-purple-300 hover:text-white hover:bg-slate-800 transition-all text-left">
+                <button id="drawer-admin-dash-btn" data-kpi-route="admin-dash" onclick="drawerNavigate('admin-dash')" class="drawer-nav-item hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-purple-300 hover:text-white hover:bg-slate-800 transition-all text-left">
                     <i class="fa-solid fa-gauge-high text-purple-400 w-4 text-center text-sm"></i>
                     <span>ภาพรวมผู้บริหาร (Cockpit)</span>
                 </button>
 
-                <button id="drawer-admin-btn" onclick="drawerNavigate('admin')" class="drawer-nav-item hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all text-left">
+                <button id="drawer-admin-btn" data-kpi-route="admin" onclick="drawerNavigate('admin')" class="drawer-nav-item hidden w-full items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all text-left">
                     <i class="fa-solid fa-gear text-slate-400 w-4 text-center text-sm"></i>
                     <span>ตั้งค่าระบบ &amp; จัดการข้อมูล</span>
                 </button>
+                </details>
             </div>
         </div>
 
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">BM Work v20261003.03</span>
+                <span id="drawer-version-text">BM Work v20261005.01</span>
                 <span>BUYMORETH</span>
             </div>
         </div>
@@ -3246,6 +3250,8 @@
             border-bottom: 0;
             background: var(--kpi-blue-soft) !important;
         }
+        .kpi-mobile-only { display: none; }
+        #drawer-panel [data-kpi-route][aria-current="page"] { background: #1e293b; color: #93c5fd; }
 
         #main-wl-primary-name { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
         @media (max-width: 767px) {
@@ -3260,7 +3266,7 @@
                 border-radius: 9px;
             }
             .app-header h1 { font-size: 14px; }
-            .app-header #btn-open-drawer { width: 44px; height: 44px; flex-shrink: 0; }
+            .app-header #btn-open-drawer { display: none; }
             #btn-toggle-main-duty-picker,
             #support-modal button,
             #duty-modal button,
@@ -3281,9 +3287,40 @@
             }
             .ops-view { width: 100%; }
             #bottom-nav > div { width: 100%; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-            #bottom-nav button { min-width: 0; margin-inline: 0; padding-inline: 2px; }
-            #bottom-nav button span { max-width: 100%; overflow-wrap: anywhere; }
+            #bottom-nav button { min-width: 0; min-height: 56px; margin-inline: 0; padding-inline: 2px; }
+            #bottom-nav button span { max-width: 100%; font-size: 11px; letter-spacing: 0; white-space: nowrap; }
+            #drawer-panel {
+                top: auto; left: 0; right: 0; bottom: 0; width: 100%; max-width: none;
+                max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px - env(safe-area-inset-top));
+                padding-bottom: env(safe-area-inset-bottom); border: 0; border-radius: 18px 18px 0 0;
+                background: #fff; color: var(--kpi-ink); overscroll-behavior: contain;
+                box-shadow: 0 -8px 28px rgba(15, 23, 42, .15); transform: translateY(0);
+                transition-timing-function: cubic-bezier(.16, 1, .3, 1);
+            }
+            #drawer-panel.translate-x-full { transform: translateY(100%); }
+            #drawer-panel .kpi-mobile-only { display: block; }
+            #drawer-panel .kpi-desktop-only, #drawer-user-card, #drawer-branch-badge { display: none; }
+            #drawer-panel > div:first-child > div:first-child { padding: 12px 16px; border: 0; }
+            #drawer-panel > div:first-child > div:first-child > div > div:first-child { display: none; }
+            #drawer-title { color: var(--kpi-ink); font-size: 18px; letter-spacing: 0; }
+            #drawer-panel button { min-height: 48px; color: var(--kpi-ink); font-size: 14px; font-weight: 600; }
+            #drawer-panel button[aria-label="ปิดเมนู"] { width: 48px; background: transparent; }
+            #drawer-panel button:hover { background: #f1f5f9; }
+            #drawer-panel button i { color: var(--kpi-muted); flex-shrink: 0; width: 20px; text-align: center; }
+            #drawer-panel .kpi-drawer-heading { margin: 16px 8px 4px; font-size: 12px; font-weight: 600; color: var(--kpi-muted); }
+            #drawer-panel .kpi-drawer-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 8px; }
+            #drawer-panel .kpi-drawer-route { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 10px; text-align: left; }
+            #drawer-panel .kpi-drawer-route span { min-width: 0; overflow-wrap: anywhere; }
+            #drawer-panel [data-kpi-route][aria-current="page"] { background: var(--kpi-blue-soft); color: var(--kpi-blue); }
+            #drawer-panel [data-kpi-route][aria-current="page"] i { color: var(--kpi-blue); }
+            #drawer-tools { margin-top: 16px; padding-top: 8px; border-top: 1px solid var(--kpi-border); }
+            #drawer-panel .kpi-drawer-tools-heading { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px; color: var(--kpi-muted); font-size: 13px; font-weight: 600; cursor: pointer; }
+            #drawer-tools > summary::after { content: "+"; margin-left: auto; }
+            #drawer-tools[open] > summary::after { content: "−"; }
+            #drawer-panel > div:last-child { border-top-color: var(--kpi-border); }
+            #drawer-panel > div:last-child span { color: var(--kpi-muted); }
         }
+        @media (prefers-reduced-motion: reduce) { #drawer-panel, #drawer-backdrop { transition: none; } }
     </style>
     <style id="kpi-saas-ui">
         :root { --kpi-canvas: #f5f7fa; --kpi-nav: #0e1729; --kpi-blue: #2563eb; --kpi-ink: #172033; --kpi-muted: #475569; --kpi-shadow: none; }
@@ -3462,16 +3499,16 @@
         }
     </style>
     <div id="kb-image-viewer" class="hidden fixed inset-0 z-[80] bg-slate-950/90 p-4" role="dialog" aria-modal="true" aria-label="ดูรูปภาพ" tabindex="-1"></div>
-    <script src="js/supabase-kpi-client.js?v=20261003.03"></script>
-    <script src="js/workload-permissions.js?v=20261003.03"></script>
-    <script src="js/incident-impact.js?v=20261003.03"></script>
-    <script src="js/kpi-kanban-board.js?v=20261003.03"></script>
-    <script src="js/kpi-duty-matrix.js?v=20261003.03"></script>
-    <script src="js/kpi-integration.js?v=20261003.03"></script>
+    <script src="js/supabase-kpi-client.js?v=20261005.01"></script>
+    <script src="js/workload-permissions.js?v=20261005.01"></script>
+    <script src="js/incident-impact.js?v=20261005.01"></script>
+    <script src="js/kpi-kanban-board.js?v=20261005.01"></script>
+    <script src="js/kpi-duty-matrix.js?v=20261005.01"></script>
+    <script src="js/kpi-integration.js?v=20261005.01"></script>
     <script>
         // ================= CONFIGURATION =================
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20261003.03";
+        const CURRENT_VERSION = "20261005.01";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -5300,74 +5337,98 @@
         }
 
         // ================= SECONDARY UTILITY DRAWER HANDLERS =================
-        function openDrawer() {
+        let drawerReturnFocus = null;
+        let drawerBodyOverflow = '';
+        function openDrawer(opener) {
+            if (!kpiVerifiedSession || !sessionToken || !currentUser || !BRANCH_CONFIG[currentBranch]) return false;
             const drawer = document.getElementById('drawer-panel');
             const backdrop = document.getElementById('drawer-backdrop');
-            const openBtn = document.getElementById('btn-open-drawer');
-            const mainContent = document.getElementById('app-content');
-            const header = document.querySelector('.app-header');
-
-            if (drawer && backdrop) {
-                drawer.classList.remove('translate-x-full');
-                drawer.removeAttribute('aria-hidden');
-                drawer.removeAttribute('inert');
-                backdrop.classList.remove('opacity-0', 'pointer-events-none');
-                backdrop.classList.add('opacity-100');
-                if (openBtn) openBtn.setAttribute('aria-expanded', 'true');
-                if (mainContent) {
-                    mainContent.setAttribute('inert', '');
-                    mainContent.setAttribute('aria-hidden', 'true');
-                }
-                if (header) {
-                    header.setAttribute('inert', '');
-                    header.setAttribute('aria-hidden', 'true');
-                }
-                const firstFocusable = drawer.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-                if (firstFocusable) firstFocusable.focus();
-            }
+            if (!drawer || !backdrop) return false;
+            if (!drawer.classList.contains('translate-x-full')) return true;
+            drawerReturnFocus = opener || document.activeElement;
+            drawerBodyOverflow = document.body.style.overflow;
             updateDrawerUserInfo();
+            const tools = document.getElementById('drawer-tools');
+            if (tools) tools.open = !window.matchMedia('(max-width: 767px)').matches;
+            drawer.classList.remove('translate-x-full');
+            drawer.removeAttribute('aria-hidden');
+            drawer.removeAttribute('inert');
+            backdrop.classList.remove('opacity-0', 'pointer-events-none');
+            backdrop.classList.add('opacity-100');
+            ['btn-open-drawer', 'tab-menu'].forEach(id => document.getElementById(id)?.setAttribute('aria-expanded', 'true'));
+            document.body.style.overflow = 'hidden';
+            [document.getElementById('app-content'), document.querySelector('.app-header'), document.getElementById('bottom-nav')].forEach(element => {
+                if (element) {
+                    element.setAttribute('inert', '');
+                    element.setAttribute('aria-hidden', 'true');
+                }
+            });
+            const firstFocusable = drawer.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            if (firstFocusable) firstFocusable.focus();
+            return true;
         }
 
         function closeDrawer() {
             const drawer = document.getElementById('drawer-panel');
             const backdrop = document.getElementById('drawer-backdrop');
-            const openBtn = document.getElementById('btn-open-drawer');
-            const mainContent = document.getElementById('app-content');
-            const header = document.querySelector('.app-header');
-
-            if (drawer && backdrop) {
-                drawer.classList.add('translate-x-full');
-                drawer.setAttribute('aria-hidden', 'true');
-                drawer.setAttribute('inert', '');
-                backdrop.classList.remove('opacity-100');
-                backdrop.classList.add('opacity-0', 'pointer-events-none');
-                if (mainContent) {
-                    mainContent.removeAttribute('inert');
-                    mainContent.removeAttribute('aria-hidden');
+            if (!drawer || !backdrop || drawer.classList.contains('translate-x-full')) return false;
+            drawer.classList.add('translate-x-full');
+            drawer.setAttribute('aria-hidden', 'true');
+            drawer.setAttribute('inert', '');
+            backdrop.classList.remove('opacity-100');
+            backdrop.classList.add('opacity-0', 'pointer-events-none');
+            ['btn-open-drawer', 'tab-menu'].forEach(id => document.getElementById(id)?.setAttribute('aria-expanded', 'false'));
+            document.body.style.overflow = drawerBodyOverflow;
+            [document.getElementById('app-content'), document.querySelector('.app-header'), document.getElementById('bottom-nav')].forEach(element => {
+                if (element) {
+                    element.removeAttribute('inert');
+                    element.removeAttribute('aria-hidden');
                 }
-                if (header) {
-                    header.removeAttribute('inert');
-                    header.removeAttribute('aria-hidden');
-                }
-                if (openBtn) {
-                    openBtn.setAttribute('aria-expanded', 'false');
-                    openBtn.focus();
-                }
-            }
+            });
+            const returnFocus = drawerReturnFocus?.isConnected && drawerReturnFocus.getClientRects().length > 0
+                ? drawerReturnFocus
+                : document.getElementById(window.matchMedia('(max-width: 767px)').matches ? 'tab-menu' : 'btn-open-drawer');
+            returnFocus?.focus();
+            drawerReturnFocus = null;
+            return true;
         }
 
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                const drawer = document.getElementById('drawer-panel');
-                if (drawer && !drawer.classList.contains('translate-x-full')) {
-                    closeDrawer();
-                }
+        function handleDrawerKeydown(event) {
+            const drawer = document.getElementById('drawer-panel');
+            if (!drawer || drawer.classList.contains('translate-x-full')) return;
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeDrawer();
+                return;
+            }
+            if (event.key !== 'Tab') return;
+            const focusable = Array.from(drawer.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])'))
+                .filter(element => {
+                    const closedDetails = element.closest('details:not([open])');
+                    return element.getClientRects().length > 0 && (!closedDetails || closedDetails.querySelector('summary')?.contains(element));
+                });
+            const first = focusable[0], last = focusable[focusable.length - 1];
+            if (!first) return;
+            if (event.shiftKey && (document.activeElement === first || !drawer.contains(document.activeElement))) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && (document.activeElement === last || !drawer.contains(document.activeElement))) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
+        document.addEventListener('keydown', handleDrawerKeydown);
+        window.matchMedia('(max-width: 767px)').addEventListener('change', event => {
+            if (!event.matches) {
+                const tools = document.getElementById('drawer-tools');
+                if (tools) tools.open = true;
             }
         });
 
         function drawerNavigate(target) {
+            if (switchTab(target) === false) return false;
             closeDrawer();
-            switchTab(target);
+            return true;
         }
 
         function updateDrawerUserInfo() {
@@ -10533,10 +10594,8 @@
                 document.getElementById('dash-dept-filter')?.classList.remove('hidden');
                 if (document.getElementById('dash-dept-filter')) document.getElementById('dash-dept-filter').value = 'ALL';
 
-                // Hide workload tabs for TRD
-                document.getElementById('tab-workload')?.classList.add('hidden');
+                // Mobile Workload is a read-only activity entry for TRD.
                 document.getElementById('dtab-workload')?.classList.add('hidden');
-                document.getElementById('drawer-nav-workload')?.classList.add('hidden');
 
                 const targetTab=pendingKpiTab || 'error';pendingKpiTab=null;switchTab(targetTab);
             } else {
@@ -10546,7 +10605,6 @@
                 // Show workload tabs for AKRA
                 document.getElementById('tab-workload')?.classList.remove('hidden');
                 document.getElementById('dtab-workload')?.classList.remove('hidden');
-                document.getElementById('drawer-nav-workload')?.classList.remove('hidden');
 
                 const targetTab=pendingKpiTab || 'workload';pendingKpiTab=null;switchTab(targetTab);
             }
@@ -13393,9 +13451,13 @@
                 showToast('เมนูตั้งค่าระบบและพนักงานใช้ได้เฉพาะ Admin หรือ Supervisor', true);
                 return false;
             }
+            if (tab === 'admin-dash' && !can('adminDashboard')) {
+                showToast('ไม่มีสิทธิ์เปิดภาพรวมผู้บริหาร', true);
+                return false;
+            }
 
             const views = ['view-workload', 'view-error', 'view-kanban', 'view-duties', 'view-billcount', 'view-dashboard', 'view-my-profile', 'view-admin-dash', 'view-admin', 'view-record'];
-            const mobileTabs = ['tab-workload', 'tab-error', 'tab-billcount', 'tab-dashboard', 'tab-my-profile', 'tab-record'];
+            const mobileTabs = ['tab-error', 'tab-kanban', 'tab-workload', 'tab-dashboard', 'tab-menu', 'tab-record'];
             const desktopTabs = ['dtab-workload', 'dtab-error', 'dtab-kanban', 'dtab-duties', 'dtab-billcount', 'dtab-dashboard', 'dtab-my-profile'];
 
             views.forEach(v => {
@@ -13406,6 +13468,7 @@
             mobileTabs.forEach(t => {
                 const el = document.getElementById(t);
                 if (el) {
+                    el.removeAttribute('aria-current');
                     el.classList.remove('tab-active', 'bg-blue-50', 'text-blue-700', 'bg-red-50', 'text-red-700', 'bg-indigo-50', 'text-indigo-700', 'bg-teal-50', 'text-teal-700', 'bg-emerald-50', 'text-emerald-700');
                     el.classList.add('tab-inactive', 'text-slate-500');
                 }
@@ -13424,9 +13487,20 @@
 
             const activeMobileTab = document.getElementById('tab-' + tab);
             if (activeMobileTab) {
+                activeMobileTab.setAttribute('aria-current', 'page');
                 activeMobileTab.classList.remove('tab-inactive', 'text-slate-500');
                 activeMobileTab.classList.add('tab-active', 'bg-blue-50', 'text-blue-700');
             }
+            if (!activeMobileTab) {
+                const menuTab = document.getElementById('tab-menu');
+                menuTab?.classList.remove('tab-inactive', 'text-slate-500');
+                menuTab?.classList.add('tab-active', 'bg-blue-50', 'text-blue-700');
+                menuTab?.setAttribute('aria-current', 'page');
+            }
+            document.querySelectorAll('#drawer-panel [data-kpi-route]').forEach(button => {
+                if (button.dataset.kpiRoute === tab) button.setAttribute('aria-current', 'page');
+                else button.removeAttribute('aria-current');
+            });
 
             const activeDesktopTab = document.getElementById('dtab-' + tab);
             if (activeDesktopTab) {
@@ -13437,11 +13511,11 @@
             // Update Header Badge
             const badgeTitles = {
                 'workload': 'Workload',
-                'error': 'Incident QC',
-                'kanban': 'Kanban Tasks',
-                'duties': 'Duty Matrix',
+                'error': 'Incident',
+                'kanban': 'บอร์ดงาน',
+                'duties': 'ตารางงาน',
                 'billcount': 'Live Sync',
-                'dashboard': 'Dashboard',
+                'dashboard': 'แดชบอร์ด',
                 'my-profile': 'โปรไฟล์ฉัน',
                 'admin-dash': 'Executive Cockpit',
                 'admin': 'Settings'
@@ -13494,6 +13568,7 @@
                 renderAdminPanel();
                 refreshAdminStatus();
             }
+            return true;
         }
 
         function adjVol(id, val) {

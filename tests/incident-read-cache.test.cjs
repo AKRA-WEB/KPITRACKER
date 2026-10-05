@@ -95,6 +95,7 @@ function fixture({failWrites = false, stale = false} = {}) {
     };
     c.window = c;
     c.addEventListener = () => {};
+    c.matchMedia = () => ({matches: false, addEventListener() {}});
     c.scrollTo = () => {};
     vm.createContext(c);
     vm.runInContext(incidentScript, c);

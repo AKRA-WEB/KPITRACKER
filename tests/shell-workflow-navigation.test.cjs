@@ -6,7 +6,8 @@ const vm = require('node:vm');
 
 // Run the current Main adapter, KPI bridge, and KPI inline route handlers together.
 // DOM/style stubs are runtime evidence; desktop/mobile behavior needs a browser.
-const mainSource = fs.readFileSync(path.join(__dirname, '../../Main/js/unified-shell.js'), 'utf8');
+const mainRoot = process.env.AKRA_MAIN_ROOT || path.join(__dirname, '../../Main');
+const mainSource = fs.readFileSync(path.join(mainRoot, 'js/unified-shell.js'), 'utf8');
 const bridgeSource = fs.readFileSync(path.join(__dirname, '../js/akra-shell-bridge.js'), 'utf8');
 const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 function between(source, start, end) {
@@ -33,6 +34,7 @@ function setup({initialized = true, embedded = true, parentPath = '/Main/', bran
         const classes = new Set(id.startsWith('view-') && id !== 'view-workload' ? ['hidden'] : []);
         const node = {
             id, disabled: false, style: {}, textContent: '', value: '',
+            setAttribute() {}, removeAttribute() {},
             classList: {
                 add(...items) { items.forEach(item => classes.add(item)); },
                 remove(...items) { items.forEach(item => classes.delete(item)); },
@@ -88,7 +90,7 @@ function setup({initialized = true, embedded = true, parentPath = '/Main/', bran
         addErrorEntryRow: noop, loadTasksForSelectedDate: noop,
         applyEndOfShiftPermissionsUI: noop, restoreRecordDraft: noop,
         hydrateIncidentPreview: noop, updateDailyDashboard: noop, loadSkillsData: noop,
-        isKpiCacheStale: () => false,
+        isKpiCacheStale: () => false, ScopedRefresher: {trigger: noop},
         renderErrSeverity: noop, renderErrEmpChips: noop, renderErrTimeline: noop,
         renderErrTeamHp: noop, renderWorkload: noop,
         renderUnifiedWorkloadActivity: noop, ensureWorkloadActivityLoaded: noop
@@ -104,7 +106,11 @@ function setup({initialized = true, embedded = true, parentPath = '/Main/', bran
     }
     vm.runInContext(bridgeSource, child);
     const parent = vm.createContext({active: {frame: {contentWindow: window, contentDocument: {
-        querySelector() { throw Error('Main must delegate to the child realm'); }
+        querySelector(selector) {
+            const target = document.querySelector(selector);
+            if (!target) return null;
+            return {disabled: target.disabled, click() { throw Error('Main must delegate to the child realm'); }};
+        }
     }}}});
     vm.runInContext(`${clickWorkflowSource}\nthis.clickWorkflow = clickWorkflow;`, parent);
     return {
