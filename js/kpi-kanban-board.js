@@ -30,12 +30,96 @@
         categoryFilter: '',
         overdueOnly: false,
         blockedOnly: false,
+        month: 'current',
+        carryover: true,
+        monthViewerUid: null,
         activeTaskId: null,
         draggedTaskId: null,
         isInitialized: false
     };
 
     function context() { return window.getKpiTaskContext?.() || {token:null,branch:'',userUid:'',name:'',employees:[],can:()=>false}; }
+    const MONTH_NAMES = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    const monthFormatter = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit'});
+
+    // Only canonical dates count. Never infer a month from due dates, codes or edits.
+    function timestampMonth(value) {
+        if (typeof value !== 'string') return '';
+        const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+-]\d{2}:?\d{2}))?$/);
+        if (!match) return '';
+        const [,year,month,day,hour,minute,second] = match;
+        const calendar = new Date(0);
+        calendar.setUTCFullYear(Number(year), Number(month)-1, Number(day));
+        if (Number(year)<1 || calendar.getUTCFullYear()!==Number(year) || calendar.getUTCMonth()+1!==Number(month) || calendar.getUTCDate()!==Number(day)) return '';
+        if (hour && (Number(hour)>23 || Number(minute)>59 || Number(second)>59)) return '';
+        // A date-only value is explicitly a Bangkok calendar date, never browser-local.
+        const date = new Date(match[4] ? value.trim() : value.trim()+'T00:00:00+07:00');
+        if (!Number.isFinite(date.getTime())) return '';
+        const parts = monthFormatter.formatToParts(date);
+        return parts.find(p=>p.type==='year').value.padStart(4,'0')+'-'+parts.find(p=>p.type==='month').value;
+    }
+    function currentMonth() { return timestampMonth(new Date(Date.now()).toISOString()); }
+    function selectedMonth() { return state.month==='current' ? currentMonth() : state.month; }
+    function monthLabel(month) { return MONTH_NAMES[Number(month.slice(5))-1]+' '+month.slice(0,4); }
+    function syncMonthIdentity() {
+        const uid = String(context().userUid||'').trim().toLowerCase();
+        if (state.monthViewerUid!==null && state.monthViewerUid!==uid) {
+            state.month='current'; state.carryover=true;
+            state.tasks=[]; state.incomingIssues=[]; state.employees=[];
+            state.loadTicket=(state.loadTicket||0)+1;
+        }
+        state.monthViewerUid=uid;
+    }
+    function matchesMonth(task) {
+        if (state.month==='all') return true;
+        if (state.month==='unknown') return task.status==='done'&&!task.resolutionMonth;
+        const month=selectedMonth();
+        if (task.status==='done') return task.resolutionMonth===month;
+        return !task.createdMonth || task.createdMonth===month || (state.carryover&&task.createdMonth<month);
+    }
+    function isCarryover(task) {
+        return !['all','unknown'].includes(state.month) && task.status!=='done' && !!task.createdMonth && task.createdMonth<selectedMonth();
+    }
+    function renderMonthBadge(task) {
+        let label='';
+        if(task.status==='done'&&!task.resolutionMonth) label='ไม่ทราบเดือนที่ปิด';
+        else if(task.status!=='done'&&!task.createdMonth) label='ไม่ระบุวันที่สร้าง';
+        else if(isCarryover(task)) label='ค้างจาก '+monthLabel(task.createdMonth);
+        return label ? `<div class="kb-month-badge">${esc(label)}</div>` : '';
+    }
+    function setMonth(value) {
+        if(!['current','all','unknown'].includes(value)&&!/^\d{4}-(0[1-9]|1[0-2])$/.test(value)) return;
+        syncMonthIdentity(); state.month=value; renderBoard();
+    }
+    function setCarryover(value) { syncMonthIdentity(); state.carryover=!!value; renderBoard(); }
+    function renderMonthControls(unknownCount) {
+        const select=document.getElementById('kb-month-filter');
+        if(select) {
+            const months=state.tasks.flatMap(t=>[t.createdMonth,t.resolutionMonth]).filter(Boolean);
+            const current=currentMonth();
+            const earliest=months.reduce((a,b)=>b<a?b:a,current);
+            const latest=months.reduce((a,b)=>b>a?b:a,current);
+            const index=m=>Number(m.slice(0,4))*12+Number(m.slice(5))-1;
+            let options=`<option value="current">เดือนนี้ · ${esc(monthLabel(current))}</option><option value="all">ทั้งหมด</option>`;
+            for(let n=index(latest);n>=index(earliest);n--) {
+                const month=String(Math.floor(n/12)).padStart(4,'0')+'-'+String(n%12+1).padStart(2,'0');
+                options+=`<option value="${month}">${esc(monthLabel(month))}</option>`;
+            }
+            if(unknownCount||state.month==='unknown') options+='<option value="unknown">ไม่ทราบเดือนที่ปิด</option>';
+            if(!['current','all','unknown'].includes(state.month)&&!options.includes(`value="${state.month}"`)) options+=`<option value="${esc(state.month)}">${esc(monthLabel(state.month))}</option>`;
+            if(select.innerHTML!==options) select.innerHTML=options;
+            select.value=state.month;
+        }
+        const checkbox=document.getElementById('kb-carryover');
+        if(checkbox) { checkbox.checked=state.carryover; checkbox.disabled=['all','unknown'].includes(state.month); }
+        const unknown=document.getElementById('kb-unknown-closed');
+        if(unknown) {
+            unknown.textContent=`ไม่ทราบเดือนที่ปิด (${unknownCount})`;
+            unknown.classList.toggle('hidden',!unknownCount);
+        }
+        const help=document.getElementById('kb-month-summary');
+        if(help) help.textContent=state.month==='unknown' ? 'งานเสร็จที่ไม่มีวันที่ปิด · ยังไม่จัดเข้าเดือนใด' : state.month==='all' ? 'ทุกเดือน · แสดงตามสถานะปัจจุบัน' : `${monthLabel(selectedMonth())}${state.carryover?' + งานค้างจากเดือนก่อน':''} · งานเสร็จอิงเดือนที่ปิด`;
+    }
     function branches(){const c=context();const privileged=(c.roles||[]).some(role=>['ADMIN','SUPERVISOR'].includes(String(role).trim().toUpperCase()));return [...new Set((privileged?(c.allowedBranches||[c.branch]):[c.branch]).filter(b=>['AKRA','TRD'].includes(b)))];}
     function scope(){return branches().includes(state.branchScope)||state.branchScope==='ALL'&&branches().length>1?state.branchScope:context().branch;}
     function scopedBranches(){return scope()==='ALL'?branches():[scope()];}
@@ -176,6 +260,10 @@
             area: t.area || 'คลังสินค้า',
             status: status,
             due: t.due_date || t.dueDate || '',
+            createdDate: t.createdDate ?? t.created_at ?? '',
+            resolutionDate: t.resolutionDate ?? t.resolved_at ?? '',
+            createdMonth: timestampMonth(t.createdDate ?? t.created_at),
+            resolutionMonth: timestampMonth(t.resolutionDate ?? t.resolved_at),
             next: t.next_step || t.nextStep || '',
             blocked: t.blocked_reason || t.blockedReason || '',
             revision: t.revision ?? 0,
@@ -232,6 +320,7 @@
     }
 
     async function loadKanbanBoard() {
+        syncMonthIdentity();
         const c=context(); const ticket=(state.loadTicket||0)+1; state.loadTicket=ticket;
         try {
             if (!c.token) throw Error('session_required');
@@ -281,15 +370,13 @@
         select.value = state.ownerFilter;
     }
 
-    function filteredTasks() {
+    function baseFilteredTasks() {
         const q = state.search.trim().toLowerCase();
         const currentUid = String(context().userUid || '').toLowerCase();
         return state.tasks.filter(t => {
             if (q && !`${t.title} ${t.detail} ${t.taskCode} ${t.id}`.toLowerCase().includes(q)) return false;
             if (state.ownerFilter && t.owner !== state.ownerFilter && String(t.ownerName).toLowerCase() !== state.ownerFilter.toLowerCase()) return false;
             if (state.categoryFilter && t.category !== state.categoryFilter) return false;
-            if (state.overdueOnly && !isOverdue(t)) return false;
-            if (state.blockedOnly && t.status !== 'blocked') return false;
             if (state.view === 'mine') {
                 const isMe = String(t.owner).toLowerCase() === currentUid || String(t.ownerName).toLowerCase() === currentUid;
                 if (!isMe) return false;
@@ -297,24 +384,32 @@
             return true;
         });
     }
+    function matchesStatusFilters(task) {
+        return (!state.overdueOnly||isOverdue(task)) && (!state.blockedOnly||task.status==='blocked');
+    }
+    function filteredTasks() { return baseFilteredTasks().filter(t=>matchesMonth(t)&&matchesStatusFilters(t)); }
 
     function renderBoard() {
+        syncMonthIdentity();
         const container = document.getElementById('kb-board-content');
         if (!container) return;
 
         const filtered = filteredTasks();
-        const totalOpen = state.tasks.filter(t => t.status !== 'done').length;
-        const overdueCount = state.tasks.filter(isOverdue).length;
+        const monthBase = baseFilteredTasks().filter(matchesMonth);
+        const totalOpen = filtered.filter(t => t.status !== 'done').length;
+        const overdueCount = monthBase.filter(isOverdue).length;
+        const unknownCount = baseFilteredTasks().filter(t=>t.status==='done'&&!t.resolutionMonth&&matchesStatusFilters(t)).length;
+        renderMonthControls(unknownCount);
 
         const summaryEl = document.getElementById('kb-summary');
         if (summaryEl) {
-            summaryEl.textContent = `${filtered.length} งาน (${totalOpen} งานที่เปิดอยู่)`;
+            summaryEl.textContent = `${filtered.length} งาน (${totalOpen} งานที่เปิดอยู่)${['all','unknown'].includes(state.month)?'':` · ค้างจากเดือนก่อน ${filtered.filter(isCarryover).length} งาน`}`;
         }
 
         const overdueCountEl = document.getElementById('kb-overdue-count');
         if (overdueCountEl) overdueCountEl.textContent = overdueCount;
         const blockedCountEl = document.getElementById('kb-blocked-count');
-        if (blockedCountEl) blockedCountEl.textContent = state.tasks.filter(t => t.status === 'blocked').length;
+        if (blockedCountEl) blockedCountEl.textContent = monthBase.filter(t => t.status === 'blocked').length;
 
         if (state.view === 'list' || state.view === 'mine') {
             container.innerHTML = renderListView(filtered);
@@ -455,6 +550,7 @@
                 </div>
                 <h4 class="font-bold text-slate-900 leading-snug mb-1 text-xs">${esc(t.title)}</h4>
                 <div class="text-[11px] text-slate-500 mb-2">${esc(t.area)} · ${esc(t.category)}</div>
+                ${renderMonthBadge(t)}
                 ${t.sourceIssueId ? `
                     <div class="mb-2 px-2 py-1 rounded bg-purple-50 text-purple-700 text-[10px] font-bold flex items-center gap-1">
                         <i class="fa-solid fa-inbox text-[9px]"></i>
@@ -529,6 +625,7 @@
                                                 ${esc(t.title)} <span class="text-[10px] text-violet-800">${esc(t.branch)}</span>
                                             </button>
                                             <div class="text-[11px] text-slate-400">${esc(t.taskCode)} · ${esc(t.area)} · ${esc(t.category)}</div>
+                                            ${renderMonthBadge(t)}
                                             ${renderNextStep(t)}
                                         </td>
                                         <td class="p-3.5 text-slate-700">${esc((t.ownerName || resolveEmployeeName(t.owner)))}</td>
@@ -612,7 +709,8 @@
     }
 
     async function updateTaskStatus(task,nextStatus) {
-        await persistTask({...task,status:nextStatus});
+        const saved=await persistTask({...task,status:nextStatus});
+        if(saved&&!matchesMonth(saved)) notify('เปลี่ยนสถานะแล้ว · งานอยู่นอกเดือนที่เลือก ดูได้ที่ “ทั้งหมด”');
     }
 
     // Modal / Drawer system
@@ -868,7 +966,7 @@
         }
 
         const saved=await persistTask({...t,owner,ownerName:resolveEmployeeName(owner,t.branch),due,next:nextStep,blocked,note,status:nextStatus});
-        if(saved){closeDrawer();notify('บันทึกการเปลี่ยนแปลงแล้ว');}
+        if(saved){closeDrawer();notify('บันทึกการเปลี่ยนแปลงแล้ว'+(!matchesMonth(saved)?' · งานอยู่นอกเดือนที่เลือก ดูได้ที่ “ทั้งหมด”':''));}
     }
 
     async function toggleChecklist(index,done) {
@@ -1057,7 +1155,7 @@
         };
 
         const saved=await persistTask({...newTask,revision:0});
-        if(saved){closeDrawer();notify(`สร้างงาน ${saved.taskCode} เรียบร้อยแล้ว`);}
+        if(saved){closeDrawer();notify(`สร้างงาน ${saved.taskCode} เรียบร้อยแล้ว`+(!matchesMonth(saved)?' · งานอยู่นอกเดือนที่เลือก ดูได้ที่ “ทั้งหมด”':''));}
     }
 
     function openClaimIssueModal(issueId) {
@@ -1233,6 +1331,8 @@
         openClaimIssueModal,
         handleClaimIssue,
         setView,
+        setMonth,
+        setCarryover,
         toggleOverdue,
         toggleBlocked,
         initEventListeners

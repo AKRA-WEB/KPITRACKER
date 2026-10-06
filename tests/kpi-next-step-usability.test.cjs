@@ -90,7 +90,7 @@ test('blocked quick filter composes with overdue/My Tasks/combined branches and 
     ]);
     await ui.window.KpiKanbanBoard.setBranchScope('ALL');ui.window.KpiKanbanBoard.setView('mine');ui.window.KpiKanbanBoard.toggleBlocked();
     assert.match(ui.element('kb-board-content').innerHTML,/Mine overdue blocked/);assert.match(ui.element('kb-board-content').innerHTML,/TRD mine blocked/);
-    assert.doesNotMatch(ui.element('kb-board-content').innerHTML,/Other blocked|Active progress/);assert.equal(ui.element('kb-blocked-count').textContent,3);
+    assert.doesNotMatch(ui.element('kb-board-content').innerHTML,/Other blocked|Active progress/);assert.equal(ui.element('kb-blocked-count').textContent,2);
     assert.equal(ui.element('kb-blocked-toggle').attributes['aria-pressed'],'true');
     ui.window.KpiKanbanBoard.toggleOverdue();assert.match(ui.element('kb-board-content').innerHTML,/Mine overdue blocked/);
     assert.equal(ui.element('kb-overdue-toggle').attributes['aria-pressed'],'true');
