@@ -20,6 +20,8 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: node tests/static_tailwind_test.cjs
       - run: node --check js/supabase-kpi-client.js
+      - run: node tests/kpi-kanban-monthly.test.cjs
+      - run: node tests/kpi-kanban-pagination.test.cjs
       - run: node tests/supabase-kpi-test.js
       - run: node tests/daily_sections_actions_test.js
       - run: node tests/case_marker_leakage_and_metadata_v2_test.js
