@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AKRA KPI Lite Phase 1 Preview</title>
+    <style>
+        html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; font-family: system-ui, sans-serif; }
+        #preview-banner { position: fixed; inset: 0 0 auto 0; z-index: 10; min-height: 42px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 12px; background: #78350f; color: white; font-size: 13px; font-weight: 700; }
+        #preview-frame { position: fixed; inset: 42px 0 0 0; width: 100%; height: calc(100% - 42px); border: 0; }
+        #preview-status { opacity: .8; font-weight: 500; }
+    </style>
+    <script src="js/kpi-lite-phase1.js"></script>
+</head>
+<body>
+    <div id="preview-banner">
+        <span>KPI Lite Phase 1 Preview</span>
+        <span id="preview-status">กำลังโหลด compatibility layer…</span>
+    </div>
+    <iframe id="preview-frame" src="index.html" title="KPI Tracker preview"></iframe>
+    <script>
+        const frame = document.getElementById('preview-frame');
+        const status = document.getElementById('preview-status');
+        frame.addEventListener('load', () => {
+            try {
+                const result = AkraKpiLite.install(frame.contentWindow);
+                status.textContent = result.installed
+                    ? 'เปิดใช้: ยืนยัน Error แบบ explicit + Workload กรอกเร็ว'
+                    : 'ไม่สามารถเปิด compatibility layer ได้';
+            } catch (error) {
+                console.error(error);
+                status.textContent = 'ติดตั้ง compatibility layer ไม่สำเร็จ';
+            }
+        });
+    </script>
+</body>
+</html>
