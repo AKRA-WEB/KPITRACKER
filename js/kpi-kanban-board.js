@@ -24,7 +24,7 @@
     const state = {
         tasks: [],
         incomingIssues: [],
-        view: 'board', // 'board' | 'list' | 'mine'
+        view: 'board', // 'board' | 'list' | 'mine' | 'archive'
         search: '',
         ownerFilter: '',
         categoryFilter: '',
@@ -35,7 +35,8 @@
         monthViewerUid: null,
         activeTaskId: null,
         draggedTaskId: null,
-        isInitialized: false
+        isInitialized: false,
+        deletionRequests: {}
     };
 
     function context() { return window.getKpiTaskContext?.() || {token:null,branch:'',userUid:'',name:'',employees:[],can:()=>false}; }
@@ -119,29 +120,139 @@
         }
         const help=document.getElementById('kb-month-summary');
         if(help) help.textContent=state.month==='unknown' ? 'งานเสร็จที่ไม่มีวันที่ปิด · ยังไม่จัดเข้าเดือนใด' : state.month==='all' ? 'ทุกเดือน · แสดงตามสถานะปัจจุบัน' : `${monthLabel(selectedMonth())}${state.carryover?' + งานค้างจากเดือนก่อน':''} · งานเสร็จอิงเดือนที่ปิด`;
+        if(select)select.disabled=state.view==='archive';
+        if(checkbox&&state.view==='archive')checkbox.disabled=true;
+        if(unknown&&state.view==='archive')unknown.classList.add('hidden');
+        if(help&&state.view==='archive')help.textContent='แสดงงานที่เก็บไว้ทุกเดือน · เนื้อหาเดิมยังอยู่ · คืนงานเพื่อแก้ไข';
     }
     function branches(){const c=context();const privileged=(c.roles||[]).some(role=>['ADMIN','SUPERVISOR'].includes(String(role).trim().toUpperCase()));return [...new Set((privileged?(c.allowedBranches||[c.branch]):[c.branch]).filter(b=>['AKRA','TRD'].includes(b)))];}
     function scope(){return branches().includes(state.branchScope)||state.branchScope==='ALL'&&branches().length>1?state.branchScope:context().branch;}
     function scopedBranches(){return scope()==='ALL'?branches():[scope()];}
+    function syncTaskContext() {
+        const c=context(),key=JSON.stringify([c.token,c.branch,String(c.userUid||'').toLowerCase(),scope()]);
+        if(state.taskContextKey!==undefined&&state.taskContextKey!==key) {
+            state.tasks=[];state.incomingIssues=[];state.employees=[];state.deletionRequests={};state.imageRetries={};
+            state.lifecycleTicket=(state.lifecycleTicket||0)+1;state.loadTicket=(state.loadTicket||0)+1;
+            state.saving=false;closeDrawer();
+        }
+        state.taskContextKey=key;
+        if(state.view==='archive'&&!c.can('manageTeamTasks'))state.view='board';
+    }
+    function taskContextCurrent(c,selected,ticket) { const current=context();return c.token===current.token&&c.branch===current.branch&&c.userUid===current.userUid&&selected===scope()&&ticket===state.lifecycleTicket; }
+    function deletionPending(task) { return task.deletionPending || !!state.deletionRequests[task.id]; }
+    function canManageTask(task) { return !!context().token&&context().can('manageTeamTasks')&&scopedBranches().includes(task.branch); }
     function renderBranchScope(){const el=document.getElementById('kb-branch-scope');if(el){el.innerHTML=branches().map(b=>`<option value="${b}">${b}</option>`).join('')+(branches().length>1?'<option value="ALL">ทั้งสองสาขา</option>':'');el.value=scope();}}
     async function setBranchScope(value){if(state.saving)return;if(value!=='ALL'&&!branches().includes(value)||value==='ALL'&&branches().length<2)return;state.branchScope=value;closeDrawer();await loadKanbanBoard();}
     function findTask(id){return state.tasks.find(t=>t.id===id)||(state.tasks.filter(t=>t.actionId===id).length===1?state.tasks.find(t=>t.actionId===id):null);}
-    function canEdit(task) { const c=context(); return c.can('manageTeamTasks') || (c.can('updateOwnTasks') && String(task.owner).toLowerCase()===String(c.userUid).toLowerCase()); }
-    function taskPayload(t) { return {actionId:t.actionId||t.id,branch:t.branch||context().branch,title:t.title,detail:t.detail,ownerUid:t.owner,owner:t.ownerName,category:t.category,area:t.area,priority:t.priority==='high'?'High':'Medium',status:{open:'Open',progress:'In Progress',blocked:'Blocked',done:'Resolved'}[t.status],dueDate:t.due,nextStep:t.next,blockedReason:t.blocked,resolutionNote:t.note,checklist:t.checklist,comments:t.comments,revision:t.revision}; }
+    function canEdit(task) { const c=context(); return !task.isArchived&&!deletionPending(task)&&(c.can('manageTeamTasks') || (c.can('updateOwnTasks') && String(task.owner).toLowerCase()===String(c.userUid).toLowerCase())); }
+    function taskPayload(t) { return {id:t.dbId,actionId:t.actionId||t.id,taskCode:t.taskCode,branch:t.branch||context().branch,isArchived:!!t.isArchived,title:t.title,detail:t.detail,ownerUid:t.owner,owner:t.ownerName,category:t.category,area:t.area,priority:t.priority==='high'?'High':'Medium',status:t.rawStatus==='Cancelled'?'Cancelled':{open:'Open',progress:'In Progress',blocked:'Blocked',done:'Resolved'}[t.status],dueDate:t.due,nextStep:t.next,blockedReason:t.blocked,resolutionNote:t.note,checklist:t.checklist,comments:t.comments,revision:t.revision}; }
     async function persistTask(candidate) {
-        if (state.saving) return null;
-        const c=context();
+        syncTaskContext();if (state.saving) return null;
+        const c=context(),selected=scope(),ticket=state.lifecycleTicket;
         if (!c.token || !canEdit(candidate)) { notify('ไม่มีสิทธิ์แก้ไขงานนี้'); return null; }
         state.saving=true;
         try {
             const res=await window.AkraSupabaseKPI.saveKanbanTask(c.token,taskPayload(candidate),candidate.revision??0);
             if (!res?.task) throw Error('invalid_response');
-            if (context().token!==c.token || context().branch!==c.branch) return null;
+            if (!taskContextCurrent(c,selected,ticket)) return null;
             const task=normalizeTask({...res.task,branch:candidate.branch||c.branch}); const i=state.tasks.findIndex(t=>t.id===task.id);
             if(i<0) state.tasks.unshift(task); else state.tasks[i]=task;
             renderBoard(); window.onKpiTaskChanged?.(task); return task;
-        } catch(err) { notify('บันทึกไม่สำเร็จ กรุณารีเฟรชข้อมูลก่อนลองอีกครั้ง'); await loadKanbanBoard(); return null; }
-        finally {state.saving=false;}
+        } catch(err) { if(taskContextCurrent(c,selected,ticket)){notify('บันทึกไม่สำเร็จ กรุณารีเฟรชข้อมูลก่อนลองอีกครั้ง'); await loadKanbanBoard();} return null; }
+        finally {if(taskContextCurrent(c,selected,ticket))state.saving=false;}
+    }
+
+    function lifecycleIdentity(task) { return {branch:task.branch,actionId:task.actionId,taskId:task.dbId,taskCode:task.taskCode,expectedRevision:task.revision}; }
+    function validLifecycleIdentity(task) { return !!task.dbId&&!!task.actionId&&!!task.taskCode&&Number.isSafeInteger(task.revision)&&task.revision>=1; }
+    function matchingDeletion(result,request) { return result?.status==='success'&&(!result.branch||result.branch===request.branch)&&result.taskId===request.taskId&&result.actionId===request.actionId&&result.taskCode===request.taskCode&&result.requestId===request.requestId; }
+    function resumeDeletion(task) {
+        if(!state.deletionRequests[task.id]&&task.deletionPending&&task.deletionRequestId&&Number.isSafeInteger(task.deletionExpectedRevision)) {
+            state.deletionRequests[task.id]={payload:{...lifecycleIdentity(task),expectedRevision:task.deletionExpectedRevision,requestId:task.deletionRequestId},state:'pending'};
+        }
+        return state.deletionRequests[task.id];
+    }
+    function renderLifecycleControls(task) {
+        if(!canManageTask(task))return '';
+        if(deletionPending(task))return '<section class="mb-5 p-3 rounded-xl border border-amber-200 bg-amber-50 text-xs"><p class="mb-2">กำลังรอยืนยันการลบงาน · ยังแก้ไขหรือคืนงานไม่ได้</p><button type="button" onclick="window.KpiKanbanBoard.openDeleteTask()" class="px-3 py-2 rounded-lg border border-amber-300 font-bold">ตรวจสอบการลบงาน</button></section>';
+        return `<section class="mb-5 pt-3 border-t border-slate-200 text-xs"><p class="mb-2 text-slate-600">${task.isArchived?'งานนี้ถูกเก็บไว้ เนื้อหาและประวัติยังอยู่':'เก็บงานเพื่อซ่อนจากบอร์ดและคืนงานได้ภายหลัง'}</p><div class="flex flex-wrap gap-2"><button type="button" ${state.saving?'disabled':''} onclick="window.KpiKanbanBoard.setTaskArchived(${!task.isArchived})" class="px-3 py-2 rounded-lg border border-slate-300 font-bold">${task.isArchived?'คืนงานเข้าบอร์ด':'เก็บงาน'}</button><button type="button" ${state.saving?'disabled':''} onclick="window.KpiKanbanBoard.openDeleteTask()" class="px-3 py-2 rounded-lg border border-red-200 text-red-700 font-bold">ลบงานถาวร</button></div></section>`;
+    }
+    async function setTaskArchived(archived) {
+        syncTaskContext();const task=findTask(state.activeTaskId);
+        if(state.saving||!task||!canManageTask(task)||deletionPending(task)||!validLifecycleIdentity(task)||typeof archived!=='boolean')return;
+        if(!window.confirm(archived?'เก็บงาน '+task.taskCode+'? เนื้อหาและประวัติยังอยู่ และคืนงานได้':'คืนงาน '+task.taskCode+' เข้าบอร์ด?'))return;
+        const c=context(),selected=scope(),ticket=state.lifecycleTicket;state.saving=true;
+        try {
+            const result=await window.AkraSupabaseKPI.setKanbanTaskArchived(c.token,{...lifecycleIdentity(task),archived});
+            if(!taskContextCurrent(c,selected,ticket))return;
+            const next=normalizeTask(result.task||{});
+            if(result.status!=='success'||next.dbId!==task.dbId||next.actionId!==task.actionId||next.branch!==task.branch||next.taskCode!==task.taskCode||next.isArchived!==archived)throw Error('invalid_response');
+            state.tasks=state.tasks.map(row=>row.id===task.id?next:row);closeDrawer();renderBoard();window.onKpiTaskChanged?.(next);
+            notify(archived?'เก็บงานแล้ว ดูและคืนงานได้ที่ “งานที่เก็บไว้”':'คืนงานแล้ว');
+        }catch(error) {
+            if(taskContextCurrent(c,selected,ticket)){notify('ยังยืนยันการเก็บหรือคืนงานไม่ได้ กรุณาตรวจสอบข้อมูลล่าสุด');await loadKanbanBoard();}
+        }finally{if(taskContextCurrent(c,selected,ticket))state.saving=false;}
+    }
+    function openDeleteTask() {
+        syncTaskContext();const task=findTask(state.activeTaskId);
+        if(state.saving||!task||!canManageTask(task)||!validLifecycleIdentity(task))return;
+        const receipt=resumeDeletion(task);
+        if(task.deletionPending&&!receipt){notify('ยังตรวจสอบคำขอลบงานไม่ได้ กรุณาโหลดข้อมูลล่าสุด');return;}
+        const messages={pending:'ยังลบไม่ครบ กดตรวจสอบผลก่อนลองคำขอเดิมอีกครั้ง',not_started:'ยังไม่ได้เริ่มลบงาน ลองคำขอเดิมอีกครั้งได้',unknown:'ยังยืนยันผลการลบไม่ได้ กดตรวจสอบผลก่อนลองอีกครั้ง'};
+        showDrawer(`<div class="flex items-center justify-between mb-4"><h2 class="font-bold text-base">ลบงานถาวร</h2><button type="button" aria-label="ปิด" onclick="window.KpiKanbanBoard.closeDrawer()" class="px-3 py-2">ปิด</button></div><p class="text-sm font-bold mb-2">${esc(task.taskCode)} · ${esc(task.title)} · ${esc(task.branch)}</p><p class="text-xs text-red-700 mb-4">งาน Checklist ความคิดเห็น ประวัติ และรูปภาพทั้งหมดจะถูกลบ กู้คืนไม่ได้</p>${receipt?`<p role="status" class="text-xs text-amber-800 mb-3">${messages[receipt.state]||messages.unknown}</p><button type="button" onclick="window.KpiKanbanBoard.reconcileTaskDeletion()" class="mb-3 px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold">ตรวจสอบผลการลบ</button>`:''}<form id="kb-delete-task-form" onsubmit="window.KpiKanbanBoard.handleDeleteTask(event)" class="space-y-3"><label for="kb-delete-task-code" class="block text-xs font-bold">พิมพ์รหัสงาน ${esc(task.taskCode)} เพื่อยืนยัน</label><input id="kb-delete-task-code" name="taskCode" type="text" required autocomplete="off" spellcheck="false" class="w-full p-2 rounded-lg border border-slate-300 text-sm"><button type="submit" class="px-4 py-2 rounded-lg bg-red-700 text-white font-bold text-xs">${receipt?'ลองลบด้วยคำขอเดิมอีกครั้ง':'ยืนยันลบงานถาวร'}</button></form>`);
+        document.getElementById('kb-delete-task-code')?.focus();
+    }
+    function completeTaskDeletion(task,receipt) {
+        state.tasks=state.tasks.filter(row=>row.id!==task.id);delete state.deletionRequests[task.id];
+        closeDrawer();renderBoard();window.onKpiTaskChanged?.({...task,deleted:true,requestId:receipt.payload.requestId});notify('ลบงานและข้อมูลทั้งหมดแล้ว');
+    }
+    async function readTaskDeletion(task,receipt,c,selected,ticket) {
+        const result=await window.AkraSupabaseKPI.getKanbanTaskDeletion(c.token,receipt.payload);
+        if(!taskContextCurrent(c,selected,ticket))return null;
+        if(!matchingDeletion(result,receipt.payload)||!['not_started','pending','completed'].includes(result.state))throw Error('invalid_receipt');
+        receipt.state=result.state;
+        if(result.state==='completed')completeTaskDeletion(task,receipt);
+        return result.state;
+    }
+    async function reconcileTaskDeletion() {
+        syncTaskContext();const task=findTask(state.activeTaskId),receipt=task&&resumeDeletion(task);
+        if(state.saving||!task||!receipt||!canManageTask(task))return;
+        const c=context(),selected=scope(),ticket=state.lifecycleTicket;state.saving=true;
+        try{await readTaskDeletion(task,receipt,c,selected,ticket);}
+        catch(error){if(taskContextCurrent(c,selected,ticket)){receipt.state='unknown';notify('ยังยืนยันผลการลบไม่ได้ กรุณาตรวจสอบอีกครั้ง');}}
+        finally{if(taskContextCurrent(c,selected,ticket)){state.saving=false;if(findTask(task.id)&&state.activeTaskId===task.id)openDeleteTask();}}
+    }
+    async function handleDeleteTask(event) {
+        event.preventDefault();syncTaskContext();const task=findTask(state.activeTaskId);
+        if(state.saving||!task||!canManageTask(task)||!validLifecycleIdentity(task))return;
+        if(String(new FormData(event.target).get('taskCode')||'')!==task.taskCode){notify('รหัสงานไม่ตรง กรุณาพิมพ์รหัสงานให้ครบ');return;}
+        if(state.imageRetries?.[task.id]){notify('กรุณาลองอัปโหลดรูปเดิมให้สำเร็จก่อนลบงาน');return;}
+        const existing=resumeDeletion(task);
+        if(task.deletionPending&&!existing){notify('ยังตรวจสอบคำขอลบงานไม่ได้ กรุณาโหลดข้อมูลล่าสุด');return;}
+        const receipt=existing||{payload:{...lifecycleIdentity(task),requestId:crypto.randomUUID()},state:'unknown'};
+        state.deletionRequests[task.id]=receipt;
+        const c=context(),selected=scope(),ticket=state.lifecycleTicket;state.saving=true;
+        let readNotStarted=false;
+        event.target.querySelectorAll?.('input,button').forEach(control=>control.disabled=true);
+        try {
+            if(existing){const result=await readTaskDeletion(task,receipt,c,selected,ticket);if(!result||result==='completed')return;readNotStarted=result==='not_started';}
+            const result=await window.AkraSupabaseKPI.deleteKanbanTask(c.token,receipt.payload);
+            if(!taskContextCurrent(c,selected,ticket))return;
+            if(!matchingDeletion(result,receipt.payload)||(result.deleted!==true&&result.state!=='pending'))throw Error('invalid_response');
+            if(result.deleted===true)completeTaskDeletion(task,receipt);else receipt.state='pending';
+        }catch(error) {
+            if(!taskContextCurrent(c,selected,ticket))return;
+            if(['task_delete_not_ready','image_upload_pending','record_conflict','invalid_payload','permission_denied'].includes(error.reason)) {
+                if(!existing||readNotStarted&&['record_conflict','task_delete_not_ready'].includes(error.reason))delete state.deletionRequests[task.id];
+                notify(error.reason==='task_delete_not_ready'?'ระบบลบงานยังไม่พร้อมใช้งาน กรุณาลองใหม่ภายหลัง':error.reason==='image_upload_pending'?'กรุณาลองอัปโหลดรูปเดิมให้สำเร็จก่อนลบงาน':readNotStarted?'ข้อมูลเปลี่ยนและยังไม่ได้เริ่มลบ กรุณาตรวจงานล่าสุดและยืนยันรหัสอีกครั้ง':'ลบงานไม่ได้ ข้อมูลหรือสิทธิ์เปลี่ยน กรุณาโหลดข้อมูลล่าสุด');
+                if(error.reason==='record_conflict')await loadKanbanBoard();
+                return;
+            }
+            receipt.state='unknown';
+            try{await readTaskDeletion(task,receipt,c,selected,ticket);}
+            catch(readError){if(taskContextCurrent(c,selected,ticket))notify('ยังยืนยันผลการลบไม่ได้ กรุณาตรวจสอบอีกครั้ง');}
+        }finally {
+            if(taskContextCurrent(c,selected,ticket)){state.saving=false;if(findTask(task.id)&&state.activeTaskId===task.id){if(state.deletionRequests[task.id])openDeleteTask();else openTask(task.id);}}
+        }
     }
 
 
@@ -183,29 +294,30 @@
         }finally{bitmap.close?.();}
     }
     async function saveImageRequest(task,c,payload){
+        const selected=scope(),ticket=state.lifecycleTicket;
         try{
             const res=await window.AkraSupabaseKPI.uploadTaskImage(c.token,payload);
-            if(context().token!==c.token||context().branch!==c.branch)return;
+            if(!taskContextCurrent(c,selected,ticket))return;
             const next=normalizeTask({...res.task,branch:task.branch});const idx=state.tasks.findIndex(t=>t.id===task.id);if(idx>=0)state.tasks[idx]=next;
             delete state.imageRetries?.[task.id];renderBoard();window.onKpiTaskChanged?.(next);notify('เพิ่มรูปภาพแล้ว');if(state.activeTaskId===task.id)await loadImages(next);
         }catch(err){
-            if(context().token!==c.token||context().branch!==c.branch)return;
+            if(!taskContextCurrent(c,selected,ticket))return;
             if(['record_conflict','image_limit_reached','invalid_image','image_too_large','permission_denied','cannot_edit_other_tasks'].includes(err.reason)){delete state.imageRetries?.[task.id];notify('บันทึกรูปไม่ได้ ข้อมูลหรือสิทธิ์อาจเปลี่ยน กรุณาปิดแล้วเปิดงานใหม่');}
             else{(state.imageRetries??={})[task.id]={token:c.token,branch:c.branch,payload};notify('ยังยืนยันการอัปโหลดไม่ได้ กดลองบันทึกรูปเดิมอีกครั้ง');}
         }finally{
-            imageBusy(false);
-            if(context().token===c.token&&context().branch===c.branch&&state.activeTaskId===task.id)renderImages(findTask(task.id)||task,state.imageUrls||[]);
+            if(taskContextCurrent(c,selected,ticket)){imageBusy(false);if(state.activeTaskId===task.id)renderImages(findTask(task.id)||task,state.imageUrls||[]);}
         }
     }
     async function uploadImage(input){
         const task=findTask(state.activeTaskId),c=context(),file=input.files?.[0];if(!task||!file||state.saving||!canEdit(task))return;
+        const selected=scope(),ticket=state.lifecycleTicket;
         if(state.imageRetries?.[task.id]){notify('กรุณาลองบันทึกรูปเดิมให้เสร็จก่อน');return;}
         imageBusy(true);renderImages(task,state.imageUrls||[]);
         try{
             const base64=await compressedImage(file);
-            if(context().token!==c.token||context().branch!==c.branch){imageBusy(false);return;}
+            if(!taskContextCurrent(c,selected,ticket))return;
             await saveImageRequest(task,c,{branch:task.branch,actionId:task.actionId,imageId:crypto.randomUUID(),fileName:file.name.slice(0,180),mimeType:'image/jpeg',base64,expectedRevision:task.revision});
-        }catch(err){imageBusy(false);notify(/^(รองรับ|รูป)/.test(err.message)?err.message:'อ่านรูปไม่สำเร็จ กรุณาเลือกรูปอื่น');if(state.activeTaskId===task.id)renderImages(task,state.imageUrls||[]);}
+        }catch(err){if(taskContextCurrent(c,selected,ticket)){imageBusy(false);notify(/^(รองรับ|รูป)/.test(err.message)?err.message:'อ่านรูปไม่สำเร็จ กรุณาเลือกรูปอื่น');if(state.activeTaskId===task.id)renderImages(task,state.imageUrls||[]);}}
     }
     async function retryImage(){
         const task=findTask(state.activeTaskId),retry=state.imageRetries?.[task?.id],c=context();if(!task||!retry||state.saving||!canEdit(task))return;
@@ -214,15 +326,16 @@
     }
     async function removeImage(id){
         const task=findTask(state.activeTaskId),c=context();if(!task||state.saving||!canEdit(task))return;
+        const selected=scope(),ticket=state.lifecycleTicket;
         if(!window.confirm('ต้องการลบรูปภาพนี้ออกจากงานหรือไม่?'))return;
         imageBusy(true);renderImages(task,state.imageUrls||[]);
         try{
             const res=await window.AkraSupabaseKPI.removeTaskImage(c.token,{branch:task.branch,actionId:task.actionId,imageId:id,expectedRevision:task.revision});
-            if(context().token!==c.token||context().branch!==c.branch)return;
+            if(!taskContextCurrent(c,selected,ticket))return;
             const next=normalizeTask({...res.task,branch:task.branch}),idx=state.tasks.findIndex(t=>t.id===task.id);if(idx>=0)state.tasks[idx]=next;
             renderBoard();window.onKpiTaskChanged?.(next);notify('ลบรูปภาพแล้ว');if(state.activeTaskId===task.id)await loadImages(next);
-        }catch(_err){if(context().token===c.token)notify('ลบรูปไม่สำเร็จ กรุณาปิดแล้วเปิดงานเพื่อตรวจข้อมูลล่าสุด');}
-        finally{imageBusy(false);if(context().token===c.token&&state.activeTaskId===task.id)renderImages(findTask(task.id)||task,state.imageUrls||[]);}
+        }catch(_err){if(taskContextCurrent(c,selected,ticket))notify('ลบรูปไม่สำเร็จ กรุณาปิดแล้วเปิดงานเพื่อตรวจข้อมูลล่าสุด');}
+        finally{if(taskContextCurrent(c,selected,ticket)){imageBusy(false);if(state.activeTaskId===task.id)renderImages(findTask(task.id)||task,state.imageUrls||[]);}}
     }
     function closeImage(){const viewer=document.getElementById('kb-image-viewer');viewer?.classList.add('hidden');if(viewer)viewer.innerHTML='';state.imageFocus?.focus?.();}
     function openImage(id){
@@ -248,7 +361,7 @@
         return {
             id: `${t.branch||context().branch}::${t.actionId || t.action_id || t.id}`,
             branch:t.branch||context().branch,
-            dbId: t.id,
+            dbId: t.id || t.dbId,
             actionId: t.actionId || t.action_id || t.id,
             taskCode: t.taskCode || t.task_code || t.actionId || t.action_id || t.id,
             title: t.title || t.action_name || t.actionName || '',
@@ -259,6 +372,11 @@
             priority: ['high','critical'].includes(String(t.priority||'').toLowerCase()) ? 'high' : 'normal',
             area: t.area || 'คลังสินค้า',
             status: status,
+            rawStatus: rawStatus==='cancelled'?'Cancelled':String(t.status||'Open'),
+            isArchived: t.isArchived===true || t.is_archived===true,
+            deletionPending: t.deletionPending===true || t.deletePending===true,
+            deletionRequestId: t.deletionRequestId || null,
+            deletionExpectedRevision: t.deletionExpectedRevision ?? null,
             due: t.due_date || t.dueDate || '',
             createdDate: t.createdDate ?? t.created_at ?? '',
             resolutionDate: t.resolutionDate ?? t.resolved_at ?? '',
@@ -320,21 +438,22 @@
     }
 
     async function loadKanbanBoard() {
-        syncMonthIdentity();
-        const c=context(); const ticket=(state.loadTicket||0)+1; state.loadTicket=ticket;
+        syncMonthIdentity();syncTaskContext();closeDrawer();
+        state.lifecycleTicket=(state.lifecycleTicket||0)+1;state.saving=false;
+        const c=context(),selected=scope(); const ticket=(state.loadTicket||0)+1; state.loadTicket=ticket;
         try {
             if (!c.token) throw Error('session_required');
-            const selected=scope();renderBranchScope();
-            const results=await Promise.all(scopedBranches().map(async branch=>({branch,res:await window.AkraSupabaseKPI.getKanbanBoard(c.token,branch)})));
-            if(ticket!==state.loadTicket||c.token!==context().token||c.branch!==context().branch||selected!==scope())return;
+            const archive=state.view==='archive';renderBranchScope();
+            const results=await Promise.all(scopedBranches().map(async branch=>({branch,res:await window.AkraSupabaseKPI.getKanbanBoard(c.token,branch,{includeArchived:archive})})));
+            if(ticket!==state.loadTicket||c.token!==context().token||c.branch!==context().branch||c.userUid!==context().userUid||selected!==scope()||archive!==(state.view==='archive'))return;
             if(results.some(({res})=>!Array.isArray(res.tasks)))throw Error('invalid_response');
-            state.tasks=results.flatMap(({branch,res})=>res.tasks.filter(t=>!t.isArchived&&t.status!=='Cancelled').map(t=>normalizeTask({...t,branch})));
+            state.tasks=results.flatMap(({branch,res})=>res.tasks.map(t=>normalizeTask({...t,branch})));
             state.incomingIssues=results.flatMap(({branch,res})=>(res.incomingIssues||[]).map(i=>({...i,branch,id:branch+'::'+i.id,sourceId:i.id,taskId:i.taskId?branch+'::'+i.taskId:null})));
             state.employees=results.flatMap(({branch,res})=>(res.employees||c.employees||[]).map(e=>({...e,branch})));
             state.issueReady=results.every(({res})=>res.issueIntegrationReady===true);
             populateOwnerSelect(); renderBoard();
         } catch(err) {
-            if(ticket!==state.loadTicket)return;
+            if(ticket!==state.loadTicket||c.token!==context().token||c.branch!==context().branch||c.userUid!==context().userUid||selected!==scope())return;
             state.tasks=[];state.incomingIssues=[];
             state.employees=[];
             const summary=document.getElementById('kb-summary');if(summary)summary.textContent='';
@@ -374,6 +493,7 @@
         const q = state.search.trim().toLowerCase();
         const currentUid = String(context().userUid || '').toLowerCase();
         return state.tasks.filter(t => {
+            if(state.view==='archive'?!t.isArchived:t.isArchived||t.rawStatus==='Cancelled')return false;
             if (q && !`${t.title} ${t.detail} ${t.taskCode} ${t.id}`.toLowerCase().includes(q)) return false;
             if (state.ownerFilter && t.owner !== state.ownerFilter && String(t.ownerName).toLowerCase() !== state.ownerFilter.toLowerCase()) return false;
             if (state.categoryFilter && t.category !== state.categoryFilter) return false;
@@ -387,10 +507,10 @@
     function matchesStatusFilters(task) {
         return (!state.overdueOnly||isOverdue(task)) && (!state.blockedOnly||task.status==='blocked');
     }
-    function filteredTasks() { return baseFilteredTasks().filter(t=>matchesMonth(t)&&matchesStatusFilters(t)); }
+    function filteredTasks() { return baseFilteredTasks().filter(t=>state.view==='archive'||matchesMonth(t)&&matchesStatusFilters(t)); }
 
     function renderBoard() {
-        syncMonthIdentity();
+        syncMonthIdentity();syncTaskContext();
         const container = document.getElementById('kb-board-content');
         if (!container) return;
 
@@ -400,10 +520,11 @@
         const overdueCount = monthBase.filter(isOverdue).length;
         const unknownCount = baseFilteredTasks().filter(t=>t.status==='done'&&!t.resolutionMonth&&matchesStatusFilters(t)).length;
         renderMonthControls(unknownCount);
+        const archiveButton=document.getElementById('kb-archive-view');if(archiveButton)archiveButton.classList.toggle('hidden',!context().can('manageTeamTasks'));
 
         const summaryEl = document.getElementById('kb-summary');
         if (summaryEl) {
-            summaryEl.textContent = `${filtered.length} งาน (${totalOpen} งานที่เปิดอยู่)${['all','unknown'].includes(state.month)?'':` · ค้างจากเดือนก่อน ${filtered.filter(isCarryover).length} งาน`}`;
+            summaryEl.textContent = state.view==='archive'?`${filtered.length} งานที่เก็บไว้ · คืนงานเพื่อแก้ไข`:`${filtered.length} งาน (${totalOpen} งานที่เปิดอยู่)${['all','unknown'].includes(state.month)?'':` · ค้างจากเดือนก่อน ${filtered.filter(isCarryover).length} งาน`}`;
         }
 
         const overdueCountEl = document.getElementById('kb-overdue-count');
@@ -411,7 +532,7 @@
         const blockedCountEl = document.getElementById('kb-blocked-count');
         if (blockedCountEl) blockedCountEl.textContent = monthBase.filter(t => t.status === 'blocked').length;
 
-        if (state.view === 'list' || state.view === 'mine') {
+        if (state.view === 'list' || state.view === 'mine' || state.view === 'archive') {
             container.innerHTML = renderListView(filtered);
         } else {
             container.innerHTML = renderKanbanView(filtered);
@@ -616,7 +737,7 @@
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             ${filtered.map(t => {
-                                const statusDef = STATUSES.find(s => s.id === t.status) || STATUSES[0];
+                                const statusDef = t.rawStatus==='Cancelled'?{label:'ยกเลิกแล้ว',badgeClass:'bg-slate-100 text-slate-700'}:STATUSES.find(s => s.id === t.status) || STATUSES[0];
                                 const overdue = isOverdue(t);
                                 return `
                                     <tr class="hover:bg-slate-50/80 transition-colors">
@@ -683,7 +804,7 @@
                 if (!taskId || !targetStatus) return;
 
                 const task = state.tasks.find(t => t.id === taskId);
-                if (!task || task.status === targetStatus) return;
+                if (!task || !canEdit(task) || task.status === targetStatus) return;
 
                 if (needsNextStep(targetStatus) && !hasNextStep(task.next)) {
                     openTask(taskId, targetStatus);
@@ -728,25 +849,36 @@
 
     function closeDrawer() {
         closeImage();state.imageTicket=(state.imageTicket||0)+1;state.imageUrls=[];
+        state.imageUrlContext=null;state.imageFocus=null;
         const backdrop = document.getElementById('kpi-task-drawer-backdrop');
         const drawer = document.getElementById('kpi-task-drawer');
         if (backdrop) backdrop.classList.add('hidden');
-        if (drawer) drawer.classList.add('hidden');
+        if (drawer) {drawer.classList.add('hidden');drawer.innerHTML='';}
         document.body.style.overflow = '';
         state.activeTaskId = null;
     }
 
+    function invalidate() {
+        state.loadTicket=(state.loadTicket||0)+1;state.lifecycleTicket=(state.lifecycleTicket||0)+1;
+        state.dashboardOpenTicket=(state.dashboardOpenTicket||0)+1;state.saving=false;
+        state.tasks=[];state.incomingIssues=[];state.employees=[];state.deletionRequests={};state.imageRetries={};
+        state.imageShellContext=null;state.draggedTaskId=null;state.taskContextKey=undefined;state.view='board';
+        closeDrawer();renderBoard();
+    }
+
     function openTask(id, forceStatus) {
+        syncTaskContext();
         const t = findTask(id);
         if (!t) return;
         state.activeTaskId = t.id;
-        const currentStatus = forceStatus || t.status;
+        resumeDeletion(t);
+        const currentStatus = t.rawStatus==='Cancelled'?'cancelled':forceStatus || t.status;
 
         const ownerOptionsHtml = getEmployees(t.branch).map(e => `
             <option value="${esc(e.uid)}" ${String(e.uid) === String(t.owner) ? 'selected' : ''}>${esc(e.name)}</option>
         `).join('');
 
-        const statusOptionsHtml = STATUSES.map(s => `
+        const statusOptionsHtml = (t.rawStatus==='Cancelled'?[{id:'cancelled',label:'ยกเลิกแล้ว'},...STATUSES]:STATUSES).map(s => `
             <option value="${s.id}" ${s.id === currentStatus ? 'selected' : ''}>${s.label}</option>
         `).join('');
 
@@ -767,6 +899,7 @@
                 </span>
             </div>
             <p class="text-xs text-slate-600 leading-relaxed mb-4 whitespace-pre-wrap">${esc(t.detail)}</p>
+            ${renderLifecycleControls(t)}
 
             ${t.sourceIssueId ? `
                 <div class="mb-4 p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs flex items-center justify-between">
@@ -779,6 +912,7 @@
 
             <!-- Task Edit Form -->
             <form id="kb-edit-task-form" onsubmit="window.KpiKanbanBoard.handleSaveTask(event)" class="space-y-3.5 mb-6">
+                <fieldset ${!canEdit(t)?'disabled':''} class="space-y-3.5">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-bold text-slate-700 mb-1">ผู้รับผิดชอบ</label>
@@ -825,6 +959,7 @@
                     <i class="fa-solid fa-check"></i>
                     <span>บันทึกการเปลี่ยนแปลง</span>
                 </button>
+                </fieldset>
             </form>
 
             <section id="kb-task-images" class="mb-6 pt-4 border-t border-slate-200" aria-label="รูปภาพแนบงาน"></section>
@@ -843,7 +978,7 @@
                         <div>
                         <div id="kb-checklist-view-${idx}" class="flex items-center gap-2">
                         <label class="flex-1 min-w-0 flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 text-xs cursor-pointer">
-                            <input type="checkbox" ${c.done ? 'checked' : ''} onchange="window.KpiKanbanBoard.toggleChecklist(${idx}, this.checked)" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4">
+                            <input type="checkbox" ${c.done ? 'checked' : ''} ${!canEdit(t)?'disabled':''} onchange="window.KpiKanbanBoard.toggleChecklist(${idx}, this.checked)" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4">
                             <span class="break-words min-w-0 ${c.done ? 'line-through text-slate-400' : 'text-slate-700'}">${esc(c.text)}</span>
                         </label>
                         ${canEdit(t) ? `<button type="button" aria-label="แก้ไข Checklist ข้อ ${idx+1}" onclick="window.KpiKanbanBoard.editChecklistItem(${idx})" class="min-h-8 px-2 text-xs text-blue-600 hover:bg-blue-50 rounded-lg shrink-0">แก้ไข</button>` : ''}
@@ -858,12 +993,12 @@
                         </div>
                     `).join('') || '<p class="text-xs text-slate-400 py-1">ยังไม่มีขั้นตอนย่อย</p>'}
                 </div>
-                <form onsubmit="window.KpiKanbanBoard.addChecklistItem(event)" class="flex gap-2">
+                ${canEdit(t)?`<form onsubmit="window.KpiKanbanBoard.addChecklistItem(event)" class="flex gap-2">
                     <input type="text" name="item" placeholder="เพิ่มขั้นตอนย่อย..." required class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
                     <button type="submit" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">
                         <i class="fa-solid fa-plus"></i>
                     </button>
-                </form>
+                </form>`:''}
             </section>
 
             <!-- Comments Section -->
@@ -883,13 +1018,13 @@
                         </div>
                     `).join('') || '<p class="text-xs text-slate-400 py-1">ยังไม่มีความคิดเห็น</p>'}
                 </div>
-                <form onsubmit="window.KpiKanbanBoard.addComment(event)" class="space-y-2">
+                ${canEdit(t)?`<form onsubmit="window.KpiKanbanBoard.addComment(event)" class="space-y-2">
                     <textarea name="comment" placeholder="พิมพ์ความคิดเห็น หรืออัปเดตงาน..." required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 min-h-[60px]"></textarea>
                     <button type="submit" class="py-1.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center gap-1.5">
                         <i class="fa-solid fa-paper-plane text-[10px]"></i>
                         <span>ส่งความคิดเห็น</span>
                     </button>
-                </form>
+                </form>`:''}
             </section>
 
             <!-- History Log -->
@@ -911,7 +1046,7 @@
 
         showDrawer(html);
         loadImages(t);
-        if(!canEdit(t)) { const drawer=document.getElementById('kpi-task-drawer'); drawer?.querySelectorAll('input,select,textarea,button[type="submit"]').forEach(el=>el.disabled=true); }
+        if(!canEdit(t)) { const form=document.getElementById('kb-edit-task-form'); form?.querySelectorAll('input,select,textarea,button[type="submit"]').forEach(el=>el.disabled=true); }
     }
 
     function handleStatusFieldChange(newStatus) {
@@ -1239,7 +1374,9 @@
     }
 
     // Filter controls
-    function setView(viewMode) {
+    async function setView(viewMode) {
+        syncTaskContext();if(state.saving||!['board','list','mine','archive'].includes(viewMode)||viewMode==='archive'&&!context().can('manageTeamTasks'))return;
+        const reload=(state.view==='archive')!==(viewMode==='archive');
         state.view = viewMode;
         document.querySelectorAll('.kb-view-btn').forEach(btn => {
             const active = btn.dataset.view === viewMode;
@@ -1248,7 +1385,7 @@
             btn.classList.toggle('shadow-sm', active);
             btn.classList.toggle('text-slate-600', !active);
         });
-        renderBoard();
+        if(reload){state.tasks=[];state.incomingIssues=[];closeDrawer();await loadKanbanBoard();}else renderBoard();
     }
 
     function toggleOverdue() {
@@ -1307,6 +1444,7 @@
     // Public API
     window.KpiKanbanBoard = {
         loadKanbanBoard,
+        invalidate,
         setBranchScope,
         updateCreationOwners,
         renderBoard,
@@ -1318,6 +1456,10 @@
         openImage,
         closeImage,
         closeDrawer,
+        setTaskArchived,
+        openDeleteTask,
+        handleDeleteTask,
+        reconcileTaskDeletion,
         openNewTaskModal,
         handleCreateTask,
         handleSaveTask,

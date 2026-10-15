@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="th">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'none'">
+    <title>ข้อมูลทดสอบ · Kanban archive and delete</title>
+    <link rel="stylesheet" href="../../css/tailwind.min.css">
+    <style>
+        body { font-family:Arial,sans-serif; }
+        /* Native board styles copied from the candidate index.html; no CDN assets. */
+        .kb-month-controls { display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; padding-bottom:12px; border-bottom:1px solid #e2e8f0; font-size:12px; color:#334155; }
+        .kb-month-picker { display:flex; align-items:center; gap:8px; font-weight:700; min-width:0; }
+        .kb-month-picker select { min-height:40px; max-width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; color:#0f172a; font-weight:600; }
+        .kb-carryover-label { display:flex; align-items:center; gap:8px; min-height:40px; cursor:pointer; }
+        .kb-carryover-label input { width:16px; height:16px; accent-color:#2563eb; }
+        .kb-carryover-label:has(input:disabled) { color:#64748b; cursor:default; }
+        .kb-unknown-closed { min-height:40px; padding:8px; color:#475569; text-decoration:underline; text-underline-offset:3px; }
+        .kb-month-controls :is(select,input,button):focus-visible { outline:2px solid #2563eb; outline-offset:3px; }
+        .kb-month-help { flex-basis:100%; color:#475569; margin:0; line-height:1.6; }
+        .kb-month-badge { display:table; max-width:100%; margin:0 0 8px; padding:3px 7px; border-radius:6px; background:#fef3c7; color:#92400e; font-size:11px; font-weight:600; overflow-wrap:anywhere; }
+        #kb-board-content .kanban-grid { display:grid; grid-template-columns:repeat(5,minmax(215px,1fr)); gap:.875rem; align-items:start; }
+        @media(max-width:1024px) { #kb-board-content .kanban-grid { grid-template-columns:repeat(5,270px); } }
+        @media(max-width:480px) { .kb-month-picker { width:100%; } .kb-month-picker select { flex:1; min-width:0; } .kb-month-controls { gap:4px 12px; } }
+        #fixture-log { white-space:pre-wrap; overflow-wrap:anywhere; }
+        #fixture-toast { z-index:100; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 p-4">
+    <main class="max-w-6xl mx-auto space-y-4">
+        <section class="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3" aria-label="ข้อมูลทดสอบ">
+            <h1 class="font-bold text-lg">ข้อมูลทดสอบ · เก็บ คืน และลบงาน</h1>
+            <p class="text-sm">ใช้ตัวควบคุมและ CSS จริงจากเวิร์กทรีนี้กับ API จำลองและข้อมูลสมมติทั้งหมด ไม่มีการเชื่อมต่อระบบจริง หลักฐานหน้านี้ยืนยันพฤติกรรมส่วนหน้าเท่านั้น</p>
+            <div class="flex flex-wrap items-center gap-3 text-sm">
+                <label for="fixture-delete-mode">ผลการลบจำลอง
+                    <select id="fixture-delete-mode" class="ml-2 border border-slate-300 rounded-lg p-2 bg-white">
+                        <option value="pending">ครั้งแรกค้าง · ลองคำขอเดิมแล้วสำเร็จ</option>
+                        <option value="complete">สำเร็จทันที</option>
+                        <option value="unknown_completed">ผลขาดหาย · ตรวจสอบแล้วพบว่าลบสำเร็จ</option>
+                    </select>
+                </label>
+                <label for="fixture-viewer">สิทธิ์จำลอง
+                    <select id="fixture-viewer" class="ml-2 border border-slate-300 rounded-lg p-2 bg-white">
+                        <option value="manager">ผู้จัดการงานทีม</option>
+                        <option value="owner">แก้ไขงานของตนเองเท่านั้น</option>
+                    </select>
+                </label>
+                <button id="fixture-reset" type="button" class="border border-slate-300 rounded-lg p-2 bg-white font-bold">เริ่มข้อมูลทดสอบใหม่</button>
+            </div>
+            <p id="fixture-state" role="status" class="text-sm font-bold"></p>
+            <details class="text-sm">
+                <summary class="cursor-pointer font-bold">ขั้นตอนตรวจสอบด้วยเบราว์เซอร์</summary>
+                <ol class="list-decimal pl-5 space-y-1 mt-2">
+                    <li>เปิด “งานเก่าทดสอบสำหรับลบ” รหัส TEST-OLD แล้วกด “เก็บงาน” และยืนยัน งานเก่าจะหายจากบอร์ด แต่กลุ่มทดสอบทั้งสี่ยังอยู่</li>
+                    <li>กด “งานที่เก็บไว้” เปิดงานเดิม ตรวจว่าแก้ไขไม่ได้ และกด “คืนงานเข้าบอร์ด” กลับมุมมองบอร์ดเพื่อดูงานเดิม</li>
+                    <li>เปิดงานเก่า กด “ลบงานถาวร” พิมพ์รหัสผิดก่อนเพื่อยืนยันว่าไม่มีคำขอลบ จากนั้นพิมพ์ TEST-OLD ให้ตรงและยืนยัน</li>
+                    <li>ในโหมดค้าง งานจะแก้ไขหรือคืนไม่ได้ กดตรวจสอบผล หรือปิดแล้วรีเฟรชและเปิดงานใหม่เพื่อทดสอบการคืนคำขอจากข้อมูล canonical</li>
+                    <li>พิมพ์ TEST-OLD อีกครั้งและลองคำขอเดิม ตรวจบันทึกว่ามี receipt ก่อน retry และ requestId/expectedRevision เดิมทั้งสองครั้ง งานเก่าจะหาย กลุ่มทั้งสี่และ Checklist 31 ข้อยังครบ</li>
+                </ol>
+            </details>
+        </section>
+
+        <div id="view-kanban" class="space-y-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <h2 class="font-bold">บอร์ดงาน · ข้อมูลทดสอบ</h2>
+                <p class="text-xs text-slate-500">มีงานเก่าจำลองหนึ่งงานและกลุ่มจำลองสี่งาน</p>
+            </div>
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="inline-flex p-1 bg-slate-100 rounded-xl text-xs font-bold gap-1" role="tablist" aria-label="มุมมองบอร์ดงาน">
+                        <button type="button" data-view="board" onclick="window.KpiKanbanBoard.setView('board')" class="kb-view-btn px-3 py-2 rounded-lg bg-white text-blue-700 shadow-sm">บอร์ด</button>
+                        <button type="button" data-view="list" onclick="window.KpiKanbanBoard.setView('list')" class="kb-view-btn px-3 py-2 rounded-lg text-slate-600">รายการ</button>
+                        <button type="button" data-view="mine" onclick="window.KpiKanbanBoard.setView('mine')" class="kb-view-btn px-3 py-2 rounded-lg text-slate-600">งานของฉัน</button>
+                        <button id="kb-archive-view" type="button" data-view="archive" onclick="window.KpiKanbanBoard.setView('archive')" class="kb-view-btn px-3 py-2 rounded-lg text-slate-600">งานที่เก็บไว้</button>
+                    </div>
+                    <span id="kb-summary" class="text-xs text-slate-500"></span>
+                </div>
+                <div class="kb-month-controls" aria-label="ช่วงเดือนของบอร์ดงาน">
+                    <label for="kb-month-filter" class="kb-month-picker">เดือน <select id="kb-month-filter" onchange="window.KpiKanbanBoard.setMonth(this.value)" aria-describedby="kb-month-summary"><option value="current">เดือนนี้</option><option value="all">ทั้งหมด</option></select></label>
+                    <label class="kb-carryover-label"><input id="kb-carryover" type="checkbox" checked onchange="window.KpiKanbanBoard.setCarryover(this.checked)">รวมงานค้างจากเดือนก่อน</label>
+                    <button id="kb-unknown-closed" type="button" class="kb-unknown-closed hidden" onclick="window.KpiKanbanBoard.setMonth('unknown')">ไม่ทราบเดือนที่ปิด</button>
+                    <p id="kb-month-summary" class="kb-month-help" role="status"></p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <input id="kb-search" type="text" aria-label="ค้นหางาน" placeholder="ค้นหาชื่องานหรือรหัส..." class="border border-slate-200 rounded-xl p-2 text-xs flex-1">
+                    <label for="kb-branch-scope" class="text-xs">สาขา <select id="kb-branch-scope" onchange="window.KpiKanbanBoard.setBranchScope(this.value)" class="border border-slate-200 rounded-xl p-2"></select></label>
+                    <select id="kb-filter-owner" aria-label="ผู้รับผิดชอบ" class="border border-slate-200 rounded-xl p-2 text-xs"><option value="">ทุกคน</option></select>
+                    <select id="kb-filter-category" aria-label="หมวดงาน" class="border border-slate-200 rounded-xl p-2 text-xs"><option value="">ทุกหมวดงาน</option><option>งานปรับปรุง</option></select>
+                    <button id="kb-blocked-toggle" type="button" aria-pressed="false" onclick="window.KpiKanbanBoard.toggleBlocked()" class="border border-slate-200 rounded-xl p-2 text-xs">ติดขัด (<span id="kb-blocked-count">0</span>)</button>
+                    <button id="kb-overdue-toggle" type="button" aria-pressed="false" onclick="window.KpiKanbanBoard.toggleOverdue()" class="border border-slate-200 rounded-xl p-2 text-xs">เกินกำหนด (<span id="kb-overdue-count">0</span>)</button>
+                    <button id="fixture-refresh" type="button" onclick="window.KpiKanbanBoard.loadKanbanBoard()" class="border border-slate-200 rounded-xl p-2 text-xs">รีเฟรชข้อมูล</button>
+                </div>
+            </div>
+            <div id="kb-board-content"></div>
+        </div>
+        <details open class="p-4 border border-slate-200 rounded-xl bg-white">
+            <summary class="font-bold cursor-pointer">บันทึกคำขอจำลอง · ไม่มีข้อมูลจริง</summary>
+            <pre id="fixture-log" class="text-xs mt-3" aria-live="polite"></pre>
+        </details>
+    </main>
+    <div id="kpi-task-drawer-backdrop" class="fixed inset-0 bg-slate-900/50 z-50 hidden" onclick="window.KpiKanbanBoard.closeDrawer()"></div>
+    <aside id="kpi-task-drawer" class="fixed inset-y-0 right-0 w-full max-w-lg bg-white z-50 shadow-2xl p-6 overflow-y-auto hidden outline-none" role="dialog" aria-modal="true" aria-label="รายละเอียดงานทดสอบ" tabindex="-1"></aside>
+    <div id="kb-image-viewer" class="hidden fixed inset-0 z-[80] bg-slate-950/90 p-4" role="dialog" aria-modal="true" aria-label="ดูรูปภาพทดสอบ" tabindex="-1"></div>
+    <div id="fixture-toast" class="hidden fixed bottom-4 left-4 max-w-lg p-3 rounded-lg bg-slate-900 text-white text-sm" role="status"></div>
+    <script>
+    (function() {
+        'use strict';
+        const uid='fixture-owner';
+        const clone=value=>JSON.parse(JSON.stringify(value));
+        const original=()=>{
+            const now=new Date().toISOString(),today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+            const task=(number,actionId,taskCode,title,status,size)=>({
+                id:`00000000-0000-4000-8000-${String(number).padStart(12,'0')}`,actionId,taskCode,title,branch:'AKRA',ownerUid:uid,owner:'ผู้รับผิดชอบทดสอบ',
+                detail:'ข้อมูลสมมติสำหรับตรวจส่วนหน้าเท่านั้น',category:'งานปรับปรุง',area:'พื้นที่ทดสอบ',priority:'Medium',status,revision:7,isArchived:false,
+                createdDate:now,resolutionDate:status==='Resolved'?now:null,dueDate:today,nextStep:status==='In Progress'?'ตรวจข้อมูลทดสอบครั้งถัดไป':'',
+                blockedReason:status==='Blocked'?'รอข้อมูลสมมติ':'',resolutionNote:status==='Resolved'?'ปิดงานทดสอบแล้ว':'',
+                checklist:Array.from({length:size},(_,index)=>({id:`fixture-${number}-${index+1}`,text:`ขั้นตอนทดสอบ ${index+1}`,done:index%2===0})),
+                comments:[{id:`fixture-comment-${number}`,text:'ความคิดเห็นสมมติ',author:'ผู้ทดสอบ',time:now}],
+                activityLog:[{id:`fixture-history-${number}`,details:'สร้างข้อมูลทดสอบ',actorUid:uid,timestamp:now}],attachments:[],
+                deletionPending:false,deletionRequestId:null,deletionExpectedRevision:null
+            });
+            return [task(1,'FIXTURE_OLD','TEST-OLD','งานเก่าทดสอบสำหรับลบ','Open',2),
+                task(2,'FIXTURE_GROUP_A','TEST-GROUP-A','กลุ่มทดสอบหนึ่ง','Open',9),
+                task(3,'FIXTURE_GROUP_B','TEST-GROUP-B','กลุ่มทดสอบสอง','In Progress',8),
+                task(4,'FIXTURE_GROUP_C','TEST-GROUP-C','กลุ่มทดสอบสาม','Blocked',7),
+                task(5,'FIXTURE_GROUP_D','TEST-GROUP-D','กลุ่มทดสอบสี่','Resolved',7)];
+        };
+        let tasks=original(),receipts=new Map(),calls=[],viewer='manager',toastTimer;
+        const token=()=>`fixture-not-a-real-session-${viewer}`;
+        function update() {
+            const groups=tasks.filter(task=>task.actionId.startsWith('FIXTURE_GROUP_')),old=tasks.find(task=>task.actionId==='FIXTURE_OLD');
+            document.getElementById('fixture-state').textContent=`กลุ่มทดสอบ ${groups.length}/4 งาน · Checklist กลุ่ม ${groups.reduce((count,task)=>count+task.checklist.length,0)}/31 ข้อ · งานเก่า ${!old?'ลบแล้ว':old.deletionPending?'รอลบ':old.isArchived?'เก็บไว้':'อยู่บนบอร์ด'}`;
+            document.getElementById('fixture-log').textContent=calls.length?calls.map((call,index)=>`${index+1}. ${call.action}\n${JSON.stringify(call.payload)}`).join('\n\n'):'ยังไม่มีคำขอ';
+        }
+        function log(action,payload) {calls.push({action,payload:clone(payload)});update();}
+        function error(reason) {throw Object.assign(new Error(reason),{reason});}
+        function guard(request) {
+            if(viewer!=='manager')error('permission_denied');
+            const task=tasks.find(row=>row.id===request.taskId);
+            if(!task||task.branch!==request.branch||task.actionId!==request.actionId||task.taskCode!==request.taskCode)error('record_conflict');
+            return task;
+        }
+        function sameReceipt(receipt,request) {return ['branch','taskId','actionId','taskCode','expectedRevision','requestId'].every(key=>receipt.payload[key]===request[key]);}
+        function finish(receipt) {tasks=tasks.filter(task=>task.id!==receipt.payload.taskId);receipt.state='completed';update();return {status:'success',...clone(receipt.payload),state:'completed',deleted:true};}
+        window.getKpiTaskContext=()=>({token:token(),branch:'AKRA',userUid:uid,name:'ผู้ทดสอบ',roles:viewer==='manager'?['ADMIN']:['AKRA'],allowedBranches:['AKRA'],
+            employees:[{employeeUid:uid,name:'ผู้รับผิดชอบทดสอบ',branch:'AKRA'}],can:permission=>['viewKpiData','updateOwnTasks'].includes(permission)||(viewer==='manager'&&permission==='manageTeamTasks')});
+        window.showToast=message=>{const element=document.getElementById('fixture-toast');element.textContent=message;element.classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>element.classList.add('hidden'),6000);};
+        window.getTodayBangkokDateStr=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+        window.onKpiTaskChanged=()=>update();
+        window.AkraSupabaseKPI={
+            getKanbanBoard:async(_token,branch,options={})=>{log('getKanbanBoard',{branch,...options});return {status:'success',tasks:clone(tasks.filter(task=>task.branch===branch&&(options.includeArchived||!task.isArchived))),employees:window.getKpiTaskContext().employees,incomingIssues:[],issueIntegrationReady:false};},
+            setKanbanTaskArchived:async(_token,request)=>{
+                log('setKanbanTaskArchived',request);const task=guard(request);if(task.deletionPending)error('task_delete_pending');if(task.revision!==request.expectedRevision)error('record_conflict');
+                if(task.isArchived!==request.archived){task.isArchived=request.archived;task.revision++;task.activityLog.push({details:request.archived?'เก็บงานทดสอบ':'คืนงานทดสอบ',actorUid:uid,timestamp:new Date().toISOString()});}
+                update();return {status:'success',task:clone(task)};
+            },
+            getKanbanTaskDeletion:async(_token,request)=>{
+                log('getKanbanTaskDeletion',request);if(viewer!=='manager')error('permission_denied');const receipt=receipts.get(request.requestId);
+                if(receipt){if(!sameReceipt(receipt,request))error('record_conflict');return {status:'success',...clone(receipt.payload),state:receipt.state,deleted:receipt.state==='completed'};}
+                guard(request);return {status:'success',...clone(request),state:'not_started',deleted:false};
+            },
+            deleteKanbanTask:async(_token,request)=>{
+                log('deleteKanbanTask',request);if(viewer!=='manager')error('permission_denied');let receipt=receipts.get(request.requestId);
+                if(receipt){if(!sameReceipt(receipt,request))error('record_conflict');return finish(receipt);}
+                const task=guard(request);if(task.revision!==request.expectedRevision||task.deletionPending)error('record_conflict');
+                receipt={payload:clone(request),state:'pending'};receipts.set(request.requestId,receipt);
+                task.revision++;task.deletionPending=true;task.deletionRequestId=request.requestId;task.deletionExpectedRevision=request.expectedRevision;update();
+                const mode=document.getElementById('fixture-delete-mode').value;
+                if(mode==='pending')return {status:'success',...clone(request),state:'pending',deleted:false,reason:'storage_cleanup_pending'};
+                const result=finish(receipt);if(mode==='unknown_completed')throw new Error('synthetic_response_lost');return result;
+            },
+            saveKanbanTask:async(_token,payload,revision)=>{
+                log('saveKanbanTask',{...payload,expectedRevision:revision});const task=tasks.find(row=>row.actionId===payload.actionId&&row.branch===payload.branch);
+                if(!task||task.deletionPending||task.isArchived||task.revision!==revision)error('record_conflict');
+                Object.assign(task,clone(payload),{revision:revision+1});update();return {status:'success',task:clone(task)};
+            },
+            getTaskImages:async()=>({status:'success',images:[]}),
+            uploadTaskImage:async()=>error('invalid_image'),removeTaskImage:async()=>error('invalid_image')
+        };
+        window.KanbanLifecycleFixture={
+            async reset(){tasks=original();receipts=new Map();calls=[];window.KpiKanbanBoard.invalidate();await window.KpiKanbanBoard.loadKanbanBoard();window.KpiKanbanBoard.setMonth('all');update();},
+            async setViewer(value){viewer=value;window.KpiKanbanBoard.invalidate();await window.KpiKanbanBoard.loadKanbanBoard();window.KpiKanbanBoard.setMonth('all');update();},
+            inspect:()=>clone({tasks,calls,receipts:[...receipts.values()]})
+        };
+        document.getElementById('fixture-reset').addEventListener('click',()=>window.KanbanLifecycleFixture.reset());
+        document.getElementById('fixture-viewer').addEventListener('change',event=>window.KanbanLifecycleFixture.setViewer(event.target.value));
+        update();
+    })();
+    </script>
+    <script src="../../js/kpi-kanban-board.js"></script>
+    <script>
+        window.KpiKanbanBoard.initEventListeners();
+        window.KanbanLifecycleFixture.reset();
+    </script>
+</body>
+</html>

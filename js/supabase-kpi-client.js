@@ -47,7 +47,7 @@
     }
 
     async function transportRequest(action, payload, context) {
-        if(!['getTaskImages','uploadTaskImage','removeTaskImage','getDutyMatrix','setDutyAssignment','saveDutyAssignments','saveDutyCatalog','setDutyCapacity','setDrivingCapabilities'].includes(action))return performTransportRequest(action,payload,context);
+        if(!['getTaskImages','uploadTaskImage','removeTaskImage','setKanbanTaskArchived','deleteKanbanTask','getKanbanTaskDeletion','getDutyMatrix','setDutyAssignment','saveDutyAssignments','saveDutyCatalog','setDutyCapacity','setDrivingCapabilities'].includes(action))return performTransportRequest(action,payload,context);
         const controller=new AbortController();let timer;
         const deadline=new Promise((resolve,reject)=>{timer=setTimeout(()=>{
             reject(Object.assign(new Error('request_timeout'),{reason:'request_timeout'}));controller.abort();
@@ -343,6 +343,21 @@
             const rev = expectedRevision ?? taskItem.revision ?? (taskItem.lastUpdated ? null : 0);
             const data = await fetchKpiAction('saveKanbanTask', token, { taskItem, expectedRevision: rev });
             if (data.status !== 'success') throw new Error('invalid_save_kanban_response');
+            return data;
+        },
+        setKanbanTaskArchived: async (token, request) => {
+            const data = await fetchKpiAction('setKanbanTaskArchived', token, request);
+            if (!data.task || data.task.id !== request.taskId || data.task.actionId !== request.actionId || data.task.taskCode !== request.taskCode || data.task.branch !== request.branch || data.task.isArchived !== request.archived) throw new Error('invalid_kanban_archive_response');
+            return data;
+        },
+        deleteKanbanTask: async (token, request) => {
+            const data = await fetchKpiAction('deleteKanbanTask', token, request);
+            if ((data.branch && data.branch !== request.branch) || data.taskId !== request.taskId || data.actionId !== request.actionId || data.taskCode !== request.taskCode || data.requestId !== request.requestId || (data.deleted !== true && data.state !== 'pending')) throw new Error('invalid_kanban_delete_response');
+            return data;
+        },
+        getKanbanTaskDeletion: async (token, request) => {
+            const data = await fetchKpiAction('getKanbanTaskDeletion', token, request);
+            if ((data.branch && data.branch !== request.branch) || data.taskId !== request.taskId || data.actionId !== request.actionId || data.taskCode !== request.taskCode || data.requestId !== request.requestId || !['not_started','pending','completed'].includes(data.state)) throw new Error('invalid_kanban_delete_receipt');
             return data;
         },
         claimIssueTask: async (token, claimPayload) => {
