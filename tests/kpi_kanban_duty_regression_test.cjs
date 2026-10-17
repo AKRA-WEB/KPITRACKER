@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
-function setup(api) {
+function setup(api, {actualDialog=false}={}) {
   const els = new Map();
   const element = id => {
     if (!els.has(id)) els.set(id, { innerHTML: '', textContent: '', value: '', classList: {add(){},remove(){},toggle(){}}, focus(){}, addEventListener(){}, querySelectorAll:()=>[] });
@@ -12,9 +12,14 @@ function setup(api) {
   const document = { getElementById: element, querySelectorAll: () => [], addEventListener(){}, body:{style:{}} };
   const notices = [];
   const window = { confirm:()=>true, AkraSupabaseKPI: api, getKpiTaskContext: () => ({token:'fixture',branch:'TRD',userUid:'u1',name:'Test',employees:[],can:()=>true}), showToast:msg=>notices.push(msg) };
+  // This suite chooses decisions; actual focus/owner/one-shot dialog behavior has its own runtime suite.
+  window.BMDialog={run:async(_key,message,operation)=>{if(window.confirm(message))await operation();}};
+  let dialog;
+  if(actualDialog){dialog=require('./helpers/bm-dialog-runtime.cjs').rig();dialog.window.getBmDialogContext=()=>{const c=window.getKpiTaskContext();return[c.token,c.branch,c.userUid];};window.BMDialog=dialog.window.BMDialog;}
   const context = vm.createContext({window,document,console,Intl,Date,Math,structuredClone,crypto:require('node:crypto').webcrypto,FormData:class {constructor(form){this.values=form.values;}get(key){return this.values[key]??null;}}});
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/bm-date-display.js'),'utf8'),context);
   for (const file of ['kpi-kanban-board.js','kpi-duty-matrix.js']) vm.runInContext(fs.readFileSync(path.join(__dirname,'../js',file),'utf8'),context);
-  return {window,element,notices,document};
+  return {window,element,notices,document,dialog};
 }
 
 test('Dashboard opens a fresh branch-matched Kanban drawer and saving refreshes the shared action cache',async()=>{
@@ -283,7 +288,10 @@ test('task images resize, preserve detail form, retry identical upload and refre
  await ui.window.KpiKanbanBoard.uploadImage({files:[{type:'image/png',size:1000,name:'Photo <literal>.png'}]});assert.equal(canvas.width,1600);assert.equal(canvas.height,600);assert.equal(calls.length,1);assert.match(ui.element('kb-task-images').innerHTML,/ลองบันทึกรูปเดิม/);
  fail=false;await ui.window.KpiKanbanBoard.retryImage();assert.deepEqual(calls[1],calls[0]);assert.equal(calls[1].expectedRevision,4);assert.equal(ui.element('kb-edit-task-form').pendingText,'keep this draft');assert.match(ui.element('kb-task-images').innerHTML,/Photo &lt;literal&gt;/);
  let deleted;ui.window.AkraSupabaseKPI.removeTaskImage=async(t,p)=>{deleted=p;task.attachments=[];task.revision=6;return {task};};await ui.window.KpiKanbanBoard.removeImage(task.attachments[0].id);assert.equal(deleted.expectedRevision,5);assert.equal(ui.element('kb-edit-task-form').pendingText,'keep this draft');
- ui.window.getKpiTaskContext=()=>({token:'fixture',branch:'TRD',userUid:'other',can:()=>false});ui.window.KpiKanbanBoard.openTask('IMAGE-1');assert.doesNotMatch(ui.element('kb-task-images').innerHTML,/เพิ่มรูปภาพ/);
+ ui.window.getKpiTaskContext=()=>({token:'fixture',branch:'TRD',userUid:'other',can:()=>false});ui.window.KpiKanbanBoard.openTask('IMAGE-1');
+ assert.equal(ui.element('kpi-task-drawer').innerHTML,'','identity replacement clears the old task drawer before a fresh canonical read');
+ await ui.window.KpiKanbanBoard.uploadImage({files:[{type:'image/png',size:100}]});assert.equal(calls.length,2,'cleared identity state cannot upload from the stale drawer');
+ await ui.window.KpiKanbanBoard.loadKanbanBoard();ui.window.KpiKanbanBoard.openTask('IMAGE-1');assert.doesNotMatch(ui.element('kb-task-images').innerHTML,/เพิ่มรูปภาพ/);
  await ui.window.KpiKanbanBoard.uploadImage({files:[{type:'image/png',size:100}]});assert.equal(calls.length,2);
 });
 
@@ -292,4 +300,21 @@ test('late image signing cannot paint another drawer or user session',async()=>{
  const ui=setup({getKanbanBoard:async()=>({tasks}),getTaskImages:()=>new Promise(r=>finish=r)});await ui.window.KpiKanbanBoard.loadKanbanBoard();ui.window.KpiKanbanBoard.openTask('A');const finishA=finish;ui.window.KpiKanbanBoard.openTask('B');
  finishA({images:[{id:'A',url:'https://evil.invalid/unsafe',expiresAt:Date.now()+300000}]});await new Promise(r=>setImmediate(r));assert.doesNotMatch(ui.element('kb-task-images').innerHTML,/evil/);assert.match(ui.element('kb-task-images').innerHTML,/B.jpg/);
  ui.window.getKpiTaskContext=()=>({token:'changed',branch:'AKRA',can:()=>false});finish({images:[{id:'B',url:'https://hgxrrskztbpejirrdpbq.supabase.co/storage/v1/object/sign/kpi-task-images/private',expiresAt:Date.now()+300000}]});await new Promise(r=>setImmediate(r));assert.doesNotMatch(ui.element('kb-task-images').innerHTML,/src=/);
+});
+
+test('actual duty dialog defers synchronous navigation, cancels drafts intact, confirms once and fences replacement owner',async()=>{
+ const tick=()=>new Promise(setImmediate);const matrix={catalog:[{id:'d',name:'Duty',weight:1,isActive:true}],assignments:[],employees:[{employeeUid:'u1',name:'One'}],employeeRevisions:{u1:0}};let writes=0;
+ const ui=setup({getDutyMatrix:async()=>matrix,saveDutyAssignments:async()=>writes++},{actualDialog:true});
+ await ui.window.KpiDutyMatrix.loadDutyMatrix();await ui.window.KpiDutyMatrix.cycleAssignment('u1','d');let continued=0;
+ assert.equal(ui.window.KpiDutyMatrix.confirmLeave(()=>continued++),false);ui.dialog.button('ยกเลิก').dispatch('click');await tick();assert.equal(continued,0);assert.equal(writes,0);assert.equal(ui.window.KpiDutyMatrix.hasDrafts(),true);
+ assert.equal(ui.window.KpiDutyMatrix.confirmLeave(()=>continued++),false);ui.window.KpiDutyMatrix.confirmLeave(()=>continued++);ui.dialog.button('ยืนยัน').dispatch('click');await tick();assert.equal(continued,1);assert.equal(writes,0);assert.equal(ui.window.KpiDutyMatrix.hasDrafts(),false);
+ await ui.window.KpiDutyMatrix.cycleAssignment('u1','d');ui.window.KpiDutyMatrix.confirmLeave(()=>continued++);ui.window.getKpiTaskContext=()=>({token:'replacement',branch:'TRD',userUid:'u2',can:()=>true});ui.dialog.button('ยืนยัน').dispatch('click');await tick();assert.equal(continued,1);assert.equal(writes,0);
+});
+
+test('actual task image dialog preserves original revision/payload, cancellation, double lock and owner fence',async()=>{
+ const tick=()=>new Promise(setImmediate);const task={actionId:'A',branch:'TRD',title:'Task',ownerUid:'u1',status:'Open',revision:7,attachments:[{id:'image',name:'image.jpg'}],checklist:[],comments:[]};const writes=[];let finish;
+ const ui=setup({getKanbanBoard:async()=>({tasks:[task]}),getTaskImages:async()=>({images:[]}),removeTaskImage:(token,payload)=>{writes.push({token,payload});return new Promise(resolve=>finish=resolve);}},{actualDialog:true});
+ await ui.window.KpiKanbanBoard.loadKanbanBoard();ui.window.KpiKanbanBoard.openTask('A');const cancel=ui.window.KpiKanbanBoard.removeImage('image');ui.dialog.button('ยกเลิก').dispatch('click');await cancel;assert.equal(writes.length,0);
+ const pending=ui.window.KpiKanbanBoard.removeImage('image'),duplicate=ui.window.KpiKanbanBoard.removeImage('image');ui.dialog.button('ยืนยัน').dispatch('click');await tick();const repeated=ui.window.KpiKanbanBoard.removeImage('image');assert.equal(writes.length,1);assert.equal(JSON.stringify(writes[0]),JSON.stringify({token:'fixture',payload:{branch:'TRD',actionId:'A',imageId:'image',expectedRevision:7}}));finish({task:{...task,revision:8,attachments:[]}});await Promise.all([pending,duplicate,repeated]);
+ const stale=ui.window.KpiKanbanBoard.removeImage('image');ui.window.getKpiTaskContext=()=>({token:'replacement',branch:'TRD',userUid:'u2',can:()=>true});ui.dialog.button('ยืนยัน').dispatch('click');await stale;assert.equal(writes.length,1);
 });

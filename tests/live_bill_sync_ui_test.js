@@ -93,6 +93,7 @@ const sandbox = {
 
 sandbox.window = sandbox;
 vm.createContext(sandbox);
+vm.runInContext(html.slice(html.indexOf('        function kpiReadFailureMarkup('), html.indexOf('        function renderKpiReadFailure(')), sandbox);
 vm.runInContext(controller, sandbox);
 
 // 4.0 Direct classifyRequisition unit tests

@@ -69,11 +69,15 @@
         state.matrices=structuredClone(state.confirmed||{});state.retryBatch=null;state.conflict=false;state.draftSession=null;
         renderDuties();if(reconcile)loadDutyMatrix();return true;
     }
-    function confirmLeave(){
+    function confirmLeave(onApproved){
         if(state.busy){notify('กำลังบันทึก กรุณารอสักครู่');return false;}
         if(!hasDrafts())return true;
-        if(!window.confirm('มีหน้าที่ที่ยังไม่ได้บันทึก ต้องการยกเลิกการเปลี่ยนแปลงและออกจากหน้านี้หรือไม่?'))return false;
-        return discardDrafts();
+        const c=baseContext();
+        window.BMDialog.run('duty-leave', 'มีหน้าที่ที่ยังไม่ได้บันทึก ต้องการยกเลิกการเปลี่ยนแปลงและออกจากหน้านี้หรือไม่?', () => {
+            if(c.token!==baseContext().token||c.branch!==baseContext().branch||state.busy)return;
+            if(discardDrafts())onApproved?.();
+        });
+        return false;
     }
     async function saveDrafts(){
         const c=baseContext();if(state.busy||state.conflict||!hasDrafts())return;
@@ -116,7 +120,7 @@
     function scope(){return branches().includes(state.branchScope)||state.branchScope==='ALL'&&branches().length>1?state.branchScope:baseContext().branch;}
     function scopedBranches(){return scope()==='ALL'?branches():[scope()];}
     function renderBranchScope(){const el=document.getElementById('kb-duty-branch-scope');if(el){el.innerHTML=branches().map(b=>`<option value="${b}">${b}</option>`).join('')+(branches().length>1?'<option value="ALL">ทั้งสองสาขา</option>':'');el.value=scope();}}
-    async function setBranchScope(value){if(!confirmLeave()){renderBranchScope();return;}if(value!=='ALL'&&!branches().includes(value)||value==='ALL'&&branches().length<2)return;state.branchScope=value;state.activeBranch=null;closeDrawer();await loadDutyMatrix();}
+    async function setBranchScope(value){if(!confirmLeave(()=>setBranchScope(value))){renderBranchScope();return;}if(value!=='ALL'&&!branches().includes(value)||value==='ALL'&&branches().length<2)return;state.branchScope=value;state.activeBranch=null;closeDrawer();await loadDutyMatrix();}
     async function runBranch(branch,method,...args){if(state.busy||!branches().includes(branch)||!state.matrices?.[branch])return;state.activeBranch=branch;applyMatrix(state.matrices[branch]);return window.KpiDutyMatrix[method](...args);}
 
     function applyMatrix(res){
@@ -253,8 +257,10 @@
     }
 
     async function loadDutyMatrix(){
-        if(hasDrafts()&&!confirmLeave())return;
+        if(hasDrafts()&&!confirmLeave(()=>loadDutyMatrix()))return;
         const c=baseContext(),ticket=(state.loadTicket||0)+1;state.loadTicket=ticket;
+        const pendingContent=document.getElementById('kb-duty-content');
+        if(pendingContent?.querySelector?.('[data-kpi-read-retry]')) pendingContent.innerHTML='<p role="status" class="p-6 text-slate-700">กำลังโหลดตารางงาน…</p>';
         const selected=scope();renderBranchScope();
         try{
             if(!c.token)throw Error('session_required');
@@ -265,8 +271,8 @@
             state.confirmed=structuredClone(state.matrices);state.retryBatch=null;state.conflict=false;state.draftSession=null;
             if(!state.matrices[state.activeBranch])state.activeBranch=rows[0]?.branch;
             renderDuties();
-        }catch(err){if(ticket!==state.loadTicket)return;state.matrices={};state.duties=[];state.assignments={};state.employees=[];
-            const content=document.getElementById('kb-duty-content');if(content)content.innerHTML='<p role="alert" class="p-6 text-red-700 bg-red-50 rounded-xl">โหลดตารางงานไม่สำเร็จ กรุณารีเฟรชข้อมูลหรือตรวจสอบสิทธิ์</p>';
+        }catch(err){if(ticket!==state.loadTicket||c.token!==baseContext().token||c.branch!==baseContext().branch||err?.reason==='session_changed'||err?.reason==='request_cancelled')return;state.matrices={};state.duties=[];state.assignments={};state.employees=[];
+            const content=document.getElementById('kb-duty-content'),failure=window.AkraSupabaseKPI.describeReadError?.(err);if(content)content.innerHTML=failure ? `<div role="alert" class="p-6 text-slate-700 bg-slate-50 rounded-xl"><strong>${failure.title}</strong><p>${failure.body}</p><button type="button" ${failure.retry ? 'data-kpi-read-retry' : ''} class="mt-3 px-3 py-2 border rounded-lg font-bold" onclick="${failure.retry ? 'this.disabled=true;window.KpiDutyMatrix.loadDutyMatrix()' : "window.AkraModule.home('https://akra-web.github.io/Main/')"}">${failure.retry ? 'ลองอีกครั้ง' : 'กลับหน้าหลัก'}</button></div>` : '<p role="alert" class="p-6 text-red-700 bg-red-50 rounded-xl">โหลดตารางงานไม่สำเร็จ กรุณารีเฟรชข้อมูลหรือตรวจสอบสิทธิ์</p>';
             const summary=document.getElementById('kb-duty-summary');if(summary)summary.innerHTML='';
         }
     }

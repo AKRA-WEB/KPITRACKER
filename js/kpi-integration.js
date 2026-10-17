@@ -19,8 +19,9 @@
         const available=loaded&&status!=='error';
         const stateText=status==='error'?'โหลดกิจกรรมไม่สำเร็จ กรุณารีเฟรช': 'กำลังโหลดกิจกรรม...';
         const dash=document.getElementById('dash-activity-summary'), profile=document.getElementById('profile-activity-summary');
-        if(dash)dash.textContent=available?`วันที่ ${selected} · ${sum.total} กิจกรรมระบบรวม · LINE ${sum.requests} · Event จริง ${sum.actual}`:stateText;
-        if(profile)profile.textContent=available?`วันที่ ${selected} · ปฏิบัติงานจริง ${sum.myActual} กิจกรรม · LINE รับมอบหมาย ${sum.myAssigned} งาน`:stateText;
+        const displayDate=window.BMDateDisplay?.date(selected)||selected;
+        if(dash)dash.textContent=available?`วันที่ ${displayDate} · ${sum.total} กิจกรรมระบบรวม · LINE ${sum.requests} · Event จริง ${sum.actual}`:stateText;
+        if(profile)profile.textContent=available?`วันที่ ${displayDate} · ปฏิบัติงานจริง ${sum.myActual} กิจกรรม · LINE รับมอบหมาย ${sum.myAssigned} งาน`:stateText;
     }
     async function refreshActivity() {
         const c=window.getKpiTaskContext?.()||{}, selected=date(), current=++ticket;

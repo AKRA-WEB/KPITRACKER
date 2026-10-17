@@ -12,6 +12,7 @@ const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
     .map(match => match[1]).filter(source => source.trim());
 const incidentScript = fs.readFileSync(path.join(root, 'js/incident-impact.js'), 'utf8');
 const clientScript = fs.readFileSync(path.join(root, 'js/supabase-kpi-client.js'), 'utf8');
+const dateScript = fs.readFileSync(path.join(root, 'js/bm-date-display.js'), 'utf8');
 const tick = () => new Promise(setImmediate);
 const original = {
     identityId: '10000000-0000-4000-8000-000000000001', id: 'fixture-admin',
@@ -98,6 +99,8 @@ function fixture({failWrites = false, stale = false} = {}) {
     c.matchMedia = () => ({matches: false, addEventListener() {}});
     c.scrollTo = () => {};
     vm.createContext(c);
+    // Match the page's external display helper before the actual inline consumers.
+    vm.runInContext(dateScript, c);
     vm.runInContext(incidentScript, c);
     for (const source of scripts) new vm.Script(source).runInContext(c);
     const run = source => vm.runInContext(source, c);

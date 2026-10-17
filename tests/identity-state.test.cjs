@@ -27,10 +27,11 @@ test('KPI drafts/preferences follow UUID while private read cache also follows s
  f.user({...original,id:'renamed'});assert.equal(f.c.fixtureStorage.getItem('kpiDraft_renamed_AKRA_2026-09-18_main'),'original-draft');
  assert.equal(f.local.get('kpiData_AKRA'),'legacy-private');assert.equal(f.local.get('kpiDraft_reused-name_AKRA_2026-09-18_main'),'legacy-draft');
 });
-test('KPI cache reset preserves Main, other apps and unsaved drafts',()=>{
+test('KPI cache reset preserves Main, other apps and unsaved drafts',async()=>{
  const f=rig();f.user();f.local.set('akra_sso_token','main-token');f.local.set('other_sso_session','other');f.tab.set('returnitem-pending','uncertain');
  f.c.fixtureStorage.setItem('kpiData_AKRA','cache');f.c.fixtureStorage.setItem('kpiDraft_reused-name_AKRA_2026-09-18_main','draft');
- f.run(section('        function forceCleanCacheAndReload(','        function getTodayBangkokDateStr('));f.c.forceCleanCacheAndReload();
+ f.window.BMDialog={run:async(_key,_message,operation)=>operation()};
+ f.run(section('        async function forceCleanCacheAndReload(','        function getTodayBangkokDateStr('));await f.c.forceCleanCacheAndReload();
  assert.equal(f.local.get('akra_sso_token'),'main-token');assert.equal(f.local.get('other_sso_session'),'other');assert.equal(f.tab.get('returnitem-pending'),'uncertain');
  assert.equal(f.c.fixtureStorage.getItem('kpiDraft_reused-name_AKRA_2026-09-18_main'),'draft');assert.equal(f.c.fixtureStorage.getItem('kpiData_AKRA'),null);
 });
@@ -41,10 +42,10 @@ test('KPI delayed config cannot populate another owner or another owner cache',a
  const pending=f.c.loadConfig();await tick();f.user(replacement,'new-token');finish({employees:[{uid:'old-owner'}],viewer:{name:'old'}});
  await pending.catch(()=>{});assert.equal(applied,0);assert.equal(f.c.fixtureStorage.getItem('kpi_cached_config'),null);
 });
-for(const action of ['getWorkloadData','saveWorkload'])test(`KPI actual client rejects late ${action} after page identity replacement`,async()=>{
+for(const action of ['getWorkloadData','saveWorkload','getKanbanLineDelivery'])test(`KPI actual client rejects late ${action} after page identity replacement`,async()=>{
  const f=rig();f.user();f.c.module={exports:{}};let finish;
  f.c.fetch=()=>new Promise(resolve=>finish=resolve);vm.runInContext(adapter,f.c);
- const pending=action==='saveWorkload'?f.c.module.exports.saveWorkload(token,'reused-name','2026-09-18',{}):f.c.module.exports.getWorkloadData(token,'AKRA',1);
+ const pending=action==='saveWorkload'?f.c.module.exports.saveWorkload(token,'reused-name','2026-09-18',{}):action==='getKanbanLineDelivery'?f.c.module.exports.getKanbanLineDelivery(token,{branch:'AKRA',taskId:'20000000-0000-4000-8000-000000000001'}):f.c.module.exports.getWorkloadData(token,'AKRA',1);
  f.user(replacement,'new-token');finish({ok:true,json:async()=>({status:'success',records:[{id:'old'}],workload:[]})});
  await assert.rejects(pending,e=>e.reason==='session_changed');
 });

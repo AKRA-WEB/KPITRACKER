@@ -12,7 +12,7 @@ function rig({verify=async()=>original}={}){
  const node=id=>{if(!nodes.has(id)){const classes=new Set();nodes.set(id,{hidden:false,textContent:'',innerText:'',innerHTML:'',value:'',classList:{add:k=>classes.add(k),remove:k=>classes.delete(k),contains:k=>classes.has(k)},style:{setProperty(){}},setAttribute(){},removeAttribute(){}});}return nodes.get(id);};
  const window={location:{search:'?sso='+token,pathname:'/KPITRACKER/',hash:'',href:'https://fixture.invalid/KPITRACKER/',replace:u=>redirects.push(u)},history:{replaceState(){}},addEventListener:(key,fn)=>events[key]=fn,
   AkraModule:{embedded:false,getToken:()=>'',verifySession:verify,authRequired:u=>redirects.push(u),home:u=>redirects.push(u)}};
- const c=vm.createContext({window,document:{title:'KPI',getElementById:node,querySelectorAll:()=>[],body:node('body')},URL,URLSearchParams,Date,console:{log(){},error(){},warn(){}},
+ const c=vm.createContext({window,document:{title:'KPI',getElementById:node,querySelectorAll:()=>[],body:node('body')},URL,URLSearchParams,AbortController,Date,console:{log(){},error(){},warn(){}},
   location:window.location,localStorage:storage(local),sessionStorage:storage(tab),setTimeout(){},clearTimeout(){},clearInterval(){},showToast(){},confirm:()=>true,
   PORTAL_URL:'https://fixture.invalid/Main/',decodeJwtPayload:()=>({...original}),GLOBAL_CONFIG_LIST:[],KPI_SYSTEM_CONFIG:{},processConfigList(){},applySystemConfig(){},populateAdminEmpFilter(){},TRD_DEPARTMENTS:{}});
  const run=s=>vm.runInContext(s,c);

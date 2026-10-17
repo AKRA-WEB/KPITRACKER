@@ -1,0 +1,29 @@
+/* Plans 009/010: preserve BM Work layouts while improving readable roles and controls. */
+body { --app-primary:var(--bm-primary); --app-primary-dark:var(--bm-primary-hover); }
+:is(#view-workload,#view-kanban,#view-billcount,#view-duties,#view-my-profile,#view-selector,.app-header,#bottom-nav,#kpi-task-drawer,#kpi-session-status) :is([class~="text-[8px]"],[class~="text-[9px]"],[class~="text-[10px]"],[class~="text-[11px]"],.kb-month-badge,.kb-month-help) { font-size:var(--bm-text-xs) !important; line-height:1.5; }
+:is(#view-workload,#view-kanban,#view-billcount,#view-duties,#view-my-profile,.app-header) :is(.text-slate-400,.text-slate-500,.text-gray-400,.text-gray-500) { color:var(--bm-text-secondary) !important; }
+:is(#view-workload,#view-kanban,#view-billcount,#view-duties,#view-my-profile) :is(input,textarea)::placeholder { color:var(--bm-text-secondary) !important; opacity:1; }
+:is(#view-workload,#view-kanban,#view-billcount,#view-duties,#view-my-profile) :is(.text-amber-300,.text-amber-400,.text-amber-500,.text-amber-600,.text-yellow-300,.text-yellow-400) { color:var(--bm-warning) !important; }
+:is(#view-workload,#view-kanban,#view-billcount,#view-duties,#view-my-profile) :is(.text-emerald-400,.text-emerald-500,.text-emerald-600,.text-green-400,.text-green-500,.text-green-600) { color:var(--bm-success) !important; }
+:is(#view-workload,#view-kanban,#view-billcount,#view-duties,#view-my-profile) :is(.text-blue-500,.text-blue-400) { color:var(--bm-info) !important; }
+:is(#view-workload,#view-kanban,#view-billcount,#view-duties,#view-my-profile) :is(.text-red-400,.text-red-500) { color:var(--bm-error) !important; }
+:is(#view-workload,#view-kanban,#view-billcount,#view-duties,#view-my-profile) :is(.text-cyan-500,.text-cyan-600,.text-sky-500,.text-sky-600) { color:#0e7490 !important; }
+#kb-board-content h4, #live-bill-list-cards .text-xs.font-bold, #kb-duty-content .text-xs.font-bold { font-size:var(--bm-text-sm) !important; }
+#header-branch-name { color:var(--bm-primary-hover) !important; }
+#view-selector :is(#selector-user-name,.selector-caption) { color:var(--bm-text-secondary) !important; }
+#view-selector #btn-branch-akra { background:var(--bm-primary) !important; color:var(--bm-on-primary) !important; border-color:var(--bm-primary) !important; }
+:is(#view-workload,#view-billcount,#view-my-profile) .kpi-dark-surface :is(.text-slate-400,.text-slate-500,.text-gray-400,.text-gray-500) { color:#cbd5e1 !important; }
+:is(#view-workload,#view-billcount,#view-my-profile) .kpi-dark-surface :is(.text-amber-300,.text-amber-400,.text-amber-500,.text-amber-600,.text-yellow-300,.text-yellow-400) { color:#fde68a !important; }
+:is(#view-workload,#view-billcount,#view-my-profile) .kpi-dark-surface :is(.text-blue-400,.text-blue-500) { color:#bfdbfe !important; }
+:is(#view-workload,#view-billcount,#view-my-profile) .kpi-dark-surface :is(.text-red-400,.text-red-500) { color:#fecaca !important; }
+:is(#view-workload,#view-billcount,#view-my-profile) .kpi-dark-surface :is(.text-emerald-400,.text-emerald-500,.text-emerald-600,.text-green-400,.text-green-500,.text-green-600) { color:#a7f3d0 !important; }
+#kpi-startup-retry { background:var(--bm-primary); color:var(--bm-on-primary); min-height:40px; padding:8px 16px; margin-top:16px; border-radius:var(--bm-radius-sm); }
+#kpi-startup-retry:disabled { opacity:.7; }
+:is(#view-workload,#view-kanban,#view-billcount,#view-duties,#view-my-profile,#kpi-task-drawer) :is(.emp-label,button[class*="chip"],label:has(input[type="checkbox"]),.kb-carryover-label) { min-height:24px; cursor:pointer; }
+:is(#view-duties,#kb-duty-content) button { min-height:24px; }
+:is(#view-kanban,#view-duties,#view-billcount,#view-my-profile) input:is([type="date"],[type="month"]),.app-record-date { min-height:32px; }
+:is(#view-workload,#view-kanban,#view-billcount,#view-duties,#view-my-profile,#kpi-task-drawer) :is(button,input,select,textarea):focus-visible { outline:3px solid var(--bm-focus) !important; outline-offset:2px; }
+#kb-board-content h4, #live-bill-list-cards .truncate, #main-wl-primary-name, #main-wl-primary-desc { white-space:normal; overflow-wrap:anywhere; }
+@media(max-width:767px) { #view-billcount :is(input,select),#my-profile-month-input { max-width:100%; } #view-workload .flex:has(#wl-filter-search) { min-width:0; } }
+
+#view-duties small { font-size:var(--bm-text-xs) !important; }

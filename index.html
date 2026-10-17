@@ -2,7 +2,11 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <script src="js/akra-shell-bridge.js?v=20261014.01"></script>
+    <script src="js/bm-icon-data.js?v=20261015.01"></script>
+    <script src="js/bm-icons.js?v=20261015.01"></script>
+    <script src="js/bm-dialog.js?v=20261015.01"></script>
+    <script src="js/bm-date-display.js?v=20261015.01"></script>
+    <script src="js/akra-shell-bridge.js?v=20261015.01"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BM Work | งานและทีม</title>
@@ -15,7 +19,6 @@
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -51,10 +54,6 @@
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
         optgroup { font-weight: bold; color: #4f46e5; background-color: #f8fafc; }
         option { font-weight: normal; color: #1f2937; background-color: #ffffff; }
-        /* FontAwesome Fallback Aliases */
-        .fa-shield-halved::before { content: "\f3ed"; }
-        .fa-arrows-split-up-and-left::before { content: "\e4bc"; }
-
         /* Chips and Active State from all-in-one-preview.html */
         .chip-active {
             border-color: #2563eb !important;
@@ -73,7 +72,7 @@
             background-color: #dc2626 !important;
             color: #ffffff !important;
         }
-        .incident-category-grid .cat-chip {
+        #view-error .incident-category-grid .cat-chip {
             min-block-size: 3rem;
             width: 100%;
             justify-content: center;
@@ -129,12 +128,15 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="css/tailwind.min.css?v=20261014.01">
+    <link rel="stylesheet" href="css/tailwind.min.css?v=20261015.01">
+    <link rel="stylesheet" href="css/bm-tokens.css?v=20261015.01">
+    <link rel="stylesheet" href="css/bm-readable.css?v=20261015.01">
 </head>
 <body class="text-gray-800 pb-20">
-    <style>body:not(.kpi-session-ready) > :not(#kpi-session-status):not(script):not(style) { display: none !important; } #kpi-session-status[hidden] { display: none !important; }</style>
+    <style>body:not(.kpi-session-ready) > :not(#kpi-session-status):not(#bm-ui-dialog):not(script):not(style) { display: none !important; } #kpi-session-status[hidden] { display: none !important; }</style>
     <section id="kpi-session-status" role="status" class="p-6 text-center">
         <p id="kpi-session-message">กำลังตรวจสอบเซสชันกับ BUYMORETH…</p>
+        <button id="kpi-startup-retry" type="button" hidden onclick="retryKpiStartup()">ลองอีกครั้ง</button>
         <button type="button" class="mt-4 rounded-lg border px-4 py-2" onclick="window.AkraModule.home('https://akra-web.github.io/Main/')">กลับหน้าหลัก</button>
     </section>
     <a href="#app-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
@@ -233,7 +235,7 @@
                     <p class="text-xs text-slate-500 mt-1">รวมกิจกรรมจาก Event ที่เชื่อมต่อ • ไม่ต้องบันทึก Workload ซ้ำ</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <input type="date" id="record-date" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="date" id="record-date" aria-describedby="record-date-hint" aria-label="วันที่ Workload" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"><small id="record-date-hint" class="block text-xs text-slate-600">วันที่แสดงเป็น พ.ศ. · เลือกวันตามปฏิทินของอุปกรณ์</small>
                     <span class="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-bold text-emerald-700">
                         <i class="fa-solid fa-eye"></i>
                         อ่านอย่างเดียว
@@ -536,7 +538,7 @@
                     </section>
 
                     <!-- Unified workload activity: read-only evidence from operational events -->
-                    <section id="wl-unified-activity-card" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 shadow-sm space-y-3 text-white">
+                    <section id="wl-unified-activity-card" class="kpi-dark-surface bg-slate-950 p-4 rounded-2xl border border-slate-800 shadow-sm space-y-3 text-white">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="text-xs font-black flex items-center gap-1.5">
@@ -588,7 +590,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-xs bg-red-100 text-red-800 font-bold px-3 py-1.5 rounded-xl">Checker / Lead</span>
-                    <input type="date" id="record-date-error" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-red-500">
+                    <input type="date" id="record-date-error" aria-describedby="record-date-error-hint" aria-label="วันที่ Incident" onchange="syncAppRecordDate(this.value)" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-red-500"><small id="record-date-error-hint" class="block text-xs text-slate-600">วันที่แสดงเป็น พ.ศ. · เลือกวันตามปฏิทินของอุปกรณ์</small>
                 </div>
             </div>
 
@@ -1061,7 +1063,7 @@
                     <p class="text-xs text-slate-500">รายการเบิกผ่านกลุ่ม LINE แยกตามวัน</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <input type="date" id="record-date-billcount" onchange="syncAppRecordDate(this.value); fetchLiveRequisitions(this.value);" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="date" id="record-date-billcount" aria-describedby="record-date-billcount-hint" aria-label="วันที่ Live Bill Sync" onchange="syncAppRecordDate(this.value); fetchLiveRequisitions(this.value);" class="app-record-date p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"><small id="record-date-billcount-hint" class="block text-xs text-slate-600">วันที่แสดงเป็น พ.ศ. · เลือกวันตามปฏิทินของอุปกรณ์</small>
                     <button type="button" onclick="fetchLiveRequisitions(document.getElementById('record-date-billcount') ? document.getElementById('record-date-billcount').value : null)" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
                         <i class="fa-solid fa-arrows-rotate"></i>
                         <span>รีเฟรชข้อมูล</span>
@@ -1070,7 +1072,7 @@
             </div>
 
             <!-- Summary Stats Banner -->
-            <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white p-5 rounded-2xl border border-indigo-700/50 shadow-md space-y-3.5">
+            <div class="kpi-dark-surface bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white p-5 rounded-2xl border border-indigo-700/50 shadow-md space-y-3.5">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-800/40 pb-2.5">
                     <div class="flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
@@ -1205,7 +1207,7 @@
                         <span class="text-sm font-medium text-gray-700">บิลย้ายคลัง <span class="text-[10px] text-gray-400 block">(หน้าร้านเบิก)</span></span>
                         <div class="flex items-center space-x-2">
                             <button onclick="adjVol('vol-transfer', -1)" data-vol="vol-transfer" data-step="-1" aria-label="ลดจำนวนบิลย้ายคลัง" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
-                            <input type="number" id="vol-transfer" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                            <input type="number" id="vol-transfer" aria-label="จำนวนบิลย้ายคลัง" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
                             <button onclick="adjVol('vol-transfer', 1)" data-vol="vol-transfer" data-step="1" aria-label="เพิ่มจำนวนบิลย้ายคลัง" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                         </div>
                     </div>
@@ -1215,7 +1217,7 @@
                             <span class="text-sm font-medium text-gray-700">ลูกค้ามารับที่ร้าน</span>
                             <div class="flex items-center space-x-2">
                                 <button onclick="adjVol('vol-pickup', -1)" data-vol="vol-pickup" data-step="-1" aria-label="ลดจำนวนลูกค้ามารับที่ร้าน" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
-                                <input type="number" id="vol-pickup" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                                <input type="number" id="vol-pickup" aria-label="จำนวนลูกค้ามารับเอง" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
                                 <button onclick="adjVol('vol-pickup', 1)" data-vol="vol-pickup" data-step="1" aria-label="เพิ่มจำนวนลูกค้ามารับที่ร้าน" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
@@ -1227,7 +1229,7 @@
                             <span class="text-sm font-medium text-gray-700">ส่งต่างจังหวัด (ตจว.)</span>
                             <div class="flex items-center space-x-2">
                                 <button onclick="adjVol('vol-upcountry', -1)" data-vol="vol-upcountry" data-step="-1" aria-label="ลดจำนวนส่งต่างจังหวัด" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
-                                <input type="number" id="vol-upcountry" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                                <input type="number" id="vol-upcountry" aria-label="จำนวนส่งต่างจังหวัด" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
                                 <button onclick="adjVol('vol-upcountry', 1)" data-vol="vol-upcountry" data-step="1" aria-label="เพิ่มจำนวนส่งต่างจังหวัด" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
@@ -1239,7 +1241,7 @@
                             <span class="text-sm font-medium text-gray-700">ส่งในตลาด</span>
                             <div class="flex items-center space-x-2">
                                 <button onclick="adjVol('vol-inmarket', -1)" data-vol="vol-inmarket" data-step="-1" aria-label="ลดจำนวนส่งในตลาด" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
-                                <input type="number" id="vol-inmarket" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                                <input type="number" id="vol-inmarket" aria-label="จำนวนส่งในตลาด" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
                                 <button onclick="adjVol('vol-inmarket', 1)" data-vol="vol-inmarket" data-step="1" aria-label="เพิ่มจำนวนส่งในตลาด" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
@@ -1251,7 +1253,7 @@
                             <span class="text-sm font-medium text-gray-700">ส่งนอกตลาด</span>
                             <div class="flex items-center space-x-2">
                                 <button onclick="adjVol('vol-outmarket', -1)" data-vol="vol-outmarket" data-step="-1" aria-label="ลดจำนวนส่งนอกตลาด" class="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold active:bg-gray-200"><i class="fa-solid fa-minus"></i></button>
-                                <input type="number" id="vol-outmarket" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
+                                <input type="number" id="vol-outmarket" aria-label="จำนวนส่งนอกตลาด" value="0" inputmode="numeric" pattern="[0-9]*" class="w-14 text-center border border-gray-200 rounded-lg p-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50">
                                 <button onclick="adjVol('vol-outmarket', 1)" data-vol="vol-outmarket" data-step="1" aria-label="เพิ่มจำนวนส่งนอกตลาด" class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 font-bold active:bg-blue-200"><i class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
@@ -1539,9 +1541,10 @@
 
         <!-- ================= VIEW: MY PROFILE & PERSONAL PASSPORT (โปรไฟล์ของฉัน) ================= -->
         <div id="view-my-profile" class="ops-view hidden space-y-4 max-w-5xl mx-auto">
+            <div id="my-profile-read-error" hidden></div>
                 <section class="bg-white border border-slate-200 rounded-xl p-4 mb-4" aria-label="กิจกรรมปฏิบัติการของฉัน"><h3 class="font-bold text-slate-800">กิจกรรมปฏิบัติการของฉัน</h3><div id="profile-activity-summary" role="status" class="text-sm text-slate-600 mt-2">กำลังโหลด...</div><p class="text-xs text-slate-500 mt-2">กิจกรรมรายวันจากระบบ แยกงาน LINE ที่รับมอบหมายจากงานที่มีหลักฐานผู้ปฏิบัติ ไม่แปลงจำนวนงานเป็นชั่วโมง</p></section>
             <!-- Header Card -->
-            <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-5 rounded-3xl border border-slate-700/60 shadow-xl relative overflow-hidden">
+            <div class="kpi-dark-surface bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-5 rounded-3xl border border-slate-700/60 shadow-xl relative overflow-hidden">
                 <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                     <div class="flex items-center gap-4 min-w-0">
@@ -1569,7 +1572,7 @@
                     <div class="flex items-center gap-2 self-start sm:self-center">
                         <div class="bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-1.5 flex items-center gap-2">
                             <i class="fa-solid fa-calendar text-blue-400 text-xs"></i>
-                            <input type="month" id="my-profile-month-input" onchange="changeMyProfileMonth(this.value)" class="bg-transparent text-white text-xs font-bold outline-none cursor-pointer">
+                            <input type="month" id="my-profile-month-input" aria-label="เดือน Profile" onchange="changeMyProfileMonth(this.value)" class="bg-transparent text-white text-xs font-bold outline-none cursor-pointer">
                         </div>
                         <button type="button" onclick="loadMyProfileData(true)" title="รีเฟรชข้อมูล" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs transition-colors">
                             <i class="fa-solid fa-rotate"></i>
@@ -1799,11 +1802,11 @@
                     <div id="exec-custom-range" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2 flex-[2]">
                         <div>
                             <label for="exec-date-start" class="block text-xs font-bold text-slate-600 mb-1">วันที่เริ่มต้น</label>
-                            <input type="date" id="exec-date-start" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" onchange="handleExecutiveCustomDateChange()">
+                            <input type="date" id="exec-date-start" aria-describedby="exec-date-start-hint" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" onchange="handleExecutiveCustomDateChange()"><small id="exec-date-start-hint" class="block text-xs text-slate-600">วันที่แสดงเป็น พ.ศ. · เลือกวันตามปฏิทินของอุปกรณ์</small>
                         </div>
                         <div>
                             <label for="exec-date-end" class="block text-xs font-bold text-slate-600 mb-1">วันที่สิ้นสุด</label>
-                            <input type="date" id="exec-date-end" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" onchange="handleExecutiveCustomDateChange()">
+                            <input type="date" id="exec-date-end" aria-describedby="exec-date-end-hint" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" onchange="handleExecutiveCustomDateChange()"><small id="exec-date-end-hint" class="block text-xs text-slate-600">วันที่แสดงเป็น พ.ศ. · เลือกวันตามปฏิทินของอุปกรณ์</small>
                         </div>
                     </div>
                     <p id="exec-period-description" class="text-xs text-slate-500 lg:max-w-xs" role="status" aria-live="polite">-</p>
@@ -2943,7 +2946,7 @@
                         </div>
                         <div>
                             <label for="action-form-duedate" class="block text-xs font-bold text-slate-700 mb-1">วันครบกำหนด <span class="text-red-500">*</span></label>
-                            <input type="date" id="action-form-duedate" required class="w-full p-2.5 border border-slate-350 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                            <input type="date" id="action-form-duedate" aria-describedby="action-form-duedate-hint" required class="w-full p-2.5 border border-slate-350 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"><small id="action-form-duedate-hint" class="block text-xs text-slate-600">วันที่แสดงเป็น พ.ศ. · เลือกวันตามปฏิทินของอุปกรณ์</small>
                         </div>
                     </div>
 
@@ -3061,7 +3064,7 @@
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                <span id="drawer-version-text">BM Work v20261014.01</span>
+                <span id="drawer-version-text">BM Work v20261015.01</span>
                 <span>BUYMORETH</span>
             </div>
         </div>
@@ -3530,16 +3533,16 @@
         }
     </style>
     <div id="kb-image-viewer" class="hidden fixed inset-0 z-[80] bg-slate-950/90 p-4" role="dialog" aria-modal="true" aria-label="ดูรูปภาพ" tabindex="-1"></div>
-    <script src="js/supabase-kpi-client.js?v=20261014.01"></script>
-    <script src="js/workload-permissions.js?v=20261014.01"></script>
-    <script src="js/incident-impact.js?v=20261014.01"></script>
-    <script src="js/kpi-kanban-board.js?v=20261014.01"></script>
-    <script src="js/kpi-duty-matrix.js?v=20261014.01"></script>
-    <script src="js/kpi-integration.js?v=20261014.01"></script>
+    <script src="js/supabase-kpi-client.js?v=20261015.01"></script>
+    <script src="js/workload-permissions.js?v=20261015.01"></script>
+    <script src="js/incident-impact.js?v=20261015.01"></script>
+    <script src="js/kpi-kanban-board.js?v=20261015.01"></script>
+    <script src="js/kpi-duty-matrix.js?v=20261015.01"></script>
+    <script src="js/kpi-integration.js?v=20261015.01"></script>
     <script>
         // ================= CONFIGURATION =================
         const CURRENT_APP_NAME = "KPITRACKER";
-        const CURRENT_VERSION = "20261014.01";
+        const CURRENT_VERSION = "20261015.01";
         const KPI_LIFF_ID = "2011386176-m5a77Ms9";
         window.KPI_LIFF_ID = KPI_LIFF_ID;
 
@@ -3675,13 +3678,13 @@
             } catch (_e) {}
         }, 300);
 
-        function forceCleanCacheAndReload() {
-            if (confirm('ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?')) {
-                clearKpiReadCaches();
-                const url = new URL(window.location.href);
-                url.searchParams.set('update', Date.now());
-                window.location.replace(url.toString());
-            }
+        async function forceCleanCacheAndReload() {
+            return window.BMDialog.run('clean-cache', 'ต้องการล้างแคชและโหลดเวอร์ชันล่าสุดใช่หรือไม่?', async (isCurrent) => {
+                    clearKpiReadCaches();
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('update', Date.now());
+                    window.location.replace(url.toString());
+            });
         }
 
         function getTodayBangkokDateStr(now = new Date()) {
@@ -3704,7 +3707,7 @@
                 if (!res.ok) return true;
                 const config = await res.json();
                 if (config && config.version && config.version !== CURRENT_VERSION) {
-                    alert('พบเวอร์ชันใหม่ กำลังอัปเดตระบบ...');
+                    if (!await window.BMDialog.alert('พบเวอร์ชันใหม่ กำลังอัปเดตระบบ...', {title:'อัปเดตแอป'})) return false;
                     const url = new URL(window.location.href);
                     url.searchParams.set('update', Date.now());
                     window.location.replace(url.toString());
@@ -4253,6 +4256,9 @@
             try { return localStorage.getItem(KPI_SESSION_KEY); } catch (_) { return null; }
         }
         function invalidateKpiSession(message) {
+            window.BMDialog?.cancel();
+            kpiPendingVerification = null;
+            const retry = document.getElementById('kpi-startup-retry'); if (retry) retry.hidden = true;
             window.AkraPerfDiagnostics?.invalidate?.();
             window.KpiKanbanBoard?.invalidate?.();
             if (typeof clearStartupActivityPrefetch === 'function') clearStartupActivityPrefetch();
@@ -4301,6 +4307,47 @@
         window.getKpiSessionOwner = () => kpiVerifiedSession;
         window.getKpiSessionToken = getKpiPageToken;
         window.onKpiSessionRejected = error => handleKpiAuthFailure(error);
+        let kpiStartupRetryInFlight = false, kpiPendingVerification = null;
+        function kpiReadFailureMarkup(error, retryAction) {
+            const describe = window.AkraSupabaseKPI?.describeReadError;
+            const failure = describe ? describe(error) : {title:'โหลดข้อมูลไม่สำเร็จ',body:'ลองโหลดข้อมูลอีกครั้ง',retry:true};
+            if (!failure) return '';
+            const action = failure.retry ? retryAction : "window.AkraModule.home('https://akra-web.github.io/Main/')";
+            return `<div role="alert" class="p-4 text-sm text-slate-700 bg-slate-50 rounded-xl"><strong>${failure.title}</strong><p class="mt-1">${failure.body}</p><button type="button" onclick="${action}" class="mt-3 px-3 py-2 rounded-lg border border-slate-300 font-bold">${failure.retry ? 'ลองอีกครั้ง' : 'กลับหน้าหลัก'}</button></div>`;
+        }
+        function renderKpiReadFailure(error) {
+            const describe = window.AkraSupabaseKPI?.describeReadError;
+            const failure = describe ? describe(error) : {title:'โหลดข้อมูลไม่สำเร็จ',body:'ลองโหลดข้อมูลอีกครั้ง',retry:true};
+            if (!failure) return;
+            const status = document.getElementById('kpi-session-status');
+            status.hidden = false; status.setAttribute('role', 'alert');
+            document.getElementById('kpi-session-message').textContent = `${failure.title} · ${failure.body}`;
+            const retry = document.getElementById('kpi-startup-retry');
+            retry.hidden = !failure.retry; retry.disabled = false;
+        }
+        function showKpiStartupFailure(error, owner, token) {
+            if (!isCurrentKpiSession(owner, token) || error?.reason === 'session_changed'
+                || (error?.name === 'AbortError' && error?.reason === 'request_cancelled')) return;
+            if (handleKpiAuthFailure(error)) return;
+            renderKpiReadFailure(error);
+        }
+        function showKpiVerificationFailure(error) {
+            const failure = window.AkraSupabaseKPI?.describeReadError?.(error);
+            if (!failure) return;
+            if (failure.kind === 'session' || failure.kind === 'identity') {
+                invalidateKpiSession(`${failure.title} · ${failure.body}`);
+                if (window.AkraModule?.embedded || failure.kind === 'identity') window.AkraModule.authRequired(PORTAL_URL);
+            } else renderKpiReadFailure(error);
+        }
+        async function retryKpiStartup() {
+            if (kpiStartupRetryInFlight) return;
+            kpiStartupRetryInFlight = true;
+            const retry = document.getElementById('kpi-startup-retry'); retry.disabled = true;
+            const status = document.getElementById('kpi-session-status'); status.setAttribute('role', 'status');
+            document.getElementById('kpi-session-message').textContent = 'กำลังโหลดข้อมูลพนักงาน…';
+            try { await initSystem(); }
+            finally { kpiStartupRetryInFlight = false; retry.disabled = false; }
+        }
         function can(perm) {
             if (!sessionToken) return false;
             return _kpiPerms.includes(perm);
@@ -4312,9 +4359,9 @@
             if (!isAuthFailure) return false;
             if (_kpiAuthRedirecting) return true;
             _kpiAuthRedirecting = true;
-            invalidateKpiSession('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่');
+            invalidateKpiSession('เซสชันหมดอายุหรือเปลี่ยนแล้ว · เข้าสู่ระบบ BUYMORETH อีกครั้ง');
             document.getElementById('app-content')?.classList.add('hidden');
-            showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', true);
+            showToast('เซสชันหมดอายุหรือเปลี่ยนแล้ว · เข้าสู่ระบบ BUYMORETH อีกครั้ง', true);
             setTimeout(() => window.AkraModule.authRequired(PORTAL_URL), 0);
             return true;
         }
@@ -4326,6 +4373,9 @@
             }
             return "";
         }
+
+        window.getBmDialogContext = () => [kpiVerifiedSession, getKpiPageToken(), currentBranch, currentUser, rawKpiSession(), window.AkraModule?.sessionStamp?.(), ...['record-date','record-date-error','record-date-billcount'].map(id => document.getElementById(id)?.value)];
+        function formatThaiDisplayDate(value) { return window.BMDateDisplay.date(value); }
 
         function formatDisplayDate(dateStr) {
             if (!dateStr) return "";
@@ -6980,7 +7030,7 @@
             ];
 
             if (!code || !name) {
-                alert('กรุณากรอกรหัสทักษะและชื่อทักษะให้ครบถ้วน');
+                window.BMDialog.alert('กรุณากรอกรหัสทักษะและชื่อทักษะให้ครบถ้วน');
                 return;
             }
 
@@ -7017,26 +7067,28 @@
                 return;
             }
 
-            if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบทักษะ "${skillCode}" ออกจากระบบ?\n(การรับรองทักษะนี้ของพนักงานทั้งหมดจะถูกลบไปด้วย)`)) {
-                return;
-            }
+            return window.BMDialog.run('delete-skill:'+skillCode, `คุณแน่ใจหรือไม่ว่าต้องการลบทักษะ "${skillCode}" ออกจากระบบ?\n(การรับรองทักษะนี้ของพนักงานทั้งหมดจะถูกลบไปด้วย)`, async (isCurrent) => {
 
-            try {
-                const res = await AkraSupabaseKPI.deleteSkillCatalogItem(sessionToken, skillCode);
-                if (res.status === 'success') {
-                    GLOBAL_SKILL_CATALOG = res.skills || [];
-                    // Refresh employee skills if any were cascade removed
-                    if (window.AkraSupabaseKPI?.getEmployeeSkills) {
-                        const empRes = await AkraSupabaseKPI.getEmployeeSkills(sessionToken).catch(() => null);
-                        if (empRes && empRes.skills) GLOBAL_EMPLOYEE_SKILLS = empRes.skills;
+                try {
+                    const res = await AkraSupabaseKPI.deleteSkillCatalogItem(sessionToken, skillCode);
+                    if (!isCurrent()) return;
+                    if (res.status === 'success') {
+                        GLOBAL_SKILL_CATALOG = res.skills || [];
+                        // Refresh employee skills if any were cascade removed
+                        if (window.AkraSupabaseKPI?.getEmployeeSkills) {
+                            const empRes = await AkraSupabaseKPI.getEmployeeSkills(sessionToken).catch(() => null);
+                            if (!isCurrent()) return;
+                            if (empRes && empRes.skills) GLOBAL_EMPLOYEE_SKILLS = empRes.skills;
+                        }
+                        renderAdminSkillsSettings();
+                        showToast('ลบทักษะออกจากระบบสำเร็จแล้ว');
                     }
-                    renderAdminSkillsSettings();
-                    showToast('ลบทักษะออกจากระบบสำเร็จแล้ว');
+                } catch (err) {
+                    if (!isCurrent()) return;
+                    console.error('Failed to delete skill catalog item:', err);
+                    showToast('ลบทักษะไม่สำเร็จ: ' + (err.message || ''), true);
                 }
-            } catch (err) {
-                console.error('Failed to delete skill catalog item:', err);
-                showToast('ลบทักษะไม่สำเร็จ: ' + (err.message || ''), true);
-            }
+            });
         }
 
         function renderAdminSkillsSettings() {
@@ -7167,7 +7219,7 @@
             const notes = notesInput ? notesInput.value.trim() : '';
 
             if (!employeeUid || !skillCode) {
-                alert('กรุณาเลือกพนักงานและทักษะ');
+                window.BMDialog.alert('กรุณาเลือกพนักงานและทักษะ');
                 return;
             }
 
@@ -7204,19 +7256,22 @@
                 showToast('ต้องการสิทธิ์ Admin หรือ Supervisor ในการลบการรับรองทักษะ', true);
                 return;
             }
-            if (!confirm(`ต้องการเพิกถอนทักษะ ${skillCode} ของพนักงานรายนี้ใช่หรือไม่?`)) return;
+            return window.BMDialog.run('revoke-skill:'+employeeUid+':'+skillCode, `ต้องการเพิกถอนทักษะ ${skillCode} ของพนักงานรายนี้ใช่หรือไม่?`, async (isCurrent) => {
 
-            try {
-                const res = await AkraSupabaseKPI.deleteEmployeeSkill(sessionToken, employeeUid, skillCode);
-                if (res.status === 'success') {
-                    GLOBAL_EMPLOYEE_SKILLS = res.skills || [];
-                    renderAdminSkillsSettings();
-                    showToast('เพิกถอนทักษะเรียบร้อยแล้ว');
+                try {
+                    const res = await AkraSupabaseKPI.deleteEmployeeSkill(sessionToken, employeeUid, skillCode);
+                    if (!isCurrent()) return;
+                    if (res.status === 'success') {
+                        GLOBAL_EMPLOYEE_SKILLS = res.skills || [];
+                        renderAdminSkillsSettings();
+                        showToast('เพิกถอนทักษะเรียบร้อยแล้ว');
+                    }
+                } catch (err) {
+                    if (!isCurrent()) return;
+                    console.error('Failed to revoke skill:', err);
+                    showToast('ลบทักษะไม่สำเร็จ: ' + (err.message || ''), true);
                 }
-            } catch (err) {
-                console.error('Failed to revoke skill:', err);
-                showToast('ลบทักษะไม่สำเร็จ: ' + (err.message || ''), true);
-            }
+            });
         }
 
         // ================= EMPLOYEE PROFILE MODAL CONTROLLER =================
@@ -7406,6 +7461,7 @@
 
         let myProfileReadTicket=0;
         async function loadMyProfileData(force = false) {
+            const readError = document.getElementById('my-profile-read-error'); if (readError) readError.hidden = true;
             const profileTicket=++myProfileReadTicket, profileToken=sessionToken, profileBranch=currentBranch;
             const profileCurrent=()=>profileTicket===myProfileReadTicket&&profileToken===sessionToken&&profileBranch===currentBranch;
             const container = document.getElementById('view-my-profile');
@@ -7550,7 +7606,8 @@
 
             } catch (err) {
                 if(!profileCurrent())return;
-                showToast('โหลด Profile ไม่สำเร็จ กรุณารีเฟรชหรือตรวจสิทธิ์',true);
+                const markup = kpiReadFailureMarkup(err, 'loadMyProfileData(true)');
+                if (readError && markup) { readError.innerHTML = markup; readError.hidden = false; }
                 console.error('loadMyProfileData error:', err);
             }
         }
@@ -8353,7 +8410,7 @@
             const icon = document.getElementById('duty-modal-icon').value.trim();
 
             if (!name) {
-                alert('กรุณาระบุชื่อหัวข้องาน');
+                window.BMDialog.alert('กรุณาระบุชื่อหัวข้องาน');
                 return;
             }
 
@@ -8370,15 +8427,18 @@
             renderAdminWorkloadSettings();
         }
 
-        function deleteAdminDuty(kind, idx) {
+        async function deleteAdminDuty(kind, idx) {
             const list = kind === 'primary' ? ADMIN_SETTINGS_STATE.workloadDuties.primaryDuties : ADMIN_SETTINGS_STATE.workloadDuties.supportDuties;
             if (list.length <= 1) {
-                alert('ต้องมีหัวข้องานอย่างน้อย 1 รายการ');
+                window.BMDialog.alert('ต้องมีหัวข้องานอย่างน้อย 1 รายการ');
                 return;
             }
-            if (!confirm(`ยืนยันการลบ "${list[idx].name}" หรือไม่?`)) return;
-            list.splice(idx, 1);
-            renderAdminWorkloadSettings();
+            const originalDuty = list[idx]; if (!originalDuty) return;
+            return window.BMDialog.run('delete-duty:'+kind+':'+idx, `ยืนยันการลบ "${list[idx].name}" หรือไม่?`, async (isCurrent) => {
+                if (list !== (kind === 'primary' ? ADMIN_SETTINGS_STATE.workloadDuties.primaryDuties : ADMIN_SETTINGS_STATE.workloadDuties.supportDuties) || list[idx] !== originalDuty || list.length <= 1) return;
+                list.splice(idx, 1);
+                renderAdminWorkloadSettings();
+            });
         }
 
         async function saveAdminWorkloadSettings() {
@@ -8513,7 +8573,7 @@
             const color = document.getElementById('cat-modal-color').value.trim();
 
             if (!label) {
-                alert('กรุณาระบุชื่อหมวดหมู่');
+                window.BMDialog.alert('กรุณาระบุชื่อหมวดหมู่');
                 return;
             }
 
@@ -8529,18 +8589,20 @@
             renderAdminIncidentSettings();
         }
 
-        function deleteAdminCategory(branch, catKey) {
+        async function deleteAdminCategory(branch, catKey) {
             const catalog = ADMIN_SETTINGS_STATE.incidentCatalog[branch];
             if (!catalog || !catalog.categories) return;
             if (catalog.categories.length <= 1) {
-                alert('ต้องมีหมวดหมู่อย่างน้อย 1 หมวด');
+                window.BMDialog.alert('ต้องมีหมวดหมู่อย่างน้อย 1 หมวด');
                 return;
             }
             const found = catalog.categories.find(c => c.key === catKey);
-            if (!confirm(`ยืนยันการลบหมวดหมู่ "${found ? found.label : catKey}" และรายการภายในทั้งหมดหรือไม่?`)) return;
-            catalog.categories = catalog.categories.filter(c => c.key !== catKey);
-            delete catalog.items[catKey];
-            renderAdminIncidentSettings();
+            return window.BMDialog.run('delete-category:'+branch+':'+catKey, `ยืนยันการลบหมวดหมู่ "${found ? found.label : catKey}" และรายการภายในทั้งหมดหรือไม่?`, async (isCurrent) => {
+                if (ADMIN_SETTINGS_STATE.incidentCatalog[branch] !== catalog || catalog.categories.length <= 1 || catalog.categories.find(c => c.key === catKey) !== found) return;
+                catalog.categories = catalog.categories.filter(c => c.key !== catKey);
+                delete catalog.items[catKey];
+                renderAdminIncidentSettings();
+            });
         }
 
         function addAdminIncidentItem(branch, catKey) {
@@ -9392,7 +9454,7 @@
             return `<table class="kpi-incident-register"><caption class="sr-only">รายการ Incident และรายละเอียดเหตุการณ์</caption>
                 <thead><tr><th scope="col">วันที่</th><th scope="col">พนักงาน</th><th scope="col">เหตุการณ์ / ผลกระทบ</th></tr></thead>
                 <tbody>${sorted.map(row => `<tr>
-                    <td class="kpi-case-date">${esc(formatDisplayDate(row.date))}</td>
+                    <td class="kpi-case-date">${esc(formatThaiDisplayDate(row.date))}</td>
                     <td class="kpi-case-employee">${esc(row.emp)}</td>
                     <td class="kpi-case-detail"><strong>${esc(row.type)}</strong><div>${row.note}</div></td>
                 </tr>`).join('')}</tbody></table>`;
@@ -9693,27 +9755,28 @@
             if (date && date !== todayBangkok) {
                 return showModal('ไม่สามารถยกเลิกได้', 'ระบบอนุญาตให้ยกเลิกหรือลบรายการความผิดพลาดเฉพาะวันปัจจุบันเท่านั้น', 'error');
             }
-            if (typeof window.confirm === 'function' && !window.confirm('ต้องการยกเลิก/ลบรายการความผิดพลาดนี้ใช่หรือไม่? (คะแนน HP จะถูกคืนกลับทันที)')) {
-                return;
-            }
-            if (!sessionToken || !window.AkraSupabaseKPI?.deleteIncident) {
-                return showModal('ดำเนินการไม่สำเร็จ', 'ระบบยังไม่พร้อม กรุณาโหลดหน้าใหม่', 'error');
-            }
-            try {
-                showToast('กำลังยกเลิกรายการ...', false);
-                const result = await AkraSupabaseKPI.deleteIncident(sessionToken, currentBranch, date || todayBangkok, caseId);
-                recordedErrorCases = result.incidents || [];
-                incidentZeroConfirmed = result.zeroConfirmed || false;
-                applyIncidentSaveResultToCache(date || todayBangkok, currentBranch, result);
-                renderErrTimeline();
-                renderErrTeamHp();
-                showToast('ยกเลิกรายการความผิดพลาดเรียบร้อยแล้ว');
-                loadDashboardData();
-                updateDailyDashboard();
-            } catch (err) {
-                console.error('Failed to delete incident case:', err);
-                showModal('ยกเลิกไม่สำเร็จ', err?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล', 'error');
-            }
+            return window.BMDialog.run('delete-error:'+caseId, 'ต้องการยกเลิก/ลบรายการความผิดพลาดนี้ใช่หรือไม่? (คะแนน HP จะถูกคืนกลับทันที)', async (isCurrent) => {
+                if (!sessionToken || !window.AkraSupabaseKPI?.deleteIncident) {
+                    return showModal('ดำเนินการไม่สำเร็จ', 'ระบบยังไม่พร้อม กรุณาโหลดหน้าใหม่', 'error');
+                }
+                try {
+                    showToast('กำลังยกเลิกรายการ...', false);
+                    const result = await AkraSupabaseKPI.deleteIncident(sessionToken, currentBranch, date || todayBangkok, caseId);
+                    if (!isCurrent()) return;
+                    recordedErrorCases = result.incidents || [];
+                    incidentZeroConfirmed = result.zeroConfirmed || false;
+                    applyIncidentSaveResultToCache(date || todayBangkok, currentBranch, result);
+                    renderErrTimeline();
+                    renderErrTeamHp();
+                    showToast('ยกเลิกรายการความผิดพลาดเรียบร้อยแล้ว');
+                    loadDashboardData();
+                    updateDailyDashboard();
+                } catch (err) {
+                    if (!isCurrent()) return;
+                    console.error('Failed to delete incident case:', err);
+                    showModal('ยกเลิกไม่สำเร็จ', err?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล', 'error');
+                }
+            });
         }
 
         // ================= VIEW 3: LIVE REQUISITIONS CONTROLLERS =================
@@ -9942,7 +10005,8 @@
                 perf?.fail();
                 console.warn('fetchLiveRequisitions error:', e);
                 if (!isSilent) {
-                    renderLiveRequisitions('error');
+                    const markup = kpiReadFailureMarkup(e, 'fetchLiveRequisitions()');
+                    if (markup) { renderLiveRequisitions('error'); const list = document.getElementById('live-bill-list-cards'); if (list) list.innerHTML = markup; }
                 } else {
                     const stateEl = document.getElementById('live-bill-read-state');
                     if (stateEl) stateEl.innerText = 'อัปเดตเบื้องหลังไม่สำเร็จ (แสดงข้อมูลล่าสุด)';
@@ -10272,7 +10336,7 @@
                     } catch (supaErr) {
                         if (!current()) return false;
                         perf?.configFailed();
-                        handleKpiAuthFailure(supaErr);
+                        if (!handleKpiAuthFailure(supaErr)) throw supaErr;
                         console.warn('[Supabase KPI] authenticated loadConfig failed:', supaErr);
                     }
                 }
@@ -10381,6 +10445,7 @@
                 const ssoResult = await resolveSsoAuth();
                 perf?.end(authSpan);
                 if (ssoResult.superseded) return;
+                if (ssoResult.error) { showKpiVerificationFailure(ssoResult.error); return; }
                 if (!ssoResult.userData || ssoResult.expired) { await checkAuth(ssoResult); return; }
                 owner = kpiVerifiedSession;
                 token = getKpiPageToken();
@@ -10399,7 +10464,7 @@
             } catch (err) {
                 if (startupPrefetch) clearStartupActivityPrefetch(startupPrefetch);
                 console.error("InitSystem error:", err);
-                if (isCurrentKpiSession(owner, token)) invalidateKpiSession('โหลดข้อมูลพนักงานไม่สำเร็จ กรุณาเปิด BM Work จาก BUYMORETH ใหม่');
+                if (isCurrentKpiSession(owner, token)) showKpiStartupFailure(err, owner, token);
             } finally {
                 clearTimeout(dismissTimer);
                 const loader = document.getElementById('system-loading');
@@ -10411,6 +10476,8 @@
         async function resolveSsoAuth() {
             const result = { attempted: false, userData: null, expired: false };
             const attempt = ++kpiAuthAttempt, savedRaw = rawKpiSession();
+            const mainStamp = window.AkraModule?.sessionStamp?.();
+            let verificationToken = '';
             sessionToken = null;
             kpiVerifiedSession = null;
             bindKpiSessionEvents();
@@ -10419,6 +10486,7 @@
                 const embedded = window.AkraModule?.embedded;
                 let saved = null; try { saved = JSON.parse(savedRaw || 'null'); } catch (_) {}
                 let ssoToken = embedded ? window.AkraModule.getToken() : urlParams.get('sso') || saved?.token;
+                if (!embedded && !ssoToken && kpiPendingVerification?.savedRaw === savedRaw && kpiPendingVerification.mainStamp === mainStamp) ssoToken = kpiPendingVerification.token;
                 if (!embedded && !ssoToken) {
                     // Read-only compatibility with Main's prior token location; never trust cached roles.
                     try { ssoToken = localStorage.getItem('akra_sso_token') || localStorage.getItem('akra_session_token'); } catch (_) {}
@@ -10427,6 +10495,7 @@
                     try { window.history.replaceState({}, document.title, window.location.pathname + window.location.hash); } catch (_) {}
                 }
                 if (!ssoToken) return result;
+                verificationToken = ssoToken;
                 result.attempted = true;
                 const user = embedded ? await window.AkraModule.verifySession('app-kpi') : await window.AkraModule.verifySession('app-kpi', ssoToken);
                 if (attempt !== kpiAuthAttempt || (!embedded && rawKpiSession() !== savedRaw)) {
@@ -10434,6 +10503,7 @@
                     return result;
                 }
                 kpiVerifiedSession = {user:{...user},token:ssoToken};
+                kpiPendingVerification = null;
                 if (!kpiIdentityId()) throw new Error('missing_verified_identity');
                 sessionToken = ssoToken;
                 window.AkraModule?.watchSession?.({appId:'app-kpi', user, token:ssoToken,
@@ -10445,9 +10515,13 @@
                 if (!embedded) {
                     try { localStorage.setItem(KPI_SESSION_KEY,JSON.stringify(kpiVerifiedSession)); } catch (_) { /* Verified memory session only. */ }
                 }
-            } catch (_) {
+            } catch (error) {
+                if (attempt !== kpiAuthAttempt || (!window.AkraModule?.embedded && rawKpiSession() !== savedRaw) || mainStamp !== window.AkraModule?.sessionStamp?.()) { result.superseded = true; return result; }
                 if (attempt === kpiAuthAttempt) { sessionToken = null; kpiVerifiedSession = null; }
-                result.expired = true;
+                result.error = error;
+                const failure = window.AkraSupabaseKPI?.describeReadError?.(error);
+                result.expired = failure?.kind === 'session' || failure?.kind === 'permission';
+                kpiPendingVerification = failure?.retry ? {token:verificationToken,savedRaw,mainStamp} : null;
             }
             return result;
         }
@@ -11159,7 +11233,7 @@
                 const bills = day.vendorBills;
                 const isPending = bills.entryStatus === 'pending';
                 const pendingDetails = isPending ? `<div class="mt-2 pt-2 border-t border-amber-200/70 text-xs text-amber-900"><p class="font-bold">ค้างสะสม ${bills.pendingAccumulated === '' ? '-' : bills.pendingAccumulated} บิล</p>${bills.pendingNote.trim() ? `<p class="mt-1 whitespace-pre-wrap break-words">${esc(bills.pendingNote)}</p>` : ''}</div>` : '';
-                return `<article class="text-sm p-2.5 rounded-lg border ${isPending ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50/60 border-emerald-100'}"><header class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-slate-700"><i class="fa-solid fa-calendar-day mr-1.5 opacity-60"></i>วันที่ ${formatDisplayDate(day.date)}</span><span class="shrink-0 text-[10px] font-bold ${isPending ? 'text-amber-800' : 'text-emerald-700'}">${isPending ? 'ค้าง' : 'เรียบร้อย'}</span></header><p class="mt-1.5 text-slate-700">จำนวนบิลวันนี้ <strong class="text-slate-900">${bills.totalToday}</strong> บิล</p>${pendingDetails}</article>`;
+                return `<article class="text-sm p-2.5 rounded-lg border ${isPending ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50/60 border-emerald-100'}"><header class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-slate-700"><i class="fa-solid fa-calendar-day mr-1.5 opacity-60"></i>วันที่ ${formatThaiDisplayDate(day.date)}</span><span class="shrink-0 text-[10px] font-bold ${isPending ? 'text-amber-800' : 'text-emerald-700'}">${isPending ? 'ค้าง' : 'เรียบร้อย'}</span></header><p class="mt-1.5 text-slate-700">จำนวนบิลวันนี้ <strong class="text-slate-900">${bills.totalToday}</strong> บิล</p>${pendingDetails}</article>`;
             }).join('');
         }
 
@@ -11243,7 +11317,7 @@
                         ? 'bg-blue-600 text-white border-blue-600 shadow-sm font-black'
                         : 'bg-white text-slate-655 border-slate-200 hover:bg-slate-50';
                     filterHtml += `
-                        <button type="button" onclick="setDashboardSelectedDate('${wd.dateStr}')" class="min-h-[32px] px-2 py-1 text-xs rounded-md border transition-all flex items-center gap-1.5 ${activeClass}" title="${wd.fullDayLabel} ที่ ${formatDisplayDate(wd.dateStr)}">
+                        <button type="button" onclick="setDashboardSelectedDate('${wd.dateStr}')" class="min-h-[32px] px-2 py-1 text-xs rounded-md border transition-all flex items-center gap-1.5 ${activeClass}" title="${wd.fullDayLabel} ที่ ${formatThaiDisplayDate(wd.dateStr)}">
                             <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
                             <span>${wd.dayLabel} ${wd.dateDisplay}</span>
                         </button>
@@ -11330,7 +11404,7 @@
                                         <div class="text-[10px] text-slate-550 mt-1">
                                             ผู้รับผิดชอบ: <span class="font-semibold text-slate-700">${esc(act.owner)}</span>
                                             <span class="mx-1 text-slate-300">|</span>
-                                            กำหนด: <span class="${dateClass}">${act.dueDate ? formatDisplayDate(act.dueDate) : '-'}</span>
+                                            กำหนด: <span class="${dateClass}">${act.dueDate ? formatThaiDisplayDate(act.dueDate) : '-'}</span>
                                         </div>
                                     </div>
                                     <div class="flex flex-col items-end gap-1.5 shrink-0">
@@ -11384,7 +11458,7 @@
                                             <div class="p-2 rounded bg-slate-50/50 border border-slate-200 flex items-start justify-between gap-2 text-xs hover:bg-slate-50 transition-colors">
                                                 <div class="min-w-0">
                                                     <p class="font-bold text-slate-800 truncate">${esc(act.title)}</p>
-                                                    <p class="text-[10px] text-slate-550 mt-0.5">ผู้รับผิดชอบ: ${esc(act.owner)} | กำหนด: ${act.dueDate ? formatDisplayDate(act.dueDate) : '-'}</p>
+                                                    <p class="text-[10px] text-slate-550 mt-0.5">ผู้รับผิดชอบ: ${esc(act.owner)} | กำหนด: ${act.dueDate ? formatThaiDisplayDate(act.dueDate) : '-'}</p>
                                                 </div>
                                                 <span class="px-1.5 py-0.5 rounded text-[9px] font-semibold border ${badge} shrink-0">${act.status}</span>
                                             </div>
@@ -11398,7 +11472,7 @@
                     return `
                         <article class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow transition-shadow">
                             <header class="flex justify-between items-center gap-3 px-3 py-2.5 bg-slate-50 border-b border-slate-200">
-                                <h4 class="text-xs font-bold text-slate-800">สรุปวันที่ ${formatDisplayDate(wd.dateStr)} (${wd.fullDayLabel})</h4>
+                                <h4 class="text-xs font-bold text-slate-800">สรุปวันที่ ${formatThaiDisplayDate(wd.dateStr)} (${wd.fullDayLabel})</h4>
                                 <div class="flex items-center gap-2">
                                     <span class="text-[10px] font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">${currentBranch}</span>
                                     <button type="button" onclick="drillDownToRecord('${wd.dateStr}')" class="text-blue-600 hover:text-blue-800 font-bold text-xs flex items-center gap-1 min-h-[32px] px-2 rounded-md hover:bg-blue-50 transition-colors">
@@ -11497,7 +11571,7 @@
 
             document.getElementById('dash-week-label').innerText = viewOffsetWeek === 0 ? "สัปดาห์นี้" : (viewOffsetWeek === -1 ? "สัปดาห์ที่แล้ว" : "อดีต");
 
-            const formatDateObj = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${String(d.getFullYear()).substring(2)}`;
+            const formatDateObj = (d) => formatThaiDisplayDate(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
             document.getElementById('dash-date-range').innerText = `${formatDateObj(startOfCurrentWeek)} - ${formatDateObj(endOfWeek)}`;
 
             let targetWeekData = rawData.filter(d => {
@@ -11552,7 +11626,7 @@
                     allCustomerNotesHtml += `
                         <div class="text-sm bg-blue-50/50 p-2.5 rounded-lg border border-blue-100 mb-2">
                             <span class="text-xs text-blue-700 font-bold block mb-1 border-b border-blue-200/50 pb-1.5 flex justify-between items-center">
-                                <span><i class="fa-solid fa-calendar-day mr-1.5 opacity-70"></i> วันที่ ${formatDisplayDate(day.date)}</span>
+                                <span><i class="fa-solid fa-calendar-day mr-1.5 opacity-70"></i> วันที่ ${formatThaiDisplayDate(day.date)}</span>
                                 <span class="bg-white text-blue-600 px-2 py-0.5 rounded-md text-[10px] shadow-sm border border-blue-100">${notesLines.length} รายการ</span>
                             </span>
                             <div class="text-gray-700 whitespace-pre-wrap mt-1.5 leading-relaxed pl-1">${esc(day.customerNotes)}</div>
@@ -11905,8 +11979,6 @@
         // เมื่อเลือกดูเดือนเก่ากว่าช่วงที่ cache 3 เดือนครอบคลุม ให้ดึงประวัติเต็มหนึ่งครั้ง
         // ================= DATE UTILITIES =================
         const EXEC_NUMBER_FORMAT = new Intl.NumberFormat('th-TH', { maximumFractionDigits: 2 });
-        const EXEC_DATE_FORMAT = new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
-        const EXEC_DATE_TIME_FORMAT = new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
 
         function parseDateKeyLocal(dateKey) {
             const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateKey || '').slice(0, 10));
@@ -11926,8 +11998,7 @@
         }
 
         function formatExecutiveDate(dateKey) {
-            const date = parseDateKeyLocal(dateKey);
-            return date ? EXEC_DATE_FORMAT.format(date) : String(dateKey || '-');
+            return window.BMDateDisplay.date(dateKey) || '-';
         }
 
         function addCalendarDays(date, days) {
@@ -12177,7 +12248,7 @@
                 partial: 'bg-amber-50 text-amber-800 border-amber-300',
                 complete: 'bg-emerald-50 text-emerald-800 border-emerald-300'
             }[state];
-            const syncText = oldestSync ? EXEC_DATE_TIME_FORMAT.format(new Date(oldestSync)) : 'ไม่พบเวลาซิงค์';
+            const syncText = oldestSync ? window.BMDateDisplay.dateTime(new Date(oldestSync)) : 'ไม่พบเวลาซิงค์';
             const branchText = branchFilter === 'ALL' ? 'AKRA และ TRD' : branchFilter;
             document.getElementById('exec-freshness-label').innerText = `ขอบเขต: ${branchText} · ช่วงข้อมูล: ${formatExecutiveDate(range.startKey)}–${formatExecutiveDate(range.endKey)} · ซิงค์ล่าสุด: ${syncText} · สถานะ: ${stateText}`;
             document.getElementById('exec-confidence-summary').innerText = `ข้อมูลล่าสุดในชุดรายงาน: ${formatExecutiveDate(metrics.latestRecordDate)} · ครอบคลุม ${formatExecutiveNumber(metrics.reportedDays, 0)} จาก ${formatExecutiveNumber(metrics.expectedReports, 0)} รายงานที่คาดหมาย`;
@@ -12635,7 +12706,7 @@
                     logsHtmlContent += `
                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs shadow-sm flex flex-col gap-1.5 transition-colors hover:bg-white">
                             <div class="flex justify-between items-center border-b border-gray-200 pb-1.5">
-                                <span class="font-bold text-gray-600"><i class="fa-regular fa-calendar-days mr-1.5 opacity-70"></i>${formatDisplayDate(day.date)}</span>
+                                <span class="font-bold text-gray-600"><i class="fa-regular fa-calendar-days mr-1.5 opacity-70"></i>${formatThaiDisplayDate(day.date)}</span>
                                 <span class="font-bold text-xs px-1.5 py-0.5 rounded border shadow-sm ${branchBadge}">${day.sourceBranch}</span>
                             </div>
                             <div class="flex items-start mt-0.5">
@@ -13010,7 +13081,7 @@
                 return `<tr class="border-b border-slate-100 hover:bg-slate-50/50">
                     <td class="p-2.5 font-bold text-slate-500 text-[10px]">${act.actionId}</td>
                     <td class="p-2.5"><span class="px-2 py-0.5 rounded border text-[10px] font-bold ${branchBadge}">${act.branch}</span></td>
-                    <td class="p-2.5"><button onclick="deepLinkToActionSource('${act.sourceDate}', '${act.branch}')" class="text-blue-600 hover:underline font-bold text-left">${formatDisplayDate(act.sourceDate)}</button></td>
+                    <td class="p-2.5"><button onclick="deepLinkToActionSource('${act.sourceDate}', '${act.branch}')" class="text-blue-600 hover:underline font-bold text-left">${formatThaiDisplayDate(act.sourceDate)}</button></td>
                     <td class="p-2.5">
                         <div class="font-bold text-slate-800 text-[12px]">${esc(act.title)}</div>
                         ${act.detail ? `<div class="text-[10px] text-slate-500 mt-0.5 whitespace-pre-wrap">${esc(act.detail)}</div>` : ''}
@@ -13019,7 +13090,7 @@
                     <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${severityBadge}">${act.severity}</span></td>
                     <td class="p-2.5 text-slate-700 font-semibold">${esc(act.owner)}</td>
                     <td class="p-2.5 ${dateDisplayClass}">
-                        <div>${act.dueDate ? formatDisplayDate(act.dueDate) : '-'}</div>
+                        <div>${act.dueDate ? formatThaiDisplayDate(act.dueDate) : '-'}</div>
                         <div class="text-[10px] text-slate-450 mt-0.5 font-normal">อายุ: ${ageDays} วัน</div>
                     </td>
                     <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusBadge}">${act.status}</span></td>
@@ -13064,7 +13135,7 @@
                     <td class="p-2.5 text-slate-650">${esc(act.category || 'อื่นๆ')}</td>
                     <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${severityClass}">${act.severity}</span></td>
                     <td class="p-2.5 text-slate-700 font-semibold">${esc(act.owner)}</td>
-                    <td class="p-2.5 ${dateDisplayClass}">${act.dueDate ? formatDisplayDate(act.dueDate) : '-'}</td>
+                    <td class="p-2.5 ${dateDisplayClass}">${act.dueDate ? formatThaiDisplayDate(act.dueDate) : '-'}</td>
                     <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusClass}">${act.status}</span></td>
                     <td class="p-2.5 text-center">
                         <button type="button" onclick="openActionModalForEdit('${act.actionId}')" class="text-blue-600 hover:text-blue-800 font-bold mr-2"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -13074,12 +13145,13 @@
             }).join('');
         }
 
-        function deleteLocalAction(actionId) {
-            if (!confirm("คุณต้องการลบ Action Item นี้ออกจากฉบับร่างหรือไม่?")) return;
-            localActionsDraft = localActionsDraft.filter(a => a.actionId !== actionId);
-            renderRecordActionsTable();
-            saveRecordDraftDebounced();
-            showToast("ลบ Action Item ออกจากร่างแล้ว");
+        async function deleteLocalAction(actionId) {
+            return window.BMDialog.run('delete-local:'+actionId, "คุณต้องการลบ Action Item นี้ออกจากฉบับร่างหรือไม่?", async (isCurrent) => {
+                localActionsDraft = localActionsDraft.filter(a => a.actionId !== actionId);
+                renderRecordActionsTable();
+                saveRecordDraftDebounced();
+                showToast("ลบ Action Item ออกจากร่างแล้ว");
+            });
         }
 
         function generateActionId() {
@@ -13473,7 +13545,7 @@
                 pendingKpiTab=tab;
                 return false;
             }
-            if (tab !== 'duties' && window.KpiDutyMatrix?.hasDrafts() && !window.KpiDutyMatrix.confirmLeave()) return false;
+            if (tab !== 'duties' && window.KpiDutyMatrix?.hasDrafts() && !window.KpiDutyMatrix.confirmLeave(() => switchTab(tab))) return false;
             // Map legacy aliases
             if (tab === 'record') tab = (currentBranch === 'TRD' ? 'error' : 'workload');
             if (tab === 'errors') tab = 'error';
@@ -14715,47 +14787,48 @@
             if (date && date !== todayBangkok) {
                 return showModal('ไม่สามารถล้างข้อมูลได้', 'ระบบอนุญาตให้ล้างหรือยกเลิกข้อมูลภาระงานเฉพาะวันปัจจุบันเท่านั้น', 'error');
             }
-            if (typeof window.confirm === 'function' && !window.confirm('ต้องการล้างข้อมูลภาระงาน (Workload) ของคุณในวันนี้ใช่หรือไม่?')) {
-                return;
-            }
-            if (!sessionToken || !window.AkraSupabaseKPI?.clearWorkload) {
-                return showModal('ดำเนินการไม่สำเร็จ', 'ระบบยังไม่พร้อม กรุณาโหลดหน้าใหม่', 'error');
-            }
-
-            const btn = document.getElementById('btn-clear-workload');
-            if (btn) {
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-                btn.disabled = true;
-            }
-
-            try {
-                const res = await AkraSupabaseKPI.clearWorkload(sessionToken, String(currentUser || '').trim(), date || todayBangkok);
-                if (res && res.status === 'success') {
-                    showToast('ล้างข้อมูล Workload ของคุณเรียบร้อยแล้ว');
-                    safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date || todayBangkok}_workload`);
-                    applyWorkloadSaveResultToCache(date || todayBangkok, currentBranch, res);
-                    renderAkraWorkloadEditor([], true);
-                    renderTeamWorkloadPreview();
-                    updateDailyDashboard();
-                    try {
-                        await syncDataFromSheet();
-                        loadDashboardData();
-                        updateDailyDashboard();
-                    } catch (syncErr) {
-                        console.warn('Post-clear UI refresh warning:', syncErr);
-                    }
-                } else {
-                    showModal('ล้างข้อมูลไม่สำเร็จ', res?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์', 'error');
+            return window.BMDialog.run('clear-workload', 'ต้องการล้างข้อมูลภาระงาน (Workload) ของคุณในวันนี้ใช่หรือไม่?', async (isCurrent) => {
+                if (!sessionToken || !window.AkraSupabaseKPI?.clearWorkload) {
+                    return showModal('ดำเนินการไม่สำเร็จ', 'ระบบยังไม่พร้อม กรุณาโหลดหน้าใหม่', 'error');
                 }
-            } catch (e) {
-                console.error(e);
-                showModal('ล้างข้อมูลไม่สำเร็จ', e.message || 'เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้', 'error');
-            } finally {
+
+                const btn = document.getElementById('btn-clear-workload');
                 if (btn) {
-                    btn.innerHTML = '<i class="fa-solid fa-trash-can"></i><span>ล้างข้อมูล</span>';
-                    btn.disabled = !canRecordOwnWorkload();
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    btn.disabled = true;
                 }
-            }
+
+                try {
+                    const res = await AkraSupabaseKPI.clearWorkload(sessionToken, String(currentUser || '').trim(), date || todayBangkok);
+                    if (!isCurrent()) return;
+                    if (res && res.status === 'success') {
+                        showToast('ล้างข้อมูล Workload ของคุณเรียบร้อยแล้ว');
+                        safeStorage.removeItem(`kpiDraft_${currentUser}_${currentBranch}_${date || todayBangkok}_workload`);
+                        applyWorkloadSaveResultToCache(date || todayBangkok, currentBranch, res);
+                        renderAkraWorkloadEditor([], true);
+                        renderTeamWorkloadPreview();
+                        updateDailyDashboard();
+                        try {
+                            await syncDataFromSheet();
+                            loadDashboardData();
+                            updateDailyDashboard();
+                        } catch (syncErr) {
+                            console.warn('Post-clear UI refresh warning:', syncErr);
+                        }
+                    } else {
+                        showModal('ล้างข้อมูลไม่สำเร็จ', res?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์', 'error');
+                    }
+                } catch (e) {
+                    if (!isCurrent()) return;
+                    console.error(e);
+                    showModal('ล้างข้อมูลไม่สำเร็จ', e.message || 'เชื่อมต่อกับเซิร์ฟเวอร์ไม่ได้', 'error');
+                } finally {
+                    if (btn) {
+                        btn.innerHTML = '<i class="fa-solid fa-trash-can"></i><span>ล้างข้อมูล</span>';
+                        btn.disabled = !canRecordOwnWorkload();
+                    }
+                }
+            });
         }
 
         function prepareTrdErrorEntriesForNextSave(date, entries, branch) {
@@ -14855,7 +14928,7 @@
             saveRecordDraft();
 
             if (currentErrors.length === 0) {
-                const confirmSave = confirm("ไม่มีรายการความผิดพลาดที่ระบุ คุณต้องการบันทึกยืนยันว่า 'ไม่มีความผิดพลาดในวันนี้' หรือไม่?");
+                const confirmSave = await window.BMDialog.ask("ไม่มีรายการความผิดพลาดที่ระบุ คุณต้องการบันทึกยืนยันว่า 'ไม่มีความผิดพลาดในวันนี้' หรือไม่?");
                 if (!confirmSave) return;
 
                 const caseId = `NO_ERRORS-${date}-${Date.now()}`;
@@ -15284,7 +15357,7 @@
             if (!value) return '';
             const date = new Date(value);
             if (isNaN(date.getTime())) return '';
-            return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getFullYear()).slice(-2)} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')} น.`;
+            return window.BMDateDisplay.dateTime(date);
         }
 
         function renderDailyDashboardStatus(state, completeText, missingText) {
@@ -15320,7 +15393,7 @@
             const combinedStatus = document.getElementById('daily-status-badge');
             const completenessDetails = document.getElementById('daily-completeness-details');
 
-            if (branchDate) branchDate.innerText = `${model.branch} · ${formatDisplayDate(model.date)}`;
+            if (branchDate) branchDate.innerText = `${model.branch} · ${formatThaiDisplayDate(model.date)}`;
             if (freshness) {
                 const syncText = formatDailyDashboardTimestamp(model.cacheTimestamp);
                 freshness.innerText = syncText ? `ข้อมูลที่โหลดล่าสุด: ${syncText}` : 'ยังไม่มีเวลาซิงค์ข้อมูล';
@@ -15485,7 +15558,7 @@
                                     <span class="rounded border ${resolved ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-purple-200 bg-purple-50 text-purple-800'} px-2 py-0.5 text-[10px] font-bold">${esc(action.status)}</span>
                                 </div>
                                 ${action.detail ? `<p class="mt-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-800">${esc(action.detail)}</p>` : ''}
-                                <p class="mt-2 text-xs text-slate-500">ผู้รับผิดชอบ: ${esc(action.owner || 'ยังไม่ระบุ')}${resolved ? ` · ปิดเมื่อ ${esc(formatDisplayDate(action.resolutionDate))}` : ` · กำหนด ${action.dueDate ? esc(formatDisplayDate(action.dueDate)) : 'ยังไม่ระบุ'}`}</p>
+                                <p class="mt-2 text-xs text-slate-500">ผู้รับผิดชอบ: ${esc(action.owner || 'ยังไม่ระบุ')}${resolved ? ` · ปิดเมื่อ ${esc(formatThaiDisplayDate(action.resolutionDate))}` : ` · กำหนด ${action.dueDate ? esc(formatThaiDisplayDate(action.dueDate)) : 'ยังไม่ระบุ'}`}</p>
                                 ${resolved && action.resolutionNote ? `<p class="mt-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-emerald-800">ผลการปิดงาน: ${esc(action.resolutionNote)}</p>` : ''}
                             </li>
                         `).join('')}</ul>

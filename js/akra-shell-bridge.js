@@ -81,45 +81,7 @@
             {label:'พิมพ์แบบฟอร์ม (A4)', icon:'printer', selector:'#btnPrint'}
         ]
     });
-    const APP_SWITCHER_ICON_PATHS = Object.freeze({
-        package:'<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
-        'arrow-right-left':'<path d="M4 7h15M15 4l4 3-4 3M20 17H5M9 14l-4 3 4 3"/>',
-        'clipboard-check':'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M8 12l2.5 2.5L16 9"/>',
-        'file-plus-2':'<path d="M6 3h8l4 4v14H6zM14 3v5h4M9 14h6M12 11v6"/>',
-        'package-check':'<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m8.5 13 2.2 2.2 4.8-5"/>',
-        truck:'<path d="M3 5h11v11H3zM14 9h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
-        'package-x':'<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m9 10 6 6M15 10l-6 6"/>',
-        'chart-no-axes-combined':'<path d="M4 19V5M4 19h16"/><path d="m7 15 3-4 3 2 5-7"/>',
-        'book-open':'<path d="M4 5.5c3-1.2 5.7-.5 8 1.5v12c-2.3-2-5-2.7-8-1.5zM20 5.5c-3-1.2-5.7-.5-8 1.5v12c2.3-2 5-2.7 8-1.5z"/>',
-        'clipboard-list':'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/>',
-        boxes:'<path d="m4 7 8 4 8-4"/><path d="M4 7v10l8 4 8-4V7l-8-4zM12 11v10"/>',
-        'chart-pie':'<path d="M12 3v9h9"/><path d="M20.5 15A9 9 0 1 1 9 3.5"/>',
-        settings:'<path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-2.6V20a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1-1.8-1.8.1-.1A1.7 1.7 0 0 0 8 15a1.7 1.7 0 0 0-1.6-1H6v-2.6h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1 1.8-1.8.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V5h2.6v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2V14h-.2a1.7 1.7 0 0 0-1.6 1z"/>',
-        house:'<path d="m3 10 9-7 9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/>',
-        inbox:'<path d="M4 4h16v16H4z"/><path d="M4 14h4l1.5 2h5L16 14h4"/>',
-        history:'<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5M12 7v5l3 2"/>',
-        trend:'<path d="m4 16 5-5 3 3 7-8"/><path d="M14 6h5v5"/>',
-        cart:'<path d="M4 5h2l2 11h9l2-8H7"/><circle cx="10" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/>',
-        compare:'<path d="M4 7h15M15 4l4 3-4 3M20 17H5M9 14l-4 3 4 3"/>',
-        'file-check':'<path d="M6 3h8l4 4v14H6zM14 3v5h4M9 15l2 2 4-4"/>',
-        dashboard:'<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/>',
-        plus:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',
-        check:'<path d="m5 12 4 4L19 6"/>',
-        file:'<path d="M6 3h8l4 4v14H6zM14 3v5h4M9 13h6M9 17h4"/>',
-        alert:'<path d="M12 4 3 20h18z"/><path d="M12 9v5M12 17h.01"/>',
-        warehouse:'<path d="m3 10 9-7 9 7v10H3z"/><path d="M7 20v-6h10v6M7 10h10"/>',
-        clipboard:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/>',
-        briefcase:'<rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V5h6v2M4 12h16"/>',
-        phone:'<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 18h4"/>',
-        workflow:'<rect x="4" y="4" width="5" height="5"/><rect x="15" y="15" width="5" height="5"/><path d="M9 6.5h4a2 2 0 0 1 2 2V15M15 17.5h-4a2 2 0 0 1-2-2V9"/>',
-        sliders:'<path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h10M18 18h2"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="18" r="2"/>',
-        printer:'<path d="M6 9V3h12v6M6 17H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/>',
-        user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
-        pin:'<path d="M12 21s6-5.4 6-11a6 6 0 1 0-12 0c0 5.6 6 11 6 11z"/><circle cx="12" cy="10" r="2"/>',
-        chart:'<path d="M4 19V5M4 19h16"/><path d="m7 15 3-4 3 2 5-7"/>',
-        home:'<path d="m3 10 9-7 9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/>',
-        'chevron-down':'<path d="m6 9 6 6 6-6"/>'
-    });
+    const APP_SWITCHER_ICONS = Object.freeze({"package":"package","arrow-right-left":"arrow-right-left","clipboard-check":"clipboard-check","file-plus-2":"file-plus-2","package-check":"package-check","truck":"truck","package-x":"package-x","chart-no-axes-combined":"chart-no-axes-combined","book-open":"book-open","clipboard-list":"clipboard-list","boxes":"boxes","chart-pie":"chart-pie","settings":"settings","house":"house","inbox":"inbox","history":"history","trend":"trending-up","cart":"shopping-cart","compare":"arrow-right-left","file-check":"file-check","dashboard":"layout-dashboard","plus":"circle-plus","check":"check","file":"file-text","alert":"triangle-alert","warehouse":"warehouse","clipboard":"clipboard-list","briefcase":"briefcase-business","phone":"smartphone","workflow":"workflow","sliders":"sliders-horizontal","printer":"printer","user":"user","pin":"map-pin","chart":"chart-no-axes-combined","home":"house","chevron-down":"chevron-down","clipboard-plus":"clipboard-plus","users":"users"});
     const APP_SWITCHER_STYLE = [
         '#akra-global-app-switcher,.akra-global-switcher{font:inherit;color:#dbe7f5;box-sizing:border-box}',
         '.akra-global-switcher--fixed,.akra-global-switcher--inline{display:flex;flex-direction:column;gap:10px;width:100%;min-height:0;padding:20px 12px 14px;background:#0f172a;color:#dbe7f5}',
@@ -188,22 +150,20 @@
         document.head.appendChild(style);
     }
     function switcherIcon(name) {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-        svg.setAttribute('viewBox','0 0 24 24');
-        svg.setAttribute('aria-hidden','true');
-        svg.innerHTML = APP_SWITCHER_ICON_PATHS[name] || APP_SWITCHER_ICON_PATHS.package;
-        return svg;
+        return window.BMIcons.create(Object.hasOwn(APP_SWITCHER_ICONS, name) ? APP_SWITCHER_ICONS[name] : name);
     }
-    function confirmStandaloneLeave() {
+    async function confirmStandaloneLeave() {
         const work = window.AkraModule?.getWorkState?.() || {};
         if (work.busy) {
-            window.alert?.('กำลังบันทึกรายการ กรุณารอผลก่อนเปลี่ยนแอปหรือออกจากระบบ');
+            window.BMDialog.alert('กำลังบันทึกรายการ กรุณารอผลก่อนเปลี่ยนแอปหรือออกจากระบบ');
             return false;
         }
-        return !work.dirty || window.confirm('มีข้อมูลที่แก้ไขหรือรายการที่อาจยังไม่บันทึก ต้องการเปลี่ยนแอปหรือไม่?');
+        return !work.dirty || await window.BMDialog.ask('มีข้อมูลที่แก้ไขหรือรายการที่อาจยังไม่บันทึก ต้องการเปลี่ยนแอปหรือไม่?');
     }
-    function switchStandalone(target) {
-        if (!confirmStandaloneLeave()) return;
+    async function switchStandalone(target) {
+        const owner = window.getBmDialogContext?.();
+        const stamp = window.AkraModule?.sessionStamp?.();
+        if (!await confirmStandaloneLeave() || (owner && !owner.every((value, index) => value === window.getBmDialogContext?.()[index])) || stamp !== window.AkraModule?.sessionStamp?.() || window.AkraModule?.getWorkState?.().busy) return;
         window.AkraModule?.prepareLeave?.();
         window.location.assign(target);
     }
@@ -238,8 +198,10 @@
         home.title = 'กลับหน้าหลัก'; home.setAttribute('aria-label','กลับหน้าหลัก');
         home.appendChild(switcherIcon('home'));
         const homeLabel = document.createElement('span'); homeLabel.className = 'akra-global-switcher__app-label'; homeLabel.textContent = 'หน้าหลัก'; home.appendChild(homeLabel);
-        home.addEventListener('click', () => {
-            if (!confirmStandaloneLeave()) return;
+        home.addEventListener('click', async () => {
+            const owner = window.getBmDialogContext?.();
+            const stamp = window.AkraModule?.sessionStamp?.();
+            if (!await confirmStandaloneLeave() || (owner && !owner.every((value, index) => value === window.getBmDialogContext?.()[index])) || stamp !== window.AkraModule?.sessionStamp?.() || window.AkraModule?.getWorkState?.().busy) return;
             window.AkraModule?.home?.(new URL('/Main/', window.location.origin).href);
         });
         host.appendChild(home);
@@ -496,11 +458,17 @@
                     return {response:nextResponse,result:await nextResponse.json()};
                 })();
                 ({response, result} = await Promise.race([request, timeout]));
+            } catch (error) {
+                if (!shell && stamp !== sessionStamp()) throw new Error('session_changed');
+                throw error;
             } finally {
                 clearTimeout(timeoutId);
             }
             if (!shell && stamp !== sessionStamp()) throw new Error('session_changed');
-            if (!response.ok || result.valid !== true || !result.user?.id) throw new Error(result.reason || 'invalid_session');
+            if (!response.ok || result.valid !== true || !result.user?.id) {
+                const reason = result.reason || (response.ok ? 'invalid_session' : undefined);
+                throw Object.assign(new Error(reason || 'session_verification_failed'), {reason,status:response.status});
+            }
             return result.user;
         },
         home: fallback => { if (shell) send('home'); else window.location.assign(fallback); },

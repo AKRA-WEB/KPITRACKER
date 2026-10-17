@@ -25,6 +25,14 @@ test('empty day displays zero, failures stay visible and a successful Workload r
   c.fetchLiveRequisitions=async()=>false;await c.KpiIntegration.refreshActivity();assert.match(elements.get('profile-activity-summary').textContent,/ไม่สำเร็จ/);
   c.KpiIntegration.acceptActivity();assert.match(elements.get('profile-activity-summary').textContent,/ปฏิบัติงานจริง 0/);
 });
+test('activity dates use BE presentation while read dates remain Gregorian',async()=>{
+  const {c,elements}=activity();vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/bm-date-display.js'),'utf8'),c);
+  c.fetchLiveRequisitions=async()=>{assert.equal(elements.get('record-date').value,'2026-10-02');c.liveRequisitionsLoadedDate='2026-10-02';return true;};
+  await c.KpiIntegration.refreshActivity();
+  assert.match(elements.get('dash-activity-summary').textContent,/2 ต.ค. 2569/);
+  assert.match(elements.get('profile-activity-summary').textContent,/2 ต.ค. 2569/);
+  assert.equal(elements.get('record-date').value,'2026-10-02');
+});
 test('late activity responses cannot update a changed date or session',async()=>{
   const {c,elements}=activity();let finish;c.fetchLiveRequisitions=()=>new Promise(resolve=>finish=resolve);
   const p=c.KpiIntegration.refreshActivity();elements.get('record-date').value='2026-10-03';elements.get('dash-activity-summary').textContent='new date';finish(true);await p;
@@ -33,7 +41,7 @@ test('late activity responses cannot update a changed date or session',async()=>
   assert.equal(elements.get('profile-activity-summary').textContent,'new session');
 });
 test('Dashboard canonical task routing and forced refresh reject stale reads',async()=>{
-  const c={console,document:{addEventListener(){},querySelectorAll(){return[];},getElementById(){return {addEventListener(){}};}},addEventListener(){},setTimeout,clearTimeout,URL,URLSearchParams,location:{search:'',hostname:'localhost'},navigator:{},localStorage:{getItem(){return null;},setItem(){},removeItem(){}},sessionStorage:{getItem(){return null;}},alert(){}};c.window=c;vm.createContext(c);
+  const c={console,document:{addEventListener(){},querySelectorAll(){return[];},getElementById(){return {addEventListener(){}};}},addEventListener(){},matchMedia:()=>({matches:false,addEventListener(){}}),setTimeout,clearTimeout,URL,URLSearchParams,location:{search:'',hostname:'localhost'},navigator:{},localStorage:{getItem(){return null;},setItem(){},removeItem(){}},sessionStorage:{getItem(){return null;}},alert(){}};c.window=c;vm.createContext(c);
   for(const [,src] of fs.readFileSync(path.join(__dirname,'../index.html'),'utf8').matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi))if(src.trim())new vm.Script(src).runInContext(c);
   assert.equal(c.switchTab('dashboard'),false,'shell navigation waits for verified session and branch');
   assert.equal(vm.runInContext('pendingKpiTab',c),'dashboard');

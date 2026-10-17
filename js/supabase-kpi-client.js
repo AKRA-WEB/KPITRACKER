@@ -23,6 +23,27 @@
         return Object.assign(new Error('session_changed'), {reason:'session_changed'});
     }
 
+    // Read presentation only: mutation conflicts and uncertain outcomes keep their handlers.
+    function describeReadError(error) {
+        const reason = String(error?.reason || error?.code || error?.message || '');
+        if (reason === 'session_changed' || reason === 'request_cancelled') return null;
+        if (reason === 'mandatory_password_change_required') return {kind:'password-change',title:'ต้องเปลี่ยนรหัสผ่านก่อน',body:'กลับไป BUYMORETH เพื่อเปลี่ยนรหัสผ่าน แล้วเปิด BM Work ใหม่',retry:false};
+        if (reason === 'missing_verified_identity') return {kind:'identity',title:'ยืนยันบัญชีไม่ได้',body:'กลับไป BUYMORETH แล้วเปิด BM Work ใหม่',retry:false};
+        if (['invalid_or_expired_token','invalid_session','session_expired','session_revoked','shell_session_unavailable','main_signed_out','no_token'].includes(reason)) return {kind:'session',title:'เซสชันหมดอายุหรือเปลี่ยนแล้ว',body:'เข้าสู่ระบบ BUYMORETH อีกครั้ง',retry:false};
+        if (reason === 'permission_denied') return {kind:'permission',title:'ไม่มีสิทธิ์ใช้ส่วนนี้',body:'ติดต่อผู้ดูแลใน BUYMORETH เพื่อขอสิทธิ์',retry:false};
+        if (reason === 'record_conflict') return {kind:'conflict',title:'ข้อมูลเปลี่ยนแล้ว',body:'โหลดข้อมูลล่าสุดแล้วตรวจทานก่อนบันทึกใหม่',retry:false};
+        if (['request_timeout','session_verify_timeout'].includes(reason)) return {kind:'network',title:'เชื่อมต่อไม่ได้',body:'ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง',retry:true};
+        if (['internal_error','service_unavailable'].includes(reason)) return {kind:'server',title:'ระบบขัดข้องชั่วคราว',body:'ลองอีกครั้งในอีกสักครู่ ถ้ายังไม่ได้ให้แจ้งผู้ดูแล',retry:true};
+        if (error?.status === 401) return {kind:'session',title:'เซสชันหมดอายุหรือเปลี่ยนแล้ว',body:'เข้าสู่ระบบ BUYMORETH อีกครั้ง',retry:false};
+        if (error?.status === 403) return {kind:'permission',title:'ไม่มีสิทธิ์ใช้ส่วนนี้',body:'ติดต่อผู้ดูแลใน BUYMORETH เพื่อขอสิทธิ์',retry:false};
+        if (error?.status === 409) return {kind:'conflict',title:'ข้อมูลเปลี่ยนแล้ว',body:'โหลดข้อมูลล่าสุดแล้วตรวจทานก่อนบันทึกใหม่',retry:false};
+        if (error?.status === 400) return {kind:'validation',title:'โหลดข้อมูลไม่สำเร็จ',body:'ตรวจสอบคำค้นหาหรือตัวกรองแล้วลองอีกครั้ง',retry:false};
+        if (error?.status === 429) return {kind:'rate-limit',title:'มีคำขอจำนวนมาก',body:'กรุณารอสักครู่แล้วลองอีกครั้ง',retry:false};
+        if (error?.status >= 500) return {kind:'server',title:'ระบบขัดข้องชั่วคราว',body:'ลองอีกครั้งในอีกสักครู่ ถ้ายังไม่ได้ให้แจ้งผู้ดูแล',retry:true};
+        if (error?.name === 'TypeError' || error?.name === 'AbortError') return {kind:'network',title:'เชื่อมต่อไม่ได้',body:'ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง',retry:true};
+        return {kind:'unknown',title:'โหลดข้อมูลไม่สำเร็จ',body:'ลองโหลดข้อมูลอีกครั้ง',retry:true};
+    }
+
     function requestContext(token) {
         if (typeof window === 'undefined') return {token,owner:null};
         const owner = window.getKpiSessionOwner?.(), current = window.getKpiSessionToken?.();
@@ -47,7 +68,7 @@
     }
 
     async function transportRequest(action, payload, context) {
-        if(!['getTaskImages','uploadTaskImage','removeTaskImage','setKanbanTaskArchived','deleteKanbanTask','getKanbanTaskDeletion','getDutyMatrix','setDutyAssignment','saveDutyAssignments','saveDutyCatalog','setDutyCapacity','setDrivingCapabilities'].includes(action))return performTransportRequest(action,payload,context);
+        if(!['getConfig','getKanbanLineDelivery','getTaskImages','uploadTaskImage','removeTaskImage','setKanbanTaskArchived','deleteKanbanTask','getKanbanTaskDeletion','getDutyMatrix','setDutyAssignment','saveDutyAssignments','saveDutyCatalog','setDutyCapacity','setDrivingCapabilities'].includes(action))return performTransportRequest(action,payload,context);
         const controller=new AbortController();let timer;
         const deadline=new Promise((resolve,reject)=>{timer=setTimeout(()=>{
             reject(Object.assign(new Error('request_timeout'),{reason:'request_timeout'}));controller.abort();
@@ -65,7 +86,8 @@
         perf?.count(kind + 'Requests', 1, true);
         const apiSpan = perf?.start(kind + 'Api');
         const url = `${SUPABASE_CONFIG.URL}/functions/v1/kpi-api`;
-        const response = await fetch(url, {
+        let response;
+        try { response = await fetch(url, {
             ...(signal ? {signal} : {}),
             method: 'POST',
             headers: {
@@ -73,7 +95,7 @@
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ ...payload, action, token:context.token })
-        });
+        }); } catch (error) { assertRequestContext(context); throw error; }
         perf?.end(apiSpan);
         assertRequestContext(context);
         const responseSpan = perf?.start(kind + 'Response');
@@ -84,7 +106,7 @@
             const error = new Error(data.reason === 'record_conflict' ? 'ข้อมูลถูกแก้ไขจากที่อื่น กรุณาโหลดข้อมูลล่าสุดและตรวจทานก่อนบันทึกใหม่' : (data.reason || ('Supabase fetch failed: ' + response.statusText)));
             error.reason = data.reason;
             error.status = response.status;
-            if (response.status === 401 && typeof window !== 'undefined') window.onKpiSessionRejected?.(error);
+            if ((response.status === 401 || error.reason === 'invalid_or_expired_token') && typeof window !== 'undefined') window.onKpiSessionRejected?.(error);
             throw error;
         }
         perf?.response(kind, data);
@@ -184,6 +206,7 @@
     }
 
     return {
+        describeReadError,
         saveDailyRecord,
         fetchBranchData: async (token, branch, months = 3) => {
             const endDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -358,6 +381,13 @@
         getKanbanTaskDeletion: async (token, request) => {
             const data = await fetchKpiAction('getKanbanTaskDeletion', token, request);
             if ((data.branch && data.branch !== request.branch) || data.taskId !== request.taskId || data.actionId !== request.actionId || data.taskCode !== request.taskCode || data.requestId !== request.requestId || !['not_started','pending','completed'].includes(data.state)) throw new Error('invalid_kanban_delete_receipt');
+            return data;
+        },
+        getKanbanLineDelivery: async (token, payload) => {
+            const data = await fetchKpiAction('getKanbanLineDelivery', token, {branch:payload.branch,taskId:payload.taskId});
+            if (!data.delivery || !['not_queued','pending','sending','accepted','failed','expired','suppressed'].includes(data.delivery.state)) {
+                throw new Error('invalid_line_delivery_response');
+            }
             return data;
         },
         claimIssueTask: async (token, claimPayload) => {

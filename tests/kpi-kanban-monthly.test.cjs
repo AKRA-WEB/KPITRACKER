@@ -78,6 +78,14 @@ function expectColumns(ui,counts) {
 }
 const drain=()=>new Promise(resolve=>setImmediate(resolve));
 
+test('month captions display BE while Gregorian option keys and board filtering stay unchanged',async()=>{
+    const ui=setup([row('OCT')]);await ui.board.loadKanbanBoard();
+    assert.match(ui.element('kb-month-filter').innerHTML,/value="2026-10"[^>]*>ตุลาคม 2569/);
+    assert.match(ui.element('kb-month-summary').textContent,/ตุลาคม 2569/);
+    ui.board.setMonth('2026-10');expectVisible(ui,['OCT']);
+    assert.equal(ui.tasks[0].createdDate,'2026-10-02T01:00:00Z');
+});
+
 test('current month uses creation for unfinished work and closure for completed work in all views',async()=>{
     const tasks=[row('SEPT-OPEN',{createdDate:'2026-09-12T00:00:00Z'}),row('OCT-OPEN'),
         row('OCT-CLOSED',{status:'Resolved',createdDate:'2026-08-01T00:00:00Z',resolutionDate:'2026-10-01T01:00:00Z'}),
@@ -258,7 +266,9 @@ test('same-status checklist/comment response with a NULL closure remains unknown
 test('canonical image response keeps dates when updating the task without a board refetch',async()=>{
     const task=row('IMAGE',{status:'Resolved',createdDate:'2026-08-10T00:00:00Z',resolutionDate:'2026-09-12T00:00:00Z',attachments:[{id:'image',name:'Synthetic.jpg'}]});
     const ui=setup([task],{api:{getTaskImages:async()=>({images:[]}),removeTaskImage:async()=>({task:{...task,revision:2,attachments:[]}})}});
-    await ui.board.loadKanbanBoard();ui.board.setMonth('2026-09');ui.board.openTask('IMAGE');await ui.board.removeImage('image');
+    const dialog=require('./helpers/bm-dialog-runtime.cjs').rig();ui.window.BMDialog=dialog.window.BMDialog;
+    await ui.board.loadKanbanBoard();ui.board.setMonth('2026-09');ui.board.openTask('IMAGE');
+    const removal=ui.board.removeImage('image');dialog.button('ยืนยัน').dispatch('click');await removal;
     expectVisible(ui,['IMAGE']);ui.board.setMonth('current');expectVisible(ui,[]);assert.equal(ui.reads.length,1);
     ui.board.setMonth('2026-09');expectVisible(ui,['IMAGE']);
 });

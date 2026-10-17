@@ -61,7 +61,7 @@
     }
     function currentMonth() { return timestampMonth(new Date(Date.now()).toISOString()); }
     function selectedMonth() { return state.month==='current' ? currentMonth() : state.month; }
-    function monthLabel(month) { return MONTH_NAMES[Number(month.slice(5))-1]+' '+month.slice(0,4); }
+    function monthLabel(month) { return MONTH_NAMES[Number(month.slice(5))-1]+' '+(Number(month.slice(0,4))+543); }
     function syncMonthIdentity() {
         const uid = String(context().userUid||'').trim().toLowerCase();
         if (state.monthViewerUid!==null && state.monthViewerUid!==uid) {
@@ -145,7 +145,7 @@
     async function setBranchScope(value){if(state.saving)return;if(value!=='ALL'&&!branches().includes(value)||value==='ALL'&&branches().length<2)return;state.branchScope=value;closeDrawer();await loadKanbanBoard();}
     function findTask(id){return state.tasks.find(t=>t.id===id)||(state.tasks.filter(t=>t.actionId===id).length===1?state.tasks.find(t=>t.actionId===id):null);}
     function canEdit(task) { const c=context(); return !task.isArchived&&!deletionPending(task)&&(c.can('manageTeamTasks') || (c.can('updateOwnTasks') && String(task.owner).toLowerCase()===String(c.userUid).toLowerCase())); }
-    function taskPayload(t) { return {id:t.dbId,actionId:t.actionId||t.id,taskCode:t.taskCode,branch:t.branch||context().branch,isArchived:!!t.isArchived,title:t.title,detail:t.detail,ownerUid:t.owner,owner:t.ownerName,category:t.category,area:t.area,priority:t.priority==='high'?'High':'Medium',status:t.rawStatus==='Cancelled'?'Cancelled':{open:'Open',progress:'In Progress',blocked:'Blocked',done:'Resolved'}[t.status],dueDate:t.due,nextStep:t.next,blockedReason:t.blocked,resolutionNote:t.note,checklist:t.checklist,comments:t.comments,revision:t.revision}; }
+    function taskPayload(t) { return {id:t.dbId,actionId:t.actionId||t.id,taskCode:t.taskCode,branch:t.branch||context().branch,isArchived:!!t.isArchived,title:t.title,detail:t.detail,ownerUid:t.owner,owner:t.ownerName,category:t.category,area:t.area,priority:t.priority==='high'?'High':'Medium',status:t.rawStatus==='Cancelled'?'Cancelled':{open:'Open',progress:'In Progress',blocked:'Blocked',done:'Resolved'}[t.status],dueDate:t.noDeadline && !t.due ? null : t.due,nextStep:t.next,blockedReason:t.blocked,resolutionNote:t.note,checklist:t.checklist,comments:t.comments,revision:t.revision}; }
     async function persistTask(candidate) {
         syncTaskContext();if (state.saving) return null;
         const c=context(),selected=scope(),ticket=state.lifecycleTicket;
@@ -265,6 +265,44 @@
         }).join('')}</div>${!task.attachments.length?'<p class="text-xs text-slate-500 py-3">ยังไม่มีรูปภาพแนบในงานนี้</p>':''}`;
     }
     function imageStateCurrent(c,id,ticket){return state.activeTaskId===id&&context().token===c.token&&context().branch===c.branch&&state.imageTicket===ticket;}
+    const LINE_DELIVERY_LABELS = {
+        not_queued:'ยังไม่ได้ส่ง LINE', pending:'รอส่ง LINE', sending:'กำลังส่ง LINE',
+        accepted:'LINE รับคำขอแล้ว', failed:'ส่ง LINE ไม่สำเร็จ', expired:'คำขอส่ง LINE หมดอายุ',
+        suppressed:'ยกเลิกการส่ง LINE สำหรับงานนี้'
+    };
+    const LINE_DELIVERY_REASONS = {
+        dispatch_disabled:'ยังไม่ได้เปิดระบบส่งงาน LINE', no_route:'ยังไม่ได้ตั้งกลุ่มส่งงานสำหรับสาขานี้',
+        route_disabled:'ยังไม่ได้เปิดส่งงานให้กลุ่มนี้',
+        assignee_unlinked:'ผู้รับงานยังไม่ได้ผูกบัญชี LINE', membership_unverified:'ยังตรวจสอบสมาชิกกลุ่มไม่ได้',
+        retry_pending:'รอลองส่งอีกครั้ง', provider_failed:'LINE ยังไม่พร้อมรับคำขอ',
+        assignment_changed:'ผู้รับงานหรือสถานะงานเปลี่ยนแล้ว'
+    };
+    function deliveryStateCurrent(c,task,ticket) {
+        const latest=findTask(task.id),current=context();
+        return state.activeTaskId===task.id && state.deliveryTicket===ticket && current.token===c.token
+            && current.branch===c.branch && current.userUid===c.userUid && latest?.dbId===task.dbId
+            && latest?.revision===task.revision && latest?.owner===task.owner;
+    }
+    async function loadLineDelivery(task) {
+        const c=context(),ticket=state.deliveryTicket=(state.deliveryTicket||0)+1;
+        const status=document.getElementById('kb-line-delivery-status');
+        if(status)status.textContent='กำลังตรวจสอบสถานะส่ง LINE...';
+        try {
+            if(!c.token || !task.dbId || !window.AkraSupabaseKPI?.getKanbanLineDelivery) throw Error('delivery_unavailable');
+            const result=await window.AkraSupabaseKPI.getKanbanLineDelivery(c.token,{branch:task.branch,taskId:task.dbId});
+            if(!deliveryStateCurrent(c,task,ticket))return;
+            const label=Object.prototype.hasOwnProperty.call(LINE_DELIVERY_LABELS,result?.delivery?.state) ? LINE_DELIVERY_LABELS[result.delivery.state] : '';
+            if(!label)throw Error('invalid_delivery_response');
+            const reason=Object.prototype.hasOwnProperty.call(LINE_DELIVERY_REASONS,result.delivery.reason) ? LINE_DELIVERY_REASONS[result.delivery.reason] : '';
+            const el=document.getElementById('kb-line-delivery-status');
+            if(el)el.textContent=label+(reason?' · '+reason:'');
+        } catch(_err) {
+            if(deliveryStateCurrent(c,task,ticket)) {
+                const el=document.getElementById('kb-line-delivery-status');
+                if(el)el.textContent='ยังตรวจสอบสถานะส่ง LINE ไม่ได้ · ปิดแล้วเปิดงานอีกครั้งเพื่อตรวจสอบ';
+            }
+        }
+    }
     async function loadImages(task){
         const c=context(),ticket=state.imageTicket=(state.imageTicket||0)+1;state.imageUrls=[];renderImages(task);
         if(!task.attachments.length)return;
@@ -327,7 +365,8 @@
     async function removeImage(id){
         const task=findTask(state.activeTaskId),c=context();if(!task||state.saving||!canEdit(task))return;
         const selected=scope(),ticket=state.lifecycleTicket;
-        if(!window.confirm('ต้องการลบรูปภาพนี้ออกจากงานหรือไม่?'))return;
+        return window.BMDialog.run('remove-task-image:'+task.id+':'+id, 'ต้องการลบรูปภาพนี้ออกจากงานหรือไม่?', async () => {
+        if(!taskContextCurrent(c,selected,ticket)||state.activeTaskId!==task.id||findTask(task.id)!==task||state.saving||!canEdit(task))return;
         imageBusy(true);renderImages(task,state.imageUrls||[]);
         try{
             const res=await window.AkraSupabaseKPI.removeTaskImage(c.token,{branch:task.branch,actionId:task.actionId,imageId:id,expectedRevision:task.revision});
@@ -336,6 +375,7 @@
             renderBoard();window.onKpiTaskChanged?.(next);notify('ลบรูปภาพแล้ว');if(state.activeTaskId===task.id)await loadImages(next);
         }catch(_err){if(taskContextCurrent(c,selected,ticket))notify('ลบรูปไม่สำเร็จ กรุณาปิดแล้วเปิดงานเพื่อตรวจข้อมูลล่าสุด');}
         finally{if(taskContextCurrent(c,selected,ticket)){imageBusy(false);if(state.activeTaskId===task.id)renderImages(findTask(task.id)||task,state.imageUrls||[]);}}
+        });
     }
     function closeImage(){const viewer=document.getElementById('kb-image-viewer');viewer?.classList.add('hidden');if(viewer)viewer.innerHTML='';state.imageFocus?.focus?.();}
     function openImage(id){
@@ -378,6 +418,7 @@
             deletionRequestId: t.deletionRequestId || null,
             deletionExpectedRevision: t.deletionExpectedRevision ?? null,
             due: t.due_date || t.dueDate || '',
+            noDeadline: t.noDeadline === true || t.dueDate === null || t.due_date === null,
             createdDate: t.createdDate ?? t.created_at ?? '',
             resolutionDate: t.resolutionDate ?? t.resolved_at ?? '',
             createdMonth: timestampMonth(t.createdDate ?? t.created_at),
@@ -423,7 +464,7 @@
     function formatDate(dateStr) {
         if (!dateStr) return '—';
         try {
-            return new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short' }).format(new Date(`${dateStr}T12:00:00+07:00`));
+            return window.BMDateDisplay.date(dateStr);
         } catch (_) {
             return dateStr;
         }
@@ -441,6 +482,8 @@
         syncMonthIdentity();syncTaskContext();closeDrawer();
         state.lifecycleTicket=(state.lifecycleTicket||0)+1;state.saving=false;
         const c=context(),selected=scope(); const ticket=(state.loadTicket||0)+1; state.loadTicket=ticket;
+        const pendingContent=document.getElementById('kb-board-content');
+        if(pendingContent?.querySelector?.('[data-kpi-read-retry]')) pendingContent.innerHTML='<p role="status" class="p-6 text-slate-700">กำลังโหลดบอร์ดงาน…</p>';
         try {
             if (!c.token) throw Error('session_required');
             const archive=state.view==='archive';renderBranchScope();
@@ -453,12 +496,13 @@
             state.issueReady=results.every(({res})=>res.issueIntegrationReady===true);
             populateOwnerSelect(); renderBoard();
         } catch(err) {
-            if(ticket!==state.loadTicket||c.token!==context().token||c.branch!==context().branch||c.userUid!==context().userUid||selected!==scope())return;
+            if(ticket!==state.loadTicket||c.token!==context().token||c.branch!==context().branch||c.userUid!==context().userUid||selected!==scope()||err?.reason==='session_changed'||err?.reason==='request_cancelled')return;
             state.tasks=[];state.incomingIssues=[];
             state.employees=[];
             const summary=document.getElementById('kb-summary');if(summary)summary.textContent='';
             const content=document.getElementById('kb-board-content');
-            if(content)content.innerHTML='<p role="alert" class="p-6 text-red-700 bg-red-50 rounded-xl">โหลดบอร์ดไม่สำเร็จ กรุณารีเฟรชข้อมูลหรือตรวจสอบสิทธิ์</p>';
+            const failure=window.AkraSupabaseKPI.describeReadError?.(err);
+            if(content)content.innerHTML=failure ? `<div role="alert" class="p-6 text-slate-700 bg-slate-50 rounded-xl"><strong>${failure.title}</strong><p>${failure.body}</p><button type="button" ${failure.retry ? 'data-kpi-read-retry' : ''} class="mt-3 px-3 py-2 border rounded-lg font-bold" onclick="${failure.retry ? 'this.disabled=true;window.KpiKanbanBoard.loadKanbanBoard()' : "window.AkraModule.home('https://akra-web.github.io/Main/')"}">${failure.retry ? 'ลองอีกครั้ง' : 'กลับหน้าหลัก'}</button></div>` : '<p role="alert" class="p-6 text-red-700 bg-red-50 rounded-xl">โหลดบอร์ดไม่สำเร็จ กรุณารีเฟรชข้อมูลหรือตรวจสอบสิทธิ์</p>';
         }
     }
 
@@ -840,6 +884,7 @@
         const drawer = document.getElementById('kpi-task-drawer');
         if (!backdrop || !drawer) return;
 
+        state.deliveryTicket=(state.deliveryTicket||0)+1;
         drawer.innerHTML = html;
         backdrop.classList.remove('hidden');
         drawer.classList.remove('hidden');
@@ -850,6 +895,7 @@
     function closeDrawer() {
         closeImage();state.imageTicket=(state.imageTicket||0)+1;state.imageUrls=[];
         state.imageUrlContext=null;state.imageFocus=null;
+        state.deliveryTicket=(state.deliveryTicket||0)+1;
         const backdrop = document.getElementById('kpi-task-drawer-backdrop');
         const drawer = document.getElementById('kpi-task-drawer');
         if (backdrop) backdrop.classList.add('hidden');
@@ -901,6 +947,11 @@
             <p class="text-xs text-slate-600 leading-relaxed mb-4 whitespace-pre-wrap">${esc(t.detail)}</p>
             ${renderLifecycleControls(t)}
 
+            <section class="mb-4 p-3 rounded-xl border border-slate-200 bg-slate-50" aria-label="สถานะส่งงานทาง LINE">
+                <p id="kb-line-delivery-status" role="status" class="text-xs font-bold text-slate-700">กำลังตรวจสอบสถานะส่ง LINE...</p>
+                <p class="text-xs text-slate-600 mt-1">สถานะส่ง LINE แยกจากสถานะงาน · LINE รับคำขอแล้วไม่ได้หมายถึงผู้รับอ่านแล้ว</p>
+            </section>
+
             ${t.sourceIssueId ? `
                 <div class="mb-4 p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs flex items-center justify-between">
                     <div class="flex items-center gap-2">
@@ -922,7 +973,7 @@
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-700 mb-1">กำหนดเสร็จ</label>
-                        <input type="date" name="due" value="${esc(t.due)}" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="date" name="due" value="${esc(t.due)}" ${t.noDeadline ? '' : 'required'} class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500"><small class="block text-xs text-slate-600">วันที่แสดงเป็น พ.ศ. · เลือกวันตามปฏิทินของอุปกรณ์</small>
                     </div>
                 </div>
 
@@ -1046,6 +1097,7 @@
 
         showDrawer(html);
         loadImages(t);
+        loadLineDelivery(t);
         if(!canEdit(t)) { const form=document.getElementById('kb-edit-task-form'); form?.querySelectorAll('input,select,textarea,button[type="submit"]').forEach(el=>el.disabled=true); }
     }
 
@@ -1195,7 +1247,7 @@
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-700 mb-1">กำหนดเสร็จ</label>
-                        <input type="date" name="due" required value="${today}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="date" name="due" required value="${today}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500"><small class="block text-xs text-slate-600">วันที่แสดงเป็น พ.ศ. · เลือกวันตามปฏิทินของอุปกรณ์</small>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -1336,7 +1388,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-bold text-slate-700 mb-1">กำหนดเสร็จ</label>
-                        <input type="date" name="due" required value="${today}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500">
+                        <input type="date" name="due" required value="${today}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500"><small class="block text-xs text-slate-600">วันที่แสดงเป็น พ.ศ. · เลือกวันตามปฏิทินของอุปกรณ์</small>
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-700 mb-1">สถานะหลังรับงาน</label>

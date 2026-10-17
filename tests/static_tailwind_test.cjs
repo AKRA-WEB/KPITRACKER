@@ -27,6 +27,7 @@ function jsFiles(directory) {
             : entry.name.endsWith('.js') ? [path.join(directory, entry.name)] : []);
 }
 const sources = [path.join(root, 'index.html'), ...jsFiles(path.join(root, 'js'))]
+    .filter(file => file !== path.join(root, 'js/bm-icon-data.js'))
     .map(file => ({ raw: fs.readFileSync(file, 'utf8'), extension: path.extname(file).slice(1) }));
 
 assert.equal(manifest.devDependencies.tailwindcss, '3.4.17');
@@ -36,7 +37,7 @@ assert.equal(lock.packages['node_modules/tailwindcss'].version, '3.4.17');
 for (const [name, entry] of Object.entries(lock.packages)) {
     if (name) assert.ok(entry.integrity && entry.version, 'Every locked package has a version and integrity: ' + name);
 }
-assert.deepEqual(config.content, { relative: true, files: ['./index.html', './js/**/*.js'] });
+assert.deepEqual(config.content, { relative: true, files: ['./index.html', './js/**/*.js', '!./js/bm-icon-data.js'] });
 assert.deepEqual(config.safelist, ['bg-red-500', 'bg-green-500']);
 assert.deepEqual(config.plugins, []);
 assert.deepEqual(config.theme, { extend: {} });
